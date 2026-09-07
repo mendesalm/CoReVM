@@ -1,7 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Check } from 'lucide-react';
 import ModalCadastroLoja from './ModalCadastroLoja';
 
 const API_URL = 'http://localhost:8003/api/v1';
@@ -15,13 +15,20 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
   const [lojaBusca, setLojaBusca] = useState('');
   const [lojasEncontradas, setLojasEncontradas] = useState<any[]>([]);
   const [mostrarCadastroLoja, setMostrarCadastroLoja] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const handleBuscarLoja = async (termo: string) => {
     setLojaBusca(termo);
-    if (termo.length < 3) return;
+    if (termo.length < 3) {
+      setLojasEncontradas([]);
+      return;
+    }
     try {
       const res = await axios.get(`${API_URL}/integracao/lojas/busca?q=${termo}`);
       setLojasEncontradas(res.data);
+      // Pré-marcar todas por padrão
+      setSelectedIds(res.data.map((l: any) => l.id));
+      
       if (res.data.length === 0) {
         setMostrarCadastroLoja(true);
       } else {
@@ -32,15 +39,35 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    handleBuscarLoja(val);
-    
-    const sel = lojasEncontradas.find(l => `${l.nome} - ${l.numero_loja}` === val);
-    if (sel) {
-      onSelect({ id: sel.id, nome: sel.nome, numero: sel.numero_loja });
-      setLojaBusca('');
+  const toggleSelection = (id: number) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(sId => sId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
     }
+  };
+
+  const confirmarSelecao = () => {
+    const selecionadas = lojasEncontradas.filter(l => selectedIds.includes(l.id));
+    if (selecionadas.length === 1) {
+      onSelect({ id: selecionadas[0].id, nome: selecionadas[0].nome, numero: selecionadas[0].numero_loja });
+    } else if (selecionadas.length > 1 && onSelectMultiple) {
+      onSelectMultiple(selecionadas.map(l => ({ id: l.id, nome: l.nome, numero: l.numero_loja })));
+    } else if (selecionadas.length > 1 && !onSelectMultiple) {
+      // Fallback
+      onSelect({ id: selecionadas[0].id, nome: selecionadas[0].nome, numero: selecionadas[0].numero_loja });
+    }
+    setLojaBusca('');
+    setLojasEncontradas([]);
+    setSelectedIds([]);
+  };
+
+  const getPotenciaNome = (id?: number) => {
+    if (!id) return '-';
+    if (id === 1) return 'GOB';
+    if (id === 2) return 'CMSB';
+    if (id === 3) return 'COMAB';
+    return String(id);
   };
 
   return (
@@ -51,31 +78,63 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
         </div>
         <input 
           type="text" 
-          list="lojas-regiao"
           placeholder="Buscar Loja por Nome, Número ou Cidade (Mín. 3 caracteres)..." 
           value={lojaBusca}
-          onChange={handleChange}
+          onChange={(e) => handleBuscarLoja(e.target.value)}
           className="w-full bg-[#080808] border border-[#333] rounded-lg pl-10 p-3 text-white focus:border-[#facc15] focus:outline-none" 
         />
-        <datalist id="lojas-regiao">
-          {lojasEncontradas.map(l => <option key={l.id} value={`${l.nome} - ${l.numero_loja}`} />)}
-        </datalist>
       </div>
 
-      {lojasEncontradas.length > 1 && onSelectMultiple && lojaBusca.length >= 3 && (
-        <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-          <p className="text-blue-400 text-sm">{lojasEncontradas.length} lojas encontradas para "{lojaBusca}".</p>
-          <button 
-            type="button" 
-            onClick={() => {
-              onSelectMultiple(lojasEncontradas.map(l => ({ id: l.id, nome: l.nome, numero: l.numero_loja })));
-              setLojaBusca('');
-              setLojasEncontradas([]);
-            }} 
-            className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-blue-600 transition-colors flex items-center gap-1"
-          >
-            <Plus className="w-4 h-4" /> Adicionar Todas
-          </button>
+      {lojasEncontradas.length > 0 && lojaBusca.length >= 3 && (
+        <div className="bg-[#111] border border-[#333] rounded-lg overflow-hidden">
+          <table className="w-full text-left text-sm text-gray-300">
+            <thead className="bg-[#222] text-xs uppercase text-gray-400">
+              <tr>
+                <th className="px-4 py-3 w-12 text-center">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.length === lojasEncontradas.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? lojasEncontradas.map(l => l.id) : [])}
+                    className="accent-[#facc15] w-4 h-4 cursor-pointer"
+                  />
+                </th>
+                <th className="px-4 py-3">Nº</th>
+                <th className="px-4 py-3">Loja</th>
+                <th className="px-4 py-3">Potência</th>
+                <th className="px-4 py-3">Cidade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lojasEncontradas.map(l => (
+                <tr key={l.id} className="border-b border-[#333] hover:bg-[#1a1a1a] transition-colors cursor-pointer" onClick={() => toggleSelection(l.id)}>
+                  <td className="px-4 py-3 text-center">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.includes(l.id)}
+                      onChange={() => {}} // Controlled via tr onClick
+                      className="accent-[#facc15] w-4 h-4 cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-4 py-3 font-medium text-white">{l.numero_loja}</td>
+                  <td className="px-4 py-3">{l.nome}</td>
+                  <td className="px-4 py-3">{getPotenciaNome(l.potencia)}</td>
+                  <td className="px-4 py-3">{l.cidade || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          <div className="p-3 bg-[#151515] flex justify-end">
+            <button 
+              type="button" 
+              disabled={selectedIds.length === 0}
+              onClick={confirmarSelecao} 
+              className="bg-[#facc15] text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Check className="w-4 h-4" /> 
+              {selectedIds.length > 1 ? `Adicionar ${selectedIds.length} Lojas` : 'Adicionar Loja Selecionada'}
+            </button>
+          </div>
         </div>
       )}
 
