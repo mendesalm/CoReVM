@@ -11,8 +11,8 @@ export const LogoAnimadaCore: React.FC<LogoAnimadaCoreProps> = ({ width = 200, h
           <div className='absolute inset-0 bg-yellow-500/10 blur-3xl rounded-full animate-ping z-0 scale-150' style={{ animationDuration: '3s' }}></div>
         </>
       )}
-      <div className='relative z-10 drop-shadow-[0_0_20px_rgba(234,179,8,0.4)]' style={{width:'100%', height:'100%'}}>
-<svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" width="96.9382mm" height="89.5783mm" version="1.1" 
+      <div className='relative z-10 drop-shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-[pulse_3s_ease-in-out_infinite]' style={{width:'100%', height:'100%'}}>
+<svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" width="100%" height="100%" version="1.1" 
 viewBox="0 0 9402.6 8688.72"
  xmlnsXlink="http://www.w3.org/1999/xlink"
 >
