@@ -17,14 +17,27 @@ class GrauSimbolico(str, Enum):
 
 class CargoLoja(str, Enum):
     VENERAVEL_MESTRE = "Venerável Mestre"
-    PRIMEIRO_VIGILANTE = "1º Vigilante"
-    SEGUNDO_VIGILANTE = "2º Vigilante"
+    PRIMEIRO_VIGILANTE = "Primeiro Vigilante"
+    SEGUNDO_VIGILANTE = "Segundo Vigilante"
     ORADOR = "Orador"
     SECRETARIO = "Secretário"
     TESOUREIRO = "Tesoureiro"
     CHANCELER = "Chanceler"
+    PRIMEIRO_EXPERTO = "Primeiro Experto"
+    SEGUNDO_EXPERTO = "Segundo Experto"
+    PRIMEIRO_DIACONO = "Primeiro Diácono"
+    SEGUNDO_DIACONO = "Segundo Diácono"
     MESTRE_HARMONIA = "Mestre de Harmonia"
-    # ... outros cargos ...
+    HOSPITALEIRO = "Hospitaleiro"
+    ARQUITETO = "Arquiteto"
+    PORTA_ESTANDARTE = "Porta Estandarte"
+    PORTA_BANDEIRAS = "Porta Bandeiras"
+    MESTRE_DE_BANQUETES = "Mestre de Banquetes"
+    COBRIDOR_EXTERNO = "Cobridor Externo"
+    COBRIDOR_INTERNO = "Cobridor Interno"
+    BIBLIOTECARIO = "Bibliotecário"
+    PORTA_ESPADAS = "Porta Espadas"
+    GUARDA_DO_TEMPLO = "Guarda do Templo"
 
 class CargoConselho(str, Enum):
     PRESIDENTE = "presidente"
