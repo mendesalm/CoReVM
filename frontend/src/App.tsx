@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './compartilhado/componentes/Layout';
 import PainelSuperAdmin from './modulos/superadmin/PainelSuperAdmin';
 import PainelConselho from './modulos/regional/PainelConselho';
+import PainelVM from './modulos/local/PainelVM';
 import PaginaCalendario from './modulos/calendario/PaginaCalendario';
 import PaginaLogin from './modulos/auth/PaginaLogin';
 import { AuthProvider, useAuth } from './compartilhado/contextos/AuthContext';
@@ -35,6 +36,7 @@ function AppRotas() {
 
       <Route element={<RotaProtegida><Layout /></RotaProtegida>}>
         <Route path="/dashboard-conselho/:id" element={<PainelConselho />} />
+        <Route path="/dashboard-loja" element={<PainelVM />} />
         <Route path="/calendario" element={<PaginaCalendario />} />
       </Route>
     </Routes>
