@@ -18,9 +18,8 @@ def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = D
     termo = f"%{q}%"
     try:
         # Supondo que a tabela seja "lojas" e tenha "id", "nome", e "numero"
-        # Adaptaremos para as colunas mais comuns se não forem exatas
         result = db_lista.execute(
-            text("SELECT id, nome, numero, cidade FROM lojas WHERE nome ILIKE :t OR numero::text ILIKE :t OR cidade ILIKE :t LIMIT 20"),
+            text("SELECT id, lodge_name, lodge_number, city FROM lodges WHERE lodge_name ILIKE :t OR lodge_number::text ILIKE :t OR city ILIKE :t LIMIT 20"),
             {"t": termo}
         ).fetchall()
         
