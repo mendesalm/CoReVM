@@ -12,22 +12,17 @@ export const LogoAnimadaCore: React.FC<LogoAnimadaCoreProps> = ({ width = 200, h
         </>
       )}
       <div className='relative z-10 drop-shadow-[0_0_20px_rgba(234,179,8,0.4)]' style={{width:'100%', height:'100%'}}>
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<!-- Creator: CorelDRAW (Versão OEM) -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" width="96.9382mm" height="89.5783mm" version="1.1" 
 viewBox="0 0 9402.6 8688.72"
  xmlnsXlink="http://www.w3.org/1999/xlink"
- xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
+>
  <defs>
-  <style type="text/css">
-   <![CDATA[
+  <style dangerouslySetInnerHTML={{ __html: `
     .str0 {stroke:#009EE1;stroke-width:7.39;stroke-miterlimit:22.9256}
     .fil2 {fill:#FEFEFE}
     .fil1 {fill:#009EE1}
     .fil0 {fill:#009EE1;fill-rule:nonzero}
-   ]]>
-  </style>
+   ` }} />
  </defs>
  <g id="Camada_x0020_1">
   <metadata id="CorelCorpID_0Corel-Layer"/>
