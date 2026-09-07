@@ -19,11 +19,17 @@ def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = D
     try:
         # Supondo que a tabela seja "lojas" e tenha "id", "nome", e "numero"
         result = db_lista.execute(
-            text("SELECT id, lodge_name, lodge_number, city, obedience_id FROM lodges WHERE lodge_name ILIKE :t OR lodge_number::text ILIKE :t OR city ILIKE :t LIMIT 20"),
+            text("""
+                SELECT l.id, l.lodge_name, l.lodge_number, l.city, o.acronym 
+                FROM lodges l
+                LEFT JOIN obediences o ON l.obedience_id = o.id
+                WHERE l.lodge_name ILIKE :t OR l.lodge_number::text ILIKE :t OR l.city ILIKE :t 
+                LIMIT 20
+            """),
             {"t": termo}
         ).fetchall()
         
-        return [{"id": row[0], "nome": row[1], "numero_loja": str(row[2]), "cidade": row[3] if len(row) > 3 else '', "potencia": row[4] if len(row) > 4 else ''} for row in result]
+        return [{"id": row[0], "nome": row[1], "numero_loja": str(row[2]), "cidade": row[3] if len(row) > 3 else '', "potencia": row[4] if len(row) > 4 and row[4] else ''} for row in result]
     except Exception as e:
         logger.error(f"Erro ao buscar na lista_de_lojas_db: {e}")
         # Tenta fallback para Lojas Integracao (lojas_db) se a tabela for diferente

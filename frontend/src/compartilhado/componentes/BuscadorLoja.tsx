@@ -62,14 +62,6 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
     setSelectedIds([]);
   };
 
-  const getPotenciaNome = (id?: number) => {
-    if (!id) return '-';
-    if (id === 1) return 'GOB';
-    if (id === 2) return 'CMSB';
-    if (id === 3) return 'COMAB';
-    return String(id);
-  };
-
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -117,7 +109,7 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
                   </td>
                   <td className="px-4 py-3 font-medium text-white">{l.numero_loja}</td>
                   <td className="px-4 py-3">{l.nome}</td>
-                  <td className="px-4 py-3">{getPotenciaNome(l.potencia)}</td>
+                  <td className="px-4 py-3">{l.potencia || '-'}</td>
                   <td className="px-4 py-3">{l.cidade || '-'}</td>
                 </tr>
               ))}
