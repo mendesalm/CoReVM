@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Mail, Lock, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../compartilhado/contextos/AuthContext';
+import HeroBackground from '../../compartilhado/componentes/HeroBackground';
+import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 
 export default function PaginaLogin() {
   const [email, setEmail] = useState('');
@@ -68,11 +70,8 @@ export default function PaginaLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#080808] relative overflow-hidden">
       
-      {/* Background Animado Ouro */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-macaonico-dourado/10 rounded-full mix-blend-screen filter blur-3xl animate-blob"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-yellow-600/10 rounded-full mix-blend-screen filter blur-3xl animate-blob animation-delay-2000"></div>
-      </div>
+      {/* Background Animado */}
+      <HeroBackground />
 
       <div className="w-full max-w-md relative z-10">
         
@@ -81,8 +80,8 @@ export default function PaginaLogin() {
           
           {/* Logo e Título */}
           <div className="flex flex-col items-center text-center mb-8">
-            <div className="mb-4">
-              <img src="/core-icon.svg" alt="CoReVM Logo" className="w-24 h-24 drop-shadow-[0_0_15px_rgba(234,179,8,0.3)]" />
+            <div id="hero-logo" className="mb-4">
+              <LogoAnimadaCore width={110} height={110} animated={true} />
             </div>
 
             <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-200 tracking-wider font-sans drop-shadow-[0_0_10px_rgba(234,179,8,0.2)]">
