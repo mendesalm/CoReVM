@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function PaginaLogin() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,30 @@ export default function PaginaLogin() {
   
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setErro(null);
+    setCarregando(true);
+    try {
+      // Mock do Login do Google
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const tokenMock = "token_google_fake";
+      // Assumindo que o google traz alguem logado como presidente por padrao
+      const fakeConselhoId = "123e4567-e89b-12d3-a456-426614174000"; 
+      login(tokenMock, {
+        id: "102",
+        nome: "Usuário Google",
+        email: "usuario@gmail.com",
+        roles: ["presidente_conselho"],
+        conselho_id: fakeConselhoId
+      });
+      navigate(`/regiao/${fakeConselhoId}`, { replace: true });
+    } catch (err: any) {
+      setErro('Falha no login com Google.');
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +180,22 @@ export default function PaginaLogin() {
               )}
             </button>
           </form>
+
+          <div className="flex items-center my-6">
+            <div className="flex-1 h-px bg-white/10"></div>
+            <span className="px-4 text-xs text-slate-500">ou</span>
+            <div className="flex-1 h-px bg-white/10"></div>
+          </div>
+
+          <div className="flex justify-center mb-6">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setErro('Ocorreu um erro ao tentar fazer login com o Google')}
+              theme="filled_black"
+              text="continue_with"
+              width="100%"
+            />
+          </div>
 
           {/* Botões MOCK Temporários para UX testing */}
           <div className="mt-8 border-t border-gray-800 pt-6">
