@@ -1,3 +1,4 @@
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text

@@ -1,3 +1,4 @@
+// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import { Mail, Lock, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

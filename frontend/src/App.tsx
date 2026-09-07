@@ -1,3 +1,4 @@
+// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './compartilhado/componentes/Layout';

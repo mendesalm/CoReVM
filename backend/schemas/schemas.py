@@ -1,5 +1,5 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List
 from datetime import date, datetime
 from core.constants import CargoConselho
@@ -26,6 +26,21 @@ class LojaAgregadaResponse(BaseModel):
 class RegiaoBase(BaseModel):
     nome: str
     uf: str
+
+    @field_validator('nome')
+    def sanitize_nome(cls, v):
+        if not v: return v
+        words = v.split()
+        preps = ['de', 'da', 'do', 'das', 'dos', 'e']
+        title_words = [w.capitalize() if w.lower() not in preps else w.lower() for w in words]
+        return ' '.join(title_words)
+
+    @field_validator('uf')
+    def sanitize_uf(cls, v):
+        if v:
+            return v.upper().strip()
+        return v
+
 
 class RegiaoCreate(RegiaoBase):
     presidente_id: Optional[str] = None

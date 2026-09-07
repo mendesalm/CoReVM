@@ -1,3 +1,4 @@
+// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Loader2, CheckCircle2, Search, Plus } from 'lucide-react';

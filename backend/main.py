@@ -1,3 +1,4 @@
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.regioes.rotas import router as regioes_router

@@ -1,3 +1,4 @@
+// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useEffect, useRef } from 'react';
 
 interface LogoAnimadaCoreProps { width?: number | string; height?: number | string; animated?: boolean; }

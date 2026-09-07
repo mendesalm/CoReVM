@@ -1,3 +1,4 @@
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 from database import engine_core, Base
 from models.models import Regiao, DiretoriaConselho, LojaAgregada
 

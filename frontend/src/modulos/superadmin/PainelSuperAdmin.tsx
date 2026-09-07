@@ -1,3 +1,4 @@
+// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, MapPin, Users, Activity, Settings, ChevronRight, Loader2, Map, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

@@ -1,3 +1,4 @@
+// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 

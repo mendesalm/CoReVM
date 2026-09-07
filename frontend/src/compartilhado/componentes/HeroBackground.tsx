@@ -1,3 +1,4 @@
+// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useRef, useEffect } from 'react';
 
 const HeroBackground: React.FC = () => {

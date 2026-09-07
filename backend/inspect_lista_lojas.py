@@ -1,3 +1,4 @@
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import psycopg2
 try:
     conn = psycopg2.connect("postgresql://esigma:BsysT23754RthfFg@69.62.89.211:5432/lista_de_lojas_db")
