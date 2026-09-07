@@ -68,7 +68,7 @@ export default function PaginaLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#080808] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden z-0">
       
       {/* Background Animado */}
       <HeroBackground />
@@ -76,7 +76,7 @@ export default function PaginaLogin() {
       <div className="w-full max-w-md relative z-10">
         
         {/* Cartão de Login - Glassmorphism */}
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-macaonico-dourado/20">
+        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
           
           {/* Logo e Título */}
           <div className="flex flex-col items-center text-center mb-8">
@@ -85,10 +85,10 @@ export default function PaginaLogin() {
             </div>
 
             <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-200 tracking-wider font-sans drop-shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-              CoReVM
+              E-Sigma: CoRe
             </h1>
             <p className="text-sm text-gray-400 mt-2 font-sans">
-              Conselhos Regionais de Veneráveis Mestres
+              Conselho Regional de Veneráveis Mestres
             </p>
           </div>
 
@@ -110,15 +110,15 @@ export default function PaginaLogin() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder=" "
-                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-macaonico-dourado outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <label 
                   htmlFor="email"
-                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-macaonico-dourado"
+                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
                 >
                   E-mail do Usuário
                 </label>
-                <Mail className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-macaonico-dourado transition-colors" />
+                <Mail className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
               </div>
             </div>
 
@@ -131,15 +131,15 @@ export default function PaginaLogin() {
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   placeholder=" "
-                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-macaonico-dourado outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <label 
                   htmlFor="senha"
-                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-macaonico-dourado"
+                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
                 >
                   Senha
                 </label>
-                <Lock className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-macaonico-dourado transition-colors" />
+                <Lock className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
               </div>
             </div>
 
@@ -171,7 +171,7 @@ export default function PaginaLogin() {
                 onClick={() => preencherCredencialRapida('PRESIDENTE')}
                 className="flex-1 text-[11px] bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg flex items-center justify-center gap-1 border border-gray-700"
               >
-                <Shield size={12} className="text-macaonico-dourado" />
+                <Shield size={12} className="text-yellow-500" />
                 Presidente
               </button>
             </div>

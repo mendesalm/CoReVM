@@ -49,7 +49,7 @@ const HeroBackground: React.FC = () => {
     function draw() {
       if (!can || !ctx) return;
       ctx.clearRect(0, 0, can.width, can.height);
-      ctx.fillStyle = mode === 'dark' ? "#0B0F19" : "#f8fafc";
+      ctx.fillStyle = mode === 'dark' ? "#080808" : "#f8fafc";
       ctx.fillRect(0, 0, can.width, can.height);
 
       let focalPoint = { x: can.width / 2, y: (can.height / 2) - 120 };

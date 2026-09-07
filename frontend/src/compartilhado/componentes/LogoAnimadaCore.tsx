@@ -29,7 +29,7 @@ export const LogoAnimadaCore: React.FC<LogoAnimadaCoreProps> = ({
       {animated && (
         <>
           <div className="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full animate-pulse z-0 scale-150"></div>
-          <div className="absolute inset-0 bg-macaonico-dourado/10 blur-3xl rounded-full animate-ping z-0 scale-150" style={{ animationDuration: '3s' }}></div>
+          <div className="absolute inset-0 bg-yellow-500/10 blur-3xl rounded-full animate-ping z-0 scale-150" style={{ animationDuration: '3s' }}></div>
         </>
       )}
       <img 
