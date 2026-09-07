@@ -68,3 +68,57 @@ class LojaAgregadaCreate(BaseModel):
     regiao_id: str
     loja_id: str
     data_filiacao: date
+
+import re
+from core.constants import CargoLoja
+
+class LojaCreateOnTheFly(BaseModel):
+    nome_loja: str
+    numero_loja: str
+    titulo_loja: str
+    rito: str
+    obediencia_id: int
+    cidade: str
+    estado: str
+    cep: Optional[str] = None
+    
+    @field_validator('nome_loja', 'cidade')
+    def sanitize_title_case(cls, v):
+        if not v: return v
+        words = v.split()
+        preps = ['de', 'da', 'do', 'das', 'dos', 'e']
+        title_words = [w.capitalize() if w.lower() not in preps else w.lower() for w in words]
+        return ' '.join(title_words)
+        
+    @field_validator('estado')
+    def sanitize_estado(cls, v):
+        if v:
+            return v.upper().strip()
+        return v
+
+class ObreiroCreateOnTheFly(BaseModel):
+    cim: str
+    nome_completo: str
+    email: str
+    cpf: str
+    telefone: str
+    loja_id: int
+    cargo_loja: Optional[CargoLoja] = None
+    
+    @field_validator('nome_completo')
+    def sanitize_nome(cls, v):
+        if not v: return v
+        words = v.split()
+        preps = ['de', 'da', 'do', 'das', 'dos', 'e']
+        title_words = [w.capitalize() if w.lower() not in preps else w.lower() for w in words]
+        return ' '.join(title_words)
+        
+    @field_validator('cpf')
+    def sanitize_cpf(cls, v):
+        if not v: return v
+        return re.sub(r'[^0-9]', '', v)
+
+    @field_validator('telefone')
+    def sanitize_telefone(cls, v):
+        if not v: return v
+        return re.sub(r'[^0-9]', '', v)

@@ -18,7 +18,7 @@ export default function PainelSuperAdmin() {
 
   // Wizard States
   const [step, setStep] = useState(1);
-  const [selectedLojas, setSelectedLojas] = useState<{id: number, nome: string, numero: number}[]>([]);
+  const [selectedLojas, setSelectedLojas] = useState<{id: number, nome: string, numero: string}[]>([]);
   const [editModal, setEditModal] = useState<any>(null); // Estado para o modal de edição
   const [editPresidente, setEditPresidente] = useState<string>('');
   const [editVice, setEditVice] = useState<string>('');
