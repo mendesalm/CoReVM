@@ -18,12 +18,17 @@ O sistema deve possuir mecanismos robustos na camada de entrada e validação pa
 O sistema aplica validações matemáticas e de máscara sistematicamente para dados sensíveis:
 - **CPF:** Algoritmo de validação matemática obrigatório.
 - **CNPJ:** Algoritmo de validação matemática obrigatório.
-- **Celular:** Obrigatório formato DDI/DDD mínimo para evitar bouncing.
 - **E-mail:** Validação de regex, salvo sempre em minúsculo (`.lower()`) e sem espaços (`.strip()`).
+- **Celular (Padrão WhatsApp / E.164):** Os telefones devem ser salvos no banco de dados exclusivamente no formato internacional numérico (ex: `5511999999999`), visando integração nativa com APIs do WhatsApp e SMS. A máscara `(11) 99999-9999` será aplicada *apenas* na renderização visual do frontend.
 
 > **Regra de Ouro (Storage vs Display):** 
 > No Banco de Dados, documentos (CPF/CNPJ) e Telefones/CEPs devem ser armazenados **estritamente como números** (somente dígitos) para garantir que as constraints de `UNIQUE` funcionem sem falsos negativos. 
-> As máscaras formatadas (`###.###.###-##`, `(##) #####-####`) devem ser aplicadas **apenas na camada visual** (Frontend/React) ou em retornos específicos de formatação da API.
+> As máscaras formatadas devem ser aplicadas **apenas na camada visual** (Frontend/React).
+
+### 1.3 Dicionário de Dados Centralizado (Enums)
+Para evitar registros duplicados ou com grafias distintas (ex: "Mestre Instalado" vs "Mestre-Instalado"), variáveis internas estáticas (Ritos, Cargos, Graus, Status) **não devem ser textos livres no banco de dados**. 
+- Devem ser tipadas em arquivos de Constantes/Enums no código fonte (ex: `constants.py`).
+- O banco de dados deve utilizar tipos enumerados (`ENUM`) ou tabelas de referência estáticas.
 
 ---
 
