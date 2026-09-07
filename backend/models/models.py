@@ -1,16 +1,12 @@
-import enum
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import uuid
 from sqlalchemy import Column, String, Boolean, Date, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 from database import Base
+from core.constants import CargoConselho
 
 def generate_uuid():
     return str(uuid.uuid4())
-
-class CargoConselhoEnum(str, enum.Enum):
-    PRESIDENTE = "presidente"
-    SECRETARIO = "secretario"
-    DELEGADO = "delegado"
 
 class Regiao(Base):
     """
@@ -38,7 +34,7 @@ class DiretoriaConselho(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
     usuario_id = Column(String(36), nullable=False) # Ref: E-Sigma ID
-    cargo = Column(SQLAlchemyEnum(CargoConselhoEnum), nullable=False)
+    cargo = Column(SQLAlchemyEnum(CargoConselho), nullable=False)
     inicio_mandato = Column(Date, nullable=False)
     termino_mandato = Column(Date, nullable=False)
 

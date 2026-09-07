@@ -26,6 +26,13 @@ class CargoLoja(str, Enum):
     MESTRE_HARMONIA = "Mestre de Harmonia"
     # ... outros cargos ...
 
+class CargoConselho(str, Enum):
+    PRESIDENTE = "presidente"
+    VICE_PRESIDENTE = "vice-presidente"
+    SECRETARIO = "secretario"
+    TESOUREIRO = "tesoureiro"
+    DELEGADO = "delegado"
+
 class StatusObreiro(str, Enum):
     ATIVO = "Ativo"
     INATIVO = "Inativo"

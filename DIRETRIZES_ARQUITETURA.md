@@ -48,30 +48,41 @@ Para garantir agilidade de UX e precisão de dados, o sistema evitará ao máxim
 
 ---
 
-## 3. Varredura, Correção e Auditoria
+## 3. Logs, Auditoria e Troubleshooting
 
-- Sempre que um novo padrão for definido, um script de varredura (ou migration) deve ser executado sobre o banco de dados para levantar (ou corrigir automaticamente) as inconsistências históricas.
-- Arquitetura avessa ao `DELETE` físico em tabelas sensíveis: adotar o conceito de exclusões lógicas (Soft Deletes) em transações financeiras e registros históricos de obreiros.
+- **Sistema de Logs Estruturados:** Todo o tráfego crítico da API, falhas de integração e ações sensíveis (ex: cadastro/exclusão) devem ser registrados em um sistema robusto de logs (ex: JSON estruturado via biblioteca `loguru` ou nativa do Python).
+- O log deve ser rastreável (Trace ID) para permitir auditoria e troubleshooting rápido sem precisar parar a aplicação em produção.
 
 ---
 
-## 4. Práticas de Código e Documentação (Handoff e Walkthrough)
+## 4. Testes e Qualidade (Checklist e Testes Automáticos)
+
+- **Checklist de Validação:** Nenhuma funcionalidade (Feature) deve ser considerada pronta (Done) sem antes passar por um Checklist de Validação que confirme o atendimento das regras de negócio, tratamento de erros e UX.
+- **Testes Automáticos de API:** As APIs devem ser blindadas por testes automatizados (usando `pytest` + `TestClient` no FastAPI). Todo endpoint core (login, inserção de dados, relatórios) deve ter cobertura de teste unitário/integração para garantir que mudanças futuras não quebrem o comportamento original.
+
+---
+
+## 5. Práticas de Código e Documentação (Handoff e Walkthrough)
 
 Um ecossistema satélite precisa ser passível de manutenção por outros desenvolvedores. As seguintes regras de versionamento e documentação são obrigatórias:
 
-### 4.1 Conformidade de Código
+### 5.1 Consulta Estrita ao Dicionário de Dados
+- **Regra do Enum:** Sempre que o desenvolvedor ou agente de IA precisar usar um enumerador (Ritos, Cargos, Graus, etc.), ele deve, primeiramente, varrer o Dicionário de Dados (`constants.py`).
+- O sistema deve listar as informações disponíveis e questionar o responsável se aquelas opções são suficientes para o novo requisito, antes de criar variáveis hardcoded ou novos Enums redundantes.
+
+### 5.2 Conformidade de Código
 - Todo código deve possuir comentários claros, focados no "porquê" (lógica de negócios), escritos em **pt-BR**.
 - Ao abrir um arquivo legado para edição, o desenvolvedor (ou agente de IA) deve varrê-lo em busca de inconsistências com estas regras e, se refatorado e certificado, adicionar um comentário de conformidade no topo do arquivo:
   `// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA`
 
-### 4.2 Documentação de APIs
+### 5.3 Documentação de APIs
 - Uso irrestrito de **Swagger / OpenAPI**. O backend (FastAPI) deve ter seus schemas (Pydantic) e rotas (Routers) devidamente tipados e documentados para geração automática da interface de API.
 
-### 4.3 Versionamento Automático (Git)
+### 5.4 Versionamento Automático (Git)
 - O fim de cada sessão de desenvolvimento ativa deve engatilhar automaticamente as rotinas de versionamento:
   `git add .`, `git commit -m "..."`, e `git push`.
 - A mensagem de commit deve tentar resumir o que foi implantado, gerando um "diário de implantação" (Deployment Diary) no histórico do repositório.
 
-### 4.4 Artefatos de Handoff e Walkthrough
+### 5.5 Artefatos de Handoff e Walkthrough
 - Toda implantação estrutural grande (features complexas, mudanças de banco de dados) deve ser acompanhada da escrita de um **Walkthrough** ou plano de **Handoff**.
 - Estes documentos registram a concepção da funcionalidade, o que foi alterado e como deve ser testado, garantindo uma passagem de bastão segura.

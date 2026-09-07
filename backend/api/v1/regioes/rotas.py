@@ -1,8 +1,11 @@
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from loguru import logger
 from database import get_db_core
-from models.models import Regiao, DiretoriaConselho, CargoConselhoEnum
+from core.constants import CargoConselho
+from models.models import Regiao, DiretoriaConselho
 from schemas.schemas import RegiaoCreate, RegiaoResponse
 from typing import List
 from datetime import date, timedelta
@@ -11,6 +14,7 @@ router = APIRouter()
 
 @router.post("/", response_model=RegiaoResponse)
 def criar_regiao(regiao_in: RegiaoCreate, db: Session = Depends(get_db_core)):
+    logger.info(f"Iniciando criação da Região {regiao_in.nome} - {regiao_in.uf}")
     nova_regiao = Regiao(
         nome=regiao_in.nome,
         uf=regiao_in.uf,
@@ -20,9 +24,9 @@ def criar_regiao(regiao_in: RegiaoCreate, db: Session = Depends(get_db_core)):
     db.flush()
 
     diretores = [
-        (regiao_in.presidente_id, CargoConselhoEnum.PRESIDENTE),
-        (regiao_in.vice_presidente_id, CargoConselhoEnum.VICE_PRESIDENTE),
-        (regiao_in.secretario_id, CargoConselhoEnum.SECRETARIO)
+        (regiao_in.presidente_id, CargoConselho.PRESIDENTE),
+        (regiao_in.vice_presidente_id, CargoConselho.VICE_PRESIDENTE),
+        (regiao_in.secretario_id, CargoConselho.SECRETARIO)
     ]
     
     for user_id, cargo in diretores:

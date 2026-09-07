@@ -1,7 +1,8 @@
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date, datetime
-from models.models import CargoConselhoEnum
+from core.constants import CargoConselho
 
 class RegiaoBase(BaseModel):
     nome: str
@@ -16,7 +17,6 @@ class RegiaoCreate(RegiaoBase):
 class RegiaoResponse(RegiaoBase):
     id: str
     ativa: bool
-    criado_em: datetime
 
     class Config:
         from_attributes = True
@@ -24,7 +24,7 @@ class RegiaoResponse(RegiaoBase):
 class DiretoriaCreate(BaseModel):
     regiao_id: str
     usuario_id: str
-    cargo: CargoConselhoEnum
+    cargo: CargoConselho
     inicio_mandato: date
     termino_mandato: date
 
