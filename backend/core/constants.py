@@ -30,7 +30,6 @@ class CargoConselho(str, Enum):
     PRESIDENTE = "presidente"
     VICE_PRESIDENTE = "vice-presidente"
     SECRETARIO = "secretario"
-    TESOUREIRO = "tesoureiro"
     DELEGADO = "delegado"
 
 class StatusObreiro(str, Enum):
