@@ -20,11 +20,11 @@ def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = D
         # Supondo que a tabela seja "lojas" e tenha "id", "nome", e "numero"
         # Adaptaremos para as colunas mais comuns se não forem exatas
         result = db_lista.execute(
-            text("SELECT id, nome, numero FROM lojas WHERE nome ILIKE :t OR numero::text ILIKE :t LIMIT 10"),
+            text("SELECT id, nome, numero, cidade FROM lojas WHERE nome ILIKE :t OR numero::text ILIKE :t OR cidade ILIKE :t LIMIT 20"),
             {"t": termo}
         ).fetchall()
         
-        return [{"id": row[0], "nome": row[1], "numero_loja": str(row[2])} for row in result]
+        return [{"id": row[0], "nome": row[1], "numero_loja": str(row[2]), "cidade": row[3] if len(row) > 3 else ''} for row in result]
     except Exception as e:
         logger.error(f"Erro ao buscar na lista_de_lojas_db: {e}")
         # Tenta fallback para Lojas Integracao (lojas_db) se a tabela for diferente
@@ -32,9 +32,10 @@ def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = D
             db_lojas = next(get_db_lojas())
             lojas = db_lojas.query(LojaIntegracao).filter(
                 (LojaIntegracao.nome_loja.ilike(termo)) | 
-                (LojaIntegracao.numero_loja.ilike(termo))
-            ).limit(10).all()
-            return [{"id": l.id, "nome": l.nome_loja, "numero_loja": l.numero_loja} for l in lojas]
+                (LojaIntegracao.numero_loja.ilike(termo)) |
+                (LojaIntegracao.cidade.ilike(termo))
+            ).limit(20).all()
+            return [{"id": l.id, "nome": l.nome_loja, "numero_loja": l.numero_loja, "cidade": l.cidade} for l in lojas]
         except Exception as e2:
              logger.error(f"Erro no fallback: {e2}")
              return []

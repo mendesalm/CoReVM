@@ -294,11 +294,19 @@ export default function PainelSuperAdmin() {
                   </div>
                   <p className="text-sm text-gray-500 mb-4">Busque e adicione as Lojas que farão parte deste Conselho (Recomendado: mínimo de 5).</p>
                   
-                  <BuscadorLoja onSelect={(loja) => {
-                    if (!selectedLojas.find(l => l.id === loja.id)) {
-                      setSelectedLojas([...selectedLojas, loja]);
-                    }
-                  }} />
+                  <BuscadorLoja 
+                    onSelect={(loja) => {
+                      if (!selectedLojas.find(l => l.id === loja.id)) {
+                        setSelectedLojas([...selectedLojas, loja]);
+                      }
+                    }} 
+                    onSelectMultiple={(lojas) => {
+                      const novasLojas = lojas.filter(l => !selectedLojas.find(sl => sl.id === l.id));
+                      if (novasLojas.length > 0) {
+                        setSelectedLojas([...selectedLojas, ...novasLojas]);
+                      }
+                    }}
+                  />
 
                   {selectedLojas.length > 0 && (
                     <div className="mt-4 p-4 bg-[#151515] border border-[#333] rounded-lg max-h-48 overflow-y-auto">
@@ -406,11 +414,19 @@ export default function PainelSuperAdmin() {
 
               <div className="border-t border-[#333] pt-4">
                 <h3 className="text-md font-semibold text-gray-200 mb-2">Lojas do Conselho</h3>
-                <BuscadorLoja onSelect={(loja) => {
+                <BuscadorLoja 
+                  onSelect={(loja) => {
                     if (!editLojas.find(l => l.id === loja.id)) {
                       setEditLojas([...editLojas, loja]);
                     }
-                  }} />
+                  }} 
+                  onSelectMultiple={(lojas) => {
+                    const novasLojas = lojas.filter(l => !editLojas.find(el => el.id === l.id));
+                    if (novasLojas.length > 0) {
+                      setEditLojas([...editLojas, ...novasLojas]);
+                    }
+                  }}
+                />
                 
                 {editLojas.length > 0 && (
                   <div className="mt-2 p-3 bg-[#151515] border border-[#333] rounded-lg max-h-32 overflow-y-auto">

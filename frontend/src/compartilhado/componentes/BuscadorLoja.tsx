@@ -8,9 +8,10 @@ const API_URL = 'http://localhost:8003/api/v1';
 
 interface Props {
   onSelect: (loja: { id: number, nome: string, numero: string }) => void;
+  onSelectMultiple?: (lojas: { id: number, nome: string, numero: string }[]) => void;
 }
 
-export default function BuscadorLoja({ onSelect }: Props) {
+export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
   const [lojaBusca, setLojaBusca] = useState('');
   const [lojasEncontradas, setLojasEncontradas] = useState<any[]>([]);
   const [mostrarCadastroLoja, setMostrarCadastroLoja] = useState(false);
@@ -51,7 +52,7 @@ export default function BuscadorLoja({ onSelect }: Props) {
         <input 
           type="text" 
           list="lojas-regiao"
-          placeholder="Buscar Loja por Nome ou Número (Mín. 3 caracteres)..." 
+          placeholder="Buscar Loja por Nome, Número ou Cidade (Mín. 3 caracteres)..." 
           value={lojaBusca}
           onChange={handleChange}
           className="w-full bg-[#080808] border border-[#333] rounded-lg pl-10 p-3 text-white focus:border-[#facc15] focus:outline-none" 
@@ -60,6 +61,23 @@ export default function BuscadorLoja({ onSelect }: Props) {
           {lojasEncontradas.map(l => <option key={l.id} value={`${l.nome} - ${l.numero_loja}`} />)}
         </datalist>
       </div>
+
+      {lojasEncontradas.length > 1 && onSelectMultiple && lojaBusca.length >= 3 && (
+        <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <p className="text-blue-400 text-sm">{lojasEncontradas.length} lojas encontradas para "{lojaBusca}".</p>
+          <button 
+            type="button" 
+            onClick={() => {
+              onSelectMultiple(lojasEncontradas.map(l => ({ id: l.id, nome: l.nome, numero: l.numero_loja })));
+              setLojaBusca('');
+              setLojasEncontradas([]);
+            }} 
+            className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-blue-600 transition-colors flex items-center gap-1"
+          >
+            <Plus className="w-4 h-4" /> Adicionar Todas
+          </button>
+        </div>
+      )}
 
       {mostrarCadastroLoja && (
         <div className="flex items-center justify-between p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
