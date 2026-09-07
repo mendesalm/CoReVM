@@ -1,12 +1,43 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from loguru import logger
-from database import get_db_lojas
+from database import get_db_lojas, get_db_lista
 from models.lojas_models import LojaIntegracao
 from schemas.schemas import LojaCreateOnTheFly
 
 router = APIRouter()
+
+@router.get("/busca", summary="Busca Lojas no banco global (lista_de_lojas_db)", description="Busca lojas pelo nome ou número na base unificada de todas as lojas.")
+def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = Depends(get_db_lista)):
+    """
+    Pesquisa as lojas globalmente na tabela 'lojas' do 'lista_de_lojas_db'.
+    Cruza a busca pelo nome e pelo número da loja.
+    """
+    termo = f"%{q}%"
+    try:
+        # Supondo que a tabela seja "lojas" e tenha "id", "nome", e "numero"
+        # Adaptaremos para as colunas mais comuns se não forem exatas
+        result = db_lista.execute(
+            text("SELECT id, nome, numero FROM lojas WHERE nome ILIKE :t OR numero::text ILIKE :t LIMIT 10"),
+            {"t": termo}
+        ).fetchall()
+        
+        return [{"id": row[0], "nome": row[1], "numero_loja": str(row[2])} for row in result]
+    except Exception as e:
+        logger.error(f"Erro ao buscar na lista_de_lojas_db: {e}")
+        # Tenta fallback para Lojas Integracao (lojas_db) se a tabela for diferente
+        try:
+            db_lojas = next(get_db_lojas())
+            lojas = db_lojas.query(LojaIntegracao).filter(
+                (LojaIntegracao.nome_loja.ilike(termo)) | 
+                (LojaIntegracao.numero_loja.ilike(termo))
+            ).limit(10).all()
+            return [{"id": l.id, "nome": l.nome_loja, "numero_loja": l.numero_loja} for l in lojas]
+        except Exception as e2:
+             logger.error(f"Erro no fallback: {e2}")
+             return []
 
 @router.post("/", response_model=dict, summary="Cadastra Loja On-the-Fly", description="Cria uma loja diretamente no lojas_db respeitando regras de GLEGO e GOB.")
 def cadastrar_loja_integracao(loja_in: LojaCreateOnTheFly, db: Session = Depends(get_db_lojas)):
@@ -21,12 +52,7 @@ def cadastrar_loja_integracao(loja_in: LojaCreateOnTheFly, db: Session = Depends
         logger.warning(f"Tentativa de duplicar loja: {loja_in.numero_loja}")
         raise HTTPException(status_code=422, detail="Já existe uma loja cadastrada com este número.")
     
-    # Regra GLEGO: obediencia_id = 3 (por exemplo, na estrutura real de lojas)
-    # Aqui a regra de negócios pede "duplicação de Potência em obediência para a GLEGO".
-    # Supondo que obediencia_id == 3 seja GLEGO.
     subobediencia = loja_in.obediencia_id
-    # O frontend pode omitir ou enviar null para subobediencia, 
-    # o backend garante que potência = subobediência (na vida real checaríamos o tipo).
     
     nova_loja = LojaIntegracao(
         nome_loja=loja_in.nome_loja,

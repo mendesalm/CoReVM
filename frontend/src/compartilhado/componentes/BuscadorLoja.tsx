@@ -19,11 +19,13 @@ export default function BuscadorLoja({ onSelect }: Props) {
     setLojaBusca(termo);
     if (termo.length < 3) return;
     try {
-      // Dummy search if api is not implemented, just to trigger "not found"
-      // const res = await axios.get(`${API_URL}/integracao/lojas/busca?q=${termo}`);
-      // For now let's mock empty
-      setLojasEncontradas([]);
-      setMostrarCadastroLoja(true);
+      const res = await axios.get(`${API_URL}/integracao/lojas/busca?q=${termo}`);
+      setLojasEncontradas(res.data);
+      if (res.data.length === 0) {
+        setMostrarCadastroLoja(true);
+      } else {
+        setMostrarCadastroLoja(false);
+      }
     } catch (err) {
       console.error(err);
     }
