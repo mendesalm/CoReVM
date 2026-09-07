@@ -38,5 +38,4 @@ class StatusObreiro(str, Enum):
     INATIVO = "Inativo"
     REGULAR = "Regular"
     IRREGULAR = "Irregular"
-    PLUMBAGEM = "Plumbagem"
     FALECIDO = "Falecido"
