@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import coreLogo from '../../../../public/core-icon.svg';
 
 interface LogoAnimadaCoreProps {
   width?: number | string;
