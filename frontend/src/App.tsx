@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './compartilhado/componentes/Layout';
 import PainelSuperAdmin from './modulos/superadmin/PainelSuperAdmin';
+import PainelConselho from './modulos/regional/PainelConselho';
 import PaginaCalendario from './modulos/calendario/PaginaCalendario';
 import PaginaLogin from './modulos/auth/PaginaLogin';
 import { AuthProvider, useAuth } from './compartilhado/contextos/AuthContext';
@@ -32,15 +33,9 @@ function AppRotas() {
         </RotaProtegida>
       } />
 
-      {/* Rotas de um Conselho Regional Específico (Com Sidebar) */}
-      <Route path="/regiao/:id" element={
-        <RotaProtegida>
-          <Layout />
-        </RotaProtegida>
-      }>
-        <Route index element={<div className="p-8 text-white">Dashboard do Conselho (Gestão de Lojas será aqui)</div>} />
-        <Route path="calendario" element={<PaginaCalendario />} />
-        <Route path="livros" element={<div className="p-8 text-white">Módulo de Livros em construção...</div>} />
+      <Route element={<RotaProtegida><Layout /></RotaProtegida>}>
+        <Route path="/dashboard-conselho/:id" element={<PainelConselho />} />
+        <Route path="/calendario" element={<PaginaCalendario />} />
       </Route>
     </Routes>
   );
