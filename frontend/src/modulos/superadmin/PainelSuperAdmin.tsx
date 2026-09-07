@@ -18,6 +18,11 @@ export default function PainelSuperAdmin() {
   // Wizard States
   const [step, setStep] = useState(1);
   const [selectedLojas, setSelectedLojas] = useState<{id: number, nome: string, numero: number}[]>([]);
+  const [editModal, setEditModal] = useState<any>(null); // Estado para o modal de edição
+  const [editPresidente, setEditPresidente] = useState<string>('');
+  const [editVice, setEditVice] = useState<string>('');
+  const [editSecretario, setEditSecretario] = useState<string>('');
+  const [editLojas, setEditLojas] = useState<any[]>([]);
 
   // Campos do formulário
   const [nome, setNome] = useState('');
@@ -28,7 +33,6 @@ export default function PainelSuperAdmin() {
   const [vicePresidenteId, setVicePresidenteId] = useState('');
   const [secretarioId, setSecretarioId] = useState('');
   
-  const [editModal, setEditModal] = useState<any>(null); // Estado para o modal de edição
 
   // Carregar dados da API
   const fetchRegioes = async () => {
@@ -78,14 +82,18 @@ export default function PainelSuperAdmin() {
     }
   };
 
-  const handleUpdate = async (id: string, novoNome: string, novaUf: string) => {
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModal) return;
+    
     try {
-      await axios.put(`${API_URL}/regioes/${id}`, {
-        nome: novoNome,
-        uf: novaUf,
-        presidente_id: '',
-        vice_presidente_id: '',
-        secretario_id: ''
+      await axios.put(`${API_URL}/regioes/${editModal.id}`, {
+        nome: editModal.nome,
+        uf: editModal.uf,
+        presidente_id: editPresidente || null,
+        vice_presidente_id: editVice || null,
+        secretario_id: editSecretario || null,
+        lojas_ids: editLojas.map((l: any) => l.id || l.loja_id)
       });
       setEditModal(null);
       fetchRegioes();
@@ -209,7 +217,16 @@ export default function PainelSuperAdmin() {
                   </td>
                   <td className="p-4 text-right flex justify-end gap-2">
                     <button 
-                      onClick={() => setEditModal(regiao)}
+                      onClick={() => {
+                        setEditModal(regiao);
+                        setEditLojas(regiao.lojas || []);
+                        const pres = (regiao.diretoria || []).find((d: any) => d.cargo === 'Presidente' || d.cargo === 'PRESIDENTE');
+                        const vice = (regiao.diretoria || []).find((d: any) => d.cargo === 'Vice-Presidente' || d.cargo === 'VICE_PRESIDENTE');
+                        const sec = (regiao.diretoria || []).find((d: any) => d.cargo === 'Secretário' || d.cargo === 'SECRETARIO');
+                        setEditPresidente(pres ? pres.usuario_id : '');
+                        setEditVice(vice ? vice.usuario_id : '');
+                        setEditSecretario(sec ? sec.usuario_id : '');
+                      }}
                       className="p-2 hover:bg-[#222] rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1"
                       title="Editar Dados da Região"
                     >
@@ -365,29 +382,68 @@ export default function PainelSuperAdmin() {
       {/* Modal de Edição */}
       {editModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-lg">
+          <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-2xl">
             <h2 className="text-2xl font-bold text-[#facc15] mb-6">Editar Conselho Regional</h2>
             
-            <form className="space-y-6" onSubmit={(e) => {
-              e.preventDefault();
-              handleUpdate(editModal.id, editModal.nome, editModal.uf);
-            }}>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Nome do Conselho</label>
-                <input type="text" value={editModal.nome} onChange={e => setEditModal({...editModal, nome: e.target.value})} required className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Estado (UF)</label>
-                <select value={editModal.uf} onChange={e => setEditModal({...editModal, uf: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none">
-                  <option value="GO">GO</option>
-                  <option value="DF">DF</option>
-                  <option value="SP">SP</option>
-                  <option value="MG">MG</option>
-                  <option value="RJ">RJ</option>
-                </select>
+            <form className="space-y-6 max-h-[70vh] overflow-y-auto pr-2" onSubmit={handleUpdate}>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Nome do Conselho</label>
+                  <input type="text" value={editModal.nome} onChange={e => setEditModal({...editModal, nome: e.target.value})} required className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Estado (UF)</label>
+                  <select value={editModal.uf} onChange={e => setEditModal({...editModal, uf: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none">
+                    <option value="GO">GO</option>
+                    <option value="DF">DF</option>
+                    <option value="SP">SP</option>
+                    <option value="MG">MG</option>
+                    <option value="RJ">RJ</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="border-t border-[#333] pt-6 flex justify-end gap-3">
+              <div className="border-t border-[#333] pt-4">
+                <h3 className="text-md font-semibold text-gray-200 mb-2">Lojas do Conselho</h3>
+                <BuscadorLoja onSelect={(loja) => {
+                    if (!editLojas.find(l => l.id === loja.id)) {
+                      setEditLojas([...editLojas, loja]);
+                    }
+                  }} />
+                
+                {editLojas.length > 0 && (
+                  <div className="mt-2 p-3 bg-[#151515] border border-[#333] rounded-lg max-h-32 overflow-y-auto">
+                    <ul className="space-y-2">
+                      {editLojas.map(loja => (
+                        <li key={loja.id} className="flex items-center justify-between text-xs text-gray-300 bg-[#080808] p-2 rounded">
+                          <span>{loja.nome} <span className="text-gray-500 ml-1">(Nº {loja.numero || (loja.loja_id ? loja.loja_id.substring(0,8) : '')})</span></span>
+                          <button 
+                            type="button"
+                            onClick={() => setEditLojas(editLojas.filter(l => l.id !== loja.id))}
+                            className="text-red-500 hover:text-red-400"
+                          >
+                            Remover
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-[#333] pt-4 space-y-4">
+                <h3 className="text-md font-semibold text-gray-200">Diretoria</h3>
+                <BuscadorObreiro cargo="Presidente" lojasConselho={editLojas} onSuccess={(cim) => setEditPresidente(cim)} />
+                {editPresidente && <div className="text-xs text-green-500 ml-1">CIM Atual: {editPresidente}</div>}
+                
+                <BuscadorObreiro cargo="Vice-Presidente" lojasConselho={editLojas} onSuccess={(cim) => setEditVice(cim)} />
+                {editVice && <div className="text-xs text-green-500 ml-1">CIM Atual: {editVice}</div>}
+
+                <BuscadorObreiro cargo="Secretário" lojasConselho={editLojas} onSuccess={(cim) => setEditSecretario(cim)} />
+                {editSecretario && <div className="text-xs text-green-500 ml-1">CIM Atual: {editSecretario}</div>}
+              </div>
+
+              <div className="border-t border-[#333] pt-6 flex justify-end gap-3 sticky bottom-0 bg-[#111] py-2">
                 <button 
                   type="button"
                   onClick={() => setEditModal(null)}

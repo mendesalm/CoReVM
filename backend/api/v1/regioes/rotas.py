@@ -1,11 +1,10 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 from loguru import logger
 from database import get_db_core
 from core.constants import CargoConselho
-from models.models import Regiao, DiretoriaConselho
+from models.models import Regiao, DiretoriaConselho, LojaAgregada
 from schemas.schemas import RegiaoCreate, RegiaoResponse
 from typing import List
 from datetime import date, timedelta
@@ -40,16 +39,13 @@ def criar_regiao(regiao_in: RegiaoCreate, db: Session = Depends(get_db_core)):
             ))
 
     if regiao_in.lojas_ids:
-        insert_loja = text("""
-            INSERT INTO lojas_agregadas (regiao_id, loja_id, data_filiacao, ativa)
-            VALUES (:regiao_id, :loja_id, :data_filiacao, true)
-        """)
         for loja_id in regiao_in.lojas_ids:
-            db.execute(insert_loja, {
-                "regiao_id": nova_regiao.id,
-                "loja_id": loja_id,
-                "data_filiacao": date.today()
-            })
+            db.add(LojaAgregada(
+                regiao_id=nova_regiao.id,
+                loja_id=loja_id,
+                data_filiacao=date.today(),
+                ativa=True
+            ))
             
     db.commit()
     db.refresh(nova_regiao)
@@ -74,6 +70,35 @@ def atualizar_regiao(regiao_id: str, regiao_in: RegiaoCreate, db: Session = Depe
     
     regiao.nome = regiao_in.nome
     regiao.uf = regiao_in.uf
+    
+    # Atualizar diretoria: deleta a atual e cria nova
+    db.query(DiretoriaConselho).filter(DiretoriaConselho.regiao_id == regiao_id).delete()
+    diretores = [
+        (regiao_in.presidente_id, CargoConselho.PRESIDENTE),
+        (regiao_in.vice_presidente_id, CargoConselho.VICE_PRESIDENTE),
+        (regiao_in.secretario_id, CargoConselho.SECRETARIO)
+    ]
+    for user_id, cargo in diretores:
+        if user_id:
+            db.add(DiretoriaConselho(
+                regiao_id=regiao_id,
+                usuario_id=user_id,
+                cargo=cargo,
+                inicio_mandato=date.today(),
+                termino_mandato=date.today() + timedelta(days=365)
+            ))
+
+    # Atualizar Lojas
+    db.query(LojaAgregada).filter(LojaAgregada.regiao_id == regiao_id).delete()
+    if regiao_in.lojas_ids:
+        for loja_id in regiao_in.lojas_ids:
+            db.add(LojaAgregada(
+                regiao_id=regiao_id,
+                loja_id=loja_id,
+                data_filiacao=date.today(),
+                ativa=True
+            ))
+
     db.commit()
     db.refresh(regiao)
     return regiao
@@ -84,8 +109,8 @@ def deletar_regiao(regiao_id: str, db: Session = Depends(get_db_core)):
     if not regiao:
         raise HTTPException(status_code=404, detail="Região não encontrada")
     
-    # Deletar diretoria vinculada primeiro (Cascade manual)
     db.query(DiretoriaConselho).filter(DiretoriaConselho.regiao_id == regiao_id).delete()
+    db.query(LojaAgregada).filter(LojaAgregada.regiao_id == regiao_id).delete()
     db.delete(regiao)
     db.commit()
     return {"message": "Região deletada com sucesso"}
