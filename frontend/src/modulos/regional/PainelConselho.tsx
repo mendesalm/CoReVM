@@ -460,15 +460,6 @@ export default function PainelConselho() {
             </div>
 
             <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-              {userContext.is_diretoria && (
-                <button 
-                  onClick={() => setShowAddLojaModal(true)} 
-                  className="bg-[#facc15] hover:bg-[#eab308] text-black px-4 py-2 rounded-lg font-bold text-xs transition-colors shadow-sm flex items-center gap-1.5"
-                >
-                  + Adicionar Loja
-                </button>
-              )}
-
               {/* Botão / Ícone Expandir */}
               <button 
                 type="button"
@@ -632,6 +623,26 @@ export default function PainelConselho() {
                 )}
               </tbody>
             </table>
+
+            {/* Rodapé da tabela: Adicionar Loja */}
+            {userContext.is_diretoria ? (
+              <div className="mt-4 pt-3 border-t border-[#222] flex items-center justify-between flex-wrap gap-2 text-xs">
+                <span className="text-gray-400">
+                  Não encontrou a loja jurisdicionada nesta relação?
+                </span>
+                <button
+                  onClick={() => setShowAddLojaModal(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#facc15] hover:text-[#eab308] bg-[#facc15]/10 hover:bg-[#facc15]/20 border border-[#facc15]/30 px-3.5 py-2 rounded-lg transition-all shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Não encontrou a loja? Clique aqui para adicionar
+                </button>
+              </div>
+            ) : (
+              <div className="mt-4 pt-3 border-t border-[#222] flex items-center justify-between flex-wrap gap-2 text-xs text-gray-500">
+                <span>Não encontrou sua loja na relação?</span>
+                <span>Entre em contato com a Diretoria do Conselho para solicitar a vinculação.</span>
+              </div>
+            )}
           </div>
           )}
         </div>
