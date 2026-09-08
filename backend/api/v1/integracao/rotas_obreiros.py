@@ -40,14 +40,14 @@ def cadastrar_obreiro_integracao(obreiro_in: ObreiroCreateOnTheFly, db: Session 
     
     if obreiro:
         logger.info(f"Obreiro existente encontrado no lojas_db: {obreiro.nome_completo} (ID {obreiro.id})")
-        # Atualiza dados caso tenham sido fornecidos e estejam vazios no cadastro
-        if obreiro_in.nome_completo and not obreiro.nome_completo:
+        # Atualiza dados pessoais (Fonte única da verdade: reflete em todas as lojas vinculadas)
+        if obreiro_in.nome_completo:
             obreiro.nome_completo = obreiro_in.nome_completo
-        if obreiro_in.email and not obreiro.email:
+        if obreiro_in.email:
             obreiro.email = obreiro_in.email
-        if obreiro_in.cpf and not obreiro.cpf:
+        if obreiro_in.cpf:
             obreiro.cpf = obreiro_in.cpf
-        if obreiro_in.telefone and not obreiro.telefone:
+        if obreiro_in.telefone:
             obreiro.telefone = obreiro_in.telefone
         db.flush()
     else:
@@ -155,3 +155,43 @@ def cadastrar_obreiro_integracao(obreiro_in: ObreiroCreateOnTheFly, db: Session 
     
     logger.info(f"Obreiro {obreiro.nome_completo} (CIM: {obreiro.cim}) vinculado com sucesso à Loja {obreiro_in.loja_id} como {cargo_str}")
     return {"status": "success", "obreiro_id": obreiro.id, "cim": obreiro.cim, "nome": obreiro.nome_completo}
+
+from pydantic import BaseModel
+from typing import Optional
+
+class ObreiroUpdatePayload(BaseModel):
+    nome_completo: Optional[str] = None
+    email: Optional[str] = None
+    cpf: Optional[str] = None
+    telefone: Optional[str] = None
+
+@router.put("/{cim}", summary="Atualiza dados pessoais do Obreiro", description="Atualiza os dados cadastrais centrais do obreiro, refletindo automaticamente em todas as suas lojas associadas.")
+def atualizar_dados_pessoais_obreiro(cim: str, payload: ObreiroUpdatePayload, db: Session = Depends(get_db_lojas)):
+    obreiro = db.query(ObreiroIntegracao).filter(ObreiroIntegracao.cim == cim).first()
+    if not obreiro:
+        raise HTTPException(status_code=404, detail="Obreiro não encontrado.")
+
+    if payload.nome_completo:
+        obreiro.nome_completo = payload.nome_completo
+    if payload.email:
+        obreiro.email = payload.email
+    if payload.cpf:
+        obreiro.cpf = payload.cpf
+    if payload.telefone:
+        obreiro.telefone = payload.telefone
+
+    db.commit()
+    db.refresh(obreiro)
+    logger.info(f"Dados pessoais do Obreiro CIM {cim} atualizados globalmente.")
+    return {
+        "status": "success",
+        "message": "Dados pessoais atualizados globalmente com sucesso.",
+        "obreiro": {
+            "id": obreiro.id,
+            "cim": obreiro.cim,
+            "nome_completo": obreiro.nome_completo,
+            "email": obreiro.email,
+            "cpf": obreiro.cpf,
+            "telefone": obreiro.telefone
+        }
+    }
