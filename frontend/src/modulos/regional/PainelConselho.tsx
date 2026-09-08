@@ -29,7 +29,8 @@ export default function PainelConselho() {
     loja_id: null
   });
 
-  // Accordion Lojas
+  // Accordions (Mesa Diretora & Lojas)
+  const [diretoriaExpanded, setDiretoriaExpanded] = useState(false);
   const [lojasExpanded, setLojasExpanded] = useState(true);
 
   // Mural de Avisos e Notificações
@@ -293,221 +294,128 @@ export default function PainelConselho() {
 
       <div className="max-w-6xl mx-auto p-6 space-y-8">
         
-        {/* Seção: Mesa Diretora do Conselho */}
-        <div className="bg-[#151515] border border-[#333] rounded-xl p-6 shadow-xl relative overflow-hidden">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#facc15]/10 rounded-lg text-[#facc15]">
+        {/* Accordion: Mesa Diretora do Conselho */}
+        <div className="bg-[#151515] border border-[#333] rounded-xl overflow-hidden shadow-xl transition-all">
+          {/* Cabeçalho do Accordion (Clicável para expandir/recolher) */}
+          <div 
+            onClick={() => setDiretoriaExpanded(!diretoriaExpanded)}
+            className="p-5 flex flex-wrap items-center justify-between gap-4 cursor-pointer hover:bg-[#1a1a1a] transition-colors select-none"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
                 <Award className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white tracking-wide">Mesa Diretora do Conselho</h3>
-                <p className="text-xs text-gray-400">Composição eleita e vigência do mandato regional</p>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h3 className="text-lg font-bold text-white tracking-wide">
+                    Mesa Diretora do Conselho
+                  </h3>
+                  {/* Tag do Presidente */}
+                  <span className="bg-[#222] text-[#facc15] text-xs font-bold px-2.5 py-1 rounded-full border border-[#444] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#facc15]"></span>
+                    Presidente: {presidente?.nome_completo ? presidente.nome_completo.split(' ').slice(0, 2).join(' ') : 'Definir'}
+                  </span>
+                  {/* Tag de Vigência */}
+                  <span className="bg-[#222] text-gray-300 text-xs font-medium px-2.5 py-1 rounded-full border border-[#333] flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    Gestão: {presidente?.inicio_mandato?.split('-')[0] || '2026'} - {presidente?.termino_mandato?.split('-')[0] || '2027'}
+                  </span>
+                  {/* Tag Mandato Ativo */}
+                  <span className="bg-green-500/10 text-green-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/20 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                    Mandato Ativo
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Composição eleita, lideranças regionais e vigência do mandato
+                </p>
               </div>
             </div>
 
-            {userContext.is_diretoria && (
+            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+              {userContext.is_diretoria && (
+                <button 
+                  onClick={() => setShowDiretoriaModal(true)}
+                  className="flex items-center gap-2 text-xs font-semibold bg-[#222] hover:bg-[#333] text-[#facc15] px-3 py-2 rounded-lg border border-[#444] transition-all shadow-sm"
+                >
+                  <Edit3 className="w-4 h-4" /> Gerenciar Mesa Diretora
+                </button>
+              )}
+
+              {/* Botão / Ícone Expandir */}
               <button 
-                onClick={() => setShowDiretoriaModal(true)}
-                className="flex items-center gap-2 text-xs font-semibold bg-[#222] hover:bg-[#333] text-[#facc15] px-3 py-2 rounded-lg border border-[#444] transition-all"
+                type="button"
+                onClick={() => setDiretoriaExpanded(!diretoriaExpanded)}
+                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-[#222] transition-colors"
+                title={diretoriaExpanded ? "Recolher mesa diretora" : "Expandir mesa diretora"}
               >
-                <Edit3 className="w-4 h-4" /> Gerenciar Mesa Diretora
+                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${diretoriaExpanded ? 'rotate-180 text-[#facc15]' : ''}`} />
               </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Presidente */}
-            <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#facc15]/20 text-[#facc15] flex items-center justify-center font-bold text-sm shrink-0">
-                P
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold text-[#facc15] uppercase tracking-wider block">Presidente</span>
-                <p className="text-sm font-semibold text-white truncate" title={presidente?.nome_completo || 'Pendente de Nomeação'}>
-                  {presidente?.nome_completo || (presidente?.usuario_id ? `CIM: ${presidente.usuario_id}` : 'Pendente')}
-                </p>
-                <p className="text-[11px] text-gray-500 truncate">{presidente?.email || (presidente?.cim ? `CIM: ${presidente.cim}` : 'Sem dados')}</p>
-              </div>
-            </div>
-
-            {/* Vice-Presidente */}
-            <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
-                V
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">Vice-Presidente</span>
-                <p className="text-sm font-semibold text-white truncate" title={vicePresidente?.nome_completo || 'Pendente de Nomeação'}>
-                  {vicePresidente?.nome_completo || (vicePresidente?.usuario_id ? `CIM: ${vicePresidente.usuario_id}` : 'Pendente')}
-                </p>
-                <p className="text-[11px] text-gray-500 truncate">{vicePresidente?.email || (vicePresidente?.cim ? `CIM: ${vicePresidente.cim}` : 'Sem dados')}</p>
-              </div>
-            </div>
-
-            {/* Secretário */}
-            <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm shrink-0">
-                S
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">Secretário</span>
-                <p className="text-sm font-semibold text-white truncate" title={secretario?.nome_completo || 'Pendente de Nomeação'}>
-                  {secretario?.nome_completo || (secretario?.usuario_id ? `CIM: ${secretario.usuario_id}` : 'Pendente')}
-                </p>
-                <p className="text-[11px] text-gray-500 truncate">{secretario?.email || (secretario?.cim ? `CIM: ${secretario.cim}` : 'Sem dados')}</p>
-              </div>
             </div>
           </div>
 
-          {/* Vigência do Mandato */}
-          <div className="mt-4 pt-3 border-t border-[#222] flex items-center justify-between text-xs text-gray-400">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <span>Vigência do Mandato:</span>
-              <span className="text-white font-medium">
-                {presidente?.inicio_mandato || secretario?.inicio_mandato || '2026-09-08'} até {presidente?.termino_mandato || secretario?.termino_mandato || '2027-09-08'}
-              </span>
-            </div>
-            <span className="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded font-semibold text-[10px]">
-              MANDATO ATIVO
-            </span>
-          </div>
-        </div>
-
-        {/* Seção: Mural de Avisos & Documentos */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Widget Principal: Avisos e Notificações (Ocupa 2 colunas no desktop) */}
-          <div className="lg:col-span-2 bg-[#151515] border border-[#333] rounded-xl p-5 shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#262626] mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#facc15]/10 border border-[#facc15]/20 rounded-lg text-[#facc15]">
-                    <Bell className="w-5 h-5" />
+          {/* Conteúdo Expandível (Cards da Mesa Diretora) */}
+          {diretoriaExpanded && (
+            <div className="border-t border-[#2b2b2b] p-6 pt-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Presidente */}
+                <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#facc15]/20 text-[#facc15] flex items-center justify-center font-bold text-sm shrink-0">
+                    P
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base font-bold text-white tracking-wide">
-                        Avisos e Notificações
-                      </h3>
-                      <span className="bg-[#222] text-[#facc15] text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#444]">
-                        {avisos.length} {avisos.length === 1 ? 'comunicado' : 'comunicados'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Comunicados oficiais, convocações e alertas da Diretoria do Conselho
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-bold text-[#facc15] uppercase tracking-wider block">Presidente</span>
+                    <p className="text-sm font-semibold text-white truncate" title={presidente?.nome_completo || 'Pendente de Nomeação'}>
+                      {presidente?.nome_completo || (presidente?.usuario_id ? `CIM: ${presidente.usuario_id}` : 'Pendente')}
                     </p>
+                    <p className="text-[11px] text-gray-500 truncate">{presidente?.email || (presidente?.cim ? `CIM: ${presidente.cim}` : 'Sem dados')}</p>
                   </div>
                 </div>
 
-                {userContext.is_diretoria && (
-                  <button 
-                    onClick={() => setShowNovoAvisoModal(true)}
-                    className="flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3 py-1.5 rounded-lg transition-colors shadow-sm"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Novo Aviso
-                  </button>
-                )}
-              </div>
-
-              {/* Lista de Avisos */}
-              <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-                {avisos.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 text-xs">
-                    Nenhum aviso ou comunicado pendente no momento.
+                {/* Vice-Presidente */}
+                <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                    V
                   </div>
-                ) : (
-                  avisos.map((a: any) => {
-                    const isConvocacao = a.tipo === 'CONVOCACAO';
-                    const isAlerta = a.tipo === 'ALERTA' || a.tipo === 'URGENTE';
-                    return (
-                      <div 
-                        key={a.id}
-                        className={`p-3.5 rounded-xl border transition-all ${
-                          a.fixado 
-                            ? 'bg-gradient-to-r from-[#1c1a12] to-[#151515] border-[#facc15]/30' 
-                            : 'bg-[#181818] border-[#2b2b2b] hover:border-[#444]'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {a.fixado && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/30">
-                                  <Pin className="w-3 h-3" /> FIXADO
-                                </span>
-                              )}
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                isConvocacao 
-                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
-                                  : isAlerta 
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                              }`}>
-                                {a.tipo}
-                              </span>
-                              <h4 className="text-sm font-bold text-white">{a.titulo}</h4>
-                            </div>
-                            <p className="text-xs text-gray-300 leading-relaxed pt-0.5 whitespace-pre-line">
-                              {a.conteudo}
-                            </p>
-                          </div>
-
-                          {userContext.is_diretoria && (
-                            <button
-                              onClick={() => handleExcluirAviso(a.id)}
-                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
-                              title="Remover aviso"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="mt-2.5 pt-2 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <Award className="w-3 h-3 text-[#facc15]" />
-                            {a.autor_nome || 'Diretoria'} {a.autor_cargo && `(${a.autor_cargo})`}
-                          </span>
-                          <span className="flex items-center gap-1 text-gray-400">
-                            <Calendar className="w-3 h-3 text-gray-500" />
-                            {a.data_publicacao ? a.data_publicacao.split('-').reverse().join('/') : ''}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Widget Lateral: Atas e Repositório */}
-          <div className="bg-[#151515] p-6 rounded-xl border border-[#333] shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 pb-3 border-b border-[#262626] mb-4">
-                <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
-                  <FileText className="w-6 h-6" />
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">Vice-Presidente</span>
+                    <p className="text-sm font-semibold text-white truncate" title={vicePresidente?.nome_completo || 'Pendente de Nomeação'}>
+                      {vicePresidente?.nome_completo || (vicePresidente?.usuario_id ? `CIM: ${vicePresidente.usuario_id}` : 'Pendente')}
+                    </p>
+                    <p className="text-[11px] text-gray-500 truncate">{vicePresidente?.email || (vicePresidente?.cim ? `CIM: ${vicePresidente.cim}` : 'Sem dados')}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-white">Atas e Documentos</h3>
-                  <p className="text-xs text-gray-400">Repositório documental regional</p>
+
+                {/* Secretário */}
+                <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm shrink-0">
+                    S
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">Secretário</span>
+                    <p className="text-sm font-semibold text-white truncate" title={secretario?.nome_completo || 'Pendente de Nomeação'}>
+                      {secretario?.nome_completo || (secretario?.usuario_id ? `CIM: ${secretario.usuario_id}` : 'Pendente')}
+                    </p>
+                    <p className="text-[11px] text-gray-500 truncate">{secretario?.email || (secretario?.cim ? `CIM: ${secretario.cim}` : 'Sem dados')}</p>
+                  </div>
                 </div>
               </div>
-              <div className="py-6 text-center space-y-2">
-                <div className="text-4xl font-bold text-white">0</div>
-                <p className="text-xs text-gray-400">Atas e relatórios arquivados</p>
+
+              {/* Vigência do Mandato */}
+              <div className="mt-4 pt-3 border-t border-[#222] flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <span>Vigência do Mandato:</span>
+                  <span className="text-white font-medium">
+                    {presidente?.inicio_mandato || secretario?.inicio_mandato || '2026-09-08'} até {presidente?.termino_mandato || secretario?.termino_mandato || '2027-09-08'}
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded font-semibold text-[10px]">
+                  MANDATO ATIVO
+                </span>
               </div>
             </div>
-            <div className="pt-4 border-t border-[#262626]">
-              <button 
-                onClick={() => alert("O Módulo de Upload de Documentos e Atas das Lojas será ativado na Fase 3 do Roadmap.")}
-                className="w-full bg-[#222] hover:bg-[#282828] text-purple-400 border border-purple-500/30 font-semibold py-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-2"
-              >
-                <FileText className="w-4 h-4" /> Consultar Atas
-              </button>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Accordion: Lojas Jurisdicionadas */}
@@ -726,6 +634,141 @@ export default function PainelConselho() {
             </table>
           </div>
           )}
+        </div>
+
+        {/* Seção: Mural de Avisos & Documentos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Widget Principal: Avisos e Notificações (Ocupa 2 colunas no desktop) */}
+          <div className="lg:col-span-2 bg-[#151515] border border-[#333] rounded-xl p-5 shadow-xl flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-[#262626] mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-[#facc15]/10 border border-[#facc15]/20 rounded-lg text-[#facc15]">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-white tracking-wide">
+                        Avisos e Notificações
+                      </h3>
+                      <span className="bg-[#222] text-[#facc15] text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#444]">
+                        {avisos.length} {avisos.length === 1 ? 'comunicado' : 'comunicados'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Comunicados oficiais, convocações e alertas da Diretoria do Conselho
+                    </p>
+                  </div>
+                </div>
+
+                {userContext.is_diretoria && (
+                  <button 
+                    onClick={() => setShowNovoAvisoModal(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Novo Aviso
+                  </button>
+                )}
+              </div>
+
+              {/* Lista de Avisos */}
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                {avisos.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-xs">
+                    Nenhum aviso ou comunicado pendente no momento.
+                  </div>
+                ) : (
+                  avisos.map((a: any) => {
+                    const isConvocacao = a.tipo === 'CONVOCACAO';
+                    const isAlerta = a.tipo === 'ALERTA' || a.tipo === 'URGENTE';
+                    return (
+                      <div 
+                        key={a.id}
+                        className={`p-3.5 rounded-xl border transition-all ${
+                          a.fixado 
+                            ? 'bg-gradient-to-r from-[#1c1a12] to-[#151515] border-[#facc15]/30' 
+                            : 'bg-[#181818] border-[#2b2b2b] hover:border-[#444]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {a.fixado && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/30">
+                                  <Pin className="w-3 h-3" /> FIXADO
+                                </span>
+                              )}
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                isConvocacao 
+                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                                  : isAlerta 
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                              }`}>
+                                {a.tipo}
+                              </span>
+                              <h4 className="text-sm font-bold text-white">{a.titulo}</h4>
+                            </div>
+                            <p className="text-xs text-gray-300 leading-relaxed pt-0.5 whitespace-pre-line">
+                              {a.conteudo}
+                            </p>
+                          </div>
+
+                          {userContext.is_diretoria && (
+                            <button
+                              onClick={() => handleExcluirAviso(a.id)}
+                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
+                              title="Remover aviso"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="mt-2.5 pt-2 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400">
+                          <span className="flex items-center gap-1">
+                            <Award className="w-3 h-3 text-[#facc15]" />
+                            {a.autor_nome || 'Diretoria'} {a.autor_cargo && `(${a.autor_cargo})`}
+                          </span>
+                          <span className="flex items-center gap-1 text-gray-400">
+                            <Calendar className="w-3 h-3 text-gray-500" />
+                            {a.data_publicacao ? a.data_publicacao.split('-').reverse().join('/') : ''}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Widget Lateral: Atas e Repositório */}
+          <div className="bg-[#151515] p-6 rounded-xl border border-[#333] shadow-xl flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 pb-3 border-b border-[#262626] mb-4">
+                <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Atas e Documentos</h3>
+                  <p className="text-xs text-gray-400">Repositório documental regional</p>
+                </div>
+              </div>
+              <div className="py-6 text-center space-y-2">
+                <div className="text-4xl font-bold text-white">0</div>
+                <p className="text-xs text-gray-400">Atas e relatórios arquivados</p>
+              </div>
+            </div>
+            <div className="pt-4 border-t border-[#262626]">
+              <button 
+                onClick={() => alert("O Módulo de Upload de Documentos e Atas das Lojas será ativado na Fase 3 do Roadmap.")}
+                className="w-full bg-[#222] hover:bg-[#282828] text-purple-400 border border-purple-500/30 font-semibold py-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <FileText className="w-4 h-4" /> Consultar Atas
+              </button>
+            </div>
+          </div>
         </div>
         
       </div>
