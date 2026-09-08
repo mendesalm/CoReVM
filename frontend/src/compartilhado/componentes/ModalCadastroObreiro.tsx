@@ -260,5 +260,6 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
           </div>
         </form>
       </div>
+    </div>
   );
 }
