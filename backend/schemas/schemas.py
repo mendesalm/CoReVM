@@ -117,8 +117,8 @@ class LojaCreateOnTheFly(BaseModel):
 class ObreiroCreateOnTheFly(BaseModel):
     cim: str
     nome_completo: str
-    email: str
-    cpf: str
+    email: Optional[str] = None
+    cpf: Optional[str] = None
     loja_id: int
     telefone: Optional[str] = None
     cargo_atual: Optional[str] = None

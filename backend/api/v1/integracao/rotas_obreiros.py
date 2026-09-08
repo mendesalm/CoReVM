@@ -27,89 +27,131 @@ def buscar_obreiro_por_cim(cim: str, db: Session = Depends(get_db_lojas)):
         "telefone": obreiro.telefone
     }
 
-@router.post("/", response_model=dict, summary="Cadastra Obreiro On-the-Fly", description="Cria um obreiro e registra seu mandato inicial no lojas_db.")
+@router.post("/", response_model=dict, summary="Cadastra ou Vincula Obreiro", description="Cria ou vincula um obreiro e registra seu mandato na loja.")
 def cadastrar_obreiro_integracao(obreiro_in: ObreiroCreateOnTheFly, db: Session = Depends(get_db_lojas)):
     """
-    Insere um novo Obreiro no ecossistema global do e-Sigma através do lojas_db.
-    Garante a anti-duplicidade cruzada de CPF, CIM e Email.
-    Cria a associação com a Loja e registra na tabela de Mandatos.
+    Cadastra um novo Obreiro ou vincula um já existente no lojas_db a uma Loja com seu respectivo Mandato.
+    Garante a anti-duplicidade cruzada de CPF e Email entre membros distintos.
     """
-    logger.info(f"Iniciando cadastro on-the-fly do Obreiro CIM: {obreiro_in.cim}")
+    logger.info(f"Processando atribuição do Obreiro CIM: {obreiro_in.cim} para Loja {obreiro_in.loja_id}")
     
-    # 1. Validação de Duplicidade Cruzada
-    duplicado = db.query(ObreiroIntegracao).filter(
-        or_(
-            ObreiroIntegracao.cim == obreiro_in.cim,
-            ObreiroIntegracao.cpf == obreiro_in.cpf,
-            ObreiroIntegracao.email == obreiro_in.email
+    # 1. Verifica se o obreiro já existe pelo CIM
+    obreiro = db.query(ObreiroIntegracao).filter(ObreiroIntegracao.cim == obreiro_in.cim).first()
+    
+    if obreiro:
+        logger.info(f"Obreiro existente encontrado no lojas_db: {obreiro.nome_completo} (ID {obreiro.id})")
+        # Atualiza dados caso tenham sido fornecidos e estejam vazios no cadastro
+        if obreiro_in.nome_completo and not obreiro.nome_completo:
+            obreiro.nome_completo = obreiro_in.nome_completo
+        if obreiro_in.email and not obreiro.email:
+            obreiro.email = obreiro_in.email
+        if obreiro_in.cpf and not obreiro.cpf:
+            obreiro.cpf = obreiro_in.cpf
+        if obreiro_in.telefone and not obreiro.telefone:
+            obreiro.telefone = obreiro_in.telefone
+        db.flush()
+    else:
+        # Validação de Duplicidade Cruzada contra outros membros
+        filtros = []
+        if obreiro_in.cpf:
+            filtros.append(ObreiroIntegracao.cpf == obreiro_in.cpf)
+        if obreiro_in.email:
+            filtros.append(ObreiroIntegracao.email == obreiro_in.email)
+            
+        if filtros:
+            conflito = db.query(ObreiroIntegracao).filter(or_(*filtros)).first()
+            if conflito:
+                logger.warning(f"Conflito de duplicidade cadastral: {conflito.nome_completo}")
+                raise HTTPException(
+                    status_code=422, 
+                    detail=f"Conflito cadastral! O CPF ou E-mail já pertence ao obreiro {conflito.nome_completo} (CIM: {conflito.cim})."
+                )
+        
+        # Criação do novo Obreiro
+        obreiro = ObreiroIntegracao(
+            cim=obreiro_in.cim,
+            nome_completo=obreiro_in.nome_completo,
+            email=obreiro_in.email,
+            cpf=obreiro_in.cpf,
+            telefone=obreiro_in.telefone,
+            status='Ativo'
         )
+        db.add(obreiro)
+        db.flush()
+    
+    # 2. Associação à Loja
+    associacao = db.query(ObreiroLojaAssociacao).filter(
+        ObreiroLojaAssociacao.obreiro_id == obreiro.id,
+        ObreiroLojaAssociacao.loja_id == obreiro_in.loja_id
     ).first()
     
-    if duplicado:
-        logger.warning(f"Conflito de duplicidade para o Obreiro {obreiro_in.cim}")
-        raise HTTPException(
-            status_code=422, 
-            detail="Duplicidade detectada! Já existe um membro com este CIM, CPF ou E-mail cadastrado."
+    if not associacao:
+        associacao = ObreiroLojaAssociacao(
+            obreiro_id=obreiro.id,
+            loja_id=obreiro_in.loja_id,
+            status='Ativo',
+            classe_obreiro='Regular',
+            data_inicio=date.today()
         )
+        db.add(associacao)
     
-    # 2. Criação do Obreiro
-    novo_obreiro = ObreiroIntegracao(
-        cim=obreiro_in.cim,
-        nome_completo=obreiro_in.nome_completo,
-        email=obreiro_in.email,
-        cpf=obreiro_in.cpf,
-        telefone=obreiro_in.telefone,
-        ativo=True
-    )
-    
-    db.add(novo_obreiro)
-    db.flush() # Para pegar o ID
-    
-    # 3. Associação à Loja (Cargo Atual)
-    # Supondo enum mapping no banco original (ex: Venerável Mestre = ID 1)
-    cargo_str = obreiro_in.cargo_atual or obreiro_in.cargo_loja
+    # 3. Mandato
+    cargo_str = obreiro_in.cargo_atual or (obreiro_in.cargo_loja.value if obreiro_in.cargo_loja else None)
     cargo_id_map = {
         "Venerável Mestre": 1,
+        "Primeiro Vigilante": 2,
+        "Segundo Vigilante": 3,
+        "Orador": 4,
         "Secretário": 5,
         "Tesoureiro": 6,
         "Chanceler": 7,
+        "Mestre de Harmonia": 8,
+        "Hospitaleiro": 9
     }
     cargo_id = cargo_id_map.get(cargo_str, 2) if cargo_str else 2
     
-    associacao = ObreiroLojaAssociacao(
-        obreiro_id=novo_obreiro.id,
-        loja_id=obreiro_in.loja_id,
-        status='Ativo',
-        classe_obreiro='Regular',
-        data_inicio=date.today()
-    )
-    db.add(associacao)
+    # Se for Venerável Mestre (cargo_id == 1), encerra mandatos de VM anteriores na mesma loja
+    if cargo_id == 1:
+        vms_anteriores = db.query(Mandato).filter(
+            Mandato.loja_id == obreiro_in.loja_id,
+            Mandato.cargo_id == 1,
+            Mandato.data_fim.is_(None)
+        ).all()
+        for m in vms_anteriores:
+            if m.obreiro_id != obreiro.id:
+                m.data_fim = date.today()
     
-    if cargo_str:
-        # 4. Histórico de Mandato
-        mandato = Mandato(
-            obreiro_id=novo_obreiro.id,
+    # Registra o novo mandato se ainda não estiver ativo
+    mandato_ativo = db.query(Mandato).filter(
+        Mandato.obreiro_id == obreiro.id,
+        Mandato.loja_id == obreiro_in.loja_id,
+        Mandato.cargo_id == cargo_id,
+        Mandato.data_fim.is_(None)
+    ).first()
+    
+    if not mandato_ativo:
+        novo_mandato = Mandato(
+            obreiro_id=obreiro.id,
             loja_id=obreiro_in.loja_id,
             cargo_id=cargo_id,
             data_inicio=obreiro_in.data_inicio_mandato or date.today()
         )
-        db.add(mandato)
+        db.add(novo_mandato)
     
     db.commit()
-    db.refresh(novo_obreiro)
+    db.refresh(obreiro)
     
-    # 5. Gerar e enviar senha
+    # 4. Envio de Notificação/Credenciais por E-mail
     try:
         import string
         import random
         from core.email_service import enviar_email_credenciais
         
         senha_temp = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        if novo_obreiro.email:
-            enviar_email_credenciais(novo_obreiro.email, novo_obreiro.nome_completo, novo_obreiro.cim, senha_temp)
-            # Em prod salva hash_senha no banco
+        if obreiro.email:
+            enviar_email_credenciais(obreiro.email, obreiro.nome_completo, obreiro.cim, senha_temp)
     except Exception as e:
-        logger.error(f"Erro ao enviar email: {e}")
+        logger.error(f"Erro ao disparar e-mail de credenciais: {e}")
     
-    logger.info(f"Obreiro {novo_obreiro.nome_completo} criado com sucesso com ID {novo_obreiro.id}")
-    return {"status": "success", "obreiro_id": novo_obreiro.id, "cim": novo_obreiro.cim}
+    logger.info(f"Obreiro {obreiro.nome_completo} (CIM: {obreiro.cim}) vinculado com sucesso à Loja {obreiro_in.loja_id} como {cargo_str}")
+    return {"status": "success", "obreiro_id": obreiro.id, "cim": obreiro.cim, "nome": obreiro.nome_completo}
