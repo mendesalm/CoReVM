@@ -33,7 +33,43 @@ export default function PainelConselho() {
   const [addSuplenteModal, setAddSuplenteModal] = useState<any>(null);
   const [showAddLojaModal, setShowAddLojaModal] = useState(false);
   const [showDiretoriaModal, setShowDiretoriaModal] = useState(false);
+  const [editLojaModal, setEditLojaModal] = useState<any>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Form Edição de Loja
+  const [editLojaForm, setEditLojaForm] = useState({
+    nome: '',
+    numero: '',
+    rito: '',
+    cidade: ''
+  });
+  const [salvandoLoja, setSalvandoLoja] = useState(false);
+
+  const abrirEdicaoLoja = (loja: any) => {
+    setEditLojaModal(loja);
+    setEditLojaForm({
+      nome: loja.nome ? loja.nome.replace(/^Loja\s+/i, '') : '',
+      numero: loja.numero || '',
+      rito: loja.rito || 'Rito Escocês Antigo e Aceito',
+      cidade: loja.cidade || ''
+    });
+  };
+
+  const handleSalvarLoja = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editLojaModal) return;
+    setSalvandoLoja(true);
+    try {
+      await axios.put(`${API_URL}/integracao/lojas/${editLojaModal.loja_id}`, editLojaForm);
+      alert('Cadastro da loja atualizado com sucesso!');
+      setEditLojaModal(null);
+      setReloadKey(k => k + 1);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Erro ao atualizar dados da loja');
+    } finally {
+      setSalvandoLoja(false);
+    }
+  };
 
   // Form Diretoria
   const [diretoriaForm, setDiretoriaForm] = useState({
@@ -378,6 +414,21 @@ export default function PainelConselho() {
                           </button>
                         )}
 
+                        {/* Botão Editar (Diretoria ou Representante da Própria Loja) */}
+                        <button 
+                          onClick={() => isMyLodge ? abrirEdicaoLoja(rel) : null}
+                          disabled={!isMyLodge}
+                          className={`px-2 py-1 rounded transition-all ${
+                            isMyLodge 
+                              ? 'text-blue-400 hover:text-blue-300 bg-blue-500/10 cursor-pointer' 
+                              : 'text-gray-600 bg-gray-800/30 cursor-not-allowed opacity-40'
+                          }`}
+                          title={isMyLodge ? "Editar dados cadastrais da loja" : "Apenas o representante desta loja pode editar"}
+                        >
+                          {!isMyLodge && <Lock className="w-3 h-3 inline mr-1" />}
+                          Editar
+                        </button>
+
                         {/* Botão + VM (Habilitado apenas para Diretoria ou Representante da Própria Loja) */}
                         <button 
                           onClick={() => isMyLodge ? setAddObreiroModal(rel) : null}
@@ -560,6 +611,100 @@ export default function PainelConselho() {
           }}
           onCancel={() => setAddSuplenteModal(null)}
         />
+      )}
+
+      {/* Modal: Edição Cadastral da Loja */}
+      {editLojaModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+          <div className="bg-[#111] border border-[#333] rounded-xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Editar Cadastro da Loja</h2>
+                <p className="text-xs text-gray-400">Atualize informações oficiais como Rito, Nome, Número e Oriente.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSalvarLoja} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                  Nome da Loja
+                </label>
+                <input 
+                  type="text" 
+                  required
+                  value={editLojaForm.nome}
+                  onChange={(e) => setEditLojaForm({...editLojaForm, nome: e.target.value})}
+                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                    Número
+                  </label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editLojaForm.numero}
+                    onChange={(e) => setEditLojaForm({...editLojaForm, numero: e.target.value})}
+                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                    Oriente (Cidade)
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editLojaForm.cidade}
+                    onChange={(e) => setEditLojaForm({...editLojaForm, cidade: e.target.value})}
+                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
+                  Rito Trabalhado
+                </label>
+                <select 
+                  value={editLojaForm.rito}
+                  onChange={(e) => setEditLojaForm({...editLojaForm, rito: e.target.value})}
+                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                >
+                  <option value="Rito Escocês Antigo e Aceito">Rito Escocês Antigo e Aceito</option>
+                  <option value="Rito York">Rito de York</option>
+                  <option value="Rito Adonhiramita">Rito Adonhiramita</option>
+                  <option value="Rito Brasileiro">Rito Brasileiro</option>
+                  <option value="Rito Moderno">Rito Moderno</option>
+                  <option value="Rito Schroder">Rito Schröder</option>
+                  <option value="Rito Escocês Retificado">Rito Escocês Retificado</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                <button 
+                  type="button" 
+                  onClick={() => setEditLojaModal(null)}
+                  className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={salvandoLoja}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-semibold text-xs transition-colors disabled:opacity-50"
+                >
+                  {salvandoLoja ? 'Salvando...' : 'Salvar Alterações'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

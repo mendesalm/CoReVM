@@ -127,3 +127,68 @@ def cadastrar_loja_integracao(loja_in: LojaCreateOnTheFly, db: Session = Depends
     
     logger.info(f"Loja {nova_loja.nome_loja} criada com sucesso com ID {nova_loja.id}")
     return {"status": "success", "loja_id": nova_loja.id, "nome": nova_loja.nome_loja}
+
+from pydantic import BaseModel
+from typing import Optional
+
+class LojaUpdatePayload(BaseModel):
+    nome: Optional[str] = None
+    numero: Optional[str] = None
+    rito: Optional[str] = None
+    cidade: Optional[str] = None
+
+@router.put("/{loja_id}", summary="Atualiza dados cadastrais de uma Loja", description="Corrige dados da loja tanto na lista_de_lojas_db quanto no lojas_db.")
+def atualizar_loja_integracao(
+    loja_id: int, 
+    loja_in: LojaUpdatePayload, 
+    db_lista: Session = Depends(get_db_lista),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    logger.info(f"Atualizando cadastro da Loja {loja_id}: {loja_in}")
+    
+    # 1. Atualiza lista_de_lojas_db.lodges
+    updates_lista = []
+    params_lista = {"id": loja_id}
+    if loja_in.nome is not None:
+        updates_lista.append("lodge_name = :nome")
+        params_lista["nome"] = loja_in.nome
+    if loja_in.numero is not None:
+        updates_lista.append("lodge_number = :numero")
+        params_lista["numero"] = loja_in.numero
+    if loja_in.rito is not None:
+        updates_lista.append("rite = :rito")
+        params_lista["rito"] = loja_in.rito
+    if loja_in.cidade is not None:
+        updates_lista.append("city = :cidade")
+        params_lista["cidade"] = loja_in.cidade
+
+    if updates_lista:
+        sql = f"UPDATE lodges SET {', '.join(updates_lista)} WHERE id = :id"
+        db_lista.execute(text(sql), params_lista)
+        db_lista.commit()
+
+    # 2. Atualiza lojas_db.lojas (se existir)
+    updates_lojas = []
+    params_lojas = {"id": loja_id}
+    if loja_in.nome is not None:
+        updates_lojas.append("nome_loja = :nome")
+        params_lojas["nome"] = loja_in.nome
+    if loja_in.numero is not None:
+        updates_lojas.append("numero_loja = :numero")
+        params_lojas["numero"] = loja_in.numero
+    if loja_in.rito is not None:
+        updates_lojas.append("rito = :rito")
+        params_lojas["rito"] = loja_in.rito
+    if loja_in.cidade is not None:
+        updates_lojas.append("cidade = :cidade")
+        params_lojas["cidade"] = loja_in.cidade
+
+    if updates_lojas:
+        sql_lojas = f"UPDATE lojas SET {', '.join(updates_lojas)} WHERE id = :id"
+        try:
+            db_lojas.execute(text(sql_lojas), params_lojas)
+            db_lojas.commit()
+        except Exception as e:
+            logger.warning(f"Erro ao sincronizar lojas_db: {e}")
+
+    return {"status": "success", "message": "Loja atualizada com sucesso!", "loja_id": loja_id}
