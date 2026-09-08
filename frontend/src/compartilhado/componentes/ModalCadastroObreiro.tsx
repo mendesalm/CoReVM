@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { formatarCPF, formatarTelefone } from '../utils/formatadores';
 import { Loader2, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';

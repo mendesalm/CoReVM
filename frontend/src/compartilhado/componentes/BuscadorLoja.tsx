@@ -1,5 +1,5 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { Search, Plus, Check } from 'lucide-react';
 import ModalCadastroLoja from './ModalCadastroLoja';

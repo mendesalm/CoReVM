@@ -46,7 +46,7 @@ export const LogoAnimadaCore: React.FC<LogoAnimadaCoreProps> = ({
       
       const duration = 1500 + Math.random() * 1000; 
       
-      const animation = glowElement.animate([
+      glowElement.animate([
         { opacity: 0, offset: 0 },
         { opacity: 1, offset: 0.1 },
         { opacity: 1, offset: 0.9 },
@@ -58,7 +58,6 @@ export const LogoAnimadaCore: React.FC<LogoAnimadaCoreProps> = ({
       });
 
       let start: number | null = null;
-      let frameId: number;
 
       function step(timestamp: number) {
         if (!isMounted) return;
@@ -86,12 +85,12 @@ export const LogoAnimadaCore: React.FC<LogoAnimadaCoreProps> = ({
           const angle = Math.atan2(dy, dx) * (180 / Math.PI);
           
           glowElement?.setAttribute('transform', `translate(${point.x}, ${point.y}) rotate(${angle})`);
-          frameId = requestAnimationFrame(step);
+          requestAnimationFrame(step);
         } else {
           setTimeout(() => launchGlow(glowElement), Math.random() * 2000 + 500);
         }
       }
-      frameId = requestAnimationFrame(step);
+      requestAnimationFrame(step);
     }
 
     const t1 = setTimeout(() => launchGlow(glow1Ref.current), 800);

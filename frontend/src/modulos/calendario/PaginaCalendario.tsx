@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -10,7 +10,7 @@ export default function PaginaCalendario() {
   const [isEditing, setIsEditing] = useState(false);
   
   // Form State
-  const [eventId, setEventId] = useState('');
+  const [_eventId, setEventId] = useState('');
   const [title, setTitle] = useState('');
   const [dono, setDono] = useState('Conselho');
   const [detalhamento, setDetalhamento] = useState(''); // Novo estado para info extra
@@ -21,7 +21,7 @@ export default function PaginaCalendario() {
   const [isAllDay, setIsAllDay] = useState(true);
   const [color, setColor] = useState('#eab308');
 
-  const [events, setEvents] = useState([
+  const [events, _setEvents] = useState([
     { id: '1', title: 'Sessão Conjunta', dono: 'Conselho', detalhamento: 'Sessão magna de posse conjunta com todas as lojas.', start: '2026-09-15', allDay: true, backgroundColor: '#eab308', borderColor: '#854d0e' },
     { id: '2', title: 'Palestra Pública', dono: 'Externo', detalhamento: 'Traje esporte fino. Entrada franca para familiares.', start: '2026-09-22T19:30:00', end: '2026-09-22T21:30:00', allDay: false, backgroundColor: '#1e3a8a', borderColor: '#1e40af' },
     { id: '3', title: 'Banquetes Ritualísticos', dono: 'Loja 2181', detalhamento: 'Levar paramentos completos.', start: '2026-09-25', end: '2026-09-28', allDay: true, backgroundColor: '#dc2626', borderColor: '#991b1b' },

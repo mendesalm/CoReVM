@@ -16,7 +16,7 @@ export default function PaginaLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (_credentialResponse: any) => {
     setErro(null);
     setCarregando(true);
     try {

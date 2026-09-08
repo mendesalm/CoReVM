@@ -1,6 +1,6 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-import React, { useState } from 'react';
-import { UserCircle, Users2, ShieldCheck, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { UserCircle, ShieldCheck } from 'lucide-react';
 import BuscadorObreiro from '../../compartilhado/componentes/BuscadorObreiro';
 
 export default function PainelVM() {

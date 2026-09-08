@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../compartilhado/componentes/ModalCadastroObreiro';
+import ModalGestaoVM from '../../compartilhado/componentes/ModalGestaoVM';
 
 const API_URL = 'http://localhost:8003/api/v1';
 
@@ -29,6 +30,7 @@ export default function PainelConselho() {
   });
 
   // Modais
+  const [gestaoVmModal, setGestaoVmModal] = useState<any>(null);
   const [addObreiroModal, setAddObreiroModal] = useState<any>(null);
   const [addSuplenteModal, setAddSuplenteModal] = useState<any>(null);
   const [showAddLojaModal, setShowAddLojaModal] = useState(false);
@@ -398,9 +400,48 @@ export default function PainelConselho() {
                       <td className="p-3 text-gray-400">{rel.cidade || '-'}</td>
                       <td className="p-3 text-gray-400 truncate max-w-[150px]" title={rel.rito}>{rel.rito ? rel.rito.replace(/^Rito\s+/i, '') : '-'}</td>
                       <td className="p-3">
-                        <span className={`px-2 py-1 rounded-full ${rel.hasVm ? 'bg-[#222] text-green-400' : 'bg-red-500/20 text-red-400 font-bold'}`}>
-                          {rel.hasVm ? rel.hasVm : 'Pendente'}
-                        </span>
+                        {rel.hasVm ? (
+                          <button
+                            onClick={() => isMyLodge ? setGestaoVmModal({
+                              id: parseInt(rel.loja_id),
+                              nome: rel.nome,
+                              numero: rel.numero,
+                              rito: rel.rito,
+                              potencia: rel.potencia,
+                              hasVm: rel.hasVm
+                            }) : null}
+                            disabled={!isMyLodge}
+                            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
+                              isMyLodge 
+                                ? 'bg-[#1a1a1a] hover:bg-[#252525] border border-green-500/40 text-green-400 hover:text-green-300 cursor-pointer shadow-sm' 
+                                : 'bg-[#222] text-green-400 opacity-80 cursor-default'
+                            }`}
+                            title={isMyLodge ? "Clique para gerenciar o Venerável Mestre" : rel.hasVm}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                            <span className="truncate max-w-[150px]">{rel.hasVm}</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => isMyLodge ? setGestaoVmModal({
+                              id: parseInt(rel.loja_id),
+                              nome: rel.nome,
+                              numero: rel.numero,
+                              rito: rel.rito,
+                              potencia: rel.potencia,
+                              hasVm: null
+                            }) : null}
+                            disabled={!isMyLodge}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                              isMyLodge
+                                ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 cursor-pointer border border-red-500/30'
+                                : 'bg-red-500/20 text-red-400 opacity-80 cursor-default'
+                            }`}
+                            title={isMyLodge ? "Clique para cadastrar o Venerável Mestre" : "Pendente"}
+                          >
+                            Pendente
+                          </button>
+                        )}
                       </td>
                       <td className="p-3 text-right space-x-1 whitespace-nowrap">
                         {/* Botão Remover (Exclusivo Diretoria) */}
@@ -429,19 +470,26 @@ export default function PainelConselho() {
                           Editar
                         </button>
 
-                        {/* Botão + VM (Habilitado apenas para Diretoria ou Representante da Própria Loja) */}
+                        {/* Botão Gerenciar VM / + VM (Habilitado apenas para Diretoria ou Representante da Própria Loja) */}
                         <button 
-                          onClick={() => isMyLodge ? setAddObreiroModal(rel) : null}
+                          onClick={() => isMyLodge ? setGestaoVmModal({
+                            id: parseInt(rel.loja_id),
+                            nome: rel.nome,
+                            numero: rel.numero,
+                            rito: rel.rito,
+                            potencia: rel.potencia,
+                            hasVm: rel.hasVm
+                          }) : null}
                           disabled={!isMyLodge}
                           className={`px-2 py-1 rounded transition-all ${
                             isMyLodge 
                               ? 'text-[#facc15] hover:text-[#eab308] bg-[#facc15]/10 cursor-pointer' 
                               : 'text-gray-600 bg-gray-800/30 cursor-not-allowed opacity-40'
                           }`}
-                          title={isMyLodge ? "Cadastrar/Substituir Venerável Mestre" : "Apenas o representante desta loja pode cadastrar"}
+                          title={isMyLodge ? (rel.hasVm ? "Gerenciar Venerável Mestre (Visualizar, Editar, Destituir ou Substituir)" : "Cadastrar Venerável Mestre") : "Apenas o representante desta loja pode cadastrar"}
                         >
                           {!isMyLodge && <Lock className="w-3 h-3 inline mr-1" />}
-                          + VM
+                          {rel.hasVm ? 'Gerenciar VM' : '+ VM'}
                         </button>
 
                         {/* Botão + Suplente (Habilitado apenas para Diretoria ou Representante da Própria Loja) */}
@@ -586,7 +634,18 @@ export default function PainelConselho() {
         </div>
       )}
 
-      {/* Modal: Cadastro de Venerável Mestre */}
+      {/* Modal: Gestão Completa de Venerável Mestre (Visualizar, Editar, Encerrar, Substituir) */}
+      {gestaoVmModal && (
+        <ModalGestaoVM 
+          loja={gestaoVmModal}
+          onSuccess={() => {
+            setReloadKey(k => k + 1);
+          }}
+          onClose={() => setGestaoVmModal(null)}
+        />
+      )}
+
+      {/* Modal: Cadastro de Venerável Mestre (Fallback) */}
       {addObreiroModal && (
         <ModalCadastroObreiro 
           cargoPadrao="Venerável Mestre"
