@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Building2, Users, FileText, ArrowLeft, ShieldCheck, Loader2, 
-  Award, Calendar, Edit3, Lock 
+  Award, Calendar, Edit3, Lock, ChevronDown 
 } from 'lucide-react';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../compartilhado/componentes/ModalCadastroObreiro';
@@ -28,6 +28,9 @@ export default function PainelConselho() {
     is_diretoria: true,
     loja_id: null
   });
+
+  // Accordion Lojas
+  const [lojasExpanded, setLojasExpanded] = useState(true);
 
   // Modais
   const [gestaoVmModal, setGestaoVmModal] = useState<any>(null);
@@ -199,6 +202,11 @@ export default function PainelConselho() {
   const vicePresidente = diretoria.find(d => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
   const secretario = diretoria.find(d => d.cargo.toLowerCase() === 'secretario');
 
+  // Métricas para o Accordion de Lojas
+  const totalLojas = conselho?.lojas?.length || 0;
+  const lojasComVm = conselho?.lojas?.filter((l: any) => !!l.hasVm).length || 0;
+  const lojasPendentes = totalLojas - lojasComVm;
+
   if (loading) return <div className="h-screen bg-[#080808] flex items-center justify-center"><Loader2 className="w-12 h-12 text-[#facc15] animate-spin" /></div>;
   if (erro) return <div className="h-screen bg-[#080808] flex items-center justify-center flex-col gap-4 text-orange-500 font-bold"><ShieldCheck className="w-16 h-16"/> {erro}</div>;
 
@@ -347,29 +355,73 @@ export default function PainelConselho() {
           </div>
         </div>
 
-        {/* Tabela de Lojas Jurisdicionadas */}
-        <div className="bg-[#151515] border border-[#333] rounded-xl p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-[#facc15]">Lojas do Conselho</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {userContext.is_diretoria 
-                  ? "Modo Diretoria: você possui permissão total de gestão em todas as lojas." 
-                  : `Modo Representante: permissão de edição restrita à sua Loja Ref: ${userContext.loja_id}.`}
-              </p>
+        {/* Accordion: Lojas Jurisdicionadas */}
+        <div className="bg-[#151515] border border-[#333] rounded-xl overflow-hidden shadow-xl transition-all">
+          {/* Cabeçalho do Accordion (Clicável para expandir/recolher) */}
+          <div 
+            onClick={() => setLojasExpanded(!lojasExpanded)}
+            className="p-5 flex flex-wrap items-center justify-between gap-4 cursor-pointer hover:bg-[#1a1a1a] transition-colors select-none"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h3 className="text-lg font-bold text-white tracking-wide">
+                    Lojas do Conselho
+                  </h3>
+                  {/* Tag com Total de Lojas */}
+                  <span className="bg-[#222] text-[#facc15] text-xs font-bold px-2.5 py-1 rounded-full border border-[#444]">
+                    {totalLojas} {totalLojas === 1 ? 'Loja Jurisdicionada' : 'Lojas Jurisdicionadas'}
+                  </span>
+                  {/* Tag Lojas com VM */}
+                  <span className="bg-green-500/10 text-green-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/20 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                    {lojasComVm} com VM
+                  </span>
+                  {/* Tag Lojas Pendentes */}
+                  {lojasPendentes > 0 && (
+                    <span className="bg-red-500/10 text-red-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-red-500/20 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                      {lojasPendentes} Pendente{lojasPendentes > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  {userContext.is_diretoria 
+                    ? "Modo Diretoria: você possui permissão total de gestão em todas as lojas." 
+                    : `Modo Representante: permissão de edição restrita à sua Loja Ref: ${userContext.loja_id}.`}
+                </p>
+              </div>
             </div>
-            {userContext.is_diretoria && (
+
+            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+              {userContext.is_diretoria && (
+                <button 
+                  onClick={() => setShowAddLojaModal(true)} 
+                  className="bg-[#facc15] hover:bg-[#eab308] text-black px-4 py-2 rounded-lg font-bold text-xs transition-colors shadow-sm flex items-center gap-1.5"
+                >
+                  + Adicionar Loja
+                </button>
+              )}
+
+              {/* Botão / Ícone Expandir */}
               <button 
-                onClick={() => setShowAddLojaModal(true)} 
-                className="bg-[#facc15] hover:bg-[#eab308] text-black px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+                type="button"
+                onClick={() => setLojasExpanded(!lojasExpanded)}
+                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-[#222] transition-colors"
+                title={lojasExpanded ? "Recolher lojas" : "Expandir lojas"}
               >
-                + Adicionar Loja
+                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${lojasExpanded ? 'rotate-180 text-[#facc15]' : ''}`} />
               </button>
-            )}
+            </div>
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+
+          {/* Corpo do Accordion (Tabela) */}
+          {lojasExpanded && (
+            <div className="border-t border-[#2b2b2b] p-6 pt-3 overflow-x-auto">
+              <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#333] text-sm text-gray-500 uppercase">
                   <th className="p-3">Loja</th>
@@ -518,6 +570,7 @@ export default function PainelConselho() {
               </tbody>
             </table>
           </div>
+          )}
         </div>
         
       </div>
