@@ -135,7 +135,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                CIM (Identificação Maçônica)
+                CIM <span className="text-[#facc15] font-bold">*</span>
               </label>
               <div className="relative">
                 <input 
@@ -143,7 +143,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
                   required 
                   value={formData.cim} 
                   onChange={handleCimChange}
-                  placeholder="Ex: 292936"
+                  placeholder="Ex: 314445"
                   className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
                 />
                 {buscandoCim && (
@@ -155,7 +155,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                CPF (Opcional)
+                CPF <span className="text-gray-500 font-normal lowercase">(opcional)</span>
               </label>
               <input 
                 type="text" 
@@ -170,7 +170,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
           
           <div>
             <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-              Nome Completo do Obreiro
+              Nome Completo do Obreiro <span className="text-[#facc15] font-bold">*</span>
             </label>
             <input 
               type="text" 
@@ -185,10 +185,11 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                E-mail Pessoal
+                E-mail Pessoal <span className="text-[#facc15] font-bold">*</span>
               </label>
               <input 
                 type="email" 
+                required
                 value={formData.email} 
                 onChange={e => setFormData({...formData, email: e.target.value})} 
                 placeholder="obreiro@exemplo.com"
@@ -197,7 +198,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                WhatsApp / Telefone
+                WhatsApp / Telefone <span className="text-gray-500 font-normal lowercase">(opcional)</span>
               </label>
               <input 
                 type="text" 
