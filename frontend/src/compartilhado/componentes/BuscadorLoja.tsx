@@ -78,57 +78,57 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
       </div>
 
       {lojasEncontradas.length > 0 && lojaBusca.length >= 3 && (
-        <div className="bg-[#111] border border-[#333] rounded-lg overflow-hidden">
-          <table className="w-full text-left text-sm text-gray-300">
-            <thead className="bg-[#222] text-xs uppercase text-gray-400">
-              <tr>
-                <th className="px-4 py-3 w-12 text-center">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedIds.length === lojasEncontradas.length}
-                    onChange={(e) => setSelectedIds(e.target.checked ? lojasEncontradas.map(l => l.id) : [])}
-                    className="accent-[#facc15] w-4 h-4 cursor-pointer"
-                  />
-                </th>
-                <th className="px-4 py-3">Nº</th>
-                <th className="px-4 py-3">Loja</th>
-                <th className="px-4 py-3">Potência</th>
-                <th className="px-4 py-3">Cidade</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lojasEncontradas.map(l => (
-                <tr key={l.id} className="border-b border-[#333] hover:bg-[#1a1a1a] transition-colors cursor-pointer" onClick={() => toggleSelection(l.id)}>
-                  <td className="px-4 py-3 text-center">
+          <div className="bg-[#080808] border border-[#333] rounded-lg overflow-hidden">
+            <div className="p-3 bg-[#151515] border-b border-[#333] flex justify-between items-center">
+              <span className="text-sm text-gray-400">{lojasEncontradas.length} lojas encontradas</span>
+              <button 
+                type="button" 
+                disabled={selectedIds.length === 0}
+                onClick={confirmarSelecao} 
+                className="bg-[#facc15] text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Check className="w-4 h-4" /> 
+                {selectedIds.length > 1 ? `Adicionar ${selectedIds.length} Lojas` : 'Adicionar Loja Selecionada'}
+              </button>
+            </div>
+            <table className="w-full text-sm text-left">
+              <thead className="bg-[#111] text-gray-400">
+                <tr>
+                  <th className="px-4 py-3 w-12">
                     <input 
                       type="checkbox" 
-                      checked={selectedIds.includes(l.id)}
-                      onChange={() => {}} // Controlled via tr onClick
-                      className="accent-[#facc15] w-4 h-4 cursor-pointer"
+                      onChange={(e) => setSelectedIds(e.target.checked ? lojasEncontradas.map(l => l.id) : [])}
+                      checked={lojasEncontradas.length > 0 && selectedIds.length === lojasEncontradas.length}
+                      className="rounded bg-black border-[#333] text-[#facc15] focus:ring-[#facc15]"
                     />
-                  </td>
-                  <td className="px-4 py-3 font-medium text-white">{l.numero_loja}</td>
-                  <td className="px-4 py-3">{l.nome}</td>
-                  <td className="px-4 py-3">{l.potencia || '-'}</td>
-                  <td className="px-4 py-3">{l.cidade || '-'}</td>
+                  </th>
+                  <th className="px-4 py-3">Número</th>
+                  <th className="px-4 py-3">Loja</th>
+                  <th className="px-4 py-3">Potência</th>
+                  <th className="px-4 py-3">Cidade</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          <div className="p-3 bg-[#151515] flex justify-end">
-            <button 
-              type="button" 
-              disabled={selectedIds.length === 0}
-              onClick={confirmarSelecao} 
-              className="bg-[#facc15] text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Check className="w-4 h-4" /> 
-              {selectedIds.length > 1 ? `Adicionar ${selectedIds.length} Lojas` : 'Adicionar Loja Selecionada'}
-            </button>
+              </thead>
+              <tbody className="divide-y divide-[#222]">
+                {lojasEncontradas.map(loja => (
+                  <tr key={loja.id} className="hover:bg-[#1a1a1a] transition-colors cursor-pointer" onClick={() => toggleSelection(loja.id)}>
+                    <td className="px-4 py-3">
+                      <input 
+                        type="checkbox"
+                        checked={selectedIds.includes(loja.id)}
+                        onChange={() => {}} // Controlled by tr onClick
+                        className="rounded bg-black border-[#333] text-[#facc15] focus:ring-[#facc15]"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-gray-300 font-mono">{loja.numero_loja || loja.numero}</td>
+                    <td className="px-4 py-3 text-gray-200 font-medium">{loja.nome}</td>
+                    <td className="px-4 py-3 text-[#facc15] font-semibold">{loja.sigla_potencia || loja.potencia || 'GLEG'}</td>
+                    <td className="px-4 py-3 text-gray-400">{loja.cidade || 'N/I'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
+        )}
 
       {mostrarCadastroLoja && (
         <div className="flex items-center justify-between p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">

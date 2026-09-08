@@ -35,9 +35,9 @@ function AppRotas() {
       } />
 
       <Route element={<RotaProtegida><Layout /></RotaProtegida>}>
-        <Route path="/dashboard-conselho/:id" element={<PainelConselho />} />
+        <Route path="/regiao/:id" element={<PainelConselho />} />
+        <Route path="/regiao/:id/calendario" element={<PaginaCalendario />} />
         <Route path="/dashboard-loja" element={<PainelVM />} />
-        <Route path="/calendario" element={<PaginaCalendario />} />
       </Route>
     </Routes>
   );

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import BuscadorObreiro from '../../compartilhado/componentes/BuscadorObreiro';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
+import ModalCadastroObreiro from '../../compartilhado/componentes/ModalCadastroObreiro';
 
 // URL base do backend FastAPI do CoReVM
 const API_URL = 'http://localhost:8003/api/v1';
@@ -15,6 +16,7 @@ export default function PainelSuperAdmin() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [regioes, setRegioes] = useState<any[]>([]);
+  const [addObreiroModal, setAddObreiroModal] = useState<any>(null);
 
   // Wizard States
   const [step, setStep] = useState(1);
@@ -24,6 +26,8 @@ export default function PainelSuperAdmin() {
   const [editVice, setEditVice] = useState<string>('');
   const [editSecretario, setEditSecretario] = useState<string>('');
   const [editLojas, setEditLojas] = useState<any[]>([]);
+  const [viewLojasModal, setViewLojasModal] = useState<any>(null); // Estado para visualização rápida das lojas
+
 
   // Campos do formulário
   const [nome, setNome] = useState('');
@@ -61,14 +65,14 @@ export default function PainelSuperAdmin() {
     }
 
     try {
-      await axios.post(`${API_URL}/regioes/`, {
-        nome,
-        uf,
-        presidente_id: presidenteId || null,
-        vice_presidente_id: vicePresidenteId || null,
-        secretario_id: secretarioId || null,
-        lojas_ids: selectedLojas.map(l => l.id)
-      });
+        await axios.post(`${API_URL}/regioes/`, {
+          nome: nome,
+          uf: uf,
+          presidente_id: presidenteId || null,
+          vice_presidente_id: vicePresidenteId || null,
+          secretario_id: secretarioId || null,
+          lojas_ids: selectedLojas.map((l: any) => String(l.id))
+        });
       setShowModal(false);
       setStep(1);
       setSelectedLojas([]);
@@ -94,13 +98,63 @@ export default function PainelSuperAdmin() {
         presidente_id: editPresidente || null,
         vice_presidente_id: editVice || null,
         secretario_id: editSecretario || null,
-        lojas_ids: editLojas.map((l: any) => l.id || l.loja_id)
+        lojas_ids: editLojas.map((l: any) => String(l.id || l.loja_id))
       });
       setEditModal(null);
       fetchRegioes();
     } catch (err) {
       console.error("Erro ao atualizar região", err);
       alert("Erro ao atualizar conselho");
+    }
+  };
+
+  const openViewLojas = async (regiao: any) => {
+    setViewLojasModal({ loading: true, nome: regiao.nome, lojas: [] });
+    if (regiao.lojas && regiao.lojas.length > 0) {
+      try {
+        const idsToFetch = regiao.lojas.map((l: any) => parseInt(l.loja_id)).filter((id: number) => !isNaN(id));
+        if(idsToFetch.length > 0) {
+          const res = await axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
+          const enrichedLojas = regiao.lojas.map((l: any) => {
+            const details = res.data.find((d: any) => String(d.id) === String(l.loja_id));
+            return details ? { ...l, nome: details.nome, numero: details.numero } : l;
+          });
+          setViewLojasModal({ loading: false, nome: regiao.nome, lojas: enrichedLojas });
+        } else {
+          setViewLojasModal({ loading: false, nome: regiao.nome, lojas: regiao.lojas });
+        }
+      } catch (e) {
+        setViewLojasModal({ loading: false, nome: regiao.nome, lojas: regiao.lojas });
+      }
+    } else {
+      setViewLojasModal({ loading: false, nome: regiao.nome, lojas: [] });
+    }
+  };
+
+  const openEditModal = async (regiao: any) => {
+    setEditModal(regiao);
+    setEditLojas(regiao.lojas || []);
+    const pres = (regiao.diretoria || []).find((d: any) => d.cargo === 'Presidente' || d.cargo === 'PRESIDENTE');
+    const vice = (regiao.diretoria || []).find((d: any) => d.cargo === 'Vice-Presidente' || d.cargo === 'VICE_PRESIDENTE');
+    const sec = (regiao.diretoria || []).find((d: any) => d.cargo === 'Secretário' || d.cargo === 'SECRETARIO');
+    setEditPresidente(pres ? pres.usuario_id : '');
+    setEditVice(vice ? vice.usuario_id : '');
+    setEditSecretario(sec ? sec.usuario_id : '');
+    
+    if (regiao.lojas && regiao.lojas.length > 0) {
+      try {
+        const idsToFetch = regiao.lojas.map((l: any) => parseInt(l.loja_id)).filter((id: number) => !isNaN(id));
+        if(idsToFetch.length > 0) {
+          const res = await axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
+          const enrichedLojas = regiao.lojas.map((l: any) => {
+            const details = res.data.find((d: any) => String(d.id) === String(l.loja_id));
+            return details ? { ...l, nome: details.nome, numero: details.numero } : l;
+          });
+          setEditLojas(enrichedLojas);
+        }
+      } catch (e) {
+        console.error('Erro ao buscar detalhes das lojas', e);
+      }
     }
   };
 
@@ -208,7 +262,11 @@ export default function PainelSuperAdmin() {
               ) : regioes.filter(r => r.nome.toLowerCase().includes(search.toLowerCase())).map(regiao => (
                 <tr key={regiao.id} className="border-b border-[#222] hover:bg-[#151515] transition-colors">
                   <td className="p-4 font-medium text-[#facc15]">{regiao.nome} <span className="text-gray-500 text-xs ml-2">({regiao.uf})</span></td>
-                  <td className="p-4 text-gray-300">0 Lojas ativas</td>
+                  <td className="p-4 text-gray-300">
+                      <button onClick={() => openViewLojas(regiao)} className="hover:text-[#facc15] underline decoration-dashed underline-offset-4 transition-colors">
+                        {regiao.lojas?.length || 0} Lojas ativas
+                      </button>
+                    </td>
                   <td className="p-4">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                       regiao.ativa ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'
@@ -218,16 +276,7 @@ export default function PainelSuperAdmin() {
                   </td>
                   <td className="p-4 text-right flex justify-end gap-2">
                     <button 
-                      onClick={() => {
-                        setEditModal(regiao);
-                        setEditLojas(regiao.lojas || []);
-                        const pres = (regiao.diretoria || []).find((d: any) => d.cargo === 'Presidente' || d.cargo === 'PRESIDENTE');
-                        const vice = (regiao.diretoria || []).find((d: any) => d.cargo === 'Vice-Presidente' || d.cargo === 'VICE_PRESIDENTE');
-                        const sec = (regiao.diretoria || []).find((d: any) => d.cargo === 'Secretário' || d.cargo === 'SECRETARIO');
-                        setEditPresidente(pres ? pres.usuario_id : '');
-                        setEditVice(vice ? vice.usuario_id : '');
-                        setEditSecretario(sec ? sec.usuario_id : '');
-                      }}
+                      onClick={() => openEditModal(regiao)}
                       className="p-2 hover:bg-[#222] rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1"
                       title="Editar Dados da Região"
                     >
@@ -346,47 +395,48 @@ export default function PainelSuperAdmin() {
                   </button>
                 </div>
               </div>
-            ) : (
-              <form className="space-y-6" onSubmit={handleCreate}>
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-200">Composição da Diretoria</h3>
-                  <p className="text-sm text-gray-500 mb-4">Resolva o CIM de cada diretor no sistema e-Sigma antes de salvar a região. Se precisar criar um novo Obreiro, referencie uma das lojas criadas no passo anterior.</p>
-                  
-                  <BuscadorObreiro cargo="Presidente" lojasConselho={selectedLojas} onSuccess={(cim) => setPresidenteId(cim)} />
-                  <BuscadorObreiro cargo="Vice-Presidente" lojasConselho={selectedLojas} onSuccess={(cim) => setVicePresidenteId(cim)} />
-                  <BuscadorObreiro cargo="Secretário" lojasConselho={selectedLojas} onSuccess={(cim) => setSecretarioId(cim)} />
-                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-200">Composição da Diretoria</h3>
+                    <p className="text-sm text-gray-500 mb-4">Resolva o CIM de cada diretor no sistema e-Sigma antes de salvar a região. Se precisar criar um novo Obreiro, referencie uma das lojas criadas no passo anterior.</p>
+                    
+                    <BuscadorObreiro cargo="Presidente" lojasConselho={selectedLojas} onSuccess={(cim) => setPresidenteId(cim)} />
+                    <BuscadorObreiro cargo="Vice-Presidente" lojasConselho={selectedLojas} onSuccess={(cim) => setVicePresidenteId(cim)} />
+                    <BuscadorObreiro cargo="Secretário" lojasConselho={selectedLojas} onSuccess={(cim) => setSecretarioId(cim)} />
+                  </div>
 
-                <div className="border-t border-[#333] pt-6 flex justify-between">
-                  <button 
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white transition-colors border border-[#333]"
-                  >
-                    Voltar
-                  </button>
-                  <div className="flex gap-3">
+                  <div className="border-t border-[#333] pt-6 flex justify-between">
                     <button 
                       type="button"
-                      onClick={() => { setShowModal(false); setStep(1); }}
-                      className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white transition-colors"
+                      onClick={() => setStep(1)}
+                      className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white transition-colors border border-[#333]"
                     >
-                      Cancelar
+                      Voltar
                     </button>
-                    <button 
-                      type="submit"
-                      className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ${presidenteId || vicePresidenteId || secretarioId ? 'bg-[#facc15] hover:bg-[#eab308] text-black' : 'bg-[#333] text-gray-500 cursor-not-allowed'}`}
-                      disabled={!presidenteId && !vicePresidenteId && !secretarioId}
-                    >
-                      Criar e Salvar no Banco
-                    </button>
+                    <div className="flex gap-3">
+                      <button 
+                        type="button"
+                        onClick={() => { setShowModal(false); setStep(1); }}
+                        className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={(e) => handleCreate(e as unknown as React.FormEvent)}
+                        className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ${presidenteId || vicePresidenteId || secretarioId ? 'bg-[#facc15] hover:bg-[#eab308] text-black' : 'bg-[#333] text-gray-500 cursor-not-allowed'}`}
+                        disabled={!presidenteId && !vicePresidenteId && !secretarioId}
+                      >
+                        Criar e Salvar no Banco
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </form>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Modal de Edição */}
       {editModal && (
@@ -394,7 +444,7 @@ export default function PainelSuperAdmin() {
           <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-2xl">
             <h2 className="text-2xl font-bold text-[#facc15] mb-6">Editar Conselho Regional</h2>
             
-            <form className="space-y-6 max-h-[70vh] overflow-y-auto pr-2" onSubmit={handleUpdate}>
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Nome do Conselho</label>
@@ -432,16 +482,25 @@ export default function PainelSuperAdmin() {
                   <div className="mt-2 p-3 bg-[#151515] border border-[#333] rounded-lg max-h-32 overflow-y-auto">
                     <ul className="space-y-2">
                       {editLojas.map(loja => (
-                        <li key={loja.id} className="flex items-center justify-between text-xs text-gray-300 bg-[#080808] p-2 rounded">
-                          <span>{loja.nome} <span className="text-gray-500 ml-1">(Nº {loja.numero || (loja.loja_id ? loja.loja_id.substring(0,8) : '')})</span></span>
-                          <button 
-                            type="button"
-                            onClick={() => setEditLojas(editLojas.filter(l => l.id !== loja.id))}
-                            className="text-red-500 hover:text-red-400"
-                          >
-                            Remover
-                          </button>
-                        </li>
+                          <li key={loja.id} className="flex items-center justify-between text-xs text-gray-300 bg-[#080808] p-2 rounded">
+                            <span>{loja.nome ? `Loja ${loja.nome}, nº ${loja.numero}` : `(Nº ${loja.numero || (loja.loja_id ? String(loja.loja_id).substring(0,8) : '')})`}</span>
+                            <div className="flex items-center gap-2">
+                              <button 
+                                type="button"
+                                onClick={() => setAddObreiroModal(loja)}
+                                className="text-blue-500 hover:text-blue-400"
+                              >
+                                Cadastrar Membro
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => setEditLojas(editLojas.filter(l => l.id !== loja.id))}
+                                className="text-red-500 hover:text-red-400"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          </li>
                       ))}
                     </ul>
                   </div>
@@ -469,16 +528,57 @@ export default function PainelSuperAdmin() {
                   Cancelar
                 </button>
                 <button 
-                  type="submit"
+                  type="button"
+                  onClick={(e) => handleUpdate(e as unknown as React.FormEvent)}
                   className="bg-[#facc15] hover:bg-[#eab308] text-black px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
                 >
                   Salvar Alterações
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
+      {/* Modal de View Lojas */}
+      {viewLojasModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[#facc15]">Lojas: {viewLojasModal.nome}</h2>
+              <button onClick={() => setViewLojasModal(null)} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto pr-2">
+              {viewLojasModal.loading ? (
+                <div className="flex justify-center items-center py-8 text-gray-500">Carregando lojas...</div>
+              ) : viewLojasModal.lojas.length === 0 ? (
+                <div className="text-gray-500 text-center py-4">Nenhuma loja cadastrada neste conselho.</div>
+              ) : (
+                <ul className="space-y-2">
+                  {viewLojasModal.lojas.map((loja: any, idx: number) => (
+                    <li key={idx} className="p-3 bg-[#1a1a1a] border border-[#333] rounded-lg text-gray-200 flex justify-between items-center">
+                      <span className="font-medium">
+                        {loja.nome ? `Loja ${loja.nome}, nº ${loja.numero}` : `(Nº ${loja.numero || loja.loja_id})`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addObreiroModal && (
+        <ModalCadastroObreiro 
+          lojasDisponiveis={[{ id: addObreiroModal.id || addObreiroModal.loja_id, nome: addObreiroModal.nome }]}
+          onSuccess={(cim) => {
+            alert(`Obreiro CIM ${cim} cadastrado com sucesso!`);
+            setAddObreiroModal(null);
+          }}
+          onCancel={() => setAddObreiroModal(null)}
+        />
+      )}
+
     </div>
   );
 }

@@ -10,6 +10,23 @@ from schemas.schemas import ObreiroCreateOnTheFly
 
 router = APIRouter()
 
+@router.get("/busca/{cim}")
+def buscar_obreiro_por_cim(cim: str, db: Session = Depends(get_db_lojas)):
+    """
+    Busca um obreiro pelo CIM no lojas_db.
+    """
+    obreiro = db.query(ObreiroIntegracao).filter(ObreiroIntegracao.cim == cim).first()
+    if not obreiro:
+        raise HTTPException(status_code=404, detail="Obreiro não encontrado.")
+    return {
+        "id": obreiro.id,
+        "cim": obreiro.cim,
+        "nome_completo": obreiro.nome_completo,
+        "email": obreiro.email,
+        "cpf": obreiro.cpf,
+        "telefone": obreiro.telefone
+    }
+
 @router.post("/", response_model=dict, summary="Cadastra Obreiro On-the-Fly", description="Cria um obreiro e registra seu mandato inicial no lojas_db.")
 def cadastrar_obreiro_integracao(obreiro_in: ObreiroCreateOnTheFly, db: Session = Depends(get_db_lojas)):
     """
@@ -49,27 +66,50 @@ def cadastrar_obreiro_integracao(obreiro_in: ObreiroCreateOnTheFly, db: Session 
     db.flush() # Para pegar o ID
     
     # 3. Associação à Loja (Cargo Atual)
-    # Supondo enum mapping no banco original (ex: Venerável Mestre = ID X)
-    cargo_id = 1 if obreiro_in.cargo_loja == "Venerável Mestre" else 2 # Simplificação para o exemplo
+    # Supondo enum mapping no banco original (ex: Venerável Mestre = ID 1)
+    cargo_str = obreiro_in.cargo_atual or obreiro_in.cargo_loja
+    cargo_id_map = {
+        "Venerável Mestre": 1,
+        "Secretário": 5,
+        "Tesoureiro": 6,
+        "Chanceler": 7,
+    }
+    cargo_id = cargo_id_map.get(cargo_str, 2) if cargo_str else 2
     
     associacao = ObreiroLojaAssociacao(
         obreiro_id=novo_obreiro.id,
         loja_id=obreiro_in.loja_id,
-        cargo_id=cargo_id
+        status='Ativo',
+        classe_obreiro='Regular',
+        data_inicio=date.today()
     )
     db.add(associacao)
     
-    # 4. Histórico de Mandato
-    mandato = Mandato(
-        obreiro_id=novo_obreiro.id,
-        loja_id=obreiro_in.loja_id,
-        cargo_id=cargo_id,
-        inicio_mandato=date.today()
-    )
-    db.add(mandato)
+    if cargo_str:
+        # 4. Histórico de Mandato
+        mandato = Mandato(
+            obreiro_id=novo_obreiro.id,
+            loja_id=obreiro_in.loja_id,
+            cargo_id=cargo_id,
+            data_inicio=obreiro_in.data_inicio_mandato or date.today()
+        )
+        db.add(mandato)
     
     db.commit()
     db.refresh(novo_obreiro)
+    
+    # 5. Gerar e enviar senha
+    try:
+        import string
+        import random
+        from core.email_service import enviar_email_credenciais
+        
+        senha_temp = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        if novo_obreiro.email:
+            enviar_email_credenciais(novo_obreiro.email, novo_obreiro.nome_completo, novo_obreiro.cim, senha_temp)
+            # Em prod salva hash_senha no banco
+    except Exception as e:
+        logger.error(f"Erro ao enviar email: {e}")
     
     logger.info(f"Obreiro {novo_obreiro.nome_completo} criado com sucesso com ID {novo_obreiro.id}")
     return {"status": "success", "obreiro_id": novo_obreiro.id, "cim": novo_obreiro.cim}

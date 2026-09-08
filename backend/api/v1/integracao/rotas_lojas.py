@@ -40,10 +40,58 @@ def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = D
                 (LojaIntegracao.numero_loja.ilike(termo)) |
                 (LojaIntegracao.cidade.ilike(termo))
             ).limit(20).all()
-            return [{"id": l.id, "nome": l.nome_loja, "numero_loja": l.numero_loja, "cidade": l.cidade} for l in lojas]
         except Exception as e2:
-             logger.error(f"Erro no fallback: {e2}")
-             return []
+            logger.error(f"Erro no fallback: {e2}")
+            return []
+
+@router.post("/busca/multiplas", summary="Busca multiplas lojas por ID", description="Retorna os detalhes de varias lojas baseado em uma lista de IDs.")
+def buscar_lojas_multiplas(ids: list[int], db_lista: Session = Depends(get_db_lista)):
+    try:
+        if not ids:
+            return []
+        
+        ids_str = ",".join(str(i) for i in ids if isinstance(i, int))
+        if not ids_str:
+            return []
+            
+        result = db_lista.execute(
+            text(f"""
+                SELECT l.id, l.lodge_name, l.lodge_number, l.city, o.acronym, l.rite 
+                FROM lodges l
+                LEFT JOIN obediences o ON l.obedience_id = o.id
+                WHERE l.id IN ({ids_str})
+            """)
+        ).fetchall()
+        
+        return [{"id": row[0], "nome": row[1], "numero": str(row[2]), "cidade": row[3] if len(row) > 3 else '', "potencia": row[4] if len(row) > 4 and row[4] else '', "rito": row[5] if len(row) > 5 else ''} for row in result]
+    except Exception as e:
+        logger.error(f"Erro ao buscar lojas em lote: {e}")
+        return []
+
+@router.post("/status_vm", summary="Verifica status de Venerável Mestre", description="Retorna os nomes dos VMs cadastrados nas lojas solicitadas")
+def verificar_status_vm(ids: list[int], db_lojas: Session = Depends(get_db_lojas)):
+    try:
+        if not ids:
+            return {}
+            
+        from models.lojas_models import Mandato, ObreiroIntegracao
+        # Busca todas as associações de VM (cargo_id = 1) e o nome do obreiro
+        resultados = db_lojas.query(Mandato.loja_id, ObreiroIntegracao.nome_completo).join(
+            ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
+        ).filter(
+            Mandato.loja_id.in_(ids),
+            Mandato.cargo_id == 1,
+            Mandato.data_fim.is_(None) # Apenas mandato ativo
+        ).all()
+        
+        # Mapeia loja_id -> nome_completo
+        lojas_com_vm = {row.loja_id: row.nome_completo for row in resultados}
+        
+        # Retorna dicionário com o nome ou None se não tiver
+        return {loja_id: lojas_com_vm.get(loja_id) for loja_id in ids}
+    except Exception as e:
+        logger.error(f"Erro ao verificar status VM em lote: {e}")
+        return {}
 
 @router.post("/", response_model=dict, summary="Cadastra Loja On-the-Fly", description="Cria uma loja diretamente no lojas_db respeitando regras de GLEGO e GOB.")
 def cadastrar_loja_integracao(loja_in: LojaCreateOnTheFly, db: Session = Depends(get_db_lojas)):

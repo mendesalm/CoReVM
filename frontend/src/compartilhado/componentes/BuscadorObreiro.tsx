@@ -9,28 +9,37 @@ const API_URL = 'http://localhost:8003/api/v1';
 interface Props {
   cargo: string;
   lojasConselho: {id: number, nome: string}[]; // Lojas que já estão selecionadas na Região
+  defaultCim?: string;
   onSuccess: (cim: string) => void;
 }
 
-export default function BuscadorObreiro({ cargo, lojasConselho, onSuccess }: Props) {
-  const [cim, setCim] = useState('');
+export default function BuscadorObreiro({ cargo, lojasConselho, defaultCim, onSuccess }: Props) {
+  const [cim, setCim] = useState(defaultCim || '');
   const [buscando, setBuscando] = useState(false);
   const [erro, setErro] = useState('');
   const [nomeEncontrado, setNomeEncontrado] = useState('');
   const [mostrarCadastroObreiro, setMostrarCadastroObreiro] = useState(false);
   const [travar, setTravar] = useState(false);
 
-  const buscarCim = async () => {
-    if (cim.length < 3) return;
+  React.useEffect(() => {
+    if (defaultCim && defaultCim.length >= 3) {
+      buscarCim(defaultCim);
+    }
+  }, [defaultCim]);
+
+  const buscarCim = async (cimToSearch?: string | React.FocusEvent | React.KeyboardEvent) => {
+    const term = typeof cimToSearch === 'string' ? cimToSearch : cim;
+    if (term.length < 3) return;
     setBuscando(true);
     setErro('');
     setMostrarCadastroObreiro(false);
     try {
-      // Dummy check. In real app, it would check IdP
-      // const res = await axios.get(`${API_URL}/integracao/obreiros/busca/${cim}`);
-      throw new Error("Não encontrado"); // Simulando não encontrado para forçar modal
+      const res = await axios.get(`${API_URL}/integracao/obreiros/busca/${term}`);
+      setNomeEncontrado(res.data.nome_completo);
+      setTravar(true);
+      onSuccess(term);
     } catch (err) {
-      setErro(`CIM ${cim} não localizado no e-Sigma.`);
+      setErro(`CIM ${term} não localizado no e-Sigma.`);
       setMostrarCadastroObreiro(true);
     } finally {
       setBuscando(false);

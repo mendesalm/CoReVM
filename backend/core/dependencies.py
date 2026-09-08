@@ -15,6 +15,11 @@ def get_current_director(
     Bloqueia acesso a rotas regionais se o usuário logado não for o Presidente, 
     Vice-Presidente ou Secretário DO EXATO regiao_id solicitado.
     """
+    # Bypass temporário para SuperAdmin ou mock de desenvolvimento
+    if x_user_id in ["superadmin", "CIM_12345_PRESIDENTE", "admin"]:
+        logger.info(f"Acesso autorizado por bypass (SuperAdmin): {x_user_id} acessando a Região {regiao_id}.")
+        return DiretoriaConselho(usuario_id=x_user_id, cargo="SUPERADMIN")
+
     diretor = db.query(DiretoriaConselho).filter(
         DiretoriaConselho.regiao_id == regiao_id,
         DiretoriaConselho.usuario_id == x_user_id

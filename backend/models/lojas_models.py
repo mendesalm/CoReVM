@@ -35,14 +35,18 @@ class ObreiroIntegracao(Base):
     email = Column(String(255), unique=True, index=True, nullable=True)
     cpf = Column(String(14), unique=True, index=True, nullable=True)
     telefone = Column(String(20), nullable=True)
-    ativo = Column(Boolean, default=True)
+    status = Column(String(50), nullable=True)
 
 class ObreiroLojaAssociacao(Base):
-    __tablename__ = "obreiros_lojas_associacao"
+    __tablename__ = "obreiro_loja_associacoes"
     
-    obreiro_id = Column(Integer, ForeignKey("obreiros.id"), primary_key=True)
-    loja_id = Column(Integer, ForeignKey("lojas.id"), primary_key=True)
-    cargo_id = Column(Integer, nullable=True)
+    id = Column(Integer, primary_key=True)
+    obreiro_id = Column(Integer, ForeignKey("obreiros.id"))
+    loja_id = Column(Integer, ForeignKey("lojas.id"))
+    status = Column(String(50))
+    classe_obreiro = Column(String(50))
+    data_inicio = Column(Date)
+    data_fim = Column(Date)
 
 class Mandato(Base):
     __tablename__ = "mandatos"
@@ -50,4 +54,6 @@ class Mandato(Base):
     obreiro_id = Column(Integer, ForeignKey("obreiros.id"), nullable=False)
     loja_id = Column(Integer, ForeignKey("lojas.id"), nullable=False)
     cargo_id = Column(Integer, nullable=False)
-    inicio_mandato = Column(Date, nullable=False)
+    data_inicio = Column(Date, nullable=False)
+    data_fim = Column(Date, nullable=True)
+    gestao_id = Column(Integer, nullable=True)

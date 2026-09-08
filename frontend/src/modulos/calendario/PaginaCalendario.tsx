@@ -1,9 +1,9 @@
-// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 
 export default function PaginaCalendario() {
   const [showModal, setShowModal] = useState(false);
@@ -106,7 +106,13 @@ export default function PaginaCalendario() {
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
           height="100%"
-          locale="pt-br"
+          locale={ptBrLocale}
+          buttonText={{
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            day: 'Dia',
+          }}
         />
       </div>
 

@@ -1,0 +1,104 @@
+.sigma-logo-wrapper {
+  /* Variáveis de Material (Padrão: Prata Metálico) */
+  --m-light: #ffffff;
+  --m-mid: #94a3b8;
+  --m-dark: #334155;
+  --m-deep: #1e293b;
+  --m-accent: #ffffff;
+}
+
+/* Tema: Ouro Maçónico */
+.sigma-logo-wrapper[data-theme="ouro"] {
+  --m-light: #fef08a;
+  --m-mid: #eab308;
+  --m-dark: #854d0e;
+  --m-deep: #422006;
+  --m-accent: #facc15;
+}
+
+/* Tema: Aço Carbono */
+.sigma-logo-wrapper[data-theme="carbono"] {
+  --m-light: #94a3b8;
+  --m-mid: #475569;
+  --m-dark: #1e293b;
+  --m-deep: #020617;
+  --m-accent: #cbd5e1;
+}
+
+/* Tema: Neon / Cyber */
+.sigma-logo-wrapper[data-theme="cyber"] {
+  --m-light: #e0f2fe;
+  --m-mid: #38bdf8;
+  --m-dark: #0369a1;
+  --m-deep: #082f49;
+  --m-accent: #7dd3fc;
+}
+
+/* Tema: Cyber Light */
+.sigma-logo-wrapper[data-theme="cyber-light"] {
+  --m-light: #082f49;
+  --m-mid: #0284c7;
+  --m-dark: #38bdf8;
+  --m-deep: #e0f2fe;
+  --m-accent: #0284c7;
+}
+
+.sigma-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  width: 100%;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.sigma-logo-symbol {
+  position: relative;
+}
+
+.sigma-logo-animated {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); filter: drop-shadow(0 25px 35px rgba(0,0,0,0.6)); }
+  100% { transform: translateY(0px); }
+}
+
+.sigma-logo-symbol svg {
+  overflow: visible;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
+  transition: all 0.5s ease;
+}
+
+.sigma-logo-text {
+  font-size: 46px;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  margin-right: -0.35em;
+  background: linear-gradient(to bottom, var(--m-light) 0%, var(--m-mid) 50%, var(--m-deep) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  text-transform: uppercase;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+  transition: all 0.5s ease;
+}
+
+.sigma-subtitle {
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  color: #7b8794;
+  text-transform: uppercase;
+  margin-bottom: 30px;
+}
+
+/* Ajuste fino para os gradientes lerem as variáveis CSS */
+.sigma-logo-symbol stop.light { stop-color: var(--m-light); }
+.sigma-logo-symbol stop.mid { stop-color: var(--m-mid); }
+.sigma-logo-symbol stop.dark { stop-color: var(--m-dark); }
+.sigma-logo-symbol stop.deep { stop-color: var(--m-deep); }

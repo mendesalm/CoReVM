@@ -101,8 +101,10 @@ class ObreiroCreateOnTheFly(BaseModel):
     nome_completo: str
     email: str
     cpf: str
-    telefone: str
     loja_id: int
+    telefone: Optional[str] = None
+    cargo_atual: Optional[str] = None
+    data_inicio_mandato: Optional[date] = None
     cargo_loja: Optional[CargoLoja] = None
     
     @field_validator('nome_completo')
