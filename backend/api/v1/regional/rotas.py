@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from pydantic import BaseModel
 
 from database import get_db_core, get_db_lojas
-from models.models import Regiao, DiretoriaConselho, LojaAgregada
+from models.models import Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional
 from models.lojas_models import ObreiroIntegracao
 from core.constants import CargoConselho
 from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
@@ -164,3 +164,86 @@ def remover_loja_conselho(
     db.delete(loja)
     db.commit()
     return {"message": "Loja desvinculada do conselho com sucesso"}
+
+class AvisoCreatePayload(BaseModel):
+    titulo: str
+    conteudo: str
+    tipo: Optional[str] = "COMUNICADO"
+    fixado: Optional[bool] = False
+
+@router.get("/{regiao_id}/avisos", summary="Lista os avisos e notificações do conselho")
+def listar_avisos_regionais(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Retorna os avisos da região ordenados por fixados primeiro e data mais recente.
+    """
+    avisos = db.query(AvisoRegional).filter(
+        AvisoRegional.regiao_id == regiao_id
+    ).order_by(
+        AvisoRegional.fixado.desc(),
+        AvisoRegional.data_publicacao.desc(),
+        AvisoRegional.id.desc()
+    ).all()
+    
+    return [
+        {
+            "id": a.id,
+            "titulo": a.titulo,
+            "conteudo": a.conteudo,
+            "tipo": a.tipo,
+            "autor_nome": a.autor_nome,
+            "autor_cargo": a.autor_cargo,
+            "fixado": a.fixado,
+            "data_publicacao": a.data_publicacao.isoformat() if a.data_publicacao else None
+        }
+        for a in avisos
+    ]
+
+@router.post("/{regiao_id}/avisos", summary="Publica um novo aviso ou notificação no conselho")
+def criar_aviso_regional(
+    regiao_id: str,
+    payload: AvisoCreatePayload,
+    diretor: RegionalUserContext = Depends(get_current_director),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Exclusivo para Diretoria ou SuperAdmin: publica um comunicado ou convocação.
+    """
+    novo_aviso = AvisoRegional(
+        regiao_id=regiao_id,
+        titulo=payload.titulo,
+        conteudo=payload.conteudo,
+        tipo=payload.tipo or "COMUNICADO",
+        autor_nome="Diretoria do Conselho",
+        autor_cargo=diretor.role,
+        fixado=payload.fixado or False,
+        data_publicacao=date.today()
+    )
+    db.add(novo_aviso)
+    db.commit()
+    db.refresh(novo_aviso)
+    return {"status": "success", "aviso_id": novo_aviso.id, "message": "Aviso publicado com sucesso."}
+
+@router.delete("/{regiao_id}/avisos/{aviso_id}", summary="Remove um aviso do conselho")
+def excluir_aviso_regional(
+    regiao_id: str,
+    aviso_id: str,
+    diretor: RegionalUserContext = Depends(get_current_director),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Exclusivo para Diretoria ou SuperAdmin: remove um aviso.
+    """
+    aviso = db.query(AvisoRegional).filter(
+        AvisoRegional.id == aviso_id,
+        AvisoRegional.regiao_id == regiao_id
+    ).first()
+    if not aviso:
+        raise HTTPException(status_code=404, detail="Aviso não encontrado.")
+    db.delete(aviso)
+    db.commit()
+    return {"status": "success", "message": "Aviso removido com sucesso."}
+

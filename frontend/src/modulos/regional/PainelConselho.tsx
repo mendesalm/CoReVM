@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  Building2, Users, FileText, ArrowLeft, ShieldCheck, Loader2, 
-  Award, Calendar, Edit3, Lock, ChevronDown 
+  Building2, FileText, ArrowLeft, ShieldCheck, Loader2, 
+  Award, Calendar, Edit3, Lock, ChevronDown, Bell, Pin, Trash2, Plus 
 } from 'lucide-react';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../compartilhado/componentes/ModalCadastroObreiro';
@@ -31,6 +31,17 @@ export default function PainelConselho() {
 
   // Accordion Lojas
   const [lojasExpanded, setLojasExpanded] = useState(true);
+
+  // Mural de Avisos e Notificações
+  const [avisos, setAvisos] = useState<any[]>([]);
+  const [showNovoAvisoModal, setShowNovoAvisoModal] = useState(false);
+  const [salvandoAviso, setSalvandoAviso] = useState(false);
+  const [avisoForm, setAvisoForm] = useState({
+    titulo: '',
+    conteudo: '',
+    tipo: 'COMUNICADO',
+    fixado: false
+  });
 
   // Modais
   const [gestaoVmModal, setGestaoVmModal] = useState<any>(null);
@@ -96,14 +107,16 @@ export default function PainelConselho() {
       const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
       setUserContext(userRes.data);
 
-      // 2. Dados da Região e Lojas
-      const [resDashboard, resDiretoria] = await Promise.all([
+      // 2. Dados da Região, Diretoria e Avisos
+      const [resDashboard, resDiretoria, resAvisos] = await Promise.all([
         axios.get(`${API_URL}/regional/${id}/dashboard`, { headers }),
-        axios.get(`${API_URL}/regional/${id}/diretoria`, { headers })
+        axios.get(`${API_URL}/regional/${id}/diretoria`, { headers }),
+        axios.get(`${API_URL}/regional/${id}/avisos`, { headers })
       ]);
 
       const data = resDashboard.data;
       setDiretoria(resDiretoria.data || []);
+      setAvisos(resAvisos.data || []);
 
       // Preenche form com valores atuais
       const pres = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'presidente');
@@ -194,6 +207,38 @@ export default function PainelConselho() {
       alert(err.response?.data?.detail || 'Erro ao atualizar diretoria');
     } finally {
       setSalvandoDiretoria(false);
+    }
+  };
+
+  // Publicar Novo Aviso
+  const handleCriarAviso = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSalvandoAviso(true);
+    try {
+      await axios.post(`${API_URL}/regional/${id}/avisos`, avisoForm, {
+        headers: { 'X-User-Id': activeUserId }
+      });
+      alert('Aviso publicado com sucesso no mural do conselho!');
+      setShowNovoAvisoModal(false);
+      setAvisoForm({ titulo: '', conteudo: '', tipo: 'COMUNICADO', fixado: false });
+      setReloadKey(k => k + 1);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Erro ao publicar aviso');
+    } finally {
+      setSalvandoAviso(false);
+    }
+  };
+
+  // Excluir Aviso
+  const handleExcluirAviso = async (avisoId: string) => {
+    if (!window.confirm('Tem certeza que deseja remover este aviso do mural?')) return;
+    try {
+      await axios.delete(`${API_URL}/regional/${id}/avisos/${avisoId}`, {
+        headers: { 'X-User-Id': activeUserId }
+      });
+      setReloadKey(k => k + 1);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Erro ao remover aviso');
     }
   };
 
@@ -330,27 +375,137 @@ export default function PainelConselho() {
           </div>
         </div>
 
-        {/* Cards de Métricas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#151515] p-6 rounded-xl border border-[#333] shadow-lg flex items-center gap-4">
-            <div className="p-3 bg-blue-500/10 rounded-lg"><Building2 className="w-8 h-8 text-blue-500"/></div>
+        {/* Seção: Mural de Avisos & Documentos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Widget Principal: Avisos e Notificações (Ocupa 2 colunas no desktop) */}
+          <div className="lg:col-span-2 bg-[#151515] border border-[#333] rounded-xl p-5 shadow-xl flex flex-col justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Lojas Jurisdicionadas</p>
-              <h2 className="text-3xl font-bold text-white">{conselho?.lojas?.length || 0}</h2>
+              <div className="flex items-center justify-between pb-3 border-b border-[#262626] mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-[#facc15]/10 border border-[#facc15]/20 rounded-lg text-[#facc15]">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-white tracking-wide">
+                        Avisos e Notificações
+                      </h3>
+                      <span className="bg-[#222] text-[#facc15] text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#444]">
+                        {avisos.length} {avisos.length === 1 ? 'comunicado' : 'comunicados'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Comunicados oficiais, convocações e alertas da Diretoria do Conselho
+                    </p>
+                  </div>
+                </div>
+
+                {userContext.is_diretoria && (
+                  <button 
+                    onClick={() => setShowNovoAvisoModal(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Novo Aviso
+                  </button>
+                )}
+              </div>
+
+              {/* Lista de Avisos */}
+              <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                {avisos.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-xs">
+                    Nenhum aviso ou comunicado pendente no momento.
+                  </div>
+                ) : (
+                  avisos.map((a: any) => {
+                    const isConvocacao = a.tipo === 'CONVOCACAO';
+                    const isAlerta = a.tipo === 'ALERTA' || a.tipo === 'URGENTE';
+                    return (
+                      <div 
+                        key={a.id}
+                        className={`p-3.5 rounded-xl border transition-all ${
+                          a.fixado 
+                            ? 'bg-gradient-to-r from-[#1c1a12] to-[#151515] border-[#facc15]/30' 
+                            : 'bg-[#181818] border-[#2b2b2b] hover:border-[#444]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {a.fixado && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/30">
+                                  <Pin className="w-3 h-3" /> FIXADO
+                                </span>
+                              )}
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                isConvocacao 
+                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                                  : isAlerta 
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                              }`}>
+                                {a.tipo}
+                              </span>
+                              <h4 className="text-sm font-bold text-white">{a.titulo}</h4>
+                            </div>
+                            <p className="text-xs text-gray-300 leading-relaxed pt-0.5 whitespace-pre-line">
+                              {a.conteudo}
+                            </p>
+                          </div>
+
+                          {userContext.is_diretoria && (
+                            <button
+                              onClick={() => handleExcluirAviso(a.id)}
+                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
+                              title="Remover aviso"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="mt-2.5 pt-2 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400">
+                          <span className="flex items-center gap-1">
+                            <Award className="w-3 h-3 text-[#facc15]" />
+                            {a.autor_nome || 'Diretoria'} {a.autor_cargo && `(${a.autor_cargo})`}
+                          </span>
+                          <span className="flex items-center gap-1 text-gray-400">
+                            <Calendar className="w-3 h-3 text-gray-500" />
+                            {a.data_publicacao ? a.data_publicacao.split('-').reverse().join('/') : ''}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
-          <div className="bg-[#151515] p-6 rounded-xl border border-[#333] shadow-lg flex items-center gap-4">
-            <div className="p-3 bg-green-500/10 rounded-lg"><Users className="w-8 h-8 text-green-500"/></div>
+
+          {/* Widget Lateral: Atas e Repositório */}
+          <div className="bg-[#151515] p-6 rounded-xl border border-[#333] shadow-xl flex flex-col justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Veneráveis Cadastrados</p>
-              <h2 className="text-3xl font-bold text-white">{conselho?.lojas?.filter((l: any) => l.hasVm).length || 0}</h2>
+              <div className="flex items-center gap-3 pb-3 border-b border-[#262626] mb-4">
+                <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Atas e Documentos</h3>
+                  <p className="text-xs text-gray-400">Repositório documental regional</p>
+                </div>
+              </div>
+              <div className="py-6 text-center space-y-2">
+                <div className="text-4xl font-bold text-white">0</div>
+                <p className="text-xs text-gray-400">Atas e relatórios arquivados</p>
+              </div>
             </div>
-          </div>
-          <div className="bg-[#151515] p-6 rounded-xl border border-[#333] shadow-lg flex items-center gap-4">
-            <div className="p-3 bg-purple-500/10 rounded-lg"><FileText className="w-8 h-8 text-purple-500"/></div>
-            <div>
-              <p className="text-gray-400 text-sm">Atas Recebidas</p>
-              <h2 className="text-3xl font-bold text-white">0</h2>
+            <div className="pt-4 border-t border-[#262626]">
+              <button 
+                onClick={() => alert("O Módulo de Upload de Documentos e Atas das Lojas será ativado na Fase 3 do Roadmap.")}
+                className="w-full bg-[#222] hover:bg-[#282828] text-purple-400 border border-purple-500/30 font-semibold py-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <FileText className="w-4 h-4" /> Consultar Atas
+              </button>
             </div>
           </div>
         </div>
@@ -812,6 +967,101 @@ export default function PainelConselho() {
                   className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-semibold text-xs transition-colors disabled:opacity-50"
                 >
                   {salvandoLoja ? 'Salvando...' : 'Salvar Alterações'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Publicar Novo Aviso no Mural */}
+      {showNovoAvisoModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/30">
+                <Bell className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Publicar Comunicado no Mural</h2>
+                <p className="text-xs text-gray-400">Envie um comunicado oficial visível para todos os membros do conselho.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCriarAviso} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                  Título do Comunicado *
+                </label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Ex: Convocação para Sessão Plenária"
+                  value={avisoForm.titulo}
+                  onChange={(e) => setAvisoForm({...avisoForm, titulo: e.target.value})}
+                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                    Categoria do Aviso
+                  </label>
+                  <select 
+                    value={avisoForm.tipo}
+                    onChange={(e) => setAvisoForm({...avisoForm, tipo: e.target.value})}
+                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                  >
+                    <option value="COMUNICADO">Comunicado Geral</option>
+                    <option value="CONVOCACAO">Convocação Oficial</option>
+                    <option value="ALERTA">Alerta de Regularidade</option>
+                    <option value="URGENTE">Urgente</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 pt-6">
+                  <input 
+                    type="checkbox"
+                    id="fixado_check"
+                    checked={avisoForm.fixado}
+                    onChange={(e) => setAvisoForm({...avisoForm, fixado: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-600 text-[#facc15] focus:ring-[#facc15] bg-[#080808]"
+                  />
+                  <label htmlFor="fixado_check" className="text-xs text-gray-300 cursor-pointer font-medium select-none">
+                    Fixar no topo do mural
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                  Conteúdo / Mensagem *
+                </label>
+                <textarea 
+                  required
+                  rows={4}
+                  placeholder="Digite o texto detalhado do comunicado..."
+                  value={avisoForm.conteudo}
+                  onChange={(e) => setAvisoForm({...avisoForm, conteudo: e.target.value})}
+                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                <button 
+                  type="button" 
+                  onClick={() => setShowNovoAvisoModal(false)}
+                  className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={salvandoAviso}
+                  className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {salvandoAviso && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {salvandoAviso ? 'Publicando...' : 'Publicar no Mural'}
                 </button>
               </div>
             </form>

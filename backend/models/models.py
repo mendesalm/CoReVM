@@ -63,3 +63,20 @@ class SuplenteConselho(Base):
     nome_suplente = Column(String(255), nullable=False)
     email_suplente = Column(String(255), nullable=True)
 
+class AvisoRegional(Base):
+    """
+    Mural de Avisos e Notificações do Conselho Regional.
+    """
+    __tablename__ = "avisos_regionais"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    titulo = Column(String(255), nullable=False)
+    conteudo = Column(String(3000), nullable=False)
+    tipo = Column(String(50), default="COMUNICADO") # COMUNICADO, CONVOCACAO, ALERTA, URGENTE
+    autor_nome = Column(String(255), nullable=True)
+    autor_cargo = Column(String(100), nullable=True)
+    fixado = Column(Boolean, default=False)
+    data_publicacao = Column(Date, nullable=False)
+
+
