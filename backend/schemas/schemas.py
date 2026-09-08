@@ -64,6 +64,24 @@ class DiretoriaCreate(BaseModel):
     inicio_mandato: date
     termino_mandato: date
 
+class DiretoriaMembroResponse(BaseModel):
+    id: str
+    usuario_id: str
+    cargo: CargoConselho
+    inicio_mandato: date
+    termino_mandato: date
+    nome_completo: Optional[str] = None
+    cim: Optional[str] = None
+    email: Optional[str] = None
+    telefone: Optional[str] = None
+
+class DiretoriaUpdatePayload(BaseModel):
+    presidente_id: Optional[str] = None
+    vice_presidente_id: Optional[str] = None
+    secretario_id: Optional[str] = None
+    inicio_mandato: Optional[date] = None
+    termino_mandato: Optional[date] = None
+
 class LojaAgregadaCreate(BaseModel):
     regiao_id: str
     loja_id: str
