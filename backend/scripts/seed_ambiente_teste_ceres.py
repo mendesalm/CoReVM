@@ -227,7 +227,7 @@ def seed():
             for idx_cargo, (cargo_id, cargo_nome, grau_maconico) in enumerate(cargos_ordem):
                 cim_str = str(cim_contador)
                 nome_obreiro = f"{nomes_loja[idx_cargo]} {TAG_TESTE}"
-                email_obreiro = f"cim{cim_str}.loja{l['numero']}@teste-core.org.br"
+                email_obreiro = f"contato+cim{cim_str}@e-sigma.app"
                 cpf_valido = gerar_cpf_valido(base_cpf)
                 tel_whatsapp = f"(62) 999{l['numero'][1:]}-{idx_cargo+1:04d}"
 

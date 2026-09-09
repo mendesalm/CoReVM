@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.v1.regioes.rotas import router as regioes_router
 from api.v1.integracao.rotas import router as integracao_router
 from api.v1.regional.rotas import router as regional_router
+from api.v1.email.rotas import router as email_router
 
 app = FastAPI(
     title="CoReVM API",
@@ -22,6 +23,7 @@ app.add_middleware(
 app.include_router(regioes_router, prefix="/api/v1/regioes", tags=["Regiões"])
 app.include_router(integracao_router, prefix="/api/v1/integracao", tags=["Integração e-Sigma"])
 app.include_router(regional_router, prefix="/api/v1/regional", tags=["Gestão Regional"])
+app.include_router(email_router, prefix="/api/v1/email", tags=["Email e Notificações"])
 
 @app.get("/")
 def read_root():
