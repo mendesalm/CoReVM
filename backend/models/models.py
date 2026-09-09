@@ -1,7 +1,7 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, Date, DateTime, ForeignKey, Enum as SQLAlchemyEnum
+from sqlalchemy import Column, String, Boolean, Date, DateTime, Integer, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 from database import Base
 from core.constants import CargoConselho
@@ -26,6 +26,8 @@ class Regiao(Base):
     lojas = relationship("LojaAgregada", back_populates="regiao")
     previas = relationship("PreviaAdmissao", back_populates="regiao")
     votacoes = relationship("VotacaoRegional", back_populates="regiao")
+    itens_patrimonio = relationship("ItemPatrimonio", back_populates="regiao")
+    emprestimos_patrimonio = relationship("EmprestimoPatrimonio", back_populates="regiao")
 
 class DiretoriaConselho(Base):
     """
@@ -183,6 +185,96 @@ class VotoLoja(Base):
     data_voto = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     votacao = relationship("VotacaoRegional", back_populates="votos")
+
+
+class ItemPatrimonio(Base):
+    """
+    Itens e Ativos de Patrimônio do Conselho Regional ou disponibilizados por Lojas.
+    Categorias: HOSPITALAR (cadeiras de rodas, muletas, camas), MOBILIARIO, AUDIOVISUAL, LITURGICO, ESTRUTURAL, OUTROS.
+    Tipo Propriedade: CONSELHO ou LOJA (rede solidária).
+    """
+    __tablename__ = "itens_patrimonio"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    codigo_tombamento = Column(String(50), nullable=False) # Ex: PAT-2026-001
+    nome = Column(String(255), nullable=False)
+    descricao = Column(String(2000), nullable=True)
+    categoria = Column(String(50), nullable=False, default="HOSPITALAR") # HOSPITALAR, MOBILIARIO, AUDIOVISUAL, LITURGICO, ESTRUTURAL, OUTROS
+    tipo_propriedade = Column(String(50), nullable=False, default="CONSELHO") # CONSELHO, LOJA
+    loja_proprietaria_id = Column(String(36), nullable=True)
+    loja_proprietaria_nome = Column(String(255), nullable=True)
+    loja_proprietaria_numero = Column(String(50), nullable=True)
+    quantidade_total = Column(Integer, default=1, nullable=False)
+    quantidade_disponivel = Column(Integer, default=1, nullable=False)
+    localizacao_fisica = Column(String(255), nullable=True) # Ex: Sede do Conselho, Sala de Hospitalaria, Templo Anápolis
+    estado_conservacao = Column(String(50), default="BOM", nullable=False) # NOVO, OTIMO, BOM, REGULAR, EM_MANUTENCAO
+    permite_emprestimo = Column(Boolean, default=True)
+    permite_locacao = Column(Boolean, default=False)
+    taxa_locacao_estimada = Column(String(100), nullable=True)
+    foto_url = Column(String(500), nullable=True)
+    deletado_visualmente = Column(Boolean, default=False)
+    data_cadastro = Column(DateTime, default=datetime.utcnow)
+
+    regiao = relationship("Regiao", back_populates="itens_patrimonio")
+    emprestimos = relationship("EmprestimoPatrimonio", back_populates="item", cascade="all, delete-orphan", order_by="EmprestimoPatrimonio.data_retirada.desc()")
+    fila = relationship("FilaEsperaPatrimonio", back_populates="item", cascade="all, delete-orphan", order_by="FilaEsperaPatrimonio.data_solicitacao.asc()")
+
+
+class EmprestimoPatrimonio(Base):
+    """
+    Termo de Cautela e Empréstimo / Cessão de Ativo de Patrimônio.
+    Registra datas, responsáveis pela entrega e retirada, e estado de conservação.
+    """
+    __tablename__ = "emprestimos_patrimonio"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    item_id = Column(String(36), ForeignKey("itens_patrimonio.id"), nullable=False)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    loja_solicitante_id = Column(String(36), nullable=False)
+    loja_solicitante_nome = Column(String(255), nullable=False)
+    loja_solicitante_numero = Column(String(50), nullable=False)
+    beneficiario_final = Column(String(255), nullable=True) # Ex: "Familiar do Ir.'. Silva (Preservação de Discrição)"
+    responsavel_retirada_nome = Column(String(255), nullable=False)
+    responsavel_retirada_cargo = Column(String(100), nullable=True)
+    responsavel_retirada_contato = Column(String(100), nullable=True)
+    responsavel_entrega_nome = Column(String(255), nullable=False)
+    responsavel_entrega_cargo = Column(String(100), nullable=True)
+    data_retirada = Column(Date, nullable=False)
+    data_prevista_devolucao = Column(Date, nullable=False)
+    data_efetiva_devolucao = Column(Date, nullable=True)
+    quantidade = Column(Integer, default=1, nullable=False)
+    status = Column(String(50), default="ATIVO", nullable=False) # ATIVO, CONCLUIDO, ATRASADO, CANCELADO
+    estado_conservacao_entrega = Column(String(50), default="BOM")
+    estado_conservacao_devolucao = Column(String(50), nullable=True)
+    observacoes = Column(String(2000), nullable=True)
+    data_solicitacao = Column(DateTime, default=datetime.utcnow)
+
+    item = relationship("ItemPatrimonio", back_populates="emprestimos")
+    regiao = relationship("Regiao", back_populates="emprestimos_patrimonio")
+
+
+class FilaEsperaPatrimonio(Base):
+    """
+    Fila de Espera para itens com 0 unidades disponíveis no momento.
+    """
+    __tablename__ = "fila_espera_patrimonio"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    item_id = Column(String(36), ForeignKey("itens_patrimonio.id"), nullable=False)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    loja_solicitante_id = Column(String(36), nullable=False)
+    loja_solicitante_nome = Column(String(255), nullable=False)
+    loja_solicitante_numero = Column(String(50), nullable=False)
+    responsavel_nome = Column(String(255), nullable=False)
+    contato = Column(String(100), nullable=True)
+    grau_urgencia = Column(String(50), default="NORMAL") # NORMAL, ALTA, URGENTE
+    status = Column(String(50), default="AGUARDANDO") # AGUARDANDO, ATENDIDO, CANCELADO
+    observacoes = Column(String(1000), nullable=True)
+    data_solicitacao = Column(DateTime, default=datetime.utcnow)
+
+    item = relationship("ItemPatrimonio", back_populates="fila")
+
 
 
 

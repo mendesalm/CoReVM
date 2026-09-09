@@ -14,7 +14,8 @@ from pydantic import BaseModel
 from database import get_db_core, get_db_lojas
 from models.models import (
     Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional, 
-    PreviaAdmissao, ConsideracaoPrevia, VotacaoRegional, VotoLoja
+    PreviaAdmissao, ConsideracaoPrevia, VotacaoRegional, VotoLoja,
+    ItemPatrimonio, EmprestimoPatrimonio, FilaEsperaPatrimonio
 )
 from models.lojas_models import ObreiroIntegracao, LojaIntegracao
 from core.constants import CargoConselho
@@ -1123,5 +1124,592 @@ def excluir_votacao_regional(
         return {"status": "success", "tipo_delecao": "VISUAL", "message": "Votação ocultada visualmente com sucesso."}
 
 
+# ==============================================================================
+# MÓDULO 05: GESTÃO DE PATRIMÔNIO & REDE DE AJUDA MÚTUA
+# ==============================================================================
+
+class ItemPatrimonioPayload(BaseModel):
+    codigo_tombamento: Optional[str] = None
+    nome: str
+    descricao: Optional[str] = None
+    categoria: str = "HOSPITALAR" # HOSPITALAR, MOBILIARIO, AUDIOVISUAL, LITURGICO, ESTRUTURAL, OUTROS
+    tipo_propriedade: str = "CONSELHO" # CONSELHO ou LOJA
+    loja_proprietaria_id: Optional[str] = None
+    loja_proprietaria_nome: Optional[str] = None
+    loja_proprietaria_numero: Optional[str] = None
+    quantidade_total: int = 1
+    localizacao_fisica: Optional[str] = None
+    estado_conservacao: str = "BOM" # NOVO, OTIMO, BOM, REGULAR, EM_MANUTENCAO
+    permite_emprestimo: bool = True
+    permite_locacao: bool = False
+    taxa_locacao_estimada: Optional[str] = None
+    foto_url: Optional[str] = None
+
+class EmprestimoPayload(BaseModel):
+    loja_solicitante_id: str
+    loja_solicitante_nome: str
+    loja_solicitante_numero: str
+    beneficiario_final: Optional[str] = None
+    responsavel_retirada_nome: str
+    responsavel_retirada_cargo: Optional[str] = None
+    responsavel_retirada_contato: Optional[str] = None
+    responsavel_entrega_nome: str
+    responsavel_entrega_cargo: Optional[str] = None
+    data_retirada: Optional[date] = None
+    data_prevista_devolucao: date
+    quantidade: int = 1
+    estado_conservacao_entrega: Optional[str] = "BOM"
+    observacoes: Optional[str] = None
+
+class DevolucaoPayload(BaseModel):
+    data_efetiva_devolucao: Optional[date] = None
+    estado_conservacao_devolucao: str = "BOM"
+    observacoes: Optional[str] = None
+
+class FilaEsperaPayload(BaseModel):
+    loja_solicitante_id: str
+    loja_solicitante_nome: str
+    loja_solicitante_numero: str
+    responsavel_nome: str
+    contato: Optional[str] = None
+    grau_urgencia: str = "NORMAL" # NORMAL, ALTA, URGENTE
+    observacoes: Optional[str] = None
 
 
+@router.get("/{regiao_id}/patrimonio/estatisticas", summary="Métricas gerais de patrimônio e empréstimos")
+def obter_estatisticas_patrimonio(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    itens = db.query(ItemPatrimonio).filter(
+        ItemPatrimonio.regiao_id == regiao_id,
+        ItemPatrimonio.deletado_visualmente == False
+    ).all()
+
+    total_ativos = sum(i.quantidade_total for i in itens)
+    total_disponiveis = sum(i.quantidade_disponivel for i in itens)
+    itens_lojas = sum(1 for i in itens if i.tipo_propriedade == "LOJA")
+
+    hoje = date.today()
+    emprestimos_ativos_db = db.query(EmprestimoPatrimonio).filter(
+        EmprestimoPatrimonio.regiao_id == regiao_id,
+        EmprestimoPatrimonio.status.in_(["ATIVO", "ATRASADO"])
+    ).all()
+
+    total_emprestimos_ativos = len(emprestimos_ativos_db)
+    total_atrasados = 0
+    for emp in emprestimos_ativos_db:
+        if emp.data_prevista_devolucao < hoje:
+            total_atrasados += 1
+
+    fila_espera_db = db.query(FilaEsperaPatrimonio).filter(
+        FilaEsperaPatrimonio.regiao_id == regiao_id,
+        FilaEsperaPatrimonio.status == "AGUARDANDO"
+    ).count()
+
+    return {
+        "total_ativos": total_ativos,
+        "total_disponiveis": total_disponiveis,
+        "total_emprestimos_ativos": total_emprestimos_ativos,
+        "total_atrasados": total_atrasados,
+        "itens_lojas_solidarias": itens_lojas,
+        "fila_espera_total": fila_espera_db
+    }
+
+
+@router.get("/{regiao_id}/patrimonio/itens", summary="Lista os itens de patrimônio com filtros e disponibilidade")
+def listar_itens_patrimonio(
+    regiao_id: str,
+    categoria: Optional[str] = None,
+    tipo_propriedade: Optional[str] = None,
+    apenas_disponiveis: bool = False,
+    busca: Optional[str] = None,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    query = db.query(ItemPatrimonio).filter(
+        ItemPatrimonio.regiao_id == regiao_id,
+        ItemPatrimonio.deletado_visualmente == False
+    )
+
+    if categoria and categoria.upper() != "TODAS":
+        query = query.filter(ItemPatrimonio.categoria == categoria.upper())
+
+    if tipo_propriedade and tipo_propriedade.upper() != "TODOS":
+        query = query.filter(ItemPatrimonio.tipo_propriedade == tipo_propriedade.upper())
+
+    if apenas_disponiveis:
+        query = query.filter(ItemPatrimonio.quantidade_disponivel > 0)
+
+    if busca:
+        busca_termo = f"%{busca.strip()}%"
+        query = query.filter(
+            (ItemPatrimonio.nome.ilike(busca_termo)) |
+            (ItemPatrimonio.codigo_tombamento.ilike(busca_termo)) |
+            (ItemPatrimonio.descricao.ilike(busca_termo)) |
+            (ItemPatrimonio.localizacao_fisica.ilike(busca_termo)) |
+            (ItemPatrimonio.loja_proprietaria_nome.ilike(busca_termo))
+        )
+
+    itens = query.order_by(ItemPatrimonio.data_cadastro.desc()).all()
+
+    resultado = []
+    user_loja_id = user.loja_id
+
+    for item in itens:
+        fila_aguardando = [f for f in item.fila if f.status == "AGUARDANDO"]
+        emprestimos_ativos = [e for e in item.emprestimos if e.status in ["ATIVO", "ATRASADO"]]
+
+        minha_loja_tem_emprestimo = any(e.loja_solicitante_id == user_loja_id for e in emprestimos_ativos) if user_loja_id else False
+        minha_loja_na_fila = any(f.loja_solicitante_id == user_loja_id for f in fila_aguardando) if user_loja_id else False
+
+        resultado.append({
+            "id": item.id,
+            "regiao_id": item.regiao_id,
+            "codigo_tombamento": item.codigo_tombamento,
+            "nome": item.nome,
+            "descricao": item.descricao,
+            "categoria": item.categoria,
+            "tipo_propriedade": item.tipo_propriedade,
+            "loja_proprietaria_id": item.loja_proprietaria_id,
+            "loja_proprietaria_nome": item.loja_proprietaria_nome,
+            "loja_proprietaria_numero": item.loja_proprietaria_numero,
+            "quantidade_total": item.quantidade_total,
+            "quantidade_disponivel": item.quantidade_disponivel,
+            "quantidade_emprestada": item.quantidade_total - item.quantidade_disponivel,
+            "localizacao_fisica": item.localizacao_fisica,
+            "estado_conservacao": item.estado_conservacao,
+            "permite_emprestimo": item.permite_emprestimo,
+            "permite_locacao": item.permite_locacao,
+            "taxa_locacao_estimada": item.taxa_locacao_estimada,
+            "foto_url": item.foto_url,
+            "data_cadastro": item.data_cadastro.strftime("%d/%m/%Y") if item.data_cadastro else "",
+            "fila_espera_count": len(fila_aguardando),
+            "emprestimos_ativos_count": len(emprestimos_ativos),
+            "minha_loja_tem_emprestimo": minha_loja_tem_emprestimo,
+            "minha_loja_na_fila": minha_loja_na_fila,
+            "pode_gerenciar": user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user_loja_id and item.loja_proprietaria_id == user_loja_id)
+        })
+
+    return resultado
+
+
+@router.post("/{regiao_id}/patrimonio/itens", summary="Cadastra novo bem no patrimônio (Conselho ou Loja)")
+def cadastrar_item_patrimonio(
+    regiao_id: str,
+    payload: ItemPatrimonioPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    tipo_prop = payload.tipo_propriedade.upper()
+
+    if tipo_prop == "CONSELHO" and not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        raise HTTPException(status_code=403, detail="Apenas a Mesa Diretora ou SuperAdmin podem cadastrar bens próprios do Conselho.")
+
+    codigo = payload.codigo_tombamento
+    if not codigo:
+        count = db.query(ItemPatrimonio).filter(ItemPatrimonio.regiao_id == regiao_id).count() + 1
+        prefixo = "PAT-LOJA" if tipo_prop == "LOJA" else "PAT-CORE"
+        codigo = f"{prefixo}-{date.today().year}-{count:03d}"
+
+    novo_item = ItemPatrimonio(
+        regiao_id=regiao_id,
+        codigo_tombamento=codigo,
+        nome=payload.nome.strip(),
+        descricao=payload.descricao.strip() if payload.descricao else None,
+        categoria=payload.categoria.upper(),
+        tipo_propriedade=tipo_prop,
+        loja_proprietaria_id=payload.loja_proprietaria_id,
+        loja_proprietaria_nome=payload.loja_proprietaria_nome,
+        loja_proprietaria_numero=payload.loja_proprietaria_numero,
+        quantidade_total=max(1, payload.quantidade_total),
+        quantidade_disponivel=max(1, payload.quantidade_total),
+        localizacao_fisica=payload.localizacao_fisica.strip() if payload.localizacao_fisica else "Sede Regional",
+        estado_conservacao=payload.estado_conservacao.upper(),
+        permite_emprestimo=payload.permite_emprestimo,
+        permite_locacao=payload.permite_locacao,
+        taxa_locacao_estimada=payload.taxa_locacao_estimada,
+        foto_url=payload.foto_url
+    )
+
+    db.add(novo_item)
+    db.commit()
+    db.refresh(novo_item)
+
+    return {"status": "success", "item_id": novo_item.id, "codigo": novo_item.codigo_tombamento, "message": "Bem patrimonial cadastrado com sucesso."}
+
+
+@router.put("/{regiao_id}/patrimonio/itens/{item_id}", summary="Atualiza cadastro de um item de patrimônio")
+def atualizar_item_patrimonio(
+    regiao_id: str,
+    item_id: str,
+    payload: ItemPatrimonioPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    item = db.query(ItemPatrimonio).filter(
+        ItemPatrimonio.id == item_id,
+        ItemPatrimonio.regiao_id == regiao_id
+    ).first()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item de patrimônio não encontrado.")
+
+    pode_editar = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and item.loja_proprietaria_id == user.loja_id)
+    if not pode_editar:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para editar este item de patrimônio.")
+
+    item.nome = payload.nome.strip()
+    if payload.descricao is not None:
+        item.descricao = payload.descricao.strip()
+    item.categoria = payload.categoria.upper()
+    item.localizacao_fisica = payload.localizacao_fisica
+    item.estado_conservacao = payload.estado_conservacao.upper()
+    item.permite_emprestimo = payload.permite_emprestimo
+    item.permite_locacao = payload.permite_locacao
+    item.taxa_locacao_estimada = payload.taxa_locacao_estimada
+    if payload.foto_url:
+        item.foto_url = payload.foto_url
+
+    emprestados = item.quantidade_total - item.quantidade_disponivel
+    novo_total = max(emprestados, payload.quantidade_total)
+    item.quantidade_total = novo_total
+    item.quantidade_disponivel = novo_total - emprestados
+
+    db.commit()
+    return {"status": "success", "message": "Item atualizado com sucesso."}
+
+
+@router.delete("/{regiao_id}/patrimonio/itens/{item_id}", summary="Remove ou oculta visualmente um bem de patrimônio")
+def excluir_item_patrimonio(
+    regiao_id: str,
+    item_id: str,
+    hard_delete: bool = False,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    item = db.query(ItemPatrimonio).filter(
+        ItemPatrimonio.id == item_id,
+        ItemPatrimonio.regiao_id == regiao_id
+    ).first()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item de patrimônio não encontrado.")
+
+    pode_excluir = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and item.loja_proprietaria_id == user.loja_id)
+    if not pode_excluir:
+        raise HTTPException(status_code=403, detail="Sem permissão para remover este bem patrimonial.")
+
+    if hard_delete:
+        if user.role.upper() != 'SUPERADMIN':
+            raise HTTPException(status_code=403, detail="Apenas o SuperAdmin pode deletar fisicamente do banco de dados.")
+        db.delete(item)
+        db.commit()
+        return {"status": "success", "tipo_delecao": "FISICA", "message": "Item excluído definitivamente."}
+    else:
+        item.deletado_visualmente = True
+        db.commit()
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Item ocultado visualmente com sucesso."}
+
+
+@router.get("/{regiao_id}/patrimonio/emprestimos", summary="Lista os termos de cautela e empréstimos de patrimônio")
+def listar_emprestimos_patrimonio(
+    regiao_id: str,
+    status: Optional[str] = None,
+    loja_id: Optional[str] = None,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    query = db.query(EmprestimoPatrimonio).filter(EmprestimoPatrimonio.regiao_id == regiao_id)
+
+    if loja_id:
+        query = query.filter(EmprestimoPatrimonio.loja_solicitante_id == loja_id)
+
+    hoje = date.today()
+    emprestimos = query.order_by(EmprestimoPatrimonio.data_retirada.desc()).all()
+
+    resultado = []
+    for emp in emprestimos:
+        st = emp.status
+        if st == "ATIVO" and emp.data_prevista_devolucao < hoje:
+            st = "ATRASADO"
+
+        if status and status.upper() != "TODOS":
+            if st != status.upper():
+                continue
+
+        dias_restantes = (emp.data_prevista_devolucao - hoje).days
+
+        resultado.append({
+            "id": emp.id,
+            "item_id": emp.item_id,
+            "item_nome": emp.item.nome if emp.item else "Ativo do Patrimônio",
+            "item_codigo": emp.item.codigo_tombamento if emp.item else "",
+            "item_categoria": emp.item.categoria if emp.item else "",
+            "loja_solicitante_id": emp.loja_solicitante_id,
+            "loja_solicitante_nome": emp.loja_solicitante_nome,
+            "loja_solicitante_numero": emp.loja_solicitante_numero,
+            "beneficiario_final": emp.beneficiario_final or "Empréstimo Fraterno",
+            "responsavel_retirada_nome": emp.responsavel_retirada_nome,
+            "responsavel_retirada_cargo": emp.responsavel_retirada_cargo,
+            "responsavel_retirada_contato": emp.responsavel_retirada_contato,
+            "responsavel_entrega_nome": emp.responsavel_entrega_nome,
+            "responsavel_entrega_cargo": emp.responsavel_entrega_cargo,
+            "data_retirada": emp.data_retirada.strftime("%d/%m/%Y"),
+            "data_prevista_devolucao": emp.data_prevista_devolucao.strftime("%d/%m/%Y"),
+            "data_efetiva_devolucao": emp.data_efetiva_devolucao.strftime("%d/%m/%Y") if emp.data_efetiva_devolucao else None,
+            "quantidade": emp.quantidade,
+            "status": st,
+            "dias_restantes": dias_restantes,
+            "atrasado": dias_restantes < 0 and st != "CONCLUIDO",
+            "estado_conservacao_entrega": emp.estado_conservacao_entrega,
+            "estado_conservacao_devolucao": emp.estado_conservacao_devolucao,
+            "observacoes": emp.observacoes,
+            "pode_gerenciar": user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and emp.loja_solicitante_id == user.loja_id)
+        })
+
+    return resultado
+
+
+@router.post("/{regiao_id}/patrimonio/itens/{item_id}/emprestar", summary="Registra um termo de cautela e saída de bem para empréstimo")
+def realizar_emprestimo(
+    regiao_id: str,
+    item_id: str,
+    payload: EmprestimoPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    item = db.query(ItemPatrimonio).filter(
+        ItemPatrimonio.id == item_id,
+        ItemPatrimonio.regiao_id == regiao_id
+    ).first()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item de patrimônio não encontrado.")
+
+    if item.quantidade_disponivel < payload.quantidade:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Quantidade insuficiente para empréstimo. Disponíveis: {item.quantidade_disponivel}, solicitados: {payload.quantidade}. Solicite inclusão na Fila de Espera."
+        )
+
+    data_ret = payload.data_retirada or date.today()
+    if payload.data_prevista_devolucao <= data_ret:
+        raise HTTPException(status_code=400, detail="A data prevista de devolução deve ser posterior à data de retirada.")
+
+    novo_emprestimo = EmprestimoPatrimonio(
+        item_id=item.id,
+        regiao_id=regiao_id,
+        loja_solicitante_id=payload.loja_solicitante_id,
+        loja_solicitante_nome=payload.loja_solicitante_nome,
+        loja_solicitante_numero=payload.loja_solicitante_numero,
+        beneficiario_final=payload.beneficiario_final,
+        responsavel_retirada_nome=payload.responsavel_retirada_nome.strip(),
+        responsavel_retirada_cargo=payload.responsavel_retirada_cargo,
+        responsavel_retirada_contato=payload.responsavel_retirada_contato,
+        responsavel_entrega_nome=payload.responsavel_entrega_nome.strip(),
+        responsavel_entrega_cargo=payload.responsavel_entrega_cargo,
+        data_retirada=data_ret,
+        data_prevista_devolucao=payload.data_prevista_devolucao,
+        quantidade=payload.quantidade,
+        status="ATIVO",
+        estado_conservacao_entrega=payload.estado_conservacao_entrega or item.estado_conservacao,
+        observacoes=payload.observacoes
+    )
+
+    item.quantidade_disponivel -= payload.quantidade
+
+    fila_entry = db.query(FilaEsperaPatrimonio).filter(
+        FilaEsperaPatrimonio.item_id == item.id,
+        FilaEsperaPatrimonio.loja_solicitante_id == payload.loja_solicitante_id,
+        FilaEsperaPatrimonio.status == "AGUARDANDO"
+    ).first()
+    if fila_entry:
+        fila_entry.status = "ATENDIDO"
+
+    db.add(novo_emprestimo)
+    db.commit()
+    db.refresh(novo_emprestimo)
+
+    return {
+        "status": "success",
+        "emprestimo_id": novo_emprestimo.id,
+        "item_nome": item.nome,
+        "disponiveis_restantes": item.quantidade_disponivel,
+        "message": "Termo de Cautela e Empréstimo registrado com sucesso."
+    }
+
+
+@router.post("/{regiao_id}/patrimonio/emprestimos/{emprestimo_id}/devolver", summary="Registra devolução (check-in) de bem emprestado")
+def registrar_devolucao(
+    regiao_id: str,
+    emprestimo_id: str,
+    payload: DevolucaoPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    emprestimo = db.query(EmprestimoPatrimonio).filter(
+        EmprestimoPatrimonio.id == emprestimo_id,
+        EmprestimoPatrimonio.regiao_id == regiao_id
+    ).first()
+
+    if not emprestimo:
+        raise HTTPException(status_code=404, detail="Registro de empréstimo não encontrado.")
+
+    if emprestimo.status == "CONCLUIDO":
+        raise HTTPException(status_code=400, detail="Este empréstimo já foi dado como devolvido anteriormente.")
+
+    pode_devolver = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and emprestimo.loja_solicitante_id == user.loja_id)
+    if not pode_devolver:
+        raise HTTPException(status_code=403, detail="Sem autorização para registrar a devolução deste empréstimo.")
+
+    emprestimo.status = "CONCLUIDO"
+    emprestimo.data_efetiva_devolucao = payload.data_efetiva_devolucao or date.today()
+    emprestimo.estado_conservacao_devolucao = payload.estado_conservacao_devolucao
+    if payload.observacoes:
+        antigas = emprestimo.observacoes or ""
+        emprestimo.observacoes = f"{antigas}\n[Devolução]: {payload.observacoes}".strip()
+
+    item = emprestimo.item
+    if item:
+        item.quantidade_disponivel = min(item.quantidade_total, item.quantidade_disponivel + emprestimo.quantidade)
+        if payload.estado_conservacao_devolucao:
+            item.estado_conservacao = payload.estado_conservacao_devolucao
+
+    proximo_fila = db.query(FilaEsperaPatrimonio).filter(
+        FilaEsperaPatrimonio.item_id == emprestimo.item_id,
+        FilaEsperaPatrimonio.status == "AGUARDANDO"
+    ).order_by(FilaEsperaPatrimonio.data_solicitacao.asc()).first()
+
+    mensagem_fila = None
+    if proximo_fila:
+        mensagem_fila = f"Atenção: A Loja {proximo_fila.loja_solicitante_nome} (Nº {proximo_fila.loja_solicitante_numero}) é a 1ª da fila de espera para este item."
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Devolução homologada e bem reintegrado ao acervo com sucesso.",
+        "proximo_na_fila": {
+            "loja_nome": proximo_fila.loja_solicitante_nome,
+            "loja_numero": proximo_fila.loja_solicitante_numero,
+            "responsavel": proximo_fila.responsavel_nome,
+            "contato": proximo_fila.contato
+        } if proximo_fila else None,
+        "aviso_fila": mensagem_fila
+    }
+
+
+@router.get("/{regiao_id}/patrimonio/fila", summary="Lista todas as demandas na fila de espera")
+def listar_fila_espera_geral(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    filas = db.query(FilaEsperaPatrimonio).filter(
+        FilaEsperaPatrimonio.regiao_id == regiao_id,
+        FilaEsperaPatrimonio.status == "AGUARDANDO"
+    ).order_by(FilaEsperaPatrimonio.data_solicitacao.asc()).all()
+
+    resultado = []
+    for idx, f in enumerate(filas, 1):
+        resultado.append({
+            "id": f.id,
+            "item_id": f.item_id,
+            "item_nome": f.item.nome if f.item else "Item",
+            "item_categoria": f.item.categoria if f.item else "",
+            "item_disponivel_agora": f.item.quantidade_disponivel if f.item else 0,
+            "posicao": idx,
+            "loja_solicitante_id": f.loja_solicitante_id,
+            "loja_solicitante_nome": f.loja_solicitante_nome,
+            "loja_solicitante_numero": f.loja_solicitante_numero,
+            "responsavel_nome": f.responsavel_nome,
+            "contato": f.contato,
+            "grau_urgencia": f.grau_urgencia,
+            "status": f.status,
+            "observacoes": f.observacoes,
+            "data_solicitacao": f.data_solicitacao.strftime("%d/%m/%Y %H:%M")
+        })
+
+    return resultado
+
+
+@router.post("/{regiao_id}/patrimonio/itens/{item_id}/fila", summary="Ingressa na fila de espera para um item indisponível")
+def entrar_na_fila_espera(
+    regiao_id: str,
+    item_id: str,
+    payload: FilaEsperaPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    item = db.query(ItemPatrimonio).filter(
+        ItemPatrimonio.id == item_id,
+        ItemPatrimonio.regiao_id == regiao_id
+    ).first()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item de patrimônio não encontrado.")
+
+    ja_na_fila = db.query(FilaEsperaPatrimonio).filter(
+        FilaEsperaPatrimonio.item_id == item_id,
+        FilaEsperaPatrimonio.loja_solicitante_id == payload.loja_solicitante_id,
+        FilaEsperaPatrimonio.status == "AGUARDANDO"
+    ).first()
+
+    if ja_na_fila:
+        raise HTTPException(status_code=400, detail="Esta Loja já possui solicitação ativa na fila de espera deste item.")
+
+    nova_fila = FilaEsperaPatrimonio(
+        item_id=item.id,
+        regiao_id=regiao_id,
+        loja_solicitante_id=payload.loja_solicitante_id,
+        loja_solicitante_nome=payload.loja_solicitante_nome,
+        loja_solicitante_numero=payload.loja_solicitante_numero,
+        responsavel_nome=payload.responsavel_nome.strip(),
+        contato=payload.contato,
+        grau_urgencia=payload.grau_urgencia.upper(),
+        status="AGUARDANDO",
+        observacoes=payload.observacoes
+    )
+
+    db.add(nova_fila)
+    db.commit()
+    db.refresh(nova_fila)
+
+    posicao = db.query(FilaEsperaPatrimonio).filter(
+        FilaEsperaPatrimonio.item_id == item_id,
+        FilaEsperaPatrimonio.status == "AGUARDANDO"
+    ).count()
+
+    return {
+        "status": "success",
+        "fila_id": nova_fila.id,
+        "posicao": posicao,
+        "message": f"Demanda incluída com sucesso na Fila de Espera (Posição {posicao}º)."
+    }
+
+
+@router.delete("/{regiao_id}/patrimonio/fila/{fila_id}", summary="Cancela ou remove solicitação da fila de espera")
+def cancelar_fila_espera(
+    regiao_id: str,
+    fila_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    fila = db.query(FilaEsperaPatrimonio).filter(
+        FilaEsperaPatrimonio.id == fila_id,
+        FilaEsperaPatrimonio.regiao_id == regiao_id
+    ).first()
+
+    if not fila:
+        raise HTTPException(status_code=404, detail="Solicitação na fila não encontrada.")
+
+    pode_cancelar = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and fila.loja_solicitante_id == user.loja_id)
+    if not pode_cancelar:
+        raise HTTPException(status_code=403, detail="Sem autorização para cancelar esta solicitação da fila.")
+
+    fila.status = "CANCELADO"
+    db.commit()
+
+    return {"status": "success", "message": "Solicitação na fila de espera cancelada com sucesso."}

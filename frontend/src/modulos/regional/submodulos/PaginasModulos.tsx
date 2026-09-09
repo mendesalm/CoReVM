@@ -1,24 +1,9 @@
 import React from 'react';
 import { 
-  Landmark, FileText, BarChart3, MessageSquare 
+  FileText, BarChart3, MessageSquare 
 } from 'lucide-react';
 import ModuloGenericoConselho from '../../../compartilhado/componentes/ModuloGenericoConselho';
 
-
-export const PaginaPatrimonio: React.FC = () => (
-  <ModuloGenericoConselho
-    numero={5}
-    titulo="Gestão de Patrimônio Geral do Conselho"
-    subtitulo="Inventário patrimonial, equipamentos, templos e bens compartilhados"
-    icone={Landmark}
-    descricaoRegras="Gestão centralizada do acervo patrimonial pertencente ao conselho ou compartilhado entre as lojas."
-    regrasRbac={{
-      superadmin: "Acesso total irrestrito + Hard Delete de bens",
-      diretoria: "Cadastro, tombamento, movimentação e Deleção Visual",
-      lojas: "Leitura e consulta do inventário e reservas de equipamentos"
-    }}
-  />
-);
 
 export const PaginaDocumentos: React.FC = () => (
   <ModuloGenericoConselho
