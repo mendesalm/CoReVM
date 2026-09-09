@@ -1,19 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 
+const API_URL = 'http://localhost:8003/api/v1';
+
 export default function PaginaCalendario() {
+  const { id: regiaoId } = useParams();
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
+  // Lojas da região para popular o campo "Dono do Evento"
+  const [lojasRegiao, setLojasRegiao] = useState<{id: string, nome: string, numero: string}[]>([]);
+
+  useEffect(() => {
+    if (!regiaoId) return;
+    const fetchLojas = async () => {
+      try {
+        const resDb = await axios.get(`${API_URL}/regional/${regiaoId}/dashboard`, {
+          headers: { 'X-User-Id': 'superadmin' }
+        });
+        const lojaIds = (resDb.data.lojas || []).map((l: any) => parseInt(l.loja_id)).filter(Boolean);
+        if (lojaIds.length > 0) {
+          const resLojas = await axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, lojaIds);
+          setLojasRegiao(resLojas.data.map((l: any) => ({ id: String(l.id), nome: l.nome, numero: l.numero })));
+        }
+      } catch (e) {
+        // sem lojas carregadas, datalist ficará com opções padrão
+      }
+    };
+    fetchLojas();
+  }, [regiaoId]);
+
   // Form State
   const [_eventId, setEventId] = useState('');
   const [title, setTitle] = useState('');
   const [dono, setDono] = useState('Conselho');
-  const [detalhamento, setDetalhamento] = useState(''); // Novo estado para info extra
+  const [detalhamento, setDetalhamento] = useState('');
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -21,14 +48,13 @@ export default function PaginaCalendario() {
   const [isAllDay, setIsAllDay] = useState(true);
   const [color, setColor] = useState('#eab308');
 
-  const [events, _setEvents] = useState([
-    { id: '1', title: 'Sessão Conjunta', dono: 'Conselho', detalhamento: 'Sessão magna de posse conjunta com todas as lojas.', start: '2026-09-15', allDay: true, backgroundColor: '#eab308', borderColor: '#854d0e' },
-    { id: '2', title: 'Palestra Pública', dono: 'Externo', detalhamento: 'Traje esporte fino. Entrada franca para familiares.', start: '2026-09-22T19:30:00', end: '2026-09-22T21:30:00', allDay: false, backgroundColor: '#1e3a8a', borderColor: '#1e40af' },
-    { id: '3', title: 'Banquetes Ritualísticos', dono: 'Loja 2181', detalhamento: 'Levar paramentos completos.', start: '2026-09-25', end: '2026-09-28', allDay: true, backgroundColor: '#dc2626', borderColor: '#991b1b' },
-  ]);
+  // Eventos - sem dados fake, começa vazio
+  const [events, setEvents] = useState<any[]>([]);
 
   const resetForm = () => {
-    setEventId(''); setTitle(''); setDono('Conselho'); setDetalhamento(''); setStartDate(''); setStartTime(''); setEndDate(''); setEndTime(''); setIsAllDay(true); setColor('#eab308');
+    setEventId(''); setTitle(''); setDono('Conselho'); setDetalhamento('');
+    setStartDate(''); setStartTime(''); setEndDate(''); setEndTime('');
+    setIsAllDay(true); setColor('#eab308');
   };
 
   const handleDateClick = (arg: any) => {
@@ -64,8 +90,41 @@ export default function PaginaCalendario() {
     setShowModal(true);
   };
 
+  const handleSalvarEvento = () => {
+    if (!title.trim()) return;
+    const start = isAllDay ? startDate : `${startDate}T${startTime || '00:00'}`;
+    const end = endDate ? (isAllDay ? endDate : `${endDate}T${endTime || '00:00'}`) : undefined;
+    const novoEvento = {
+      id: _eventId || String(Date.now()),
+      title,
+      extendedProps: { dono, detalhamento },
+      start,
+      end,
+      allDay: isAllDay,
+      backgroundColor: color,
+      borderColor: color,
+    };
+    if (isEditing && _eventId) {
+      setEvents(prev => prev.map(e => e.id === _eventId ? novoEvento : e));
+    } else {
+      setEvents(prev => [...prev, novoEvento]);
+    }
+    setShowModal(false);
+    resetForm();
+  };
+
+  const handleExcluirEvento = () => {
+    if (_eventId) setEvents(prev => prev.filter(e => e.id !== _eventId));
+    setShowModal(false);
+    resetForm();
+  };
+
   const handleEventDrop = (info: any) => {
-    console.log(`Evento movido para ${info.event.startStr}`);
+    setEvents(prev => prev.map(e =>
+      e.id === info.event.id
+        ? { ...e, start: info.event.startStr, end: info.event.endStr || undefined, allDay: info.event.allDay }
+        : e
+    ));
   };
 
   // Customização visual da Tag do Evento
@@ -123,21 +182,22 @@ export default function PaginaCalendario() {
               {isEditing ? 'Editar Evento Regional' : 'Novo Evento Regional'}
             </h2>
             
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={e => { e.preventDefault(); handleSalvarEvento(); }}>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">Título do Evento</label>
-                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Reunião de Veneráveis..." className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none" />
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Reunião de Veneráveis..." required className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">Organizador / Dono do Evento</label>
                 <div className="relative">
-                  <input type="text" list="donos" value={dono} onChange={e => setDono(e.target.value)} placeholder="Ex: Loja 2181, Conselho, Externo" className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none" />
-                  <datalist id="donos">
+                  <input type="text" list="donos-lista" value={dono} onChange={e => setDono(e.target.value)} placeholder="Ex: Loja 901, Conselho, Externo" className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none" />
+                  <datalist id="donos-lista">
                     <option value="Conselho" />
                     <option value="Externo" />
-                    <option value="Loja 2181" />
-                    <option value="Loja 3333" />
+                    {lojasRegiao.map(l => (
+                      <option key={l.id} value={`Loja ${l.numero} — ${l.nome.replace('[TESTE-CORE] ', '')}`} />
+                    ))}
                   </datalist>
                 </div>
               </div>
@@ -160,7 +220,7 @@ export default function PaginaCalendario() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Data de Início</label>
-                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none" />
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none" />
                 </div>
                 {!isAllDay && (
                   <div>
@@ -183,22 +243,50 @@ export default function PaginaCalendario() {
                 )}
               </div>
 
+              {/* Color Picker — swatches rápidos + input nativo */}
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Cor de Destaque</label>
-                <select value={color} onChange={e => setColor(e.target.value)} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none">
-                  <option value="#eab308">Ouro (Geral)</option>
-                  <option value="#dc2626">Vermelho (Urgente)</option>
-                  <option value="#2563eb">Azul (Cerimonial)</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Cor de Destaque</label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { hex: '#eab308', label: 'Ouro' },
+                    { hex: '#dc2626', label: 'Urgente' },
+                    { hex: '#2563eb', label: 'Cerimonial' },
+                    { hex: '#16a34a', label: 'Social' },
+                    { hex: '#7c3aed', label: 'Especial' },
+                    { hex: '#0891b2', label: 'Info' },
+                    { hex: '#ea580c', label: 'Alerta' },
+                  ].map(s => (
+                    <button
+                      key={s.hex}
+                      type="button"
+                      title={s.label}
+                      onClick={() => setColor(s.hex)}
+                      className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${color === s.hex ? 'border-white scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: s.hex }}
+                    />
+                  ))}
+                  {/* Input nativo para cor personalizada */}
+                  <label className="cursor-pointer" title="Cor personalizada">
+                    <div
+                      className={`w-7 h-7 rounded-full border-2 overflow-hidden flex items-center justify-center bg-gradient-to-br from-pink-500 via-yellow-400 to-blue-500 hover:scale-110 transition-transform ${!['#eab308','#dc2626','#2563eb','#16a34a','#7c3aed','#0891b2','#ea580c'].includes(color) ? 'border-white scale-110' : 'border-transparent'}`}
+                    />
+                    <input type="color" value={color} onChange={e => setColor(e.target.value)} className="sr-only" />
+                  </label>
+                  {/* Preview da cor selecionada */}
+                  <div className="flex items-center gap-2 ml-2 bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-1">
+                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
+                    <span className="text-xs text-gray-400 font-mono">{color}</span>
+                  </div>
+                </div>
               </div>
 
               <div className="border-t border-[#333] pt-4 flex justify-between items-center mt-4">
                 {isEditing ? (
-                  <button type="button" className="text-red-500 hover:text-red-400 text-sm font-semibold transition-colors">Excluir Evento</button>
-                ) : <div></div>}
+                  <button type="button" onClick={handleExcluirEvento} className="text-red-500 hover:text-red-400 text-sm font-semibold transition-colors">Excluir Evento</button>
+                ) : <div />}
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">Cancelar</button>
-                  <button type="button" onClick={() => setShowModal(false)} className="bg-[#facc15] hover:bg-[#eab308] text-black px-6 py-2 rounded-lg font-semibold transition-colors">{isEditing ? 'Atualizar Evento' : 'Salvar Evento'}</button>
+                  <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                  <button type="submit" className="bg-[#facc15] hover:bg-[#eab308] text-black px-6 py-2 rounded-lg font-semibold transition-colors">{isEditing ? 'Atualizar Evento' : 'Salvar Evento'}</button>
                 </div>
               </div>
             </form>

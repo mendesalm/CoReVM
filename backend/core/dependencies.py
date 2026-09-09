@@ -93,10 +93,11 @@ def get_current_regional_user(
         ).first()
 
         if obreiro:
+            from sqlalchemy import or_, func as sa_func
             mandato = db_lojas.query(Mandato).filter(
                 Mandato.obreiro_id == obreiro.id,
                 Mandato.cargo_id == 1,
-                Mandato.data_fim.is_(None)
+                or_(Mandato.data_fim.is_(None), Mandato.data_fim >= sa_func.current_date())
             ).first()
 
             if mandato and str(mandato.loja_id) in lojas_ids:

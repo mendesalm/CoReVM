@@ -1,11 +1,67 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
-import { Mail, Lock, Shield } from 'lucide-react';
+import { Mail, Lock, Shield, FlaskConical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 import { GoogleLogin } from '@react-oauth/google';
+
+// Dados dos VMs de Ceres para o simulador de acesso
+const VMS_CERES = [
+  { cim: '9900001', nome: 'Bernardo Silveira', loja: '901 — Ceres Fraterna', cargo: 'VM + Pres. Regional' },
+  { cim: '9900008', nome: 'Ícaro Beltrão',     loja: '902 — Luz de São Patrício', cargo: 'VM + Vice Pres.' },
+  { cim: '9900015', nome: 'Lucas Medeiros',    loja: '903 — União do Vale', cargo: 'VM + Secretário' },
+  { cim: '9900022', nome: 'Marcelo Queiroz',   loja: '904 — Acácia de Ceres', cargo: 'VM + Delegado' },
+  { cim: '9900029', nome: 'Otávio Bueno',      loja: '905 — Guardiões do Rio', cargo: 'VM (sem cargo)' },
+];
+
+function SimuladorVM({ navigate, login }: { navigate: (path: string, opts?: any) => void; login: (token: string, user: any) => void }) {
+  const [cimSelecionado, setCimSelecionado] = useState(VMS_CERES[0].cim);
+
+  const entrarComoVM = () => {
+    const vm = VMS_CERES.find(v => v.cim === cimSelecionado)!;
+    const ceresConselhoId = "test-core-ceres-go-001";
+    login(`token_vm_${vm.cim}_fake`, {
+      id: vm.cim,
+      nome: `${vm.nome} [TESTE-CORE]`,
+      email: `contato+cim${vm.cim}@e-sigma.app`,
+      roles: ["veneravel"],
+      conselho_id: ceresConselhoId
+    });
+    navigate(`/regiao/${ceresConselhoId}`, { replace: true });
+  };
+
+  const vmInfo = VMS_CERES.find(v => v.cim === cimSelecionado)!;
+
+  return (
+    <div className="space-y-2">
+      <select
+        value={cimSelecionado}
+        onChange={e => setCimSelecionado(e.target.value)}
+        className="w-full bg-[#080808] border border-blue-800/50 rounded-lg p-2 text-xs text-blue-200 focus:border-blue-500 focus:outline-none"
+      >
+        {VMS_CERES.map(vm => (
+          <option key={vm.cim} value={vm.cim}>
+            CIM {vm.cim} — {vm.nome} ({vm.loja})
+          </option>
+        ))}
+      </select>
+      <div className="text-[10px] text-blue-500 px-1">
+        Cargo: <span className="text-blue-300">{vmInfo.cargo}</span> · CIM: <span className="font-mono text-blue-300">{vmInfo.cim}</span>
+      </div>
+      <button
+        type="button"
+        onClick={entrarComoVM}
+        className="w-full text-[11px] bg-blue-900/60 hover:bg-blue-800/60 text-blue-200 py-2 rounded-lg flex items-center justify-center gap-1.5 border border-blue-700/50 transition-colors"
+      >
+        <FlaskConical size={12} className="text-blue-400" />
+        Entrar como VM — {vmInfo.nome.split(' ')[0]}
+      </button>
+    </div>
+  );
+}
+
 
 export default function PaginaLogin() {
   const [email, setEmail] = useState('');
@@ -80,6 +136,19 @@ export default function PaginaLogin() {
           nome: "Bernardo Silveira [TESTE-CORE]",
           email: email,
           roles: ["presidente_conselho"],
+          conselho_id: ceresConselhoId
+        });
+        navigate(`/regiao/${ceresConselhoId}`, { replace: true });
+
+      } else if (email.startsWith('cim:')) {
+        // Login por CIM simulado — VM de Loja
+        const cim = email.replace('cim:', '').trim();
+        const ceresConselhoId = "test-core-ceres-go-001";
+        login(`token_vm_${cim}_fake`, {
+          id: cim,
+          nome: `VM CIM ${cim} [TESTE-CORE]`,
+          email: `contato+cim${cim}@e-sigma.app`,
+          roles: ["veneravel"],
           conselho_id: ceresConselhoId
         });
         navigate(`/regiao/${ceresConselhoId}`, { replace: true });
@@ -238,6 +307,12 @@ export default function PaginaLogin() {
                 <Shield size={12} className="text-green-400" />
                 Ceres [TESTE]
               </button>
+            </div>
+
+            {/* Simulador de VM de Loja — acesso como Venerável Mestre */}
+            <div className="mt-4 p-3 bg-blue-950/30 border border-blue-800/40 rounded-xl">
+              <p className="text-[10px] text-blue-400 font-semibold text-center mb-2 uppercase tracking-wider">Simular Acesso como VM de Loja (Ceres)</p>
+              <SimuladorVM navigate={navigate} login={login} />
             </div>
           </div>
 
