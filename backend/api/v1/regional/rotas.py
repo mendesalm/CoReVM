@@ -2,6 +2,7 @@
 import os
 import shutil
 import uuid
+import json
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
@@ -11,7 +12,10 @@ from loguru import logger
 from pydantic import BaseModel
 
 from database import get_db_core, get_db_lojas
-from models.models import Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional, PreviaAdmissao, ConsideracaoPrevia
+from models.models import (
+    Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional, 
+    PreviaAdmissao, ConsideracaoPrevia, VotacaoRegional, VotoLoja
+)
 from models.lojas_models import ObreiroIntegracao, LojaIntegracao
 from core.constants import CargoConselho
 from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
@@ -831,6 +835,293 @@ def excluir_consideracao_previa(
     cons.deletado_visualmente = True
     db.commit()
     return {"status": "success", "message": "Consideração removida com sucesso."}
+
+# -------------------------------------------------------------
+# MÓDULO 04: ENQUETES E VOTAÇÕES (DELIBERAÇÕES FORMAIS DO CONSELHO)
+# -------------------------------------------------------------
+
+class VotacaoCreatePayload(BaseModel):
+    titulo: str
+    descricao: str
+    tipo: Optional[str] = "DELIBERACAO" # DELIBERACAO, CONSULTA
+    opcoes: List[str] = ["Favorável", "Contrário", "Abstenção"]
+    data_encerramento: Optional[date] = None
+    quorum_minimo: Optional[str] = "MAIORIA_SIMPLES"
+
+class VotoSubmitPayload(BaseModel):
+    loja_id: Optional[str] = None
+    loja_nome: Optional[str] = None
+    loja_numero: Optional[str] = None
+    opcao_escolhida: str
+    justificativa: Optional[str] = None
+
+class VotacaoStatusPayload(BaseModel):
+    status: str # EM_ANDAMENTO, ENCERRADA
+
+@router.get("/{regiao_id}/votacoes", summary="Lista todas as enquetes e votações da região")
+def listar_votacoes_regional(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Retorna as votações ativas com quórum apurado, percentuais e status do voto da Loja ativa.
+    """
+    votacoes = db.query(VotacaoRegional).filter(
+        VotacaoRegional.regiao_id == regiao_id,
+        VotacaoRegional.deletado_visualmente == False
+    ).order_by(VotacaoRegional.data_abertura.desc()).all()
+
+    # Total de Lojas agregadas ativas no conselho para cálculo de quórum
+    total_lojas_conselho = db.query(LojaAgregada).filter(
+        LojaAgregada.regiao_id == regiao_id,
+        LojaAgregada.ativa == True
+    ).count() or 1
+
+    resultado = []
+    for v in votacoes:
+        try:
+            opcoes_list = json.loads(v.opcoes) if v.opcoes else ["Favorável", "Contrário", "Abstenção"]
+        except Exception:
+            opcoes_list = ["Favorável", "Contrário", "Abstenção"]
+
+        # Apuração dos votos
+        total_votos = len(v.votos)
+        contagem = {op: 0 for op in opcoes_list}
+        
+        minha_loja_votou = False
+        meu_voto = None
+        minha_loja_justificativa = None
+        user_loja_id_str = str(user.loja_id) if user.loja_id else None
+
+        votos_detalhados = []
+        for vt in v.votos:
+            if vt.opcao_escolhida in contagem:
+                contagem[vt.opcao_escolhida] += 1
+            else:
+                contagem[vt.opcao_escolhida] = 1
+
+            if user_loja_id_str and str(vt.loja_id) == user_loja_id_str:
+                minha_loja_votou = True
+                meu_voto = vt.opcao_escolhida
+                minha_loja_justificativa = vt.justificativa
+
+            votos_detalhados.append({
+                "id": vt.id,
+                "loja_id": vt.loja_id,
+                "loja_nome": vt.loja_nome,
+                "loja_numero": vt.loja_numero,
+                "autor_nome": vt.autor_nome,
+                "autor_cargo": vt.autor_cargo,
+                "opcao_escolhida": vt.opcao_escolhida,
+                "justificativa": vt.justificativa,
+                "data_voto": vt.data_voto.isoformat() if vt.data_voto else None
+            })
+
+        # Cálculo de porcentagens
+        apuracao = []
+        for op in opcoes_list:
+            qtd = contagem.get(op, 0)
+            pct = round((qtd / total_votos * 100), 1) if total_votos > 0 else 0.0
+            apuracao.append({
+                "opcao": op,
+                "votos": qtd,
+                "percentual": pct
+            })
+
+        percentual_quorum = round((total_votos / total_lojas_conselho * 100), 1)
+
+        pode_gerenciar = (user.role.upper() == 'SUPERADMIN' or user.is_diretoria)
+
+        resultado.append({
+            "id": v.id,
+            "regiao_id": v.regiao_id,
+            "titulo": v.titulo,
+            "descricao": v.descricao,
+            "tipo": v.tipo,
+            "tipo_label": "Deliberação Formal" if v.tipo == "DELIBERACAO" else "Consulta Regional",
+            "status": v.status,
+            "opcoes": opcoes_list,
+            "data_abertura": v.data_abertura.isoformat() if v.data_abertura else None,
+            "data_encerramento": v.data_encerramento.isoformat() if v.data_encerramento else None,
+            "quorum_minimo": v.quorum_minimo,
+            "autor_nome": v.autor_nome,
+            "autor_cargo": v.autor_cargo,
+            "total_votos": total_votos,
+            "total_lojas_conselho": total_lojas_conselho,
+            "percentual_quorum": percentual_quorum,
+            "apuracao": apuracao,
+            "minha_loja_votou": minha_loja_votou,
+            "meu_voto": meu_voto,
+            "minha_loja_justificativa": minha_loja_justificativa,
+            "pode_gerenciar": pode_gerenciar,
+            "votos_detalhados": votos_detalhados
+        })
+
+    return resultado
+
+@router.post("/{regiao_id}/votacoes", summary="Cria nova votação ou consulta regional")
+def criar_votacao_regional(
+    regiao_id: str,
+    payload: VotacaoCreatePayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    if not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        raise HTTPException(status_code=403, detail="Apenas a Mesa Diretora ou SuperAdmin podem abrir novas votações.")
+
+    if not payload.titulo.strip():
+        raise HTTPException(status_code=400, detail="O título da votação é obrigatório.")
+
+    if not payload.opcoes or len(payload.opcoes) < 2:
+        raise HTTPException(status_code=400, detail="A votação deve possuir no mínimo duas opções de voto.")
+
+    nova_votacao = VotacaoRegional(
+        regiao_id=regiao_id,
+        titulo=payload.titulo.strip(),
+        descricao=payload.descricao.strip(),
+        tipo=payload.tipo.upper() if payload.tipo else "DELIBERACAO",
+        status="EM_ANDAMENTO",
+        opcoes=json.dumps([op.strip() for op in payload.opcoes if op.strip()]),
+        data_abertura=date.today(),
+        data_encerramento=payload.data_encerramento,
+        quorum_minimo=payload.quorum_minimo or "MAIORIA_SIMPLES",
+        autor_id=user.usuario_id,
+        autor_nome=f"Mesa Diretora ({user.role})" if user.is_diretoria else f"Ir. {user.usuario_id}",
+        autor_cargo=user.role,
+        deletado_visualmente=False
+    )
+    db.add(nova_votacao)
+    db.commit()
+    db.refresh(nova_votacao)
+    return {"status": "success", "votacao_id": nova_votacao.id, "message": "Votação aberta com sucesso no Conselho."}
+
+@router.post("/{regiao_id}/votacoes/{votacao_id}/votar", summary="Registra o voto de uma Loja Jurisdicionada")
+def votar_na_deliberacao(
+    regiao_id: str,
+    votacao_id: str,
+    payload: VotoSubmitPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    votacao = db_core.query(VotacaoRegional).filter(
+        VotacaoRegional.id == votacao_id,
+        VotacaoRegional.regiao_id == regiao_id
+    ).first()
+    if not votacao:
+        raise HTTPException(status_code=404, detail="Votação não encontrada.")
+
+    if votacao.status != "EM_ANDAMENTO":
+        raise HTTPException(status_code=400, detail="Esta votação já está encerrada.")
+
+    # Resolver ID da Loja votante
+    loja_id_final = payload.loja_id or (str(user.loja_id) if user.loja_id else None)
+    if not loja_id_final:
+        # Se usuário for diretoria ou superadmin e não selecionou loja:
+        loja_id_final = "DIRETORIA"
+
+    # Resolver nome e número da Loja
+    loja_nome_final = payload.loja_nome
+    loja_numero_final = payload.loja_numero
+
+    if not loja_nome_final:
+        if loja_id_final.isdigit():
+            from models.lojas_models import LojaIntegracao
+            loja_db = db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id == int(loja_id_final)).first()
+            if loja_db:
+                loja_nome_final = loja_db.nome_loja
+                loja_numero_final = loja_db.numero_loja or "S/N"
+        if not loja_nome_final:
+            loja_nome_final = f"Loja Jurisdicionada {loja_id_final}"
+            loja_numero_final = "S/N"
+
+    # Verificar se a Loja já votou nesta votação (1 Loja = 1 Voto)
+    voto_existente = db_core.query(VotoLoja).filter(
+        VotoLoja.votacao_id == votacao_id,
+        VotoLoja.loja_id == str(loja_id_final)
+    ).first()
+
+    if voto_existente:
+        # Atualiza o voto existente antes do encerramento
+        voto_existente.opcao_escolhida = payload.opcao_escolhida
+        voto_existente.justificativa = payload.justificativa.strip() if payload.justificativa else None
+        voto_existente.autor_id = user.usuario_id
+        voto_existente.autor_nome = f"VM da Loja {loja_numero_final}" if user.loja_id else f"Ir. {user.usuario_id}"
+        voto_existente.data_voto = datetime.utcnow()
+        db_core.commit()
+        return {"status": "success", "message": "Voto da Loja atualizado com sucesso."}
+    else:
+        novo_voto = VotoLoja(
+            votacao_id=votacao_id,
+            loja_id=str(loja_id_final),
+            loja_nome=loja_nome_final,
+            loja_numero=loja_numero_final,
+            autor_id=user.usuario_id,
+            autor_nome=f"VM da Loja {loja_numero_final}" if user.loja_id else f"Ir. {user.usuario_id}",
+            autor_cargo=user.role,
+            opcao_escolhida=payload.opcao_escolhida,
+            justificativa=payload.justificativa.strip() if payload.justificativa else None,
+            data_voto=datetime.utcnow()
+        )
+        db_core.add(novo_voto)
+        db_core.commit()
+        return {"status": "success", "message": "Voto formal da Loja registrado com sucesso."}
+
+@router.put("/{regiao_id}/votacoes/{votacao_id}/status", summary="Encerra ou reabre uma votação")
+def alterar_status_votacao(
+    regiao_id: str,
+    votacao_id: str,
+    payload: VotacaoStatusPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    if not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        raise HTTPException(status_code=403, detail="Apenas a Diretoria ou SuperAdmin podem alterar o status de votações.")
+
+    votacao = db.query(VotacaoRegional).filter(
+        VotacaoRegional.id == votacao_id,
+        VotacaoRegional.regiao_id == regiao_id
+    ).first()
+    if not votacao:
+        raise HTTPException(status_code=404, detail="Votação não encontrada.")
+
+    votacao.status = payload.status.upper()
+    if votacao.status == "ENCERRADA" and not votacao.data_encerramento:
+        votacao.data_encerramento = date.today()
+
+    db.commit()
+    return {"status": "success", "novo_status": votacao.status, "message": f"Votação {votacao.status} com sucesso."}
+
+@router.delete("/{regiao_id}/votacoes/{votacao_id}", summary="Remove ou oculta visualmente uma votação")
+def excluir_votacao_regional(
+    regiao_id: str,
+    votacao_id: str,
+    hard_delete: bool = False,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    if not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        raise HTTPException(status_code=403, detail="Apenas a Diretoria ou SuperAdmin podem excluir votações.")
+
+    votacao = db.query(VotacaoRegional).filter(
+        VotacaoRegional.id == votacao_id,
+        VotacaoRegional.regiao_id == regiao_id
+    ).first()
+    if not votacao:
+        raise HTTPException(status_code=404, detail="Votação não encontrada.")
+
+    if hard_delete:
+        if user.role.upper() != 'SUPERADMIN':
+            raise HTTPException(status_code=403, detail="Apenas o SuperAdmin pode deletar fisicamente.")
+        db.delete(votacao)
+        db.commit()
+        return {"status": "success", "tipo_delecao": "FISICA", "message": "Votação excluída definitivamente."}
+    else:
+        votacao.deletado_visualmente = True
+        db.commit()
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Votação ocultada visualmente com sucesso."}
+
 
 
 

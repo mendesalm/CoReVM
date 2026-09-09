@@ -25,6 +25,7 @@ class Regiao(Base):
     diretoria = relationship("DiretoriaConselho", back_populates="regiao")
     lojas = relationship("LojaAgregada", back_populates="regiao")
     previas = relationship("PreviaAdmissao", back_populates="regiao")
+    votacoes = relationship("VotacaoRegional", back_populates="regiao")
 
 class DiretoriaConselho(Base):
     """
@@ -135,6 +136,54 @@ class ConsideracaoPrevia(Base):
     deletado_visualmente = Column(Boolean, default=False)
 
     previa = relationship("PreviaAdmissao", back_populates="consideracoes")
+
+class VotacaoRegional(Base):
+    """
+    Enquetes e Votações do Conselho Regional.
+    Tipo: DELIBERACAO (deliberação formal) ou CONSULTA (consulta regional).
+    Status: EM_ANDAMENTO, ENCERRADA.
+    """
+    __tablename__ = "votacoes_regionais"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    titulo = Column(String(255), nullable=False)
+    descricao = Column(String(4000), nullable=False)
+    tipo = Column(String(50), default="DELIBERACAO") # DELIBERACAO, CONSULTA
+    status = Column(String(50), default="EM_ANDAMENTO") # EM_ANDAMENTO, ENCERRADA
+    opcoes = Column(String(2000), nullable=False) # JSON com lista de opções: ["Favorável", "Contrário", "Abstenção"]
+    data_abertura = Column(Date, nullable=False)
+    data_encerramento = Column(Date, nullable=True)
+    quorum_minimo = Column(String(50), nullable=True, default="MAIORIA_SIMPLES")
+    autor_id = Column(String(255), nullable=True)
+    autor_nome = Column(String(255), nullable=True)
+    autor_cargo = Column(String(100), nullable=True)
+    deletado_visualmente = Column(Boolean, default=False)
+
+    regiao = relationship("Regiao", back_populates="votacoes")
+    votos = relationship("VotoLoja", back_populates="votacao", cascade="all, delete-orphan", order_by="VotoLoja.data_voto.asc()")
+
+class VotoLoja(Base):
+    """
+    Registro do voto formal de cada Loja Jurisdicionada em uma votação.
+    Cada Loja possui 1 voto formal no Conselho Regional.
+    """
+    __tablename__ = "votos_loja"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    votacao_id = Column(String(36), ForeignKey("votacoes_regionais.id"), nullable=False)
+    loja_id = Column(String(36), nullable=False)
+    loja_nome = Column(String(255), nullable=False)
+    loja_numero = Column(String(50), nullable=False)
+    autor_id = Column(String(255), nullable=True)
+    autor_nome = Column(String(255), nullable=False)
+    autor_cargo = Column(String(100), nullable=True)
+    opcao_escolhida = Column(String(255), nullable=False)
+    justificativa = Column(String(2000), nullable=True)
+    data_voto = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    votacao = relationship("VotacaoRegional", back_populates="votos")
+
 
 
 

@@ -1,23 +1,9 @@
 import React from 'react';
 import { 
-  Vote, Landmark, FileText, BarChart3, MessageSquare 
+  Landmark, FileText, BarChart3, MessageSquare 
 } from 'lucide-react';
 import ModuloGenericoConselho from '../../../compartilhado/componentes/ModuloGenericoConselho';
 
-export const PaginaVotacoes: React.FC = () => (
-  <ModuloGenericoConselho
-    numero={4}
-    titulo="Enquetes e Votações"
-    subtitulo="Consultas regionais, deliberações oficiais e votações formais do conselho"
-    icone={Vote}
-    descricaoRegras="Votações democráticas e consultas de interesse maçônico com contagem de votos e apuração em tempo real."
-    regrasRbac={{
-      superadmin: "Acesso total + Abertura/Encerramento + Hard Delete",
-      diretoria: "Criação, Edição, Abertura, Encerramento e Deleção Visual",
-      lojas: "Voto formal por loja, visualização de resultados e histórico"
-    }}
-  />
-);
 
 export const PaginaPatrimonio: React.FC = () => (
   <ModuloGenericoConselho
