@@ -106,7 +106,9 @@ class PreviaAdmissao(Base):
     pdf_nome_original = Column(String(255), nullable=True)
     data_postagem = Column(Date, nullable=False)
     data_limite = Column(Date, nullable=True)
-    status = Column(String(50), default="EM_ANDAMENTO") # EM_ANDAMENTO, CONCLUIDO
+    status = Column(String(50), default="EM_ANDAMENTO") # EM_ANDAMENTO, AVERIGUADO, CONCLUIDO
+    verificado_por_nome = Column(String(255), nullable=True)
+    data_verificacao = Column(DateTime, nullable=True)
     autor_id = Column(String(255), nullable=True)
     autor_nome = Column(String(255), nullable=True)
     deletado_visualmente = Column(Boolean, default=False)

@@ -6,7 +6,8 @@ import {
   BookOpenCheck, ShieldCheck, Loader2, Award, 
   Plus, Search, ArrowLeft, FileText, Download, ExternalLink,
   MessageSquare, Calendar, Trash2, Send, CheckCircle2,
-  Clock, Sparkles, User, X, Eye
+  Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw,
+  SlidersHorizontal, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
@@ -25,7 +26,9 @@ interface PreviaAdmissaoItem {
   pdf_nome_original: string;
   data_postagem: string;
   data_limite: string | null;
-  status: string;
+  status: string; // 'EM_ANDAMENTO' | 'AVERIGUADO' | 'CONCLUIDO'
+  verificado_por_nome?: string | null;
+  data_verificacao?: string | null;
   autor_id: string;
   autor_nome: string;
   total_consideracoes: number;
@@ -63,9 +66,13 @@ export default function PaginaAdmissoes() {
     loja_id: null
   });
 
-  // Filtros e Busca
+  // Filtros, Busca, Ordenação e Paginação
   const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODAS' | 'INICIACAO' | 'FILIACAO' | 'REGULARIZACAO'>('TODAS');
+  const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'EM_ANDAMENTO' | 'AVERIGUADO'>('TODOS');
+  const [ordenacao, setOrdenacao] = useState<'RECENTES' | 'PRAZO' | 'PARECERES' | 'PENDENTES_PRIMEIRO'>('RECENTES');
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [itensPorPagina, setItensPorPagina] = useState(6);
 
   // Modal de Considerações
   const [previaSelecionada, setPreviaSelecionada] = useState<PreviaAdmissaoItem | null>(null);
@@ -97,7 +104,7 @@ export default function PaginaAdmissoes() {
     const headers = { 'X-User-Id': activeUserId };
 
     try {
-      // 1. Prévias de Admissão (essencial)
+      // 1. Prévias de Admissão
       try {
         const previasRes = await axios.get(`${API_URL}/regional/${id}/admissoes`, { headers });
         setPrevias(previasRes.data || []);
@@ -140,6 +147,47 @@ export default function PaginaAdmissoes() {
     if (id) carregarDados();
   }, [id, activeUserId]);
 
+  // Resetar paginação ao filtrar ou buscar
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [busca, filtroTipo, filtroStatus, ordenacao, itensPorPagina]);
+
+  // Alternar Status de Verificação (Marcar como Averiguado / Em Aberto)
+  const handleAlternarStatus = async (previaId: string, statusAtual: string) => {
+    const novoStatus = statusAtual === 'AVERIGUADO' ? 'EM_ANDAMENTO' : 'AVERIGUADO';
+    try {
+      const res = await axios.put(
+        `${API_URL}/regional/${id}/admissoes/${previaId}/status`,
+        { status: novoStatus },
+        { headers: { 'X-User-Id': activeUserId } }
+      );
+      
+      setPrevias(prev => prev.map(p => {
+        if (p.id === previaId) {
+          return {
+            ...p,
+            status: res.data.novo_status,
+            verificado_por_nome: res.data.verificado_por_nome,
+            data_verificacao: res.data.data_verificacao
+          };
+        }
+        return p;
+      }));
+
+      if (previaSelecionada?.id === previaId) {
+        setPreviaSelecionada(prev => prev ? {
+          ...prev,
+          status: res.data.novo_status,
+          verificado_por_nome: res.data.verificado_por_nome,
+          data_verificacao: res.data.data_verificacao
+        } : null);
+      }
+    } catch (err: any) {
+      alert('Erro ao atualizar verificação: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  // Abrir Modal de Considerações
   const abrirModalConsideracoes = async (previa: PreviaAdmissaoItem) => {
     setPreviaSelecionada(previa);
     setCarregandoConsideracoes(true);
@@ -156,6 +204,7 @@ export default function PaginaAdmissoes() {
     }
   };
 
+  // Enviar Nova Consideração
   const handleEnviarConsideracao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!previaSelecionada || !novaConsideracaoTexto.trim()) return;
@@ -195,6 +244,7 @@ export default function PaginaAdmissoes() {
     }
   };
 
+  // Excluir Consideração
   const handleExcluirConsideracao = async (consId: string) => {
     if (!previaSelecionada || !confirm('Deseja realmente ocultar este parecer?')) return;
     try {
@@ -208,6 +258,7 @@ export default function PaginaAdmissoes() {
     }
   };
 
+  // Excluir Prévia (Deleção Visual)
   const handleExcluirPrevia = async (previaId: string) => {
     if (!confirm('Deseja realmente ocultar esta prévia do Mural de Admissão?')) return;
     try {
@@ -223,6 +274,7 @@ export default function PaginaAdmissoes() {
     }
   };
 
+  // Submeter Nova Prévia
   const handleSalvarNovaPrevia = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formPrevia.candidato_nome.trim()) {
@@ -269,20 +321,53 @@ export default function PaginaAdmissoes() {
     }
   };
 
+  // 1. Filtragem
   const previasFiltradas = previas.filter(p => {
     const atendeFiltroTipo = filtroTipo === 'TODAS' || p.tipo.toUpperCase() === filtroTipo;
+    const atendeFiltroStatus = 
+      filtroStatus === 'TODOS' || 
+      (filtroStatus === 'AVERIGUADO' && p.status === 'AVERIGUADO') ||
+      (filtroStatus === 'EM_ANDAMENTO' && p.status !== 'AVERIGUADO');
     const termo = busca.toLowerCase();
     const atendeBusca = 
       p.candidato_nome.toLowerCase().includes(termo) ||
       p.loja_nome.toLowerCase().includes(termo) ||
       p.loja_numero.toLowerCase().includes(termo) ||
       p.titulo_formatado.toLowerCase().includes(termo);
-    return atendeFiltroTipo && atendeBusca;
+    return atendeFiltroTipo && atendeFiltroStatus && atendeBusca;
   });
 
+  // 2. Ordenação
+  const previasOrdenadas = [...previasFiltradas].sort((a, b) => {
+    if (ordenacao === 'PRAZO') {
+      const dataA = a.data_limite || '9999-12-31';
+      const dataB = b.data_limite || '9999-12-31';
+      return dataA.localeCompare(dataB);
+    }
+    if (ordenacao === 'PARECERES') {
+      return b.total_consideracoes - a.total_consideracoes;
+    }
+    if (ordenacao === 'PENDENTES_PRIMEIRO') {
+      if (a.status !== b.status) {
+        return a.status === 'EM_ANDAMENTO' ? -1 : 1;
+      }
+    }
+    // RECENTES (padrão)
+    return b.data_postagem.localeCompare(a.data_postagem);
+  });
+
+  // 3. Paginação
+  const totalPaginas = Math.ceil(previasOrdenadas.length / itensPorPagina) || 1;
+  const indexInicio = (paginaAtual - 1) * itensPorPagina;
+  const indexFim = itensPorPagina === 9999 ? previasOrdenadas.length : indexInicio + itensPorPagina;
+  const previasPaginadas = itensPorPagina === 9999 ? previasOrdenadas : previasOrdenadas.slice(indexInicio, indexFim);
+
+  // Métricas
   const totalIniciacoes = previas.filter(p => p.tipo.toUpperCase() === 'INICIACAO').length;
   const totalFiliacoes = previas.filter(p => p.tipo.toUpperCase() === 'FILIACAO').length;
   const totalRegularizacoes = previas.filter(p => p.tipo.toUpperCase() === 'REGULARIZACAO').length;
+  const totalAveriguadas = previas.filter(p => p.status === 'AVERIGUADO').length;
+  const totalPendentes = previas.length - totalAveriguadas;
 
   const getTipoBadgeColor = (tipo: string) => {
     switch (tipo.toUpperCase()) {
@@ -359,7 +444,7 @@ export default function PaginaAdmissoes() {
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
       
-      {/* Header Superior Limpo */}
+      {/* Header Superior com Simulação de Acesso */}
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -379,8 +464,14 @@ export default function PaginaAdmissoes() {
                   Mural de Admissão
                 </h1>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/20">
-                  {previas.length} ativas
+                  {previas.length} documentos
                 </span>
+                {totalAveriguadas > 0 && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                    <CheckCheck className="w-3 h-3" />
+                    {totalAveriguadas} averiguadas
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-400 mt-0.5">
                 Propostas de Iniciação, Filiação ou Regularização
@@ -394,7 +485,7 @@ export default function PaginaAdmissoes() {
               <select 
                 value={activeUserId} 
                 onChange={(e) => setActiveUserId(e.target.value)}
-                className="bg-[#0c0c0c] text-[#facc15] border border-[#3a3a3a] rounded-lg px-2.5 py-1 font-semibold focus:outline-none cursor-pointer"
+                className="bg-[#0c0c0c] text-[#facc15] border border-[#333] rounded-lg px-2.5 py-1 font-semibold focus:outline-none cursor-pointer"
               >
                 <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
                 <option value="272875">Secretário (Mesa Diretora)</option>
@@ -418,8 +509,8 @@ export default function PaginaAdmissoes() {
 
       <div className="max-w-7xl mx-auto px-6 pb-12 space-y-6">
         
-        {/* Métricas Rápidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Painel de Métricas Rápidas */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Prévias</span>
@@ -459,93 +550,206 @@ export default function PaginaAdmissoes() {
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
+
+          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between col-span-2 sm:col-span-1">
+            <div>
+              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Averiguadas</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-black text-emerald-400">{totalAveriguadas}</span>
+                <span className="text-[11px] text-gray-500 font-semibold">/ {totalPendentes} pendentes</span>
+              </div>
+            </div>
+            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+              <CheckCheck className="w-5 h-5" />
+            </div>
+          </div>
         </div>
 
-        {/* Barra de Filtros e Busca */}
-        <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            <button
-              onClick={() => setFiltroTipo('TODAS')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filtroTipo === 'TODAS' 
-                  ? 'bg-[#facc15] text-black shadow-md shadow-[#facc15]/10' 
-                  : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-              }`}
-            >
-              Todas ({previas.length})
-            </button>
-            <button
-              onClick={() => setFiltroTipo('INICIACAO')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filtroTipo === 'INICIACAO' 
-                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/10' 
-                  : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-              }`}
-            >
-              Iniciações ({totalIniciacoes})
-            </button>
-            <button
-              onClick={() => setFiltroTipo('FILIACAO')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filtroTipo === 'FILIACAO' 
-                  ? 'bg-blue-500 text-white shadow-md shadow-blue-500/10' 
-                  : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-              }`}
-            >
-              Filiações ({totalFiliacoes})
-            </button>
-            <button
-              onClick={() => setFiltroTipo('REGULARIZACAO')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filtroTipo === 'REGULARIZACAO' 
-                  ? 'bg-purple-500 text-white shadow-md shadow-purple-500/10' 
-                  : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-              }`}
-            >
-              Regularizações ({totalRegularizacoes})
-            </button>
+        {/* Barra de Filtros por Modalidade & Status */}
+        <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 space-y-3">
+          
+          {/* Linha 1: Abas por Natureza do Processo */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              <button
+                onClick={() => setFiltroTipo('TODAS')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  filtroTipo === 'TODAS' 
+                    ? 'bg-[#facc15] text-black shadow-md shadow-[#facc15]/10' 
+                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
+                }`}
+              >
+                Todas ({previas.length})
+              </button>
+              <button
+                onClick={() => setFiltroTipo('INICIACAO')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  filtroTipo === 'INICIACAO' 
+                    ? 'bg-amber-500 text-black shadow-md shadow-amber-500/10' 
+                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
+                }`}
+              >
+                Iniciações ({totalIniciacoes})
+              </button>
+              <button
+                onClick={() => setFiltroTipo('FILIACAO')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  filtroTipo === 'FILIACAO' 
+                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/10' 
+                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
+                }`}
+              >
+                Filiações ({totalFiliacoes})
+              </button>
+              <button
+                onClick={() => setFiltroTipo('REGULARIZACAO')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  filtroTipo === 'REGULARIZACAO' 
+                    ? 'bg-purple-500 text-white shadow-md shadow-purple-500/10' 
+                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
+                }`}
+              >
+                Regularizações ({totalRegularizacoes})
+              </button>
+            </div>
+
+            {/* Campo de Busca Rápida */}
+            <div className="relative min-w-[260px] flex-1 sm:flex-initial">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input 
+                type="text"
+                placeholder="Buscar candidato, loja ou número..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-[#0c0c0c] border border-[#2b2b2b] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
+              />
+            </div>
           </div>
 
-          <div className="relative min-w-[260px] flex-1 sm:flex-initial">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input 
-              type="text"
-              placeholder="Buscar candidato, loja ou número..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[#0c0c0c] border border-[#2b2b2b] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
-            />
+          {/* Linha 2: Filtro por Verificação + Ordenação + Paginação */}
+          <div className="pt-2 border-t border-[#1e1e1e] flex flex-wrap items-center justify-between gap-3 text-xs">
+            
+            {/* Filtro de Status de Verificação */}
+            <div className="flex items-center gap-1 bg-[#0a0a0a] border border-[#222] p-1 rounded-xl">
+              <button
+                onClick={() => setFiltroStatus('TODOS')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  filtroStatus === 'TODOS' 
+                    ? 'bg-[#252525] text-white shadow' 
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Todos os Status
+              </button>
+              <button
+                onClick={() => setFiltroStatus('EM_ANDAMENTO')}
+                className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
+                  filtroStatus === 'EM_ANDAMENTO' 
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
+                    : 'text-gray-400 hover:text-amber-300'
+                }`}
+              >
+                <Clock className="w-3 h-3 text-amber-400" />
+                Em Aberto ({totalPendentes})
+              </button>
+              <button
+                onClick={() => setFiltroStatus('AVERIGUADO')}
+                className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
+                  filtroStatus === 'AVERIGUADO' 
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                    : 'text-gray-400 hover:text-emerald-300'
+                }`}
+              >
+                <CheckCheck className="w-3 h-3 text-emerald-400" />
+                Averiguados ({totalAveriguadas})
+              </button>
+            </div>
+
+            {/* Ordenação e Seleção de Itens por Página */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
+                <span className="text-gray-400 font-medium">Ordenar por:</span>
+                <select
+                  value={ordenacao}
+                  onChange={(e: any) => setOrdenacao(e.target.value)}
+                  className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
+                >
+                  <option value="RECENTES">Mais Recentes</option>
+                  <option value="PRAZO">Prazo mais Próximo</option>
+                  <option value="PARECERES">Mais Pareceres</option>
+                  <option value="PENDENTES_PRIMEIRO">Pendentes Primeiro</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-400 font-medium">Exibir:</span>
+                <select
+                  value={itensPorPagina}
+                  onChange={(e) => setItensPorPagina(Number(e.target.value))}
+                  className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
+                >
+                  <option value={6}>6 por página</option>
+                  <option value={9}>9 por página</option>
+                  <option value={12}>12 por página</option>
+                  <option value={9999}>Todas</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Grid de Cards de Prévias */}
-        {previasFiltradas.length === 0 ? (
+        {previasOrdenadas.length === 0 ? (
           <div className="bg-[#121212] border border-[#222] rounded-2xl p-12 text-center text-gray-400">
             <BookOpenCheck className="w-12 h-12 mx-auto mb-3 text-gray-600 stroke-[1.5]" />
             <h3 className="text-base font-bold text-gray-300 mb-1">Nenhuma prévia encontrada</h3>
             <p className="text-xs text-gray-500 max-w-md mx-auto">
-              Não há pedidos de admissão correspondentes aos filtros selecionados. Clique em "Publicar Nova Prévia" para iniciar um novo processo.
+              Não há pedidos de admissão correspondentes aos filtros selecionados. Clique em "Publicar Nova Prévia" ou redefina os filtros.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {previasFiltradas.map((previa) => {
+            {previasPaginadas.map((previa) => {
+              const isAveriguado = previa.status === 'AVERIGUADO';
               const downloadPdfUrl = `${API_URL}/regional/${id}/admissoes/${previa.id}/pdf?download=true`;
               const viewPdfUrl = `${API_URL}/regional/${id}/admissoes/${previa.id}/pdf`;
 
               return (
                 <div 
                   key={previa.id}
-                  className="bg-[#141414] border border-[#252525] hover:border-[#383838] rounded-2xl p-5 shadow-xl transition-all duration-200 flex flex-col justify-between group"
+                  className={`border rounded-2xl p-5 shadow-xl transition-all duration-200 flex flex-col justify-between group relative ${
+                    isAveriguado 
+                      ? 'bg-gradient-to-b from-emerald-950/20 via-[#131414] to-[#141414] border-emerald-500/40 hover:border-emerald-500/60 shadow-emerald-950/20' 
+                      : 'bg-[#141414] border-[#252525] hover:border-[#383838]'
+                  }`}
                 >
                   <div>
-                    {/* Cabeçalho do Card */}
+                    {/* Cabeçalho do Card: Badges de Tipo, Status de Verificação e Data */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-md border tracking-wider ${getTipoBadgeColor(previa.tipo)}`}>
-                        {previa.tipo_label}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-md border tracking-wider ${getTipoBadgeColor(previa.tipo)}`}>
+                          {previa.tipo_label}
+                        </span>
+
+                        {/* Selo de Verificação */}
+                        {isAveriguado ? (
+                          <span 
+                            className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-md border tracking-wider bg-emerald-500/10 text-emerald-400 border-emerald-500/30 flex items-center gap-1 shadow-sm shadow-emerald-500/10"
+                            title={previa.verificado_por_nome ? `Averiguado por ${previa.verificado_por_nome}` : 'Averiguado pelo Conselho'}
+                          >
+                            <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                            Averiguado
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border tracking-wider bg-amber-500/10 text-amber-400 border-amber-500/20 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-400" />
+                            Em Aberto
+                          </span>
+                        )}
+                      </div>
                       
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+                      <div className="flex items-center gap-1.5 text-[11px] text-gray-400 flex-shrink-0">
                         <Calendar className="w-3.5 h-3.5 text-gray-500" />
                         <span>{formatarData(previa.data_postagem)}</span>
                         
@@ -571,7 +775,7 @@ export default function PaginaAdmissoes() {
 
                     {/* Candidato Proposto */}
                     <div className="flex items-center gap-2 p-2.5 bg-[#0d0d0d] border border-[#222] rounded-xl mb-3.5">
-                      <div className="p-1.5 bg-[#facc15]/10 text-[#facc15] rounded-lg">
+                      <div className={`p-1.5 rounded-lg ${isAveriguado ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#facc15]/10 text-[#facc15]'}`}>
                         <User className="w-4 h-4" />
                       </div>
                       <div className="overflow-hidden">
@@ -646,28 +850,105 @@ export default function PaginaAdmissoes() {
                     </div>
                   </div>
 
-                  {/* Rodapé do Card */}
-                  <div className="pt-3 border-t border-[#222] flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                      <MessageSquare className={`w-4 h-4 ${previa.total_consideracoes > 0 ? 'text-[#facc15]' : 'text-gray-600'}`} />
-                      <span className={`font-medium ${previa.total_consideracoes > 0 ? 'text-gray-200' : 'text-gray-500'}`}>
-                        {previa.total_consideracoes === 0 
-                          ? 'Sem pareceres' 
-                          : `${previa.total_consideracoes} parecer${previa.total_consideracoes > 1 ? 'es' : ''}`}
-                      </span>
+                  {/* Rodapé do Card: Contador de Pareceres, Botão de Verificação e Abertura do Modal */}
+                  <div className="pt-3 border-t border-[#222] space-y-2.5">
+                    
+                    {/* Botão de Marcação/Verificação Rápida */}
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => handleAlternarStatus(previa.id, previa.status)}
+                        className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all ${
+                          isAveriguado
+                            ? 'bg-emerald-500/10 hover:bg-red-500/10 text-emerald-400 hover:text-red-300 border-emerald-500/30 hover:border-red-500/30'
+                            : 'bg-[#1a1a1a] hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-400 border-[#333] hover:border-emerald-500/30'
+                        }`}
+                        title={isAveriguado ? 'Clique para reabrir averiguação' : 'Clique para marcar como averiguado'}
+                      >
+                        {isAveriguado ? (
+                          <>
+                            <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Averiguado</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-400" />
+                            <span>Marcar Averiguado</span>
+                          </>
+                        )}
+                      </button>
+
+                      {isAveriguado && previa.verificado_por_nome && (
+                        <span className="text-[10px] text-emerald-400/80 truncate max-w-[150px] font-medium" title={previa.verificado_por_nome}>
+                          Por {previa.verificado_por_nome}
+                        </span>
+                      )}
                     </div>
 
-                    <button
-                      onClick={() => abrirModalConsideracoes(previa)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-[#facc15] text-gray-200 hover:text-black font-bold text-xs rounded-xl border border-[#333] hover:border-[#facc15] transition-all"
-                    >
-                      <span>Abrir Considerações</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center justify-between gap-3 pt-1 border-t border-[#1f1f1f]">
+                      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                        <MessageSquare className={`w-4 h-4 ${previa.total_consideracoes > 0 ? 'text-[#facc15]' : 'text-gray-600'}`} />
+                        <span className={`font-medium ${previa.total_consideracoes > 0 ? 'text-gray-200' : 'text-gray-500'}`}>
+                          {previa.total_consideracoes === 0 
+                            ? 'Sem pareceres' 
+                            : `${previa.total_consideracoes} parecer${previa.total_consideracoes > 1 ? 'es' : ''}`}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => abrirModalConsideracoes(previa)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-[#facc15] text-gray-200 hover:text-black font-bold text-xs rounded-xl border border-[#333] hover:border-[#facc15] transition-all"
+                      >
+                        <span>Abrir Considerações</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Controles de Paginação */}
+        {previasOrdenadas.length > 0 && totalPaginas > 1 && (
+          <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+            <span className="text-xs text-gray-400">
+              Exibindo <b>{indexInicio + 1}</b> a <b>{Math.min(indexFim, previasOrdenadas.length)}</b> de <b>{previasOrdenadas.length}</b> documentos
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                disabled={paginaAtual === 1}
+                className="p-1.5 rounded-lg border border-[#333] bg-[#171717] hover:bg-[#222] disabled:opacity-40 disabled:hover:bg-[#171717] text-gray-300 transition-colors"
+                title="Página anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
+                <button
+                  key={num}
+                  onClick={() => setPaginaAtual(num)}
+                  className={`w-8 h-8 rounded-lg text-xs font-bold border transition-all ${
+                    paginaAtual === num
+                      ? 'bg-[#facc15] text-black border-[#facc15] shadow-md shadow-[#facc15]/10'
+                      : 'bg-[#171717] text-gray-300 border-[#333] hover:border-[#444] hover:bg-[#222]'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                disabled={paginaAtual === totalPaginas}
+                className="p-1.5 rounded-lg border border-[#333] bg-[#171717] hover:bg-[#222] disabled:opacity-40 disabled:hover:bg-[#171717] text-gray-300 transition-colors"
+                title="Próxima página"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -679,14 +960,28 @@ export default function PaginaAdmissoes() {
             
             <div className="px-6 py-4 bg-[#181818] border-b border-[#292929] flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${getTipoBadgeColor(previaSelecionada.tipo)}`}>
                     {previaSelecionada.tipo_label}
                   </span>
+
+                  {previaSelecionada.status === 'AVERIGUADO' ? (
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/30 flex items-center gap-1">
+                      <CheckCheck className="w-3 h-3" />
+                      Averiguado
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-amber-500/10 text-amber-400 border-amber-500/20 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Em Aberto
+                    </span>
+                  )}
+
                   <span className="text-xs text-gray-400">
                     Fixada em {formatarData(previaSelecionada.data_postagem)}
                   </span>
                 </div>
+
                 <h3 className="text-base font-bold text-white">
                   {previaSelecionada.titulo_formatado}
                 </h3>
@@ -714,11 +1009,52 @@ export default function PaginaAdmissoes() {
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
-              <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                <p className="text-xs text-amber-300/90">
-                  <b>Ambiente Restrito:</b> As considerações e apontamentos aqui inseridos são confidenciais e visíveis exclusivamente aos Veneráveis Mestres e à Diretoria deste Conselho Regional.
-                </p>
+              {/* Barra de Status & Ação de Homologação/Verificação */}
+              <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
+                previaSelecionada.status === 'AVERIGUADO'
+                  ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
+                  : 'bg-amber-500/5 border-amber-500/20 text-amber-300'
+              }`}>
+                <div className="flex items-center gap-3">
+                  {previaSelecionada.status === 'AVERIGUADO' ? (
+                    <CheckCheck className="w-6 h-6 text-emerald-400 flex-shrink-0" />
+                  ) : (
+                    <ShieldCheck className="w-6 h-6 text-amber-400 flex-shrink-0" />
+                  )}
+                  <div>
+                    <span className="text-xs font-bold block">
+                      {previaSelecionada.status === 'AVERIGUADO'
+                        ? 'Processo Marcado como Averiguado'
+                        : 'Processo em Aberto para Averiguação'}
+                    </span>
+                    <span className="text-[11px] opacity-80 block">
+                      {previaSelecionada.status === 'AVERIGUADO'
+                        ? `Verificado por ${previaSelecionada.verificado_por_nome || 'Conselho Regional'}`
+                        : 'Sindicâncias e pareceres de Veneráveis Mestres são confidenciais ao conselho.'}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleAlternarStatus(previaSelecionada.id, previaSelecionada.status)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                    previaSelecionada.status === 'AVERIGUADO'
+                      ? 'bg-[#181818] hover:bg-[#222] text-gray-300 border-[#383838]'
+                      : 'bg-emerald-500 hover:bg-emerald-600 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
+                  }`}
+                >
+                  {previaSelecionada.status === 'AVERIGUADO' ? (
+                    <>
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reabrir Averiguação
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Marcar como Averiguado
+                    </>
+                  )}
+                </button>
               </div>
 
               <div>

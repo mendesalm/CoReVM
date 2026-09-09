@@ -479,7 +479,9 @@ def listar_previas_admissao(
             "pdf_nome_original": p.pdf_nome_original or f"Previa_{p.candidato_nome.replace(' ', '_')}.pdf",
             "data_postagem": p.data_postagem.isoformat() if p.data_postagem else None,
             "data_limite": p.data_limite.isoformat() if p.data_limite else None,
-            "status": p.status,
+            "status": p.status or "EM_ANDAMENTO",
+            "verificado_por_nome": p.verificado_por_nome,
+            "data_verificacao": p.data_verificacao.isoformat() if p.data_verificacao else None,
             "autor_id": p.autor_id,
             "autor_nome": p.autor_nome,
             "total_consideracoes": len(cons_ativas),
@@ -488,6 +490,51 @@ def listar_previas_admissao(
         })
 
     return resultado
+
+class StatusUpdatePayload(BaseModel):
+    status: str # EM_ANDAMENTO, AVERIGUADO, CONCLUIDO
+    observacao: Optional[str] = None
+
+@router.put("/{regiao_id}/admissoes/{previa_id}/status", summary="Atualiza o status de verificação da prévia")
+def atualizar_status_previa(
+    regiao_id: str,
+    previa_id: str,
+    payload: StatusUpdatePayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    previa = db.query(PreviaAdmissao).filter(
+        PreviaAdmissao.id == previa_id,
+        PreviaAdmissao.regiao_id == regiao_id
+    ).first()
+    if not previa:
+        raise HTTPException(status_code=404, detail="Prévia não encontrada.")
+
+    novo_status = payload.status.upper()
+    previa.status = novo_status
+
+    if novo_status in ["AVERIGUADO", "CONCLUIDO"]:
+        if user.is_diretoria:
+            previa.verificado_por_nome = f"Mesa Diretora ({user.role})"
+        elif user.loja_id:
+            previa.verificado_por_nome = f"VM da Loja {user.loja_id}"
+        else:
+            previa.verificado_por_nome = f"Ir. {user.usuario_id}"
+        previa.data_verificacao = datetime.utcnow()
+    else:
+        previa.verificado_por_nome = None
+        previa.data_verificacao = None
+
+    db.commit()
+    db.refresh(previa)
+    return {
+        "status": "success",
+        "previa_id": previa.id,
+        "novo_status": previa.status,
+        "verificado_por_nome": previa.verificado_por_nome,
+        "data_verificacao": previa.data_verificacao.isoformat() if previa.data_verificacao else None,
+        "message": f"Status atualizado para {previa.status} com sucesso."
+    }
 
 @router.post("/{regiao_id}/admissoes/upload", summary="Cria nova prévia com upload de arquivo PDF")
 async def criar_previa_com_upload(
