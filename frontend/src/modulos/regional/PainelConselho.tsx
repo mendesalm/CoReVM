@@ -1,14 +1,12 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { 
   Building2, FileText, ShieldCheck, Loader2, 
-  Award, Calendar, Edit3, Lock, ChevronDown, Bell, Pin, Trash2, Plus 
+  Award, Calendar, Bell, Pin, Trash2, Plus, ArrowRight, 
+  CheckCircle2, AlertTriangle 
 } from 'lucide-react';
-import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
-import ModalCadastroObreiro from '../../compartilhado/componentes/ModalCadastroObreiro';
-import ModalGestaoVM from '../../compartilhado/componentes/ModalGestaoVM';
 
 const API_URL = 'http://localhost:8003/api/v1';
 
@@ -28,26 +26,11 @@ export default function PainelConselho() {
     loja_id: null
   });
 
-  // Accordions (Mesa Diretora & Lojas)
-  const location = useLocation();
-  const [diretoriaExpanded, setDiretoriaExpanded] = useState(false);
-  const [lojasExpanded, setLojasExpanded] = useState(true);
-
-  // Expande o respectivo accordion conforme a rota de navegação
-  useEffect(() => {
-    if (location.pathname.endsWith('/diretoria')) {
-      setDiretoriaExpanded(true);
-      setLojasExpanded(false);
-    } else if (location.pathname.endsWith('/lojas')) {
-      setLojasExpanded(true);
-      setDiretoriaExpanded(false);
-    }
-  }, [location.pathname]);
-
   // Mural de Avisos e Notificações
   const [avisos, setAvisos] = useState<any[]>([]);
   const [showNovoAvisoModal, setShowNovoAvisoModal] = useState(false);
   const [salvandoAviso, setSalvandoAviso] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [avisoForm, setAvisoForm] = useState({
     titulo: '',
     conteudo: '',
@@ -57,61 +40,7 @@ export default function PainelConselho() {
     fixado: false
   });
 
-  // Modais
-  const [gestaoVmModal, setGestaoVmModal] = useState<any>(null);
-  const [addObreiroModal, setAddObreiroModal] = useState<any>(null);
-  const [addSuplenteModal, setAddSuplenteModal] = useState<any>(null);
-  const [showAddLojaModal, setShowAddLojaModal] = useState(false);
-  const [showDiretoriaModal, setShowDiretoriaModal] = useState(false);
-  const [editLojaModal, setEditLojaModal] = useState<any>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  // Form Edição de Loja
-  const [editLojaForm, setEditLojaForm] = useState({
-    nome: '',
-    numero: '',
-    rito: '',
-    cidade: ''
-  });
-  const [salvandoLoja, setSalvandoLoja] = useState(false);
-
-  const abrirEdicaoLoja = (loja: any) => {
-    setEditLojaModal(loja);
-    setEditLojaForm({
-      nome: loja.nome ? loja.nome.replace(/^Loja\s+/i, '') : '',
-      numero: loja.numero || '',
-      rito: loja.rito || 'Rito Escocês Antigo e Aceito',
-      cidade: loja.cidade || ''
-    });
-  };
-
-  const handleSalvarLoja = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editLojaModal) return;
-    setSalvandoLoja(true);
-    try {
-      await axios.put(`${API_URL}/integracao/lojas/${editLojaModal.loja_id}`, editLojaForm);
-      alert('Cadastro da loja atualizado com sucesso!');
-      setEditLojaModal(null);
-      setReloadKey(k => k + 1);
-    } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao atualizar dados da loja');
-    } finally {
-      setSalvandoLoja(false);
-    }
-  };
-
-  // Form Diretoria
-  const [diretoriaForm, setDiretoriaForm] = useState({
-    presidente_id: '',
-    vice_presidente_id: '',
-    secretario_id: '',
-    inicio_mandato: '',
-    termino_mandato: ''
-  });
-  const [salvandoDiretoria, setSalvandoDiretoria] = useState(false);
-
-  // Carregar dados completos do conselho, diretoria e permissões
+  // Carregar dados completos do conselho, diretoria e avisos
   const fetchDashboard = async () => {
     setLoading(true);
     try {
@@ -132,38 +61,14 @@ export default function PainelConselho() {
       setDiretoria(resDiretoria.data || []);
       setAvisos(resAvisos.data || []);
 
-      // Preenche form com valores atuais
-      const pres = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'presidente');
-      const vice = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
-      const sec = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'secretario');
-      
-      setDiretoriaForm({
-        presidente_id: pres?.usuario_id || '',
-        vice_presidente_id: vice?.usuario_id || '',
-        secretario_id: sec?.usuario_id || '',
-        inicio_mandato: pres?.inicio_mandato || sec?.inicio_mandato || new Date().toISOString().split('T')[0],
-        termino_mandato: pres?.termino_mandato || sec?.termino_mandato || new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0]
-      });
-
       if (data.lojas && data.lojas.length > 0) {
         const ids = data.lojas.map((l: any) => parseInt(l.loja_id)).filter((n: number) => !isNaN(n));
         if (ids.length > 0) {
-          const [detailsRes, vmStatusRes] = await Promise.all([
-            axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, ids),
-            axios.post(`${API_URL}/integracao/lojas/status_vm`, ids)
-          ]);
-          data.lojas = data.lojas.map((l: any) => {
-            const det = detailsRes.data.find((d: any) => String(d.id) === String(l.loja_id));
-            const hasVm = vmStatusRes.data[l.loja_id];
-            return { ...l, nome: det?.nome, numero: det?.numero, cidade: det?.cidade, potencia: det?.potencia, rito: det?.rito, hasVm };
-          });
-          // Ordena por Potência e depois por Número da Loja
-          data.lojas.sort((a: any, b: any) => {
-            const potA = a.potencia || '';
-            const potB = b.potencia || '';
-            if (potA !== potB) return potA.localeCompare(potB);
-            return (parseInt(a.numero) || 0) - (parseInt(b.numero) || 0);
-          });
+          const vmStatusRes = await axios.post(`${API_URL}/integracao/lojas/status_vm`, ids);
+          data.lojas = data.lojas.map((l: any) => ({
+            ...l,
+            hasVm: vmStatusRes.data[l.loja_id]
+          }));
         }
       }
       setConselho(data);
@@ -177,52 +82,6 @@ export default function PainelConselho() {
   useEffect(() => {
     if (id) fetchDashboard();
   }, [id, activeUserId, reloadKey]);
-
-  // Vincular uma nova loja ao conselho (apenas Diretoria)
-  const vincularLoja = async (lojaId: number) => {
-    try {
-      await axios.post(`${API_URL}/regional/${id}/lojas`, { loja_id: lojaId.toString() }, {
-        headers: { 'X-User-Id': activeUserId }
-      });
-      alert('Loja vinculada ao conselho com sucesso!');
-      setShowAddLojaModal(false);
-      setReloadKey(k => k + 1);
-    } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erro ao vincular loja');
-    }
-  };
-
-  // Remover uma loja do conselho (apenas Diretoria)
-  const removerLoja = async (lojaId: string) => {
-    if (!confirm('Deseja realmente remover esta loja do conselho?')) return;
-    try {
-      await axios.delete(`${API_URL}/regional/${id}/lojas/${lojaId}`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
-      alert('Loja removida com sucesso!');
-      setReloadKey(k => k + 1);
-    } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erro ao remover loja');
-    }
-  };
-
-  // Salvar alterações na Diretoria
-  const handleSalvarDiretoria = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSalvandoDiretoria(true);
-    try {
-      await axios.put(`${API_URL}/regional/${id}/diretoria`, diretoriaForm, {
-        headers: { 'X-User-Id': activeUserId }
-      });
-      alert('Composição da Diretoria e Mandatos atualizados com sucesso!');
-      setShowDiretoriaModal(false);
-      setReloadKey(k => k + 1);
-    } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao atualizar diretoria');
-    } finally {
-      setSalvandoDiretoria(false);
-    }
-  };
 
   // Publicar Novo Aviso
   const handleCriarAviso = async (e: React.FormEvent) => {
@@ -279,30 +138,50 @@ export default function PainelConselho() {
     }
   };
 
-  // Membros destacados da mesa
+  // Membros da mesa
   const presidente = diretoria.find(d => d.cargo.toLowerCase() === 'presidente');
   const vicePresidente = diretoria.find(d => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
   const secretario = diretoria.find(d => d.cargo.toLowerCase() === 'secretario');
 
-  // Métricas para o Accordion de Lojas
+  // Métricas de Lojas
   const totalLojas = conselho?.lojas?.length || 0;
   const lojasComVm = conselho?.lojas?.filter((l: any) => !!l.hasVm).length || 0;
   const lojasPendentes = totalLojas - lojasComVm;
 
-  if (loading) return <div className="h-screen bg-[#080808] flex items-center justify-center"><Loader2 className="w-12 h-12 text-[#facc15] animate-spin" /></div>;
-  if (erro) return <div className="h-screen bg-[#080808] flex items-center justify-center flex-col gap-4 text-orange-500 font-bold"><ShieldCheck className="w-16 h-16"/> {erro}</div>;
+  if (loading) {
+    return (
+      <div className="h-screen bg-[#080808] flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-[#facc15] animate-spin" />
+      </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <div className="h-screen bg-[#080808] flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
+        <ShieldCheck className="w-16 h-16"/> {erro}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
+      
       {/* Barra Contextual de Governança & Simulação de Acesso */}
       <div className="bg-[#111] border-b border-[#222]">
-        <div className="max-w-6xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15]">
+            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
               <ShieldCheck className="w-5 h-5"/>
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white tracking-wide uppercase">{conselho?.nome || 'Conselho Regional'}</h1>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#facc15] uppercase tracking-wider">Módulo 01</span>
+                <span className="text-gray-600">•</span>
+                <h1 className="text-sm font-bold text-white tracking-wide uppercase">
+                  {conselho?.nome || 'Conselho Regional'}
+                </h1>
+              </div>
               <p className="text-xs text-green-400 flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
                 Perfil Ativo: <span className="font-bold text-white">{userContext.role}</span>
@@ -329,399 +208,154 @@ export default function PainelConselho() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
         
-        {/* Accordion: Mesa Diretora do Conselho */}
-        <div className="bg-[#151515] border border-[#333] rounded-xl overflow-hidden shadow-xl transition-all">
-          {/* Cabeçalho do Accordion (Clicável para expandir/recolher) */}
-          <div 
-            onClick={() => setDiretoriaExpanded(!diretoriaExpanded)}
-            className="p-5 flex flex-wrap items-center justify-between gap-4 cursor-pointer hover:bg-[#1a1a1a] transition-colors select-none"
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h3 className="text-lg font-bold text-white tracking-wide">
-                    Mesa Diretora do Conselho
-                  </h3>
-                  {/* Tag do Presidente */}
-                  <span className="bg-[#222] text-[#facc15] text-xs font-bold px-2.5 py-1 rounded-full border border-[#444] flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#facc15]"></span>
-                    Presidente: {presidente?.nome_completo ? presidente.nome_completo.split(' ').slice(0, 2).join(' ') : 'Definir'}
-                  </span>
-                  {/* Tag de Vigência */}
-                  <span className="bg-[#222] text-gray-300 text-xs font-medium px-2.5 py-1 rounded-full border border-[#333] flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    Gestão: {presidente?.inicio_mandato?.split('-')[0] || '2026'} - {presidente?.termino_mandato?.split('-')[0] || '2027'}
-                  </span>
-                  {/* Tag Mandato Ativo */}
-                  <span className="bg-green-500/10 text-green-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/20 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
-                    Mandato Ativo
-                  </span>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  Composição eleita, lideranças regionais e vigência do mandato
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-              {userContext.is_diretoria && (
-                <button 
-                  onClick={() => setShowDiretoriaModal(true)}
-                  className="flex items-center gap-2 text-xs font-semibold bg-[#222] hover:bg-[#333] text-[#facc15] px-3 py-2 rounded-lg border border-[#444] transition-all shadow-sm"
-                >
-                  <Edit3 className="w-4 h-4" /> Gerenciar Mesa Diretora
-                </button>
-              )}
-
-              {/* Botão / Ícone Expandir */}
-              <button 
-                type="button"
-                onClick={() => setDiretoriaExpanded(!diretoriaExpanded)}
-                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-[#222] transition-colors"
-                title={diretoriaExpanded ? "Recolher mesa diretora" : "Expandir mesa diretora"}
-              >
-                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${diretoriaExpanded ? 'rotate-180 text-[#facc15]' : ''}`} />
-              </button>
-            </div>
-          </div>
-
-          {/* Conteúdo Expandível (Cards da Mesa Diretora) */}
-          {diretoriaExpanded && (
-            <div className="border-t border-[#2b2b2b] p-6 pt-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Presidente */}
-                <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#facc15]/20 text-[#facc15] flex items-center justify-center font-bold text-sm shrink-0">
-                    P
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-[#facc15] uppercase tracking-wider block">Presidente</span>
-                    <p className="text-sm font-semibold text-white truncate" title={presidente?.nome_completo || 'Pendente de Nomeação'}>
-                      {presidente?.nome_completo || (presidente?.usuario_id ? `CIM: ${presidente.usuario_id}` : 'Pendente')}
-                    </p>
-                    <p className="text-[11px] text-gray-500 truncate">{presidente?.email || (presidente?.cim ? `CIM: ${presidente.cim}` : 'Sem dados')}</p>
-                  </div>
-                </div>
-
-                {/* Vice-Presidente */}
-                <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
-                    V
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">Vice-Presidente</span>
-                    <p className="text-sm font-semibold text-white truncate" title={vicePresidente?.nome_completo || 'Pendente de Nomeação'}>
-                      {vicePresidente?.nome_completo || (vicePresidente?.usuario_id ? `CIM: ${vicePresidente.usuario_id}` : 'Pendente')}
-                    </p>
-                    <p className="text-[11px] text-gray-500 truncate">{vicePresidente?.email || (vicePresidente?.cim ? `CIM: ${vicePresidente.cim}` : 'Sem dados')}</p>
-                  </div>
-                </div>
-
-                {/* Secretário */}
-                <div className="bg-[#111] p-4 rounded-lg border border-[#2a2a2a] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm shrink-0">
-                    S
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">Secretário</span>
-                    <p className="text-sm font-semibold text-white truncate" title={secretario?.nome_completo || 'Pendente de Nomeação'}>
-                      {secretario?.nome_completo || (secretario?.usuario_id ? `CIM: ${secretario.usuario_id}` : 'Pendente')}
-                    </p>
-                    <p className="text-[11px] text-gray-500 truncate">{secretario?.email || (secretario?.cim ? `CIM: ${secretario.cim}` : 'Sem dados')}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Vigência do Mandato */}
-              <div className="mt-4 pt-3 border-t border-[#222] flex items-center justify-between text-xs text-gray-400">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-500" />
-                  <span>Vigência do Mandato:</span>
-                  <span className="text-white font-medium">
-                    {presidente?.inicio_mandato || secretario?.inicio_mandato || '2026-09-08'} até {presidente?.termino_mandato || secretario?.termino_mandato || '2027-09-08'}
-                  </span>
-                </div>
-                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded font-semibold text-[10px]">
-                  MANDATO ATIVO
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Accordion: Lojas Jurisdicionadas */}
-        <div className="bg-[#151515] border border-[#333] rounded-xl overflow-hidden shadow-xl transition-all">
-          {/* Cabeçalho do Accordion (Clicável para expandir/recolher) */}
-          <div 
-            onClick={() => setLojasExpanded(!lojasExpanded)}
-            className="p-5 flex flex-wrap items-center justify-between gap-4 cursor-pointer hover:bg-[#1a1a1a] transition-colors select-none"
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
-                <Building2 className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h3 className="text-lg font-bold text-white tracking-wide">
-                    Lojas do Conselho
-                  </h3>
-                  {/* Tag com Total de Lojas */}
-                  <span className="bg-[#222] text-[#facc15] text-xs font-bold px-2.5 py-1 rounded-full border border-[#444]">
-                    {totalLojas} {totalLojas === 1 ? 'Loja Jurisdicionada' : 'Lojas Jurisdicionadas'}
-                  </span>
-                  {/* Tag Lojas com VM */}
-                  <span className="bg-green-500/10 text-green-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-green-500/20 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
-                    {lojasComVm} com VM
-                  </span>
-                  {/* Tag Lojas Pendentes */}
-                  {lojasPendentes > 0 && (
-                    <span className="bg-red-500/10 text-red-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-red-500/20 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
-                      {lojasPendentes} Pendente{lojasPendentes > 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  {userContext.is_diretoria 
-                    ? "Modo Diretoria: você possui permissão total de gestão em todas as lojas." 
-                    : `Modo Representante: permissão de edição restrita à sua Loja Ref: ${userContext.loja_id}.`}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-              {/* Botão / Ícone Expandir */}
-              <button 
-                type="button"
-                onClick={() => setLojasExpanded(!lojasExpanded)}
-                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-[#222] transition-colors"
-                title={lojasExpanded ? "Recolher lojas" : "Expandir lojas"}
-              >
-                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${lojasExpanded ? 'rotate-180 text-[#facc15]' : ''}`} />
-              </button>
-            </div>
-          </div>
-
-          {/* Corpo do Accordion (Tabela) */}
-          {lojasExpanded && (
-            <div className="border-t border-[#2b2b2b] p-6 pt-3 overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#333] text-sm text-gray-500 uppercase">
-                  <th className="p-3">Loja</th>
-                  <th className="p-3">Potência</th>
-                  <th className="p-3">Oriente</th>
-                  <th className="p-3">Rito</th>
-                  <th className="p-3">Venerável Mestre</th>
-                  <th className="p-3 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {conselho?.lojas?.map((rel: any) => {
-                  const isMyLodge = userContext.is_diretoria || String(userContext.loja_id) === String(rel.loja_id);
-                  return (
-                    <tr 
-                      key={rel.id} 
-                      className={`border-b border-[#222] transition-colors text-xs ${isMyLodge ? 'hover:bg-[#1a1a1a]' : 'opacity-70'}`}
-                    >
-                      <td className="p-3 font-medium text-white flex items-center gap-2">
-                        {isMyLodge && !userContext.is_diretoria && (
-                          <span className="p-1 bg-[#facc15]/20 text-[#facc15] rounded text-[10px] font-bold" title="Sua Loja">
-                            SUA LOJA
-                          </span>
-                        )}
-                        <span>{rel.nome ? `${rel.nome.replace(/^Loja\s+/i, '')}, nº ${rel.numero}` : `Ref: ${rel.loja_id}`}</span>
-                      </td>
-                      <td className="p-3 text-gray-400">{rel.potencia || '-'}</td>
-                      <td className="p-3 text-gray-400">{rel.cidade || '-'}</td>
-                      <td className="p-3 text-gray-400 truncate max-w-[150px]" title={rel.rito}>{rel.rito ? rel.rito.replace(/^Rito\s+/i, '') : '-'}</td>
-                      <td className="p-3">
-                        {rel.hasVm ? (
-                          <button
-                            onClick={() => isMyLodge ? setGestaoVmModal({
-                              id: parseInt(rel.loja_id),
-                              nome: rel.nome,
-                              numero: rel.numero,
-                              rito: rel.rito,
-                              potencia: rel.potencia,
-                              hasVm: rel.hasVm
-                            }) : null}
-                            disabled={!isMyLodge}
-                            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
-                              isMyLodge 
-                                ? 'bg-[#1a1a1a] hover:bg-[#252525] border border-green-500/40 text-green-400 hover:text-green-300 cursor-pointer shadow-sm' 
-                                : 'bg-[#222] text-green-400 opacity-80 cursor-default'
-                            }`}
-                            title={isMyLodge ? "Clique para gerenciar o Venerável Mestre" : rel.hasVm}
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                            <span className="truncate max-w-[150px]">{rel.hasVm}</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => isMyLodge ? setGestaoVmModal({
-                              id: parseInt(rel.loja_id),
-                              nome: rel.nome,
-                              numero: rel.numero,
-                              rito: rel.rito,
-                              potencia: rel.potencia,
-                              hasVm: null
-                            }) : null}
-                            disabled={!isMyLodge}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
-                              isMyLodge
-                                ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 cursor-pointer border border-red-500/30'
-                                : 'bg-red-500/20 text-red-400 opacity-80 cursor-default'
-                            }`}
-                            title={isMyLodge ? "Clique para cadastrar o Venerável Mestre" : "Pendente"}
-                          >
-                            Pendente
-                          </button>
-                        )}
-                      </td>
-                      <td className="p-3 text-right space-x-1 whitespace-nowrap">
-                        {/* Botão Remover (Exclusivo Diretoria) */}
-                        {userContext.is_diretoria && (
-                          <button 
-                            onClick={() => removerLoja(rel.loja_id)} 
-                            className="text-red-400 hover:text-red-300 bg-red-500/10 px-2 py-1 rounded"
-                            title="Remover loja do conselho"
-                          >
-                            Remover
-                          </button>
-                        )}
-
-                        {/* Botão Editar (Diretoria ou Representante da Própria Loja) */}
-                        <button 
-                          onClick={() => isMyLodge ? abrirEdicaoLoja(rel) : null}
-                          disabled={!isMyLodge}
-                          className={`px-2 py-1 rounded transition-all ${
-                            isMyLodge 
-                              ? 'text-blue-400 hover:text-blue-300 bg-blue-500/10 cursor-pointer' 
-                              : 'text-gray-600 bg-gray-800/30 cursor-not-allowed opacity-40'
-                          }`}
-                          title={isMyLodge ? "Editar dados cadastrais da loja" : "Apenas o representante desta loja pode editar"}
-                        >
-                          {!isMyLodge && <Lock className="w-3 h-3 inline mr-1" />}
-                          Editar
-                        </button>
-
-                        {/* Botão Gerenciar VM / + VM (Habilitado apenas para Diretoria ou Representante da Própria Loja) */}
-                        <button 
-                          onClick={() => isMyLodge ? setGestaoVmModal({
-                            id: parseInt(rel.loja_id),
-                            nome: rel.nome,
-                            numero: rel.numero,
-                            rito: rel.rito,
-                            potencia: rel.potencia,
-                            hasVm: rel.hasVm
-                          }) : null}
-                          disabled={!isMyLodge}
-                          className={`px-2 py-1 rounded transition-all ${
-                            isMyLodge 
-                              ? 'text-[#facc15] hover:text-[#eab308] bg-[#facc15]/10 cursor-pointer' 
-                              : 'text-gray-600 bg-gray-800/30 cursor-not-allowed opacity-40'
-                          }`}
-                          title={isMyLodge ? (rel.hasVm ? "Gerenciar Venerável Mestre (Visualizar, Editar, Destituir ou Substituir)" : "Cadastrar Venerável Mestre") : "Apenas o representante desta loja pode cadastrar"}
-                        >
-                          {!isMyLodge && <Lock className="w-3 h-3 inline mr-1" />}
-                          {rel.hasVm ? 'Gerenciar VM' : '+ VM'}
-                        </button>
-
-                        {/* Botão + Suplente (Habilitado apenas para Diretoria ou Representante da Própria Loja) */}
-                        <button 
-                          onClick={() => isMyLodge ? setAddSuplenteModal(rel) : null}
-                          disabled={!isMyLodge}
-                          className={`px-2 py-1 rounded transition-all ${
-                            isMyLodge 
-                              ? 'text-purple-400 hover:text-purple-300 bg-purple-500/10 cursor-pointer' 
-                              : 'text-gray-600 bg-gray-800/30 cursor-not-allowed opacity-40'
-                          }`}
-                          title={isMyLodge ? "Cadastrar Suplente da Loja" : "Apenas o representante desta loja pode cadastrar"}
-                        >
-                          {!isMyLodge && <Lock className="w-3 h-3 inline mr-1" />}
-                          + Suplente
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {conselho?.lojas?.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="p-4 text-center text-gray-500">Nenhuma loja cadastrada neste conselho ainda.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-
-            {/* Rodapé da tabela: Adicionar Loja */}
-            {userContext.is_diretoria ? (
-              <div className="mt-4 pt-3 border-t border-[#222] flex items-center justify-between flex-wrap gap-2 text-xs">
-                <span className="text-gray-400">
-                  Não encontrou a loja jurisdicionada nesta relação?
-                </span>
-                <button
-                  onClick={() => setShowAddLojaModal(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#facc15] hover:text-[#eab308] bg-[#facc15]/10 hover:bg-[#facc15]/20 border border-[#facc15]/30 px-3.5 py-2 rounded-lg transition-all shadow-sm cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Não encontrou a loja? Clique aqui para adicionar
-                </button>
-              </div>
-            ) : (
-              <div className="mt-4 pt-3 border-t border-[#222] flex items-center justify-between flex-wrap gap-2 text-xs text-gray-500">
-                <span>Não encontrou sua loja na relação?</span>
-                <span>Entre em contato com a Diretoria do Conselho para solicitar a vinculação.</span>
-              </div>
-            )}
-          </div>
-          )}
-        </div>
-
-        {/* Seção: Mural de Avisos & Documentos */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Widget Principal: Avisos e Notificações (Ocupa 2 colunas no desktop) */}
-          <div className="lg:col-span-2 bg-[#151515] border border-[#333] rounded-xl p-5 shadow-xl flex flex-col justify-between">
+        {/* Atiradores Executivos para Módulos 08 (Mesa Diretora) e 07 (Lojas Jurisdicionadas) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Card Resumo: Gestão da Mesa Diretora (Página 8) */}
+          <div className="bg-gradient-to-br from-[#161616] to-[#101010] border border-[#2d2d2d] hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#262626] mb-4">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#facc15]/10 border border-[#facc15]/20 rounded-lg text-[#facc15]">
+                  <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/20">
+                    <Award className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#facc15] uppercase tracking-wider block">Módulo 08</span>
+                    <h3 className="text-base font-bold text-white">Mesa Diretora do Conselho</h3>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full font-semibold text-[10px] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                  Mandato Ativo
+                </span>
+              </div>
+
+              <div className="bg-[#0c0c0c] border border-[#222] rounded-xl p-3.5 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Presidente Eleito:</span>
+                  <span className="text-white font-bold truncate max-w-[200px]">
+                    {presidente?.nome_completo || 'Aguardando Nomeação'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Vigência Gestão:</span>
+                  <span className="text-[#facc15] font-semibold flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {presidente?.inicio_mandato?.split('-')[0] || '2026'} - {presidente?.termino_mandato?.split('-')[0] || '2027'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-gray-500 pt-1 border-t border-[#1a1a1a]">
+                  <span>Vice: {vicePresidente?.nome_completo ? vicePresidente.nome_completo.split(' ').slice(0, 2).join(' ') : 'Definir'}</span>
+                  <span>Sec: {secretario?.nome_completo ? secretario.nome_completo.split(' ').slice(0, 2).join(' ') : 'Definir'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-[#222] flex items-center justify-between">
+              <span className="text-xs text-gray-400">Gestão de mandatos e titulares</span>
+              <Link 
+                to={`/regiao/${id}/diretoria`}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#facc15] hover:text-[#eab308] bg-[#facc15]/10 hover:bg-[#facc15]/20 border border-[#facc15]/30 px-4 py-2 rounded-xl transition-all shadow-sm"
+              >
+                Acessar Mesa Diretora <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Card Resumo: Gestão das Lojas Jurisdicionadas (Página 7) */}
+          <div className="bg-gradient-to-br from-[#161616] to-[#101010] border border-[#2d2d2d] hover:border-blue-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/20">
+                    <Building2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">Módulo 07</span>
+                    <h3 className="text-base font-bold text-white">Lojas Jurisdicionadas</h3>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 bg-[#202020] text-gray-300 border border-[#333] rounded-full font-bold text-[10px]">
+                  {totalLojas} Lojas Integradas
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="bg-[#0c0c0c] border border-[#222] rounded-xl p-3">
+                  <span className="text-gray-400 block mb-1">Com Venerável</span>
+                  <div className="text-xl font-extrabold text-green-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                    {lojasComVm}
+                  </div>
+                  <span className="text-[10px] text-green-500/70">Lideranças ativas</span>
+                </div>
+
+                <div className="bg-[#0c0c0c] border border-[#222] rounded-xl p-3">
+                  <span className="text-gray-400 block mb-1">Pendentes de Posse</span>
+                  <div className="text-xl font-extrabold text-amber-400 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4" />
+                    {lojasPendentes}
+                  </div>
+                  <span className="text-[10px] text-amber-500/70">Aguardando registro</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-[#222] flex items-center justify-between">
+              <span className="text-xs text-gray-400">Relação completa, ritos e VMs</span>
+              <Link 
+                to={`/regiao/${id}/lojas`}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-4 py-2 rounded-xl transition-all shadow-sm"
+              >
+                Gerenciar Lojas <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Seção Principal: Mural de Avisos & Documentos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Widget Principal: Avisos e Notificações (Ocupa 2 colunas no desktop) */}
+          <div className="lg:col-span-2 bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-[#242424] mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
                     <Bell className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-base font-bold text-white tracking-wide">
-                        Avisos e Notificações
+                        Mural de Avisos e Notificações
                       </h3>
-                      <span className="bg-[#222] text-[#facc15] text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#444]">
+                      <span className="bg-[#222] text-[#facc15] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#444]">
                         {avisos.length} {avisos.length === 1 ? 'comunicado' : 'comunicados'}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400">
-                      Comunicados oficiais, convocações e alertas da Diretoria do Conselho
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Comunicados oficiais, convocações solenes e novidades das Lojas e Diretoria
                     </p>
                   </div>
                 </div>
 
                 <button 
+                  type="button"
                   onClick={() => setShowNovoAvisoModal(true)}
-                  className="flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3.5 py-1.5 rounded-lg transition-colors shadow-sm cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-4 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Novo Aviso / Notificação
+                  <Plus className="w-4 h-4" /> Novo Comunicado
                 </button>
               </div>
 
               {/* Lista de Avisos */}
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+              <div className="space-y-3.5 max-h-[580px] overflow-y-auto pr-1">
                 {avisos.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 text-xs">
-                    Nenhum aviso ou comunicado pendente no momento.
+                  <div className="text-center py-16 text-gray-500 text-xs">
+                    Nenhum comunicado oficial registrado no momento.
                   </div>
                 ) : (
                   avisos.map((a: any) => {
@@ -732,7 +366,7 @@ export default function PainelConselho() {
                     return (
                       <div 
                         key={a.id}
-                        className={`p-3.5 rounded-xl border transition-all ${
+                        className={`p-4 rounded-xl border transition-all ${
                           a.deletado_visualmente
                             ? 'bg-[#141414] border-red-500/30 opacity-60'
                             : a.fixado 
@@ -788,6 +422,7 @@ export default function PainelConselho() {
                           {/* Botão Excluir / Ocultar */}
                           {a.pode_excluir && (
                             <button
+                              type="button"
                               onClick={() => handleExcluirAviso(a.id)}
                               className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 cursor-pointer"
                               title={userContext.role?.toUpperCase() === 'SUPERADMIN' ? "Opção de Deleção Visual ou Hard Delete Definitivo" : "Ocultar comunicado (Deleção Visual)"}
@@ -797,10 +432,10 @@ export default function PainelConselho() {
                           )}
                         </div>
 
-                        <div className="mt-2.5 pt-2 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
+                        <div className="mt-3 pt-2.5 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
                           <span className="flex items-center gap-1.5">
-                            <Award className="w-3 h-3 text-[#facc15]" />
-                            <span>{a.autor_nome || 'Conselho'}</span>
+                            <Award className="w-3.5 h-3.5 text-[#facc15]" />
+                            <span className="text-gray-300 font-medium">{a.autor_nome || 'Conselho'}</span>
                             {a.loja_id && <span className="text-[#facc15]/80 font-medium">(Loja Ref: {a.loja_id})</span>}
                           </span>
 
@@ -810,7 +445,7 @@ export default function PainelConselho() {
                                 Válido até: {a.data_validade.split('-').reverse().join('/')}
                               </span>
                             )}
-                            <span className="flex items-center gap-1 text-gray-400">
+                            <span className="flex items-center gap-1 text-gray-500">
                               <Calendar className="w-3 h-3 text-gray-500" />
                               {a.data_publicacao ? a.data_publicacao.split('-').reverse().join('/') : ''}
                             </span>
@@ -825,10 +460,10 @@ export default function PainelConselho() {
           </div>
 
           {/* Widget Lateral: Atas e Repositório */}
-          <div className="bg-[#151515] p-6 rounded-xl border border-[#333] shadow-xl flex flex-col justify-between">
+          <div className="bg-[#141414] p-6 rounded-2xl border border-[#2a2a2a] shadow-xl flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-3 pb-3 border-b border-[#262626] mb-4">
-                <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
+              <div className="flex items-center gap-3 pb-3 border-b border-[#242424] mb-4">
+                <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400 border border-purple-500/20">
                   <FileText className="w-6 h-6" />
                 </div>
                 <div>
@@ -836,267 +471,24 @@ export default function PainelConselho() {
                   <p className="text-xs text-gray-400">Repositório documental regional</p>
                 </div>
               </div>
-              <div className="py-6 text-center space-y-2">
-                <div className="text-4xl font-bold text-white">0</div>
+              <div className="py-8 text-center space-y-2">
+                <div className="text-4xl font-black text-white">0</div>
                 <p className="text-xs text-gray-400">Atas e relatórios arquivados</p>
               </div>
             </div>
-            <div className="pt-4 border-t border-[#262626]">
-              <button 
-                onClick={() => alert("O Módulo de Upload de Documentos e Atas das Lojas será ativado na Fase 3 do Roadmap.")}
-                className="w-full bg-[#222] hover:bg-[#282828] text-purple-400 border border-purple-500/30 font-semibold py-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-2"
+            <div className="pt-4 border-t border-[#242424]">
+              <Link 
+                to={`/regiao/${id}/documentos`}
+                className="w-full bg-[#1c1c1c] hover:bg-[#252525] text-purple-400 border border-purple-500/30 font-semibold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-2"
               >
-                <FileText className="w-4 h-4" /> Consultar Atas
-              </button>
+                <FileText className="w-4 h-4" /> Consultar Repositório Oficial
+              </Link>
             </div>
           </div>
+
         </div>
-        
+
       </div>
-
-      {/* Modal: Gerenciar Mesa Diretora e Mandato */}
-      {showDiretoriaModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-6 w-full max-w-lg shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15]">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Gerenciar Mesa Diretora</h2>
-                <p className="text-xs text-gray-400">Defina os membros titulares e o período do mandato</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSalvarDiretoria} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
-                  Presidente do Conselho (CIM)
-                </label>
-                <input 
-                  type="text" 
-                  value={diretoriaForm.presidente_id}
-                  onChange={(e) => setDiretoriaForm({...diretoriaForm, presidente_id: e.target.value})}
-                  placeholder="Informe o CIM do Presidente eleito..."
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
-                  Vice-Presidente (CIM)
-                </label>
-                <input 
-                  type="text" 
-                  value={diretoriaForm.vice_presidente_id}
-                  onChange={(e) => setDiretoriaForm({...diretoriaForm, vice_presidente_id: e.target.value})}
-                  placeholder="Informe o CIM do Vice-Presidente..."
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1">
-                  Secretário do Conselho (CIM)
-                </label>
-                <input 
-                  type="text" 
-                  value={diretoriaForm.secretario_id}
-                  onChange={(e) => setDiretoriaForm({...diretoriaForm, secretario_id: e.target.value})}
-                  placeholder="Informe o CIM do Secretário..."
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-purple-400 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">Início do Mandato</label>
-                  <input 
-                    type="date"
-                    required
-                    value={diretoriaForm.inicio_mandato}
-                    onChange={(e) => setDiretoriaForm({...diretoriaForm, inicio_mandato: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">Término do Mandato</label>
-                  <input 
-                    type="date"
-                    required
-                    value={diretoriaForm.termino_mandato}
-                    onChange={(e) => setDiretoriaForm({...diretoriaForm, termino_mandato: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
-                <button 
-                  type="button" 
-                  onClick={() => setShowDiretoriaModal(false)}
-                  className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  disabled={salvandoDiretoria}
-                  className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-lg font-semibold text-xs transition-colors disabled:opacity-50"
-                >
-                  {salvandoDiretoria ? 'Gravando...' : 'Salvar Mandato'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Adicionar Loja ao Conselho */}
-      {showAddLojaModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-xl">
-            <h2 className="text-xl font-bold text-[#facc15] mb-2">Adicionar Loja ao Conselho</h2>
-            <p className="text-sm text-gray-400 mb-6">Busque pelo nome ou número da loja no banco global.</p>
-            <BuscadorLoja onSelect={(loja) => vincularLoja(loja.id)} />
-            <div className="flex justify-end mt-6">
-              <button onClick={() => setShowAddLojaModal(false)} className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white transition-colors">Cancelar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Gestão Completa de Venerável Mestre (Visualizar, Editar, Encerrar, Substituir) */}
-      {gestaoVmModal && (
-        <ModalGestaoVM 
-          loja={gestaoVmModal}
-          onSuccess={() => {
-            setReloadKey(k => k + 1);
-          }}
-          onClose={() => setGestaoVmModal(null)}
-        />
-      )}
-
-      {/* Modal: Cadastro de Venerável Mestre (Fallback) */}
-      {addObreiroModal && (
-        <ModalCadastroObreiro 
-          cargoPadrao="Venerável Mestre"
-          lojasDisponiveis={[{ id: parseInt(addObreiroModal.loja_id), nome: addObreiroModal.nome || 'Loja' }]}
-          onSuccess={(cim: string) => {
-            alert(`Venerável Mestre CIM ${cim} cadastrado com sucesso! E-mail com senha provisória enviado.`);
-            setAddObreiroModal(null);
-            setReloadKey(k => k + 1);
-          }}
-          onCancel={() => setAddObreiroModal(null)}
-        />
-      )}
-
-      {/* Modal: Cadastro de Suplente */}
-      {addSuplenteModal && (
-        <ModalCadastroObreiro 
-          lojasDisponiveis={[{ id: parseInt(addSuplenteModal.loja_id), nome: addSuplenteModal.nome || 'Loja' }]}
-          onSuccess={(cim: string) => {
-            alert(`Suplente CIM ${cim} cadastrado com sucesso! E-mail com senha provisória enviado.`);
-            setAddSuplenteModal(null);
-            setReloadKey(k => k + 1);
-          }}
-          onCancel={() => setAddSuplenteModal(null)}
-        />
-      )}
-
-      {/* Modal: Edição Cadastral da Loja */}
-      {editLojaModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-6 w-full max-w-lg shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
-                <Building2 className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Editar Cadastro da Loja</h2>
-                <p className="text-xs text-gray-400">Atualize informações oficiais como Rito, Nome, Número e Oriente.</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSalvarLoja} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                  Nome da Loja
-                </label>
-                <input 
-                  type="text" 
-                  required
-                  value={editLojaForm.nome}
-                  onChange={(e) => setEditLojaForm({...editLojaForm, nome: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                    Número
-                  </label>
-                  <input 
-                    type="text" 
-                    required
-                    value={editLojaForm.numero}
-                    onChange={(e) => setEditLojaForm({...editLojaForm, numero: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                    Oriente (Cidade)
-                  </label>
-                  <input 
-                    type="text" 
-                    value={editLojaForm.cidade}
-                    onChange={(e) => setEditLojaForm({...editLojaForm, cidade: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
-                  Rito Trabalhado
-                </label>
-                <select 
-                  value={editLojaForm.rito}
-                  onChange={(e) => setEditLojaForm({...editLojaForm, rito: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
-                >
-                  <option value="Rito Escocês Antigo e Aceito">Rito Escocês Antigo e Aceito</option>
-                  <option value="Rito York">Rito de York</option>
-                  <option value="Rito Adonhiramita">Rito Adonhiramita</option>
-                  <option value="Rito Brasileiro">Rito Brasileiro</option>
-                  <option value="Rito Moderno">Rito Moderno</option>
-                  <option value="Rito Schroder">Rito Schröder</option>
-                  <option value="Rito Escocês Retificado">Rito Escocês Retificado</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
-                <button 
-                  type="button" 
-                  onClick={() => setEditLojaModal(null)}
-                  className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  disabled={salvandoLoja}
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-semibold text-xs transition-colors disabled:opacity-50"
-                >
-                  {salvandoLoja ? 'Salvando...' : 'Salvar Alterações'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Modal: Publicar Novo Aviso no Mural */}
       {showNovoAvisoModal && (() => {
@@ -1127,7 +519,7 @@ export default function PainelConselho() {
                     placeholder="Ex: Convocação para Sessão Conjunta / Alerta de Prazo"
                     value={avisoForm.titulo}
                     onChange={(e) => setAvisoForm({...avisoForm, titulo: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                   />
                 </div>
 
@@ -1139,7 +531,7 @@ export default function PainelConselho() {
                     <select 
                       value={avisoForm.nivel}
                       onChange={(e) => setAvisoForm({...avisoForm, nivel: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-xs text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-xs text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                     >
                       <option value="BAIXO">🟢 Baixo - Aviso Informativo</option>
                       <option value="MEDIO">🟡 Médio - Avisos de Alerta</option>
@@ -1149,67 +541,72 @@ export default function PainelConselho() {
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                      Tipo de Publicação
+                      Tipo de Postagem
                     </label>
                     <select 
                       value={avisoForm.tipo}
                       onChange={(e) => setAvisoForm({...avisoForm, tipo: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-xs text-white focus:border-[#facc15] focus:outline-none"
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-xs text-white focus:border-[#facc15] focus:outline-none"
                     >
-                      <option value="AVISO">Comunicado Oficial</option>
-                      <option value="NOTIFICACAO">Informe de Novidade / Alteração</option>
+                      <option value="AVISO">Comunicado Geral</option>
+                      <option value="NOTIFICACAO">Notificação / Informe</option>
+                      <option value="CONVOCACAO">Convocação Solene</option>
                     </select>
                   </div>
                 </div>
 
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Conteúdo da Mensagem *
+                    </label>
+                    <span className={`text-[11px] font-bold ${excedeuLimite ? 'text-red-400' : 'text-gray-500'}`}>
+                      {numPalavras} / 200 palavras
+                    </span>
+                  </div>
+                  <textarea 
+                    rows={4}
+                    required
+                    value={avisoForm.conteudo}
+                    onChange={(e) => setAvisoForm({...avisoForm, conteudo: e.target.value})}
+                    placeholder="Escreva os detalhes do aviso ou notificação (máximo de 200 palavras)..."
+                    className={`w-full bg-[#080808] border rounded-xl p-2.5 text-xs text-white focus:outline-none ${
+                      excedeuLimite ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#facc15]'
+                    }`}
+                  />
+                  {excedeuLimite && (
+                    <p className="text-[11px] text-red-400 mt-1">
+                      Limite ultrapassado! O comunicado não pode ter mais de 200 palavras.
+                    </p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
                       Data de Validade (Opcional)
                     </label>
                     <input 
                       type="date"
                       value={avisoForm.data_validade}
                       onChange={(e) => setAvisoForm({...avisoForm, data_validade: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white focus:border-[#facc15] focus:outline-none"
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
 
                   {userContext.is_diretoria && (
-                    <div className="flex items-center gap-2 pt-6">
-                      <input 
-                        type="checkbox"
-                        id="fixado_check"
-                        checked={avisoForm.fixado}
-                        onChange={(e) => setAvisoForm({...avisoForm, fixado: e.target.checked})}
-                        className="w-4 h-4 rounded border-gray-600 text-[#facc15] focus:ring-[#facc15] bg-[#080808]"
-                      />
-                      <label htmlFor="fixado_check" className="text-xs text-gray-300 cursor-pointer font-medium select-none">
-                        Fixar no topo do mural
+                    <div className="flex items-center pt-5">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-300 select-none">
+                        <input 
+                          type="checkbox"
+                          checked={avisoForm.fixado}
+                          onChange={(e) => setAvisoForm({...avisoForm, fixado: e.target.checked})}
+                          className="rounded border-[#444] text-[#facc15] focus:ring-[#facc15] h-4 w-4 bg-[#222]"
+                        />
+                        <span>Fixar no topo do mural</span>
                       </label>
                     </div>
                   )}
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                      Texto do Comunicado *
-                    </label>
-                    <span className={`text-[11px] font-bold ${excedeuLimite ? 'text-red-400 animate-pulse' : 'text-gray-400'}`}>
-                      {numPalavras} / 200 palavras {excedeuLimite && '(Limite excedido!)'}
-                    </span>
-                  </div>
-                  <textarea 
-                    required
-                    rows={4}
-                    placeholder="Digite o texto detalhado (máximo 200 palavras)..."
-                    value={avisoForm.conteudo}
-                    onChange={(e) => setAvisoForm({...avisoForm, conteudo: e.target.value})}
-                    className={`w-full bg-[#080808] border rounded-lg p-2.5 text-sm text-white focus:outline-none transition-colors ${
-                      excedeuLimite ? 'border-red-500 focus:border-red-400' : 'border-[#333] focus:border-[#facc15]'
-                    }`}
-                  />
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
@@ -1222,11 +619,10 @@ export default function PainelConselho() {
                   </button>
                   <button 
                     type="submit"
-                    disabled={salvandoAviso || excedeuLimite || !avisoForm.titulo.trim() || !avisoForm.conteudo.trim()}
-                    className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                    disabled={salvandoAviso || excedeuLimite}
+                    className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-xl font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer"
                   >
-                    {salvandoAviso && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {salvandoAviso ? 'Publicando...' : 'Publicar no Mural'}
+                    {salvandoAviso ? 'Publicando...' : 'Publicar Comunicado'}
                   </button>
                 </div>
               </form>
@@ -1234,6 +630,7 @@ export default function PainelConselho() {
           </div>
         );
       })()}
+
     </div>
   );
 }

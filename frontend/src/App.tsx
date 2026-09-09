@@ -15,6 +15,8 @@ import {
   PaginaRelatorios, 
   PaginaComunicacao 
 } from './modulos/regional/submodulos/PaginasModulos';
+import PaginaLojas from './modulos/regional/submodulos/PaginaLojas';
+import PaginaDiretoria from './modulos/regional/submodulos/PaginaDiretoria';
 import { AuthProvider, useAuth } from './compartilhado/contextos/AuthContext';
 
 function RotaProtegida({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
@@ -50,8 +52,8 @@ function AppRotas() {
         <Route path="/regiao/:id/votacoes" element={<PaginaVotacoes />} />
         <Route path="/regiao/:id/patrimonio" element={<PaginaPatrimonio />} />
         <Route path="/regiao/:id/documentos" element={<PaginaDocumentos />} />
-        <Route path="/regiao/:id/lojas" element={<PainelConselho />} />
-        <Route path="/regiao/:id/diretoria" element={<PainelConselho />} />
+        <Route path="/regiao/:id/lojas" element={<PaginaLojas />} />
+        <Route path="/regiao/:id/diretoria" element={<PaginaDiretoria />} />
         <Route path="/regiao/:id/relatorios" element={<PaginaRelatorios />} />
         <Route path="/regiao/:id/comunicacao" element={<PaginaComunicacao />} />
         
