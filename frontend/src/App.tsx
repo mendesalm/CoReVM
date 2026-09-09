@@ -8,7 +8,6 @@ import PainelVM from './modulos/local/PainelVM';
 import PaginaCalendario from './modulos/calendario/PaginaCalendario';
 import PaginaLogin from './modulos/auth/PaginaLogin';
 import { 
-  PaginaRelatorios, 
   PaginaComunicacao 
 } from './modulos/regional/submodulos/PaginasModulos';
 import PaginaLojas from './modulos/regional/submodulos/PaginaLojas';
@@ -17,6 +16,7 @@ import PaginaAdmissoes from './modulos/regional/submodulos/PaginaAdmissoes';
 import PaginaVotacoes from './modulos/regional/submodulos/PaginaVotacoes';
 import PaginaPatrimonio from './modulos/regional/submodulos/PaginaPatrimonio';
 import PaginaDocumentos from './modulos/regional/submodulos/PaginaDocumentos';
+import PaginaRelatorios from './modulos/regional/submodulos/PaginaRelatorios';
 import { AuthProvider, useAuth } from './compartilhado/contextos/AuthContext';
 
 function RotaProtegida({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {

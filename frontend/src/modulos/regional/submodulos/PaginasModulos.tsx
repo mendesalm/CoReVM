@@ -1,24 +1,8 @@
 import { 
-  BarChart3, MessageSquare 
+  MessageSquare 
 } from 'lucide-react';
 import ModuloGenericoConselho from '../../../compartilhado/componentes/ModuloGenericoConselho';
 
-
-
-export const PaginaRelatorios: React.FC = () => (
-  <ModuloGenericoConselho
-    numero={7}
-    titulo="Relatórios de Gestão"
-    subtitulo="Indicadores consolidados, presenças em sessões conjuntas e métricas maçônicas"
-    icone={BarChart3}
-    descricaoRegras="Consolidação analítica de dados regionais para subsidiar decisões estratégicas da liderança."
-    regrasRbac={{
-      superadmin: "Acesso completo a todos os relatórios analíticos",
-      diretoria: "Relatórios consolidados de todas as lojas e da região",
-      lojas: "Relatórios analíticos restritos aos dados da respectiva loja"
-    }}
-  />
-);
 
 export const PaginaComunicacao: React.FC = () => (
   <ModuloGenericoConselho

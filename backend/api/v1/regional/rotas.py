@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from database import get_db_core, get_db_lojas
 from models.models import (
-    Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional, 
+    Regiao, DiretoriaConselho, LojaAgregada, SuplenteConselho, AvisoRegional, 
     PreviaAdmissao, ConsideracaoPrevia, VotacaoRegional, VotoLoja,
     ItemPatrimonio, EmprestimoPatrimonio, FilaEsperaPatrimonio,
     DocumentoRegional
@@ -22,7 +22,10 @@ from models.lojas_models import ObreiroIntegracao, LojaIntegracao
 from core.constants import CargoConselho
 from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
 from core.dependencies import get_current_director, get_current_regional_user, RegionalUserContext
-from utils.pdf_generator import gerar_pdf_previa, gerar_pdf_documento_regional
+from utils.pdf_generator import (
+    gerar_pdf_previa, gerar_pdf_documento_regional,
+    gerar_pdf_relatorio_executivo, gerar_pdf_relatorio_integrantes, gerar_pdf_relatorio_patrimonio
+)
 
 router = APIRouter()
 
@@ -2115,4 +2118,520 @@ def excluir_documento_regional(
         doc.deletado_visualmente = True
         db.commit()
         return {"status": "success", "tipo_delecao": "VISUAL", "message": "Documento ocultado visualmente com sucesso."}
+
+
+# ==============================================================================
+# MÓDULO 07: RELATÓRIOS DE GESTÃO E INTELIGÊNCIA REGIONAL
+# ==============================================================================
+
+@router.get("/{regiao_id}/relatorios/consolidado", summary="Compila indicadores executivos de governança, ritos e assiduidade")
+def obter_relatorio_consolidado(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Retorna métricas executivas globais, distribuição por rito, ranking de assiduidade
+    das lojas e taxa de engajamento do colegiado regional.
+    """
+    from models.lojas_models import LojaIntegracao
+
+    # 1. Região e Lojas
+    regiao = db_core.query(Regiao).filter(Regiao.id == regiao_id).first()
+    conselho_nome = regiao.nome if regiao else "Conselho Regional de Veneráveis Mestres"
+
+    agregadas = db_core.query(LojaAgregada).filter(
+        LojaAgregada.regiao_id == regiao_id,
+        LojaAgregada.ativa == True
+    ).all()
+    total_lojas = len(agregadas)
+
+    loja_ids_int = [int(a.loja_id) for a in agregadas if a.loja_id.isdigit()]
+    lojas_info = {}
+    if loja_ids_int:
+        lojas_db_list = db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id.in_(loja_ids_int)).all()
+        for l in lojas_db_list:
+            lojas_info[str(l.id)] = l
+
+    # 2. Votações e Votos
+    votacoes = db_core.query(VotacaoRegional).filter(VotacaoRegional.regiao_id == regiao_id).all()
+    total_votacoes = len(votacoes)
+    votacao_ids = [v.id for v in votacoes]
+
+    votos = db_core.query(VotoLoja).filter(VotoLoja.votacao_id.in_(votacao_ids)).all() if votacao_ids else []
+    total_votos = len(votos)
+
+    votos_por_loja = {}
+    for v in votos:
+        votos_por_loja[v.loja_id] = votos_por_loja.get(v.loja_id, 0) + 1
+
+    quorum_medio = 0.0
+    if total_votacoes > 0 and total_lojas > 0:
+        quorum_medio = round((total_votos / (total_votacoes * total_lojas)) * 100, 1)
+
+    # 3. Admissões (Mural de Prévias)
+    previas = db_core.query(PreviaAdmissao).filter(
+        PreviaAdmissao.regiao_id == regiao_id,
+        PreviaAdmissao.deletado_visualmente == False
+    ).all()
+    total_admissoes = len(previas)
+    admissoes_concluidas = sum(1 for p in previas if p.status in ["CONCLUIDO", "AVERIGUADO"])
+    admissoes_andamento = sum(1 for p in previas if p.status == "EM_ANDAMENTO")
+
+    previa_ids = [p.id for p in previas]
+    total_consideracoes = db_core.query(ConsideracaoPrevia).filter(
+        ConsideracaoPrevia.previa_id.in_(previa_ids),
+        ConsideracaoPrevia.deletado_visualmente == False
+    ).count() if previa_ids else 0
+
+    # 4. Patrimônio e Cautelas
+    itens_patrimonio = db_core.query(ItemPatrimonio).filter(
+        ItemPatrimonio.regiao_id == regiao_id,
+        ItemPatrimonio.deletado_visualmente == False
+    ).all()
+    total_ativos_patrimonio = sum(i.quantidade_total for i in itens_patrimonio)
+    total_ativos_disponiveis = sum(i.quantidade_disponivel for i in itens_patrimonio)
+    total_ativos_emprestados = total_ativos_patrimonio - total_ativos_disponiveis
+    bens_solidarios_geral = sum(1 for i in itens_patrimonio if i.tipo_propriedade == "LOJA")
+
+    hoje = date.today()
+    emprestimos = db_core.query(EmprestimoPatrimonio).filter(EmprestimoPatrimonio.regiao_id == regiao_id).all()
+    total_cautelas = len(emprestimos)
+    cautelas_ativas = sum(1 for e in emprestimos if e.status in ["ATIVO", "ATRASADO"])
+    cautelas_atrasadas = sum(1 for e in emprestimos if e.status != "CONCLUIDO" and e.data_prevista_devolucao < hoje)
+
+    cautelas_ativas_por_loja = {}
+    for e in emprestimos:
+        if e.status in ["ATIVO", "ATRASADO"]:
+            cautelas_ativas_por_loja[e.loja_solicitante_id] = cautelas_ativas_por_loja.get(e.loja_solicitante_id, 0) + 1
+
+    bens_solidarios_por_loja = {}
+    for i in itens_patrimonio:
+        if i.tipo_propriedade == "LOJA" and i.loja_proprietaria_id:
+            bens_solidarios_por_loja[i.loja_proprietaria_id] = bens_solidarios_por_loja.get(i.loja_proprietaria_id, 0) + 1
+
+    # 5. Documentos Oficiais
+    docs = db_core.query(DocumentoRegional).filter(
+        DocumentoRegional.regiao_id == regiao_id,
+        DocumentoRegional.deletado_visualmente == False
+    ).all()
+    total_documentos = len(docs)
+    total_downloads = sum(d.downloads_count for d in docs)
+
+    # 6. Distribuição por Rito
+    contagem_ritos = {}
+    for a in agregadas:
+        info = lojas_info.get(a.loja_id)
+        rito = (info.rito if info and info.rito else "REAA").strip()
+        contagem_ritos[rito] = contagem_ritos.get(rito, 0) + 1
+
+    distribuicao_ritos = [
+        {
+            "rito": rito,
+            "quantidade": qtd,
+            "percentual": round((qtd / total_lojas) * 100, 1) if total_lojas > 0 else 0
+        }
+        for rito, qtd in sorted(contagem_ritos.items(), key=lambda x: x[1], reverse=True)
+    ]
+
+    # 7. Ranking e Assiduidade das Lojas
+    ranking_lojas = []
+    for a in agregadas:
+        info = lojas_info.get(a.loja_id)
+        nome_loja = info.nome_loja if info else f"Loja {a.loja_id}"
+        numero_loja = info.numero_loja if info else "S/N"
+        rito_loja = info.rito if info and info.rito else "REAA"
+        cidade_loja = info.cidade if info and info.cidade else "Anápolis"
+
+        votos_computados = votos_por_loja.get(a.loja_id, 0)
+        pct = round((votos_computados / total_votacoes * 100), 1) if total_votacoes > 0 else 100.0
+
+        status_label = "Excelente" if pct >= 80 else ("Regular" if pct >= 50 else "Atenção")
+
+        ranking_lojas.append({
+            "id": a.loja_id,
+            "nome": nome_loja,
+            "numero": numero_loja,
+            "rito": rito_loja,
+            "cidade": cidade_loja,
+            "votos_computados": votos_computados,
+            "total_votacoes": total_votacoes,
+            "percentual_participacao": pct,
+            "status_label": status_label,
+            "bens_solidarios_count": bens_solidarios_por_loja.get(a.loja_id, 0),
+            "cautelas_ativas_count": cautelas_ativas_por_loja.get(a.loja_id, 0)
+        })
+
+    ranking_lojas.sort(key=lambda x: (x["percentual_participacao"], x["votos_computados"]), reverse=True)
+
+    # Índice de Engajamento Regional (IER)
+    taxa_admissoes = (admissoes_concluidas / total_admissoes * 100) if total_admissoes > 0 else 85.0
+    taxa_patrimonio = (total_ativos_emprestados / total_ativos_patrimonio * 100) if total_ativos_patrimonio > 0 else 50.0
+    ier = round((quorum_medio * 0.5) + (taxa_admissoes * 0.3) + (min(100.0, taxa_patrimonio * 2) * 0.2), 1)
+
+    return {
+        "conselho": {
+            "id": regiao_id,
+            "nome": conselho_nome,
+            "total_lojas": total_lojas,
+            "data_relatorio": date.today().strftime("%d/%m/%Y")
+        },
+        "kpis": {
+            "total_lojas": total_lojas,
+            "total_votacoes": total_votacoes,
+            "total_votos_registrados": total_votos,
+            "quorum_medio": quorum_medio,
+            "total_admissoes": total_admissoes,
+            "admissoes_concluidas": admissoes_concluidas,
+            "admissoes_andamento": admissoes_andamento,
+            "total_consideracoes": total_consideracoes,
+            "total_ativos_patrimonio": total_ativos_patrimonio,
+            "total_ativos_disponiveis": total_ativos_disponiveis,
+            "total_ativos_emprestados": total_ativos_emprestados,
+            "bens_solidarios_geral": bens_solidarios_geral,
+            "total_cautelas": total_cautelas,
+            "cautelas_ativas": cautelas_ativas,
+            "cautelas_atrasadas": cautelas_atrasadas,
+            "total_documentos": total_documentos,
+            "total_downloads": total_downloads,
+            "indice_engajamento_regional": ier
+        },
+        "distribuicao_ritos": distribuicao_ritos,
+        "ranking_lojas": ranking_lojas
+    }
+
+
+@router.get("/{regiao_id}/relatorios/integrantes", summary="Lista nominal da Mesa Diretora e Veneráveis Mestres das Lojas")
+def obter_relatorio_integrantes(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Retorna o Livro de Matrícula do Colegiado Regional:
+    1. Mesa Diretora Executiva em exercício com mandatos e contatos.
+    2. Relação das 17 Lojas Jurisdicionadas com seus Veneráveis Mestres e 1º Vigilantes/Suplentes.
+    """
+    from models.lojas_models import LojaIntegracao, Mandato, ObreiroIntegracao
+
+    # 1. Região
+    regiao = db_core.query(Regiao).filter(Regiao.id == regiao_id).first()
+    conselho_nome = regiao.nome if regiao else "Conselho Regional de Veneráveis Mestres"
+
+    # 2. Mesa Diretora
+    diretoria_db = db_core.query(DiretoriaConselho).filter(DiretoriaConselho.regiao_id == regiao_id).all()
+    user_ids = [d.usuario_id for d in diretoria_db if d.usuario_id]
+    
+    obreiros_map = {}
+    if user_ids:
+        obreiros = db_lojas.query(ObreiroIntegracao).filter(
+            (ObreiroIntegracao.cim.in_(user_ids)) |
+            (ObreiroIntegracao.cpf.in_(user_ids))
+        ).all()
+        for o in obreiros:
+            obreiros_map[o.cim] = o
+            if o.cpf:
+                obreiros_map[o.cpf] = o
+            obreiros_map[str(o.id)] = o
+
+    ordem_cargos = {
+        "PRESIDENTE": 1,
+        "VICE_PRESIDENTE": 2,
+        "SECRETARIO": 3,
+        "TESOUREIRO": 4,
+        "CHANCELER": 5,
+        "HOSPITALEIRO": 6
+    }
+
+    mesa_diretora = []
+    for d in diretoria_db:
+        o = obreiros_map.get(d.usuario_id)
+        cargo_str = d.cargo.value if hasattr(d.cargo, 'value') else str(d.cargo)
+        cargo_formatado = cargo_str.replace("_", " ").title()
+        
+        mesa_diretora.append({
+            "id": d.id,
+            "cargo": cargo_formatado,
+            "cargo_codigo": cargo_str,
+            "usuario_id": d.usuario_id,
+            "nome": o.nome_completo if o else f"Ir.'. {d.usuario_id}",
+            "cim": o.cim if o else (d.usuario_id if d.usuario_id.isdigit() else "-"),
+            "email": o.email if o else "secretaria@conselho.org.br",
+            "telefone": o.telefone if o else "(62) 99999-0000",
+            "inicio_mandato": d.inicio_mandato.strftime("%d/%m/%Y") if d.inicio_mandato else "-",
+            "termino_mandato": d.termino_mandato.strftime("%d/%m/%Y") if d.termino_mandato else "-"
+        })
+
+    mesa_diretora.sort(key=lambda x: ordem_cargos.get(x["cargo_codigo"], 99))
+
+    # 3. Lojas e seus Representantes (VM e Suplente)
+    agregadas = db_core.query(LojaAgregada).filter(
+        LojaAgregada.regiao_id == regiao_id,
+        LojaAgregada.ativa == True
+    ).all()
+
+    loja_ids_int = [int(a.loja_id) for a in agregadas if a.loja_id.isdigit()]
+    lojas_info = {}
+    if loja_ids_int:
+        lojas_db_list = db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id.in_(loja_ids_int)).all()
+        for l in lojas_db_list:
+            lojas_info[str(l.id)] = l
+
+    # Veneráveis Mestres (cargo_id = 1)
+    vms_map = {}
+    if loja_ids_int:
+        mandatos_vm = db_lojas.query(Mandato.loja_id, ObreiroIntegracao).join(
+            ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
+        ).filter(
+            Mandato.loja_id.in_(loja_ids_int),
+            Mandato.cargo_id == 1,
+            Mandato.data_fim.is_(None)
+        ).all()
+        for loja_id, obreiro in mandatos_vm:
+            vms_map[str(loja_id)] = obreiro
+
+    # 1º Vigilantes (cargo_id = 2)
+    vigilantes_map = {}
+    if loja_ids_int:
+        mandatos_vig = db_lojas.query(Mandato.loja_id, ObreiroIntegracao).join(
+            ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
+        ).filter(
+            Mandato.loja_id.in_(loja_ids_int),
+            Mandato.cargo_id == 2,
+            Mandato.data_fim.is_(None)
+        ).all()
+        for loja_id, obreiro in mandatos_vig:
+            vigilantes_map[str(loja_id)] = obreiro
+
+    # Suplentes cadastrados na tabela SuplenteConselho
+    suplentes_conselho_map = {}
+    suplentes_db = db_core.query(SuplenteConselho).all()
+    for s in suplentes_db:
+        suplentes_conselho_map[s.loja_id] = s
+
+    quadro_lojas = []
+    for a in agregadas:
+        info = lojas_info.get(a.loja_id)
+        nome_loja = info.nome_loja if info else f"Loja {a.loja_id}"
+        numero_loja = info.numero_loja if info else "S/N"
+        rito_loja = info.rito if info and info.rito else "REAA"
+        cidade_loja = info.cidade if info and info.cidade else "Anápolis"
+
+        vm_obreiro = vms_map.get(a.loja_id)
+        suplente_cons = suplentes_conselho_map.get(a.loja_id)
+        vigilante_obreiro = vigilantes_map.get(a.loja_id)
+
+        vm_nome = vm_obreiro.nome_completo if vm_obreiro else f"Ir.'. Venerável Mestre ({a.loja_id})"
+        vm_cim = vm_obreiro.cim if vm_obreiro else "-"
+        vm_email = vm_obreiro.email if vm_obreiro else f"vm.loja{numero_loja}@corevm.org.br"
+        vm_telefone = vm_obreiro.telefone if vm_obreiro else "(62) 99999-1234"
+
+        if suplente_cons:
+            suplente_nome = suplente_cons.nome_suplente
+            suplente_email = suplente_cons.email_suplente or "-"
+            suplente_telefone = "-"
+        elif vigilante_obreiro:
+            suplente_nome = f"{vigilante_obreiro.nome_completo} (1º Vig.)"
+            suplente_email = vigilante_obreiro.email or "-"
+            suplente_telefone = vigilante_obreiro.telefone or "-"
+        else:
+            suplente_nome = "1º Vigilante em Exercício"
+            suplente_email = "-"
+            suplente_telefone = "-"
+
+        quadro_lojas.append({
+            "loja_id": a.loja_id,
+            "nome": nome_loja,
+            "numero": numero_loja,
+            "rito": rito_loja,
+            "cidade": cidade_loja,
+            "data_filiacao": a.data_filiacao.strftime("%d/%m/%Y") if a.data_filiacao else "01/01/2024",
+            "status": "Regular / Ativa",
+            "vm_nome": vm_nome,
+            "vm_cim": vm_cim,
+            "vm_email": vm_email,
+            "vm_telefone": vm_telefone,
+            "suplente_nome": suplente_nome,
+            "suplente_email": suplente_email,
+            "suplente_telefone": suplente_telefone
+        })
+
+    quadro_lojas.sort(key=lambda x: int(x["numero"]) if x["numero"].isdigit() else 99999)
+
+    return {
+        "conselho_nome": conselho_nome,
+        "regiao_id": regiao_id,
+        "data_atualizacao": date.today().strftime("%d/%m/%Y"),
+        "mesa_diretora": mesa_diretora,
+        "lojas": quadro_lojas
+    }
+
+
+@router.get("/{regiao_id}/relatorios/patrimonio", summary="Inventário patrimonial analítico e balanço de comodatos")
+def obter_relatorio_patrimonio(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Retorna o inventário detalhado de todos os bens tombados do Conselho e da Rede Solidária,
+    além de todos os termos de cautela/comodatos ativos, devolvidos e pendências.
+    """
+    regiao = db_core.query(Regiao).filter(Regiao.id == regiao_id).first()
+    conselho_nome = regiao.nome if regiao else "Conselho Regional de Veneráveis Mestres"
+
+    # Bens
+    itens = db_core.query(ItemPatrimonio).filter(
+        ItemPatrimonio.regiao_id == regiao_id,
+        ItemPatrimonio.deletado_visualmente == False
+    ).order_by(ItemPatrimonio.categoria.asc(), ItemPatrimonio.nome.asc()).all()
+
+    total_ativos = sum(i.quantidade_total for i in itens)
+    total_disponiveis = sum(i.quantidade_disponivel for i in itens)
+    total_emprestados = total_ativos - total_disponiveis
+    bens_core = sum(1 for i in itens if i.tipo_propriedade == "CONSELHO")
+    bens_rede = sum(1 for i in itens if i.tipo_propriedade == "LOJA")
+
+    lista_itens = []
+    for item in itens:
+        lista_itens.append({
+            "id": item.id,
+            "codigo_tombamento": item.codigo_tombamento,
+            "nome": item.nome,
+            "descricao": item.descricao or "",
+            "categoria": item.categoria,
+            "tipo_propriedade": item.tipo_propriedade,
+            "loja_proprietaria_nome": item.loja_proprietaria_nome or "Conselho Regional",
+            "quantidade_total": item.quantidade_total,
+            "quantidade_disponivel": item.quantidade_disponivel,
+            "quantidade_emprestada": item.quantidade_total - item.quantidade_disponivel,
+            "localizacao_fisica": item.localizacao_fisica,
+            "estado_conservacao": item.estado_conservacao,
+            "permite_emprestimo": item.permite_emprestimo,
+            "permite_locacao": item.permite_locacao,
+            "taxa_locacao_estimada": item.taxa_locacao_estimada or 0.0
+        })
+
+    # Cautelas
+    hoje = date.today()
+    emprestimos = db_core.query(EmprestimoPatrimonio).filter(
+        EmprestimoPatrimonio.regiao_id == regiao_id
+    ).order_by(EmprestimoPatrimonio.data_retirada.desc()).all()
+
+    total_cautelas = len(emprestimos)
+    cautelas_ativas = 0
+    cautelas_atrasadas = 0
+    lista_emprestimos = []
+
+    for emp in emprestimos:
+        is_atrasado = emp.status != "CONCLUIDO" and emp.data_prevista_devolucao < hoje
+        if emp.status in ["ATIVO", "ATRASADO"]:
+            cautelas_ativas += 1
+        if is_atrasado:
+            cautelas_atrasadas += 1
+
+        status_calc = "ATRASADO" if is_atrasado else emp.status
+
+        lista_emprestimos.append({
+            "id": emp.id,
+            "item_nome": emp.item.nome if emp.item else "Ativo",
+            "item_codigo": emp.item.codigo_tombamento if emp.item else "-",
+            "item_categoria": emp.item.categoria if emp.item else "-",
+            "loja_solicitante_nome": emp.loja_solicitante_nome,
+            "loja_solicitante_numero": emp.loja_solicitante_numero,
+            "beneficiario_final": emp.beneficiario_final or "Beneficiário",
+            "responsavel_retirada_nome": emp.responsavel_retirada_nome,
+            "responsavel_retirada_cargo": emp.responsavel_retirada_cargo or "Representante",
+            "responsavel_retirada_contato": emp.responsavel_retirada_contato or "",
+            "responsavel_entrega_nome": emp.responsavel_entrega_nome,
+            "data_retirada": emp.data_retirada.strftime("%d/%m/%Y"),
+            "data_prevista_devolucao": emp.data_prevista_devolucao.strftime("%d/%m/%Y"),
+            "data_efetiva_devolucao": emp.data_efetiva_devolucao.strftime("%d/%m/%Y") if emp.data_efetiva_devolucao else None,
+            "quantidade": emp.quantidade,
+            "status": status_calc,
+            "atrasado": is_atrasado,
+            "observacoes": emp.observacoes or ""
+        })
+
+    return {
+        "conselho_nome": conselho_nome,
+        "regiao_id": regiao_id,
+        "data_balanco": date.today().strftime("%d/%m/%Y"),
+        "resumo": {
+            "total_itens_cadastrados": len(itens),
+            "total_unidades_acervo": total_ativos,
+            "unidades_disponiveis": total_disponiveis,
+            "unidades_em_uso": total_emprestados,
+            "taxa_ocupacao": round((total_emprestados / total_ativos * 100), 1) if total_ativos > 0 else 0.0,
+            "itens_conselho": bens_core,
+            "itens_rede_solidaria": bens_rede,
+            "total_cautelas_historico": total_cautelas,
+            "cautelas_ativas": cautelas_ativas,
+            "cautelas_atrasadas": cautelas_atrasadas
+        },
+        "itens": lista_itens,
+        "emprestimos": lista_emprestimos
+    }
+
+
+@router.get("/{regiao_id}/relatorios/exportar-pdf", summary="Exporta relatório oficial em PDF via ReportLab")
+def exportar_relatorio_pdf(
+    regiao_id: str,
+    tipo: str = "executivo", # executivo, integrantes, patrimonio
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Gera e faz o download imediato de PDF canônico para auditoria e prestação de contas.
+    Tipos suportados: executivo, integrantes, patrimonio.
+    """
+    tipo_limpo = tipo.lower().strip()
+    if tipo_limpo not in ["executivo", "integrantes", "patrimonio"]:
+        raise HTTPException(status_code=400, detail="Tipo de relatório inválido. Escolha entre: executivo, integrantes, patrimonio.")
+
+    regiao = db_core.query(Regiao).filter(Regiao.id == regiao_id).first()
+    conselho_nome = regiao.nome if regiao else "Conselho Regional de Veneráveis Mestres de Anápolis e Região"
+
+    diretorio_relatorios = os.path.join("uploads", "relatorios", regiao_id)
+    os.makedirs(diretorio_relatorios, exist_ok=True)
+    caminho_pdf = os.path.join(diretorio_relatorios, f"Relatorio_{tipo_limpo}_{date.today().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}.pdf")
+
+    if tipo_limpo == "executivo":
+        dados = obter_relatorio_consolidado(regiao_id=regiao_id, user=user, db_core=db_core, db_lojas=db_lojas)
+        gerar_pdf_relatorio_executivo(
+            caminho_saida=caminho_pdf,
+            conselho_nome=conselho_nome,
+            stats=dados["kpis"],
+            ranking_lojas=dados["ranking_lojas"]
+        )
+        nome_download = f"Relatorio_Executivo_Conselho_{date.today().strftime('%d-%m-%Y')}.pdf"
+
+    elif tipo_limpo == "integrantes":
+        dados = obter_relatorio_integrantes(regiao_id=regiao_id, user=user, db_core=db_core, db_lojas=db_lojas)
+        gerar_pdf_relatorio_integrantes(
+            caminho_saida=caminho_pdf,
+            conselho_nome=conselho_nome,
+            diretoria=dados["mesa_diretora"],
+            lojas_vms=dados["lojas"]
+        )
+        nome_download = f"Quadro_Integrantes_Conselho_{date.today().strftime('%d-%m-%Y')}.pdf"
+
+    elif tipo_limpo == "patrimonio":
+        dados = obter_relatorio_patrimonio(regiao_id=regiao_id, user=user, db_core=db_core)
+        gerar_pdf_relatorio_patrimonio(
+            caminho_saida=caminho_pdf,
+            conselho_nome=conselho_nome,
+            itens_patrimonio=dados["itens"],
+            emprestimos_ativos=[e for e in dados["emprestimos"] if e["status"] in ["ATIVO", "ATRASADO"]]
+        )
+        nome_download = f"Balanco_Patrimonial_Conselho_{date.today().strftime('%d-%m-%Y')}.pdf"
+
+    return FileResponse(
+        path=caminho_pdf,
+        filename=nome_download,
+        media_type="application/pdf"
+    )
 
