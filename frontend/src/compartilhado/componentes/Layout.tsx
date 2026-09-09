@@ -24,20 +24,43 @@ export default function Layout() {
   const isExpanded = sidebarPinned || isHovered;
   const [showBugModal, setShowBugModal] = useState(false);
 
-  // Texto explicativo on hover após dois segundos
-  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
-  const hoverTimerRef = useRef<any>(null);
+  // Tooltip flutuante com posição fixa (escapa de overflow-y-auto e overflow-hidden)
+  const [tooltipData, setTooltipData] = useState<{
+    id: string;
+    titulo: string;
+    descricao: string;
+    top: number;
+    left: number;
+  } | null>(null);
 
-  const handleMouseEnterItem = (itemId: string) => {
+  const hoverTimerRef = useRef<any>(null);
+  const pendingTargetRef = useRef<string | null>(null);
+  const targetElementRef = useRef<HTMLElement | null>(null);
+
+  const handleMouseEnterItem = (item: { id: string; titulo: string; descricao: string }, e: React.MouseEvent<HTMLElement>) => {
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    pendingTargetRef.current = item.id;
+    targetElementRef.current = e.currentTarget;
+
     hoverTimerRef.current = setTimeout(() => {
-      setHoveredItemId(itemId);
+      if (pendingTargetRef.current === item.id && targetElementRef.current) {
+        const freshRect = targetElementRef.current.getBoundingClientRect();
+        setTooltipData({
+          id: item.id,
+          titulo: item.titulo,
+          descricao: item.descricao,
+          top: freshRect.top + freshRect.height / 2,
+          left: freshRect.right + 12
+        });
+      }
     }, 2000);
   };
 
   const handleMouseLeaveItem = () => {
+    pendingTargetRef.current = null;
+    targetElementRef.current = null;
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    setHoveredItemId(null);
+    setTooltipData(null);
   };
 
   useEffect(() => {
@@ -214,7 +237,10 @@ export default function Layout() {
           }`}
         >
           {/* Navegação dos 10 Módulos */}
-          <div className="flex-1 overflow-y-auto py-3 px-2 space-y-1.5 scrollbar-thin scrollbar-thumb-[#222]">
+          <div 
+            onScroll={handleMouseLeaveItem}
+            className="flex-1 overflow-y-auto py-3 px-2 space-y-1.5 scrollbar-thin scrollbar-thumb-[#222]"
+          >
             
             {/* Header interno do menu com botão recolher/expandir */}
             <div className="flex items-center justify-between px-2 pb-2 mb-1 border-b border-[#1c1c1c]">
@@ -258,7 +284,7 @@ export default function Layout() {
                 <NavLink
                   key={item.id}
                   to={item.to}
-                  onMouseEnter={() => handleMouseEnterItem(item.id)}
+                  onMouseEnter={(e) => handleMouseEnterItem(item, e)}
                   onMouseLeave={handleMouseLeaveItem}
                   className={`group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all ${
                     isActive 
@@ -279,19 +305,6 @@ export default function Layout() {
                       </p>
                     </div>
                   )}
-
-                  {/* Texto explicativo on hover após 2 segundos */}
-                  {hoveredItemId === item.id && (
-                    <div className="absolute left-full ml-3 px-3.5 py-2 bg-[#181818]/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-[#383838] whitespace-nowrap z-50 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
-                      <p className="font-bold text-[#facc15] text-xs flex items-center gap-1.5">
-                        <Icone className="w-3.5 h-3.5 text-[#facc15]" />
-                        {item.titulo}
-                      </p>
-                      <p className="text-[11px] text-gray-300 mt-0.5 font-normal">
-                        {item.descricao}
-                      </p>
-                    </div>
-                  )}
                 </NavLink>
               );
             })}
@@ -300,37 +313,22 @@ export default function Layout() {
             <div className="pt-2 pb-1 border-t border-[#1c1c1c] my-1"></div>
 
             {/* Item Especial: Reportar Bug no Sistema */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowBugModal(true)}
-                onMouseEnter={() => handleMouseEnterItem('bug')}
-                onMouseLeave={handleMouseLeaveItem}
-                className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-red-400/90 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 cursor-pointer ${
-                  !isExpanded ? 'justify-center' : ''
-                }`}
-              >
-                <Bug className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
-                {isExpanded && (
-                  <div className="min-w-0 flex-1 text-left">
-                    <p className="text-xs font-bold truncate">Reportar Bug</p>
-                  </div>
-                )}
-              </button>
-
-              {/* Texto explicativo on hover após 2 segundos para o Bug */}
-              {hoveredItemId === 'bug' && (
-                <div className="absolute left-full ml-3 px-3.5 py-2 bg-[#181818]/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-red-500/40 whitespace-nowrap z-50 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
-                  <p className="font-bold text-red-400 text-xs flex items-center gap-1.5">
-                    <Bug className="w-3.5 h-3.5 text-red-400" />
-                    Reportar Bug
-                  </p>
-                  <p className="text-[11px] text-gray-300 mt-0.5 font-normal">
-                    Canal direto com o SuperAdmin e equipe técnica
-                  </p>
+            <button
+              type="button"
+              onClick={() => setShowBugModal(true)}
+              onMouseEnter={(e) => handleMouseEnterItem({ id: 'bug', titulo: 'Reportar Bug / Falha', descricao: 'Canal direto com o SuperAdmin e equipe técnica' }, e)}
+              onMouseLeave={handleMouseLeaveItem}
+              className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-red-400/90 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 cursor-pointer ${
+                !isExpanded ? 'justify-center' : ''
+              }`}
+            >
+              <Bug className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
+              {isExpanded && (
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-xs font-bold truncate">Reportar Bug</p>
                 </div>
               )}
-            </div>
+            </button>
 
           </div>
 
@@ -375,6 +373,27 @@ export default function Layout() {
         onClose={() => setShowBugModal(false)}
         usuarioAtual={usuario}
       />
+
+      {/* Tooltip flutuante refinado com fundo escuro e efeito de vidro translúcido (Fixed z-[9999]) */}
+      {tooltipData && (
+        <div 
+          style={{ 
+            top: `${tooltipData.top}px`, 
+            left: `${tooltipData.left}px` 
+          }}
+          className="fixed -translate-y-1/2 px-4 py-2.5 bg-[#141414]/95 backdrop-blur-xl text-white rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] border border-[#383838] z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-200 min-w-[200px] max-w-[320px]"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#facc15] animate-pulse"></span>
+            <p className="font-bold text-[#facc15] text-xs tracking-wide">
+              {tooltipData.titulo}
+            </p>
+          </div>
+          <p className="text-[11px] text-gray-300 font-normal leading-relaxed">
+            {tooltipData.descricao}
+          </p>
+        </div>
+      )}
 
     </div>
   );
