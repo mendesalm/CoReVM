@@ -18,8 +18,10 @@ export default function Layout() {
   const [regiaoNome, setRegiaoNome] = useState('Carregando...');
   const [loading, setLoading] = useState(true);
   
-  // Menu colapsável: inicia mostrando apenas ícones conforme requisito
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  // Menu colapsável: suporta fixação via botão sandwich e expansão automática on hover
+  const [sidebarPinned, setSidebarPinned] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const isExpanded = sidebarPinned || isHovered;
   const [showBugModal, setShowBugModal] = useState(false);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function Layout() {
         const res = await axios.get(`http://localhost:8003/api/v1/regioes/${id}`);
         setRegiaoNome(res.data.nome);
       } catch (err) {
-        setRegiaoNome('Região Desconhecida');
+        setRegiaoNome('Conselho Regional de Veneráveis Mestres de Anápolis e Região');
       } finally {
         setLoading(false);
       }
@@ -117,37 +119,36 @@ export default function Layout() {
       {/* HEADER FULL-WIDTH (Ocupa toda a largura da tela) */}
       <header className="w-full h-16 bg-[#0e0e0e] border-b border-[#222] px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 shadow-lg select-none">
         
-        {/* Esquerda: Botão Toggle Sidebar + Logo Animada CoRe + Nome do Conselho */}
-        <div className="flex items-center gap-4">
+        {/* Esquerda: Botão Toggle Sidebar (Sandwich) + Ícone CoRe + Nome do Conselho */}
+        <div className="flex items-center gap-3.5 min-w-0">
           <button
             type="button"
-            onClick={() => setSidebarExpanded(!sidebarExpanded)}
-            className="p-2 text-gray-400 hover:text-[#facc15] hover:bg-[#1a1a1a] rounded-xl transition-all cursor-pointer border border-transparent hover:border-[#333]"
-            title={sidebarExpanded ? "Recolher menu lateral (modo ícones)" : "Expandir menu lateral"}
+            onClick={() => setSidebarPinned(!sidebarPinned)}
+            className={`p-2 rounded-xl transition-all cursor-pointer border shrink-0 ${
+              sidebarPinned 
+                ? 'text-[#facc15] bg-[#1a1a1a] border-[#333]' 
+                : 'text-gray-400 hover:text-[#facc15] hover:bg-[#1a1a1a] border-transparent hover:border-[#333]'
+            }`}
+            title={sidebarPinned ? "Desafixar menu lateral" : "Fixar / expandir menu lateral"}
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Logo Animada do CoRe */}
-          <Link to={id ? `/regiao/${id}` : '/'} className="flex items-center gap-2.5 group">
+          {/* Logo Animada do CoRe (Somente o Ícone) */}
+          <Link 
+            to={id ? `/regiao/${id}` : '/'} 
+            className="flex items-center shrink-0 hover:opacity-90 transition-opacity" 
+            title="Início do Conselho Regional"
+          >
             <LogoAnimadaCore theme="ouro" width={38} height={34} animated={true} />
-            <div className="flex flex-col">
-              <span className="text-base font-extrabold tracking-wider bg-gradient-to-r from-[#fef08a] via-[#facc15] to-[#ca8a04] bg-clip-text text-transparent group-hover:brightness-110 transition-all">
-                CoRe<span className="text-xs font-light text-gray-400 ml-1">VM</span>
-              </span>
-              <span className="text-[9px] uppercase tracking-widest text-gray-500 font-medium">Conselho Regional</span>
-            </div>
           </Link>
 
-          <div className="h-6 w-[1px] bg-[#262626] hidden sm:block mx-1"></div>
+          <div className="h-6 w-[1px] bg-[#262626] mx-0.5 shrink-0 hidden sm:block"></div>
 
           {/* Nome do Conselho */}
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Conselho:</span>
-            <span className="text-xs font-bold text-white bg-[#181818] border border-[#333] px-3 py-1 rounded-full truncate max-w-[280px] shadow-sm">
-              {loading ? 'Carregando...' : regiaoNome}
-            </span>
-          </div>
+          <h1 className="text-xs sm:text-sm font-bold text-gray-200 tracking-wide truncate max-w-[280px] sm:max-w-[450px] md:max-w-[700px]">
+            {loading ? 'Carregando...' : (regiaoNome || "Conselho Regional de Veneráveis Mestres de Anápolis e Região")}
+          </h1>
         </div>
 
         {/* Direita: Usuário Ativo, Role Maçônica e Logout */}
@@ -182,10 +183,12 @@ export default function Layout() {
       {/* ÁREA INFERIOR: SIDEBAR COLAPSÁVEL + CONTEÚDO PRINCIPAL */}
       <div className="flex flex-1 overflow-hidden relative">
         
-        {/* SIDEBAR COLAPSÁVEL */}
+        {/* SIDEBAR COLAPSÁVEL COM EXPANSÃO AUTOMÁTICA ON HOVER */}
         <aside 
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           className={`transition-all duration-300 ease-in-out bg-[#0f0f0f] border-r border-[#222] flex flex-col justify-between shrink-0 select-none z-20 ${
-            sidebarExpanded ? 'w-72' : 'w-20'
+            isExpanded ? 'w-72 shadow-2xl' : 'w-20'
           }`}
         >
           {/* Navegação dos 10 Módulos */}
@@ -193,14 +196,17 @@ export default function Layout() {
             
             {/* Header interno do menu com botão recolher/expandir */}
             <div className="flex items-center justify-between px-2 pb-2 mb-1 border-b border-[#1c1c1c]">
-              {sidebarExpanded ? (
+              {isExpanded ? (
                 <>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#facc15]">
                     Módulos do Conselho
                   </span>
                   <button
                     type="button"
-                    onClick={() => setSidebarExpanded(false)}
+                    onClick={() => {
+                      setSidebarPinned(false);
+                      setIsHovered(false);
+                    }}
                     className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-[#222] transition-colors"
                     title="Recolher para modo ícones"
                   >
@@ -210,9 +216,9 @@ export default function Layout() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setSidebarExpanded(true)}
+                  onClick={() => setSidebarPinned(true)}
                   className="w-full flex justify-center py-1 text-gray-500 hover:text-[#facc15] transition-colors"
-                  title="Expandir Menu"
+                  title="Fixar Menu Expandido"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -230,12 +236,12 @@ export default function Layout() {
                 <NavLink
                   key={item.numero}
                   to={item.to}
-                  title={!sidebarExpanded ? `${item.numero}. ${item.titulo}` : undefined}
+                  title={!isExpanded ? `${item.numero}. ${item.titulo}` : undefined}
                   className={`group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all ${
                     isActive 
                       ? 'bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/30 shadow-sm font-semibold' 
                       : 'text-gray-400 hover:text-white hover:bg-[#181818] border border-transparent'
-                  } ${!sidebarExpanded ? 'justify-center' : ''}`}
+                  } ${!isExpanded ? 'justify-center' : ''}`}
                 >
                   {/* Ícone */}
                   <div className={`shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#facc15]' : 'text-gray-400 group-hover:text-white'}`}>
@@ -243,7 +249,7 @@ export default function Layout() {
                   </div>
 
                   {/* Texto Expandido */}
-                  {sidebarExpanded && (
+                  {isExpanded && (
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${isActive ? 'bg-[#facc15]/20 text-[#facc15]' : 'bg-[#222] text-gray-500'}`}>
@@ -260,7 +266,7 @@ export default function Layout() {
                   )}
 
                   {/* Tooltip flutuante no modo colapsado */}
-                  {!sidebarExpanded && (
+                  {!isExpanded && (
                     <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#1a1a1a] text-white text-xs font-medium rounded-lg shadow-xl border border-[#333] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                       <span className="text-[#facc15] font-bold mr-1.5">{item.numero}.</span>
                       {item.titulo}
@@ -277,13 +283,13 @@ export default function Layout() {
             <button
               type="button"
               onClick={() => setShowBugModal(true)}
-              title={!sidebarExpanded ? "Reportar Bug no Sistema" : undefined}
+              title={!isExpanded ? "Reportar Bug no Sistema" : undefined}
               className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-red-400/90 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 cursor-pointer ${
-                !sidebarExpanded ? 'justify-center' : ''
+                !isExpanded ? 'justify-center' : ''
               }`}
             >
               <Bug className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
-              {sidebarExpanded && (
+              {isExpanded && (
                 <div className="min-w-0 flex-1 text-left">
                   <p className="text-xs font-bold truncate">Reportar Bug / Falha</p>
                   <p className="text-[10px] text-gray-500 truncate">Direto ao SuperAdmin</p>
@@ -291,7 +297,7 @@ export default function Layout() {
               )}
 
               {/* Tooltip flutuante no modo colapsado */}
-              {!sidebarExpanded && (
+              {!isExpanded && (
                 <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#1a1a1a] text-red-400 text-xs font-medium rounded-lg shadow-xl border border-red-500/30 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                   Reportar Bug no Sistema
                 </div>
@@ -302,7 +308,7 @@ export default function Layout() {
 
           {/* RODAPÉ DO MENU PRINCIPAL: ADDEX SOLUTIONS */}
           <div className="p-3 border-t border-[#1c1c1c] bg-[#0c0c0c]/80 text-center select-none">
-            {sidebarExpanded ? (
+            {isExpanded ? (
               <div className="space-y-0.5 animate-in fade-in duration-300">
                 <p className="text-[10px] font-bold text-gray-300 tracking-wide">
                   Desenvolvido por <span className="text-[#facc15]">Addex Solutions</span>
