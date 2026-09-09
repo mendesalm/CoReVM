@@ -7,6 +7,14 @@ import PainelConselho from './modulos/regional/PainelConselho';
 import PainelVM from './modulos/local/PainelVM';
 import PaginaCalendario from './modulos/calendario/PaginaCalendario';
 import PaginaLogin from './modulos/auth/PaginaLogin';
+import { 
+  PaginaAdmissoes, 
+  PaginaVotacoes, 
+  PaginaPatrimonio, 
+  PaginaDocumentos, 
+  PaginaRelatorios, 
+  PaginaComunicacao 
+} from './modulos/regional/submodulos/PaginasModulos';
 import { AuthProvider, useAuth } from './compartilhado/contextos/AuthContext';
 
 function RotaProtegida({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
@@ -35,8 +43,19 @@ function AppRotas() {
       } />
 
       <Route element={<RotaProtegida><Layout /></RotaProtegida>}>
+        {/* Módulos do Conselho Regional */}
         <Route path="/regiao/:id" element={<PainelConselho />} />
         <Route path="/regiao/:id/calendario" element={<PaginaCalendario />} />
+        <Route path="/regiao/:id/admissoes" element={<PaginaAdmissoes />} />
+        <Route path="/regiao/:id/votacoes" element={<PaginaVotacoes />} />
+        <Route path="/regiao/:id/patrimonio" element={<PaginaPatrimonio />} />
+        <Route path="/regiao/:id/documentos" element={<PaginaDocumentos />} />
+        <Route path="/regiao/:id/lojas" element={<PainelConselho />} />
+        <Route path="/regiao/:id/diretoria" element={<PainelConselho />} />
+        <Route path="/regiao/:id/relatorios" element={<PaginaRelatorios />} />
+        <Route path="/regiao/:id/comunicacao" element={<PaginaComunicacao />} />
+        
+        {/* Dashboard Específico da Loja */}
         <Route path="/dashboard-loja" element={<PainelVM />} />
       </Route>
     </Routes>

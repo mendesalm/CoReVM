@@ -1,9 +1,9 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { 
-  Building2, FileText, ArrowLeft, ShieldCheck, Loader2, 
+  Building2, FileText, ShieldCheck, Loader2, 
   Award, Calendar, Edit3, Lock, ChevronDown, Bell, Pin, Trash2, Plus 
 } from 'lucide-react';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
@@ -14,7 +14,6 @@ const API_URL = 'http://localhost:8003/api/v1';
 
 export default function PainelConselho() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [conselho, setConselho] = useState<any>(null);
   const [diretoria, setDiretoria] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +29,20 @@ export default function PainelConselho() {
   });
 
   // Accordions (Mesa Diretora & Lojas)
+  const location = useLocation();
   const [diretoriaExpanded, setDiretoriaExpanded] = useState(false);
   const [lojasExpanded, setLojasExpanded] = useState(true);
+
+  // Expande o respectivo accordion conforme a rota de navegação
+  useEffect(() => {
+    if (location.pathname.endsWith('/diretoria')) {
+      setDiretoriaExpanded(true);
+      setLojasExpanded(false);
+    } else if (location.pathname.endsWith('/lojas')) {
+      setLojasExpanded(true);
+      setDiretoriaExpanded(false);
+    }
+  }, [location.pathname]);
 
   // Mural de Avisos e Notificações
   const [avisos, setAvisos] = useState<any[]>([]);
@@ -40,7 +51,9 @@ export default function PainelConselho() {
   const [avisoForm, setAvisoForm] = useState({
     titulo: '',
     conteudo: '',
-    tipo: 'COMUNICADO',
+    tipo: 'AVISO',
+    nivel: 'BAIXO',
+    data_validade: '',
     fixado: false
   });
 
@@ -214,14 +227,23 @@ export default function PainelConselho() {
   // Publicar Novo Aviso
   const handleCriarAviso = async (e: React.FormEvent) => {
     e.preventDefault();
+    const words = avisoForm.conteudo.trim().split(/\s+/).filter(Boolean);
+    if (words.length > 200) {
+      alert(`O texto excede o limite máximo permitido de 200 palavras (atualmente com ${words.length} palavras). Por favor, sintetize a mensagem.`);
+      return;
+    }
+
     setSalvandoAviso(true);
     try {
-      await axios.post(`${API_URL}/regional/${id}/avisos`, avisoForm, {
+      await axios.post(`${API_URL}/regional/${id}/avisos`, {
+        ...avisoForm,
+        data_validade: avisoForm.data_validade || null
+      }, {
         headers: { 'X-User-Id': activeUserId }
       });
       alert('Aviso publicado com sucesso no mural do conselho!');
       setShowNovoAvisoModal(false);
-      setAvisoForm({ titulo: '', conteudo: '', tipo: 'COMUNICADO', fixado: false });
+      setAvisoForm({ titulo: '', conteudo: '', tipo: 'AVISO', nivel: 'BAIXO', data_validade: '', fixado: false });
       setReloadKey(k => k + 1);
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Erro ao publicar aviso');
@@ -230,13 +252,27 @@ export default function PainelConselho() {
     }
   };
 
-  // Excluir Aviso
+  // Excluir Aviso (Deleção Visual para membros, com opção de Hard Delete para SuperAdmin)
   const handleExcluirAviso = async (avisoId: string) => {
-    if (!window.confirm('Tem certeza que deseja remover este aviso do mural?')) return;
+    let hardDelete = false;
+    if (userContext.role?.toUpperCase() === 'SUPERADMIN') {
+      const resp = window.prompt(
+        'Você é SuperAdmin. Digite "FISICA" para deletar definitivamente do banco de dados (Hard Delete), ou clique em OK para Ocultar Visualmente (Soft Delete):',
+        'VISUAL'
+      );
+      if (resp === null) return;
+      if (resp.trim().toUpperCase() === 'FISICA') {
+        hardDelete = true;
+      }
+    } else {
+      if (!window.confirm('Tem certeza que deseja ocultar este aviso do mural? O registro será arquivado com deleção visual.')) return;
+    }
+
     try {
-      await axios.delete(`${API_URL}/regional/${id}/avisos/${avisoId}`, {
+      const res = await axios.delete(`${API_URL}/regional/${id}/avisos/${avisoId}?hard_delete=${hardDelete}`, {
         headers: { 'X-User-Id': activeUserId }
       });
+      alert(res.data?.message || 'Aviso processado com sucesso.');
       setReloadKey(k => k + 1);
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Erro ao remover aviso');
@@ -258,29 +294,30 @@ export default function PainelConselho() {
 
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
-      {/* Topo / Header com Seletor de Simulação de RBAC */}
-      <div className="bg-[#111] border-b border-[#333] sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto p-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="p-2 hover:bg-[#222] rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-400" />
-            </button>
+      {/* Barra Contextual de Governança & Simulação de Acesso */}
+      <div className="bg-[#111] border-b border-[#222]">
+        <div className="max-w-6xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15]">
+              <ShieldCheck className="w-5 h-5"/>
+            </div>
             <div>
-              <h1 className="text-xl font-bold text-[#facc15] uppercase tracking-widest">{conselho?.nome}</h1>
-              <p className="text-xs text-green-500 flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4"/> Perfil: <span className="font-bold text-white">{userContext.role}</span>
+              <h1 className="text-sm font-bold text-white tracking-wide uppercase">{conselho?.nome || 'Conselho Regional'}</h1>
+              <p className="text-xs text-green-400 flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                Perfil Ativo: <span className="font-bold text-white">{userContext.role}</span>
                 {userContext.loja_id && ` (Representante Loja Ref: ${userContext.loja_id})`}
               </p>
             </div>
           </div>
 
           {/* Teste Rápido de RBAC (Dev Tool) */}
-          <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#333] px-3 py-1.5 rounded-lg text-xs">
+          <div className="flex items-center gap-2 bg-[#181818] border border-[#333] px-3 py-1.5 rounded-xl text-xs">
             <span className="text-gray-400 font-medium">Simular Acesso:</span>
             <select 
               value={activeUserId} 
               onChange={(e) => setActiveUserId(e.target.value)}
-              className="bg-[#080808] text-[#facc15] border border-[#444] rounded px-2 py-1 font-semibold focus:outline-none"
+              className="bg-[#0a0a0a] text-[#facc15] border border-[#444] rounded-lg px-2.5 py-1 font-semibold focus:outline-none cursor-pointer"
             >
               <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
               <option value="272875">Secretário (André - CIM 272875)</option>
@@ -672,14 +709,12 @@ export default function PainelConselho() {
                   </div>
                 </div>
 
-                {userContext.is_diretoria && (
-                  <button 
-                    onClick={() => setShowNovoAvisoModal(true)}
-                    className="flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3 py-1.5 rounded-lg transition-colors shadow-sm"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Novo Aviso
-                  </button>
-                )}
+                <button 
+                  onClick={() => setShowNovoAvisoModal(true)}
+                  className="flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3.5 py-1.5 rounded-lg transition-colors shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Novo Aviso / Notificação
+                </button>
               </div>
 
               {/* Lista de Avisos */}
@@ -690,61 +725,96 @@ export default function PainelConselho() {
                   </div>
                 ) : (
                   avisos.map((a: any) => {
-                    const isConvocacao = a.tipo === 'CONVOCACAO';
-                    const isAlerta = a.tipo === 'ALERTA' || a.tipo === 'URGENTE';
+                    const isUrgente = a.nivel === 'ALTO';
+                    const isAlerta = a.nivel === 'MEDIO';
+                    const isNotificacao = a.tipo === 'NOTIFICACAO';
+
                     return (
                       <div 
                         key={a.id}
                         className={`p-3.5 rounded-xl border transition-all ${
-                          a.fixado 
-                            ? 'bg-gradient-to-r from-[#1c1a12] to-[#151515] border-[#facc15]/30' 
-                            : 'bg-[#181818] border-[#2b2b2b] hover:border-[#444]'
+                          a.deletado_visualmente
+                            ? 'bg-[#141414] border-red-500/30 opacity-60'
+                            : a.fixado 
+                              ? 'bg-gradient-to-r from-[#1c1a12] to-[#151515] border-[#facc15]/30 shadow-md' 
+                              : isUrgente
+                                ? 'bg-gradient-to-r from-[#201010] to-[#161616] border-red-500/40 shadow-md'
+                                : 'bg-[#181818] border-[#2b2b2b] hover:border-[#444]'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1 flex-1">
+                          <div className="space-y-1.5 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               {a.fixado && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/30">
                                   <Pin className="w-3 h-3" /> FIXADO
                                 </span>
                               )}
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                isConvocacao 
-                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
-                                  : isAlerta 
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                              
+                              {/* Tag de Nível de Atenção */}
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                isUrgente
+                                  ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
+                                  : isAlerta
+                                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                                    : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
                               }`}>
-                                {a.tipo}
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  isUrgente ? 'bg-red-400' : isAlerta ? 'bg-amber-400' : 'bg-blue-400'
+                                }`}></span>
+                                {isUrgente ? 'Urgência' : isAlerta ? 'Alerta' : 'Informativo'}
                               </span>
-                              <h4 className="text-sm font-bold text-white">{a.titulo}</h4>
+
+                              {/* Tag Tipo */}
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#222] text-gray-300 border border-[#333]">
+                                {isNotificacao ? 'Novidade / Informe' : 'Comunicado'}
+                              </span>
+
+                              {/* Tag Deleção Visual (SuperAdmin) */}
+                              {a.deletado_visualmente && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-300 border border-red-800">
+                                  OCULTADO VISUALMENTE
+                                </span>
+                              )}
+
+                              <h4 className="text-sm font-bold text-white ml-0.5">{a.titulo}</h4>
                             </div>
+
                             <p className="text-xs text-gray-300 leading-relaxed pt-0.5 whitespace-pre-line">
                               {a.conteudo}
                             </p>
                           </div>
 
-                          {userContext.is_diretoria && (
+                          {/* Botão Excluir / Ocultar */}
+                          {a.pode_excluir && (
                             <button
                               onClick={() => handleExcluirAviso(a.id)}
-                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
-                              title="Remover aviso"
+                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 cursor-pointer"
+                              title={userContext.role?.toUpperCase() === 'SUPERADMIN' ? "Opção de Deleção Visual ou Hard Delete Definitivo" : "Ocultar comunicado (Deleção Visual)"}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>
 
-                        <div className="mt-2.5 pt-2 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400">
-                          <span className="flex items-center gap-1">
+                        <div className="mt-2.5 pt-2 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
+                          <span className="flex items-center gap-1.5">
                             <Award className="w-3 h-3 text-[#facc15]" />
-                            {a.autor_nome || 'Diretoria'} {a.autor_cargo && `(${a.autor_cargo})`}
+                            <span>{a.autor_nome || 'Conselho'}</span>
+                            {a.loja_id && <span className="text-[#facc15]/80 font-medium">(Loja Ref: {a.loja_id})</span>}
                           </span>
-                          <span className="flex items-center gap-1 text-gray-400">
-                            <Calendar className="w-3 h-3 text-gray-500" />
-                            {a.data_publicacao ? a.data_publicacao.split('-').reverse().join('/') : ''}
-                          </span>
+
+                          <div className="flex items-center gap-3 text-gray-400">
+                            {a.data_validade && (
+                              <span className="text-amber-400/90 font-medium">
+                                Válido até: {a.data_validade.split('-').reverse().join('/')}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1 text-gray-400">
+                              <Calendar className="w-3 h-3 text-gray-500" />
+                              {a.data_publicacao ? a.data_publicacao.split('-').reverse().join('/') : ''}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1029,99 +1099,141 @@ export default function PainelConselho() {
       )}
 
       {/* Modal: Publicar Novo Aviso no Mural */}
-      {showNovoAvisoModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/30">
-                <Bell className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Publicar Comunicado no Mural</h2>
-                <p className="text-xs text-gray-400">Envie um comunicado oficial visível para todos os membros do conselho.</p>
-              </div>
-            </div>
+      {showNovoAvisoModal && (() => {
+        const numPalavras = avisoForm.conteudo.trim().split(/\s+/).filter(Boolean).length;
+        const excedeuLimite = numPalavras > 200;
 
-            <form onSubmit={handleCriarAviso} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                  Título do Comunicado *
-                </label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Ex: Convocação para Sessão Plenária"
-                  value={avisoForm.titulo}
-                  onChange={(e) => setAvisoForm({...avisoForm, titulo: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
-                />
+        return (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+            <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/30">
+                  <Bell className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Publicar no Mural do Conselho</h2>
+                  <p className="text-xs text-gray-400">Aviso ou notificação visível para as Lojas e Diretoria.</p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <form onSubmit={handleCriarAviso} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                    Categoria do Aviso
+                    Título *
                   </label>
-                  <select 
-                    value={avisoForm.tipo}
-                    onChange={(e) => setAvisoForm({...avisoForm, tipo: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
-                  >
-                    <option value="COMUNICADO">Comunicado Geral</option>
-                    <option value="CONVOCACAO">Convocação Oficial</option>
-                    <option value="ALERTA">Alerta de Regularidade</option>
-                    <option value="URGENTE">Urgente</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 pt-6">
                   <input 
-                    type="checkbox"
-                    id="fixado_check"
-                    checked={avisoForm.fixado}
-                    onChange={(e) => setAvisoForm({...avisoForm, fixado: e.target.checked})}
-                    className="w-4 h-4 rounded border-gray-600 text-[#facc15] focus:ring-[#facc15] bg-[#080808]"
+                    type="text" 
+                    required
+                    placeholder="Ex: Convocação para Sessão Conjunta / Alerta de Prazo"
+                    value={avisoForm.titulo}
+                    onChange={(e) => setAvisoForm({...avisoForm, titulo: e.target.value})}
+                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                   />
-                  <label htmlFor="fixado_check" className="text-xs text-gray-300 cursor-pointer font-medium select-none">
-                    Fixar no topo do mural
-                  </label>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                  Conteúdo / Mensagem *
-                </label>
-                <textarea 
-                  required
-                  rows={4}
-                  placeholder="Digite o texto detalhado do comunicado..."
-                  value={avisoForm.conteudo}
-                  onChange={(e) => setAvisoForm({...avisoForm, conteudo: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Nível de Atenção *
+                    </label>
+                    <select 
+                      value={avisoForm.nivel}
+                      onChange={(e) => setAvisoForm({...avisoForm, nivel: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-xs text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                    >
+                      <option value="BAIXO">🟢 Baixo - Aviso Informativo</option>
+                      <option value="MEDIO">🟡 Médio - Avisos de Alerta</option>
+                      <option value="ALTO">🔴 Alto - Avisos de Urgência</option>
+                    </select>
+                  </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
-                <button 
-                  type="button" 
-                  onClick={() => setShowNovoAvisoModal(false)}
-                  className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  disabled={salvandoAviso}
-                  className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2"
-                >
-                  {salvandoAviso && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {salvandoAviso ? 'Publicando...' : 'Publicar no Mural'}
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Tipo de Publicação
+                    </label>
+                    <select 
+                      value={avisoForm.tipo}
+                      onChange={(e) => setAvisoForm({...avisoForm, tipo: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-xs text-white focus:border-[#facc15] focus:outline-none"
+                    >
+                      <option value="AVISO">Comunicado Oficial</option>
+                      <option value="NOTIFICACAO">Informe de Novidade / Alteração</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Data de Validade (Opcional)
+                    </label>
+                    <input 
+                      type="date"
+                      value={avisoForm.data_validade}
+                      onChange={(e) => setAvisoForm({...avisoForm, data_validade: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white focus:border-[#facc15] focus:outline-none"
+                    />
+                  </div>
+
+                  {userContext.is_diretoria && (
+                    <div className="flex items-center gap-2 pt-6">
+                      <input 
+                        type="checkbox"
+                        id="fixado_check"
+                        checked={avisoForm.fixado}
+                        onChange={(e) => setAvisoForm({...avisoForm, fixado: e.target.checked})}
+                        className="w-4 h-4 rounded border-gray-600 text-[#facc15] focus:ring-[#facc15] bg-[#080808]"
+                      />
+                      <label htmlFor="fixado_check" className="text-xs text-gray-300 cursor-pointer font-medium select-none">
+                        Fixar no topo do mural
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Texto do Comunicado *
+                    </label>
+                    <span className={`text-[11px] font-bold ${excedeuLimite ? 'text-red-400 animate-pulse' : 'text-gray-400'}`}>
+                      {numPalavras} / 200 palavras {excedeuLimite && '(Limite excedido!)'}
+                    </span>
+                  </div>
+                  <textarea 
+                    required
+                    rows={4}
+                    placeholder="Digite o texto detalhado (máximo 200 palavras)..."
+                    value={avisoForm.conteudo}
+                    onChange={(e) => setAvisoForm({...avisoForm, conteudo: e.target.value})}
+                    className={`w-full bg-[#080808] border rounded-lg p-2.5 text-sm text-white focus:outline-none transition-colors ${
+                      excedeuLimite ? 'border-red-500 focus:border-red-400' : 'border-[#333] focus:border-[#facc15]'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowNovoAvisoModal(false)}
+                    className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={salvandoAviso || excedeuLimite || !avisoForm.titulo.trim() || !avisoForm.conteudo.trim()}
+                    className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                  >
+                    {salvandoAviso && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {salvandoAviso ? 'Publicando...' : 'Publicar no Mural'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

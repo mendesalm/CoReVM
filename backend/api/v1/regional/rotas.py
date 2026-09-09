@@ -167,22 +167,45 @@ def remover_loja_conselho(
 
 class AvisoCreatePayload(BaseModel):
     titulo: str
-    conteudo: str
-    tipo: Optional[str] = "COMUNICADO"
+    conteudo: str # Limite máximo: 200 palavras
+    nivel: Optional[str] = "BAIXO" # BAIXO (Informativo), MEDIO (Alerta), ALTO (Urgência)
+    tipo: Optional[str] = "AVISO" # AVISO, NOTIFICACAO
+    data_validade: Optional[date] = None
     fixado: Optional[bool] = False
+
+class AvisoUpdatePayload(BaseModel):
+    titulo: Optional[str] = None
+    conteudo: Optional[str] = None
+    nivel: Optional[str] = None
+    tipo: Optional[str] = None
+    data_validade: Optional[date] = None
+    fixado: Optional[bool] = None
 
 @router.get("/{regiao_id}/avisos", summary="Lista os avisos e notificações do conselho")
 def listar_avisos_regionais(
     regiao_id: str,
+    incluir_deletados: bool = False,
     user: RegionalUserContext = Depends(get_current_regional_user),
     db: Session = Depends(get_db_core)
 ):
     """
     Retorna os avisos da região ordenados por fixados primeiro e data mais recente.
+    Avisos deletados visualmente são ocultados para usuários comuns.
+    SuperAdmin pode visualizar todos (inclusive deletados visualmente para auditoria).
     """
-    avisos = db.query(AvisoRegional).filter(
-        AvisoRegional.regiao_id == regiao_id
-    ).order_by(
+    query = db.query(AvisoRegional).filter(AvisoRegional.regiao_id == regiao_id)
+    
+    # Filtro de Deleção Visual
+    if not (user.role.upper() == 'SUPERADMIN' and incluir_deletados):
+        query = query.filter(AvisoRegional.deletado_visualmente == False)
+        
+    # Filtro de Validade para membros regulares
+    if not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        query = query.filter(
+            (AvisoRegional.data_validade == None) | (AvisoRegional.data_validade >= date.today())
+        )
+
+    avisos = query.order_by(
         AvisoRegional.fixado.desc(),
         AvisoRegional.data_publicacao.desc(),
         AvisoRegional.id.desc()
@@ -193,11 +216,19 @@ def listar_avisos_regionais(
             "id": a.id,
             "titulo": a.titulo,
             "conteudo": a.conteudo,
-            "tipo": a.tipo,
+            "nivel": a.nivel or "BAIXO",
+            "tipo": a.tipo or "AVISO",
+            "autor_id": a.autor_id,
             "autor_nome": a.autor_nome,
             "autor_cargo": a.autor_cargo,
+            "loja_id": a.loja_id,
             "fixado": a.fixado,
-            "data_publicacao": a.data_publicacao.isoformat() if a.data_publicacao else None
+            "data_publicacao": a.data_publicacao.isoformat() if a.data_publicacao else None,
+            "data_validade": a.data_validade.isoformat() if a.data_validade else None,
+            "deletado_visualmente": a.deletado_visualmente,
+            "pode_editar": (user.role.upper() == 'SUPERADMIN' or user.is_diretoria or (user.loja_id and str(user.loja_id) == str(a.loja_id)) or user.usuario_id == a.autor_id),
+            "pode_excluir": (user.role.upper() == 'SUPERADMIN' or user.is_diretoria or (user.loja_id and str(user.loja_id) == str(a.loja_id)) or user.usuario_id == a.autor_id),
+            "eh_superadmin": user.role.upper() == 'SUPERADMIN'
         }
         for a in avisos
     ]
@@ -206,36 +237,50 @@ def listar_avisos_regionais(
 def criar_aviso_regional(
     regiao_id: str,
     payload: AvisoCreatePayload,
-    diretor: RegionalUserContext = Depends(get_current_director),
+    user: RegionalUserContext = Depends(get_current_regional_user),
     db: Session = Depends(get_db_core)
 ):
     """
-    Exclusivo para Diretoria ou SuperAdmin: publica um comunicado ou convocação.
+    Todos os membros do conselho podem postar avisos com limite máximo de 200 palavras.
     """
+    palavras = [w for w in payload.conteudo.strip().split() if w]
+    if len(palavras) > 200:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"O conteúdo excede o limite máximo permitido de 200 palavras (contém {len(palavras)} palavras)."
+        )
+
     novo_aviso = AvisoRegional(
         regiao_id=regiao_id,
-        titulo=payload.titulo,
-        conteudo=payload.conteudo,
-        tipo=payload.tipo or "COMUNICADO",
-        autor_nome="Diretoria do Conselho",
-        autor_cargo=diretor.role,
-        fixado=payload.fixado or False,
-        data_publicacao=date.today()
+        titulo=payload.titulo.strip(),
+        conteudo=payload.conteudo.strip(),
+        nivel=payload.nivel.upper() if payload.nivel else "BAIXO",
+        tipo=payload.tipo.upper() if payload.tipo else "AVISO",
+        data_validade=payload.data_validade,
+        autor_id=user.usuario_id,
+        autor_nome=f"Ir. {user.usuario_id}" if user.usuario_id else "Irmão do Conselho",
+        autor_cargo=user.role,
+        loja_id=str(user.loja_id) if user.loja_id else None,
+        fixado=bool(payload.fixado and (user.is_diretoria or user.role.upper() == 'SUPERADMIN')),
+        data_publicacao=date.today(),
+        deletado_visualmente=False
     )
     db.add(novo_aviso)
     db.commit()
     db.refresh(novo_aviso)
     return {"status": "success", "aviso_id": novo_aviso.id, "message": "Aviso publicado com sucesso."}
 
-@router.delete("/{regiao_id}/avisos/{aviso_id}", summary="Remove um aviso do conselho")
-def excluir_aviso_regional(
+@router.put("/{regiao_id}/avisos/{aviso_id}", summary="Edita um aviso no conselho")
+def atualizar_aviso_regional(
     regiao_id: str,
     aviso_id: str,
-    diretor: RegionalUserContext = Depends(get_current_director),
+    payload: AvisoUpdatePayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
     db: Session = Depends(get_db_core)
 ):
     """
-    Exclusivo para Diretoria ou SuperAdmin: remove um aviso.
+    Edição de aviso: SuperAdmin e Diretoria podem editar qualquer post.
+    Lojas podem editar exclusivamente seus próprios posts.
     """
     aviso = db.query(AvisoRegional).filter(
         AvisoRegional.id == aviso_id,
@@ -243,7 +288,79 @@ def excluir_aviso_regional(
     ).first()
     if not aviso:
         raise HTTPException(status_code=404, detail="Aviso não encontrado.")
-    db.delete(aviso)
+
+    pode_editar = (
+        user.role.upper() == 'SUPERADMIN' 
+        or user.is_diretoria 
+        or (user.loja_id and str(user.loja_id) == str(aviso.loja_id))
+        or (user.usuario_id and user.usuario_id == aviso.autor_id)
+    )
+    if not pode_editar:
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode editar avisos criados por sua própria Loja.")
+
+    if payload.conteudo is not None:
+        palavras = [w for w in payload.conteudo.strip().split() if w]
+        if len(palavras) > 200:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"O conteúdo excede o limite máximo permitido de 200 palavras (contém {len(palavras)} palavras)."
+            )
+        aviso.conteudo = payload.conteudo.strip()
+
+    if payload.titulo is not None:
+        aviso.titulo = payload.titulo.strip()
+    if payload.nivel is not None:
+        aviso.nivel = payload.nivel.upper()
+    if payload.tipo is not None:
+        aviso.tipo = payload.tipo.upper()
+    if payload.data_validade is not None:
+        aviso.data_validade = payload.data_validade
+    if payload.fixado is not None and (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        aviso.fixado = payload.fixado
+
     db.commit()
-    return {"status": "success", "message": "Aviso removido com sucesso."}
+    db.refresh(aviso)
+    return {"status": "success", "message": "Aviso atualizado com sucesso."}
+
+@router.delete("/{regiao_id}/avisos/{aviso_id}", summary="Remove ou deleta visualmente um aviso do conselho")
+def excluir_aviso_regional(
+    regiao_id: str,
+    aviso_id: str,
+    hard_delete: bool = False,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Deleção:
+    - SuperAdmin: pode fazer Hard Delete (exclusão definitiva física) ou deleção visual.
+    - Diretoria: deleção visual de qualquer post.
+    - Lojas: deleção visual exclusivamente de posts da própria loja.
+    """
+    aviso = db.query(AvisoRegional).filter(
+        AvisoRegional.id == aviso_id,
+        AvisoRegional.regiao_id == regiao_id
+    ).first()
+    if not aviso:
+        raise HTTPException(status_code=404, detail="Aviso não encontrado.")
+
+    pode_excluir = (
+        user.role.upper() == 'SUPERADMIN' 
+        or user.is_diretoria 
+        or (user.loja_id and str(user.loja_id) == str(aviso.loja_id))
+        or (user.usuario_id and user.usuario_id == aviso.autor_id)
+    )
+    if not pode_excluir:
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode deletar avisos criados por sua própria Loja.")
+
+    if hard_delete:
+        if user.role.upper() != 'SUPERADMIN':
+            raise HTTPException(status_code=403, detail="Apenas o SuperAdmin possui permissão para deletar fisicamente um registro do banco de dados.")
+        db.delete(aviso)
+        db.commit()
+        return {"status": "success", "tipo_delecao": "FISICA", "message": "Registro deletado definitivamente do banco de dados."}
+    else:
+        aviso.deletado_visualmente = True
+        db.commit()
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Aviso ocultado visualmente com sucesso (registro mantido no banco)."}
+
 

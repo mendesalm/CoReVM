@@ -66,6 +66,9 @@ class SuplenteConselho(Base):
 class AvisoRegional(Base):
     """
     Mural de Avisos e Notificações do Conselho Regional.
+    Níveis de atenção: BAIXO (Informativo), MEDIO (Alerta), ALTO (Urgência).
+    Tipos: AVISO, NOTIFICACAO.
+    Suporta deleção visual (soft-delete).
     """
     __tablename__ = "avisos_regionais"
     
@@ -73,10 +76,16 @@ class AvisoRegional(Base):
     regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
     titulo = Column(String(255), nullable=False)
     conteudo = Column(String(3000), nullable=False)
-    tipo = Column(String(50), default="COMUNICADO") # COMUNICADO, CONVOCACAO, ALERTA, URGENTE
+    tipo = Column(String(50), default="AVISO") # AVISO, NOTIFICACAO
+    nivel = Column(String(50), default="BAIXO") # BAIXO, MEDIO, ALTO
+    autor_id = Column(String(255), nullable=True)
     autor_nome = Column(String(255), nullable=True)
     autor_cargo = Column(String(100), nullable=True)
+    loja_id = Column(String(36), nullable=True)
     fixado = Column(Boolean, default=False)
     data_publicacao = Column(Date, nullable=False)
+    data_validade = Column(Date, nullable=True)
+    deletado_visualmente = Column(Boolean, default=False)
+
 
 
