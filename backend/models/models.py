@@ -28,6 +28,7 @@ class Regiao(Base):
     votacoes = relationship("VotacaoRegional", back_populates="regiao")
     itens_patrimonio = relationship("ItemPatrimonio", back_populates="regiao")
     emprestimos_patrimonio = relationship("EmprestimoPatrimonio", back_populates="regiao")
+    documentos = relationship("DocumentoRegional", back_populates="regiao")
 
 class DiretoriaConselho(Base):
     """
@@ -274,6 +275,39 @@ class FilaEsperaPatrimonio(Base):
     data_solicitacao = Column(DateTime, default=datetime.utcnow)
 
     item = relationship("ItemPatrimonio", back_populates="fila")
+
+
+class DocumentoRegional(Base):
+    """
+    Repositório documental oficial do Conselho Regional.
+    Categorias: ATA, DECRETO, REGULAMENTO, CIRCULAR, CONVITE, MODELO.
+    Origem: CONSELHO ou LOJA.
+    """
+    __tablename__ = "documentos_regionais"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    codigo_documento = Column(String(50), nullable=False) # Ex: ATA-CORE-04/2026, DEC-CORE-01/2026
+    titulo = Column(String(255), nullable=False)
+    descricao_ementa = Column(String(2000), nullable=True)
+    categoria = Column(String(50), nullable=False, default="ATA") # ATA, DECRETO, REGULAMENTO, CIRCULAR, CONVITE, MODELO
+    tipo_origem = Column(String(50), nullable=False, default="CONSELHO") # CONSELHO, LOJA
+    loja_emissora_id = Column(String(36), nullable=True)
+    loja_emissora_nome = Column(String(255), nullable=True)
+    loja_emissora_numero = Column(String(50), nullable=True)
+    autor_nome = Column(String(255), nullable=False)
+    autor_cargo = Column(String(100), nullable=True)
+    data_documento = Column(Date, nullable=False)
+    data_publicacao = Column(DateTime, default=datetime.utcnow)
+    arquivo_url = Column(String(500), nullable=True)
+    tamanho_bytes = Column(Integer, default=0)
+    downloads_count = Column(Integer, default=0)
+    visibilidade = Column(String(50), default="PUBLICO_CONSELHO") # PUBLICO_CONSELHO, RESTRITO_DIRETORIA
+    conteudo_texto = Column(String(10000), nullable=True)
+    deletado_visualmente = Column(Boolean, default=False)
+
+    regiao = relationship("Regiao", back_populates="documentos")
+
 
 
 

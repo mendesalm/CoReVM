@@ -1,24 +1,9 @@
-import React from 'react';
 import { 
-  FileText, BarChart3, MessageSquare 
+  BarChart3, MessageSquare 
 } from 'lucide-react';
 import ModuloGenericoConselho from '../../../compartilhado/componentes/ModuloGenericoConselho';
 
 
-export const PaginaDocumentos: React.FC = () => (
-  <ModuloGenericoConselho
-    numero={6}
-    titulo="Documentos do Conselho"
-    subtitulo="Widgets de Convites, Atas do Conselho, Decretos e Regulamentos Internos"
-    icone={FileText}
-    descricaoRegras="Repositório documental oficial categorizado por tipo documental com controle de visibilidade."
-    regrasRbac={{
-      superadmin: "Acesso total irrestrito + Hard Delete de arquivos",
-      diretoria: "Upload, publicação oficial e Deleção Visual de documentos",
-      lojas: "Leitura pública, download e upload/gestão de documentos próprios"
-    }}
-  />
-);
 
 export const PaginaRelatorios: React.FC = () => (
   <ModuloGenericoConselho

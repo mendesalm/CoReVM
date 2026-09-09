@@ -15,13 +15,14 @@ from database import get_db_core, get_db_lojas
 from models.models import (
     Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional, 
     PreviaAdmissao, ConsideracaoPrevia, VotacaoRegional, VotoLoja,
-    ItemPatrimonio, EmprestimoPatrimonio, FilaEsperaPatrimonio
+    ItemPatrimonio, EmprestimoPatrimonio, FilaEsperaPatrimonio,
+    DocumentoRegional
 )
 from models.lojas_models import ObreiroIntegracao, LojaIntegracao
 from core.constants import CargoConselho
 from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
 from core.dependencies import get_current_director, get_current_regional_user, RegionalUserContext
-from utils.pdf_generator import gerar_pdf_previa
+from utils.pdf_generator import gerar_pdf_previa, gerar_pdf_documento_regional
 
 router = APIRouter()
 
@@ -1713,3 +1714,405 @@ def cancelar_fila_espera(
     db.commit()
 
     return {"status": "success", "message": "Solicitação na fila de espera cancelada com sucesso."}
+
+
+# ==============================================================================
+# MÓDULO 06: DOCUMENTOS DO CONSELHO REGIONAL
+# ==============================================================================
+
+class DocumentoPayload(BaseModel):
+    codigo_documento: Optional[str] = None
+    titulo: str
+    descricao_ementa: Optional[str] = None
+    categoria: str = "ATA" # ATA, DECRETO, REGULAMENTO, CIRCULAR, CONVITE, MODELO
+    tipo_origem: str = "CONSELHO" # CONSELHO, LOJA
+    loja_emissora_id: Optional[str] = None
+    loja_emissora_nome: Optional[str] = None
+    loja_emissora_numero: Optional[str] = None
+    data_documento: Optional[date] = None
+    conteudo_texto: Optional[str] = None
+    visibilidade: str = "PUBLICO_CONSELHO" # PUBLICO_CONSELHO, RESTRITO_DIRETORIA
+
+
+@router.get("/{regiao_id}/documentos/estatisticas", summary="Métricas consolidadas do repositório documental")
+def obter_estatisticas_documentos(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    docs = db.query(DocumentoRegional).filter(
+        DocumentoRegional.regiao_id == regiao_id,
+        DocumentoRegional.deletado_visualmente == False
+    ).all()
+
+    total_docs = len(docs)
+    total_atas = sum(1 for d in docs if d.categoria == "ATA")
+    total_decretos = sum(1 for d in docs if d.categoria == "DECRETO")
+    total_regulamentos = sum(1 for d in docs if d.categoria == "REGULAMENTO")
+    total_circulares = sum(1 for d in docs if d.categoria == "CIRCULAR")
+    total_convites = sum(1 for d in docs if d.categoria == "CONVITE")
+    total_modelos = sum(1 for d in docs if d.categoria == "MODELO")
+    total_downloads = sum(d.downloads_count for d in docs)
+
+    return {
+        "total_documentos": total_docs,
+        "total_atas": total_atas,
+        "total_decretos": total_decretos,
+        "total_regulamentos": total_regulamentos,
+        "total_circulares": total_circulares,
+        "total_convites": total_convites,
+        "total_modelos": total_modelos,
+        "total_downloads": total_downloads
+    }
+
+
+@router.get("/{regiao_id}/documentos", summary="Lista os documentos oficiais com filtros")
+def listar_documentos_regionais(
+    regiao_id: str,
+    categoria: Optional[str] = None,
+    tipo_origem: Optional[str] = None,
+    busca: Optional[str] = None,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    query = db.query(DocumentoRegional).filter(
+        DocumentoRegional.regiao_id == regiao_id,
+        DocumentoRegional.deletado_visualmente == False
+    )
+
+    # Controle de Visibilidade
+    if not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        query = query.filter(
+            (DocumentoRegional.visibilidade == "PUBLICO_CONSELHO") |
+            (DocumentoRegional.loja_emissora_id == user.loja_id)
+        )
+
+    if categoria and categoria.upper() != "TODAS":
+        query = query.filter(DocumentoRegional.categoria == categoria.upper())
+
+    if tipo_origem and tipo_origem.upper() != "TODOS":
+        query = query.filter(DocumentoRegional.tipo_origem == tipo_origem.upper())
+
+    if busca:
+        busca_termo = f"%{busca.strip()}%"
+        query = query.filter(
+            (DocumentoRegional.titulo.ilike(busca_termo)) |
+            (DocumentoRegional.codigo_documento.ilike(busca_termo)) |
+            (DocumentoRegional.descricao_ementa.ilike(busca_termo)) |
+            (DocumentoRegional.loja_emissora_nome.ilike(busca_termo)) |
+            (DocumentoRegional.autor_nome.ilike(busca_termo))
+        )
+
+    documentos = query.order_by(DocumentoRegional.data_documento.desc()).all()
+
+    resultado = []
+    for doc in documentos:
+        pode_gerenciar = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and doc.loja_emissora_id == user.loja_id)
+
+        resultado.append({
+            "id": doc.id,
+            "regiao_id": doc.regiao_id,
+            "codigo_documento": doc.codigo_documento,
+            "titulo": doc.titulo,
+            "descricao_ementa": doc.descricao_ementa,
+            "categoria": doc.categoria,
+            "tipo_origem": doc.tipo_origem,
+            "loja_emissora_id": doc.loja_emissora_id,
+            "loja_emissora_nome": doc.loja_emissora_nome,
+            "loja_emissora_numero": doc.loja_emissora_numero,
+            "autor_nome": doc.autor_nome,
+            "autor_cargo": doc.autor_cargo,
+            "data_documento": doc.data_documento.strftime("%d/%m/%Y"),
+            "data_publicacao": doc.data_publicacao.strftime("%d/%m/%Y %H:%M") if doc.data_publicacao else "",
+            "arquivo_url": doc.arquivo_url,
+            "tem_arquivo": bool(doc.arquivo_url and os.path.exists(doc.arquivo_url)),
+            "tamanho_bytes": doc.tamanho_bytes,
+            "downloads_count": doc.downloads_count,
+            "visibilidade": doc.visibilidade,
+            "conteudo_texto": doc.conteudo_texto,
+            "pode_gerenciar": pode_gerenciar
+        })
+
+    return resultado
+
+
+@router.post("/{regiao_id}/documentos", summary="Publica novo documento gerando PDF oficial automaticamente")
+def publicar_documento_regional(
+    regiao_id: str,
+    payload: DocumentoPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    tipo_orig = payload.tipo_origem.upper()
+
+    if tipo_orig == "CONSELHO" and not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        raise HTTPException(status_code=403, detail="Apenas a Mesa Diretora ou SuperAdmin podem publicar documentos oficiais do Conselho.")
+
+    regiao = db.query(Regiao).filter(Regiao.id == regiao_id).first()
+    conselho_nome = regiao.nome if regiao else "Conselho Regional de Veneráveis Mestres"
+
+    data_doc = payload.data_documento or date.today()
+    ano = data_doc.year
+
+    # Gerar código automático se não fornecido
+    codigo = payload.codigo_documento
+    if not codigo:
+        count = db.query(DocumentoRegional).filter(
+            DocumentoRegional.regiao_id == regiao_id,
+            DocumentoRegional.categoria == payload.categoria.upper()
+        ).count() + 1
+        
+        pref = {
+            "ATA": "ATA-CORE",
+            "DECRETO": "DEC-CORE",
+            "REGULAMENTO": "REG-CORE",
+            "CIRCULAR": "CIR-CORE",
+            "CONVITE": f"CONV-LOJA{payload.loja_emissora_numero or 'X'}",
+            "MODELO": "MOD-CORE"
+        }.get(payload.categoria.upper(), "DOC-CORE")
+        codigo = f"{pref}-{count:02d}/{ano}"
+
+    doc_id = str(uuid.uuid4())
+    diretorio_destino = os.path.join("uploads", "documentos", regiao_id)
+    os.makedirs(diretorio_destino, exist_ok=True)
+    caminho_pdf = os.path.join(diretorio_destino, f"{doc_id}.pdf")
+
+    # Autoria
+    autor_nome = "Mesa Diretora"
+    autor_cargo = "Diretoria Regional"
+    if user.is_diretoria:
+        autor_nome = f"Ir.'. {user.usuario_id}"
+        autor_cargo = f"{user.role} Regional"
+    elif user.loja_id:
+        autor_nome = f"Ir.'. {user.usuario_id}"
+        autor_cargo = "Venerável Mestre"
+
+    # Gerar PDF Oficial via ReportLab
+    gerar_pdf_documento_regional(
+        caminho_saida=caminho_pdf,
+        codigo_documento=codigo,
+        titulo=payload.titulo.strip(),
+        categoria=payload.categoria.upper(),
+        descricao_ementa=payload.descricao_ementa.strip() if payload.descricao_ementa else "",
+        conteudo_texto=payload.conteudo_texto.strip() if payload.conteudo_texto else "",
+        data_documento=data_doc,
+        autor_nome=autor_nome,
+        autor_cargo=autor_cargo,
+        tipo_origem=tipo_orig,
+        loja_emissora_nome=payload.loja_emissora_nome,
+        conselho_nome=conselho_nome
+    )
+
+    tamanho = os.path.getsize(caminho_pdf) if os.path.exists(caminho_pdf) else 0
+
+    novo_doc = DocumentoRegional(
+        id=doc_id,
+        regiao_id=regiao_id,
+        codigo_documento=codigo,
+        titulo=payload.titulo.strip(),
+        descricao_ementa=payload.descricao_ementa.strip() if payload.descricao_ementa else None,
+        categoria=payload.categoria.upper(),
+        tipo_origem=tipo_orig,
+        loja_emissora_id=payload.loja_emissora_id,
+        loja_emissora_nome=payload.loja_emissora_nome,
+        loja_emissora_numero=payload.loja_emissora_numero,
+        autor_nome=autor_nome,
+        autor_cargo=autor_cargo,
+        data_documento=data_doc,
+        data_publicacao=datetime.utcnow(),
+        arquivo_url=caminho_pdf,
+        tamanho_bytes=tamanho,
+        downloads_count=0,
+        visibilidade=payload.visibilidade,
+        conteudo_texto=payload.conteudo_texto
+    )
+
+    db.add(novo_doc)
+    db.commit()
+    db.refresh(novo_doc)
+
+    return {
+        "status": "success",
+        "documento_id": novo_doc.id,
+        "codigo": novo_doc.codigo_documento,
+        "arquivo_url": novo_doc.arquivo_url,
+        "message": f"Documento oficial {novo_doc.codigo_documento} publicado e PDF gerado com sucesso."
+    }
+
+
+@router.post("/{regiao_id}/documentos/upload", summary="Publica documento via upload de arquivo PDF/Docx")
+def upload_documento_regional(
+    regiao_id: str,
+    titulo: str = Form(...),
+    categoria: str = Form(...),
+    tipo_origem: str = Form("CONSELHO"),
+    descricao_ementa: Optional[str] = Form(None),
+    codigo_documento: Optional[str] = Form(None),
+    loja_emissora_id: Optional[str] = Form(None),
+    loja_emissora_nome: Optional[str] = Form(None),
+    loja_emissora_numero: Optional[str] = Form(None),
+    data_documento: Optional[str] = Form(None),
+    visibilidade: str = Form("PUBLICO_CONSELHO"),
+    arquivo: UploadFile = File(...),
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    tipo_orig = tipo_origem.upper()
+    if tipo_orig == "CONSELHO" and not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
+        raise HTTPException(status_code=403, detail="Apenas a Mesa Diretora ou SuperAdmin podem publicar documentos do Conselho.")
+
+    dt_doc = date.today()
+    if data_documento:
+        try:
+            dt_doc = datetime.strptime(data_documento, "%Y-%m-%d").date()
+        except Exception:
+            dt_doc = date.today()
+
+    codigo = codigo_documento
+    if not codigo:
+        count = db.query(DocumentoRegional).filter(
+            DocumentoRegional.regiao_id == regiao_id,
+            DocumentoRegional.categoria == categoria.upper()
+        ).count() + 1
+        codigo = f"{categoria.upper()}-CORE-{count:02d}/{dt_doc.year}"
+
+    doc_id = str(uuid.uuid4())
+    diretorio_destino = os.path.join("uploads", "documentos", regiao_id)
+    os.makedirs(diretorio_destino, exist_ok=True)
+
+    ext = os.path.splitext(arquivo.filename)[1] if arquivo.filename else ".pdf"
+    caminho_final = os.path.join(diretorio_destino, f"{doc_id}{ext}")
+
+    with open(caminho_final, "wb") as buffer:
+        shutil.copyfileobj(arquivo.file, buffer)
+
+    tamanho = os.path.getsize(caminho_final) if os.path.exists(caminho_final) else 0
+
+    autor_nome = f"Ir.'. {user.usuario_id}"
+    autor_cargo = user.role
+
+    novo_doc = DocumentoRegional(
+        id=doc_id,
+        regiao_id=regiao_id,
+        codigo_documento=codigo,
+        titulo=titulo.strip(),
+        descricao_ementa=descricao_ementa.strip() if descricao_ementa else None,
+        categoria=categoria.upper(),
+        tipo_origem=tipo_orig,
+        loja_emissora_id=loja_emissora_id,
+        loja_emissora_nome=loja_emissora_nome,
+        loja_emissora_numero=loja_emissora_numero,
+        autor_nome=autor_nome,
+        autor_cargo=autor_cargo,
+        data_documento=dt_doc,
+        data_publicacao=datetime.utcnow(),
+        arquivo_url=caminho_final,
+        tamanho_bytes=tamanho,
+        downloads_count=0,
+        visibilidade=visibilidade
+    )
+
+    db.add(novo_doc)
+    db.commit()
+    db.refresh(novo_doc)
+
+    return {
+        "status": "success",
+        "documento_id": novo_doc.id,
+        "codigo": novo_doc.codigo_documento,
+        "arquivo_url": novo_doc.arquivo_url,
+        "message": f"Arquivo {arquivo.filename} anexado e registrado com sucesso."
+    }
+
+
+@router.get("/{regiao_id}/documentos/{documento_id}/arquivo", summary="Streaming e download seguro de arquivo de documento")
+def baixar_arquivo_documento(
+    regiao_id: str,
+    documento_id: str,
+    db: Session = Depends(get_db_core)
+):
+    doc = db.query(DocumentoRegional).filter(
+        DocumentoRegional.id == documento_id,
+        DocumentoRegional.regiao_id == regiao_id
+    ).first()
+
+    if not doc or not doc.arquivo_url or not os.path.exists(doc.arquivo_url):
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado no servidor.")
+
+    doc.downloads_count += 1
+    db.commit()
+
+    nome_download = f"{doc.codigo_documento.replace('/', '_')}_{doc.titulo[:30]}.pdf"
+    return FileResponse(
+        path=doc.arquivo_url,
+        filename=nome_download,
+        media_type="application/pdf"
+    )
+
+
+@router.put("/{regiao_id}/documentos/{documento_id}", summary="Atualiza metadados de um documento")
+def atualizar_documento_regional(
+    regiao_id: str,
+    documento_id: str,
+    payload: DocumentoPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    doc = db.query(DocumentoRegional).filter(
+        DocumentoRegional.id == documento_id,
+        DocumentoRegional.regiao_id == regiao_id
+    ).first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+
+    pode_editar = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and doc.loja_emissora_id == user.loja_id)
+    if not pode_editar:
+        raise HTTPException(status_code=403, detail="Sem permissão para atualizar este documento.")
+
+    doc.titulo = payload.titulo.strip()
+    if payload.descricao_ementa is not None:
+        doc.descricao_ementa = payload.descricao_ementa.strip()
+    doc.categoria = payload.categoria.upper()
+    doc.visibilidade = payload.visibilidade
+
+    db.commit()
+    return {"status": "success", "message": "Documento atualizado com sucesso."}
+
+
+@router.delete("/{regiao_id}/documentos/{documento_id}", summary="Oculta visualmente ou remove definitivamente um documento")
+def excluir_documento_regional(
+    regiao_id: str,
+    documento_id: str,
+    hard_delete: bool = False,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    doc = db.query(DocumentoRegional).filter(
+        DocumentoRegional.id == documento_id,
+        DocumentoRegional.regiao_id == regiao_id
+    ).first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+
+    pode_excluir = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and doc.loja_emissora_id == user.loja_id)
+    if not pode_excluir:
+        raise HTTPException(status_code=403, detail="Sem autorização para remover este documento.")
+
+    if hard_delete:
+        if user.role.upper() != 'SUPERADMIN':
+            raise HTTPException(status_code=403, detail="Apenas o SuperAdmin pode deletar fisicamente.")
+        if doc.arquivo_url and os.path.exists(doc.arquivo_url):
+            try:
+                os.remove(doc.arquivo_url)
+            except Exception:
+                pass
+        db.delete(doc)
+        db.commit()
+        return {"status": "success", "tipo_delecao": "FISICA", "message": "Documento removido definitivamente."}
+    else:
+        doc.deletado_visualmente = True
+        db.commit()
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Documento ocultado visualmente com sucesso."}
+
