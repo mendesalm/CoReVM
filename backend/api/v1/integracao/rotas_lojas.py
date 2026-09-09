@@ -1,7 +1,8 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, or_
+from sqlalchemy.sql import func
 from loguru import logger
 from database import get_db_lojas, get_db_lista
 from models.lojas_models import LojaIntegracao
@@ -81,7 +82,7 @@ def verificar_status_vm(ids: list[int], db_lojas: Session = Depends(get_db_lojas
         ).filter(
             Mandato.loja_id.in_(ids),
             Mandato.cargo_id == 1,
-            Mandato.data_fim.is_(None) # Apenas mandato ativo
+            or_(Mandato.data_fim.is_(None), Mandato.data_fim >= func.current_date())  # Mandato ativo: sem fim ou fim futuro
         ).all()
         
         # Mapeia loja_id -> nome_completo

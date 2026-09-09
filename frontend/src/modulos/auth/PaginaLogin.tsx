@@ -72,8 +72,20 @@ export default function PaginaLogin() {
         });
         navigate(`/regiao/${fakeConselhoId}`, { replace: true });
 
+      } else if (email === 'teste@ceres.com') {
+        const tokenMock = "token_teste_ceres_fake";
+        const ceresConselhoId = "test-core-ceres-go-001";
+        login(tokenMock, {
+          id: "9900001",
+          nome: "Bernardo Silveira [TESTE-CORE]",
+          email: email,
+          roles: ["presidente_conselho"],
+          conselho_id: ceresConselhoId
+        });
+        navigate(`/regiao/${ceresConselhoId}`, { replace: true });
+
       } else {
-        throw new Error('Credenciais inválidas. Use superadmin@esigma.com ou presidente@conselho.com');
+        throw new Error('Credenciais inválidas. Use superadmin@esigma.com, presidente@conselho.com ou teste@ceres.com');
       }
 
     } catch (err: any) {
@@ -83,9 +95,12 @@ export default function PaginaLogin() {
     }
   };
 
-  const preencherCredencialRapida = (tipo: 'SUPER' | 'PRESIDENTE') => {
+  const preencherCredencialRapida = (tipo: 'SUPER' | 'PRESIDENTE' | 'CERES') => {
     if (tipo === 'SUPER') {
       setEmail('superadmin@esigma.com');
+      setSenha('senha123');
+    } else if (tipo === 'CERES') {
+      setEmail('teste@ceres.com');
       setSenha('senha123');
     } else {
       setEmail('presidente@conselho.com');
@@ -215,6 +230,13 @@ export default function PaginaLogin() {
               >
                 <Shield size={12} className="text-yellow-500" />
                 Presidente
+              </button>
+              <button 
+                onClick={() => preencherCredencialRapida('CERES')}
+                className="flex-1 text-[11px] bg-green-900/50 hover:bg-green-800/50 text-green-300 py-2 rounded-lg flex items-center justify-center gap-1 border border-green-700/50"
+              >
+                <Shield size={12} className="text-green-400" />
+                Ceres [TESTE]
               </button>
             </div>
           </div>
