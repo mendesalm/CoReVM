@@ -1,5 +1,5 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { NavLink, Outlet, useParams, Link, useLocation } from 'react-router-dom';
 import { 
   Bell, Calendar, BookOpenCheck, Vote, Landmark, 
@@ -23,6 +23,28 @@ export default function Layout() {
   const [isHovered, setIsHovered] = useState(false);
   const isExpanded = sidebarPinned || isHovered;
   const [showBugModal, setShowBugModal] = useState(false);
+
+  // Texto explicativo on hover após dois segundos
+  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
+  const hoverTimerRef = useRef<any>(null);
+
+  const handleMouseEnterItem = (itemId: string) => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
+      setHoveredItemId(itemId);
+    }, 2000);
+  };
+
+  const handleMouseLeaveItem = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    setHoveredItemId(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchRegiao = async () => {
@@ -236,7 +258,8 @@ export default function Layout() {
                 <NavLink
                   key={item.id}
                   to={item.to}
-                  title={!isExpanded ? item.titulo : undefined}
+                  onMouseEnter={() => handleMouseEnterItem(item.id)}
+                  onMouseLeave={handleMouseLeaveItem}
                   className={`group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all ${
                     isActive 
                       ? 'bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/30 shadow-sm font-semibold' 
@@ -248,22 +271,25 @@ export default function Layout() {
                     <Icone className="w-5 h-5" />
                   </div>
 
-                  {/* Texto Expandido */}
+                  {/* Texto Expandido (Apenas o título limpo) */}
                   {isExpanded && (
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold truncate leading-tight">
                         {item.titulo}
                       </p>
-                      <p className="text-[10px] text-gray-500 truncate mt-0.5">
-                        {item.descricao}
-                      </p>
                     </div>
                   )}
 
-                  {/* Tooltip flutuante no modo colapsado */}
-                  {!isExpanded && (
-                    <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#1a1a1a] text-white text-xs font-medium rounded-lg shadow-xl border border-[#333] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
-                      {item.titulo}
+                  {/* Texto explicativo on hover após 2 segundos */}
+                  {hoveredItemId === item.id && (
+                    <div className="absolute left-full ml-3 px-3.5 py-2 bg-[#181818]/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-[#383838] whitespace-nowrap z-50 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+                      <p className="font-bold text-[#facc15] text-xs flex items-center gap-1.5">
+                        <Icone className="w-3.5 h-3.5 text-[#facc15]" />
+                        {item.titulo}
+                      </p>
+                      <p className="text-[11px] text-gray-300 mt-0.5 font-normal">
+                        {item.descricao}
+                      </p>
                     </div>
                   )}
                 </NavLink>
@@ -274,29 +300,37 @@ export default function Layout() {
             <div className="pt-2 pb-1 border-t border-[#1c1c1c] my-1"></div>
 
             {/* Item Especial: Reportar Bug no Sistema */}
-            <button
-              type="button"
-              onClick={() => setShowBugModal(true)}
-              title={!isExpanded ? "Reportar Bug no Sistema" : undefined}
-              className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-red-400/90 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 cursor-pointer ${
-                !isExpanded ? 'justify-center' : ''
-              }`}
-            >
-              <Bug className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
-              {isExpanded && (
-                <div className="min-w-0 flex-1 text-left">
-                  <p className="text-xs font-bold truncate">Reportar Bug / Falha</p>
-                  <p className="text-[10px] text-gray-500 truncate">Direto ao SuperAdmin</p>
-                </div>
-              )}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowBugModal(true)}
+                onMouseEnter={() => handleMouseEnterItem('bug')}
+                onMouseLeave={handleMouseLeaveItem}
+                className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-red-400/90 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 cursor-pointer ${
+                  !isExpanded ? 'justify-center' : ''
+                }`}
+              >
+                <Bug className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
+                {isExpanded && (
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="text-xs font-bold truncate">Reportar Bug</p>
+                  </div>
+                )}
+              </button>
 
-              {/* Tooltip flutuante no modo colapsado */}
-              {!isExpanded && (
-                <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#1a1a1a] text-red-400 text-xs font-medium rounded-lg shadow-xl border border-red-500/30 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
-                  Reportar Bug no Sistema
+              {/* Texto explicativo on hover após 2 segundos para o Bug */}
+              {hoveredItemId === 'bug' && (
+                <div className="absolute left-full ml-3 px-3.5 py-2 bg-[#181818]/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-red-500/40 whitespace-nowrap z-50 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+                  <p className="font-bold text-red-400 text-xs flex items-center gap-1.5">
+                    <Bug className="w-3.5 h-3.5 text-red-400" />
+                    Reportar Bug
+                  </p>
+                  <p className="text-[11px] text-gray-300 mt-0.5 font-normal">
+                    Canal direto com o SuperAdmin e equipe técnica
+                  </p>
                 </div>
               )}
-            </button>
+            </div>
 
           </div>
 
