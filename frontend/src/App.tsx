@@ -7,9 +7,7 @@ import PainelConselho from './modulos/regional/PainelConselho';
 import PainelVM from './modulos/local/PainelVM';
 import PaginaCalendario from './modulos/calendario/PaginaCalendario';
 import PaginaLogin from './modulos/auth/PaginaLogin';
-import { 
-  PaginaComunicacao 
-} from './modulos/regional/submodulos/PaginasModulos';
+import PaginaComunicacao from './modulos/regional/submodulos/PaginaComunicacao';
 import PaginaLojas from './modulos/regional/submodulos/PaginaLojas';
 import PaginaDiretoria from './modulos/regional/submodulos/PaginaDiretoria';
 import PaginaAdmissoes from './modulos/regional/submodulos/PaginaAdmissoes';

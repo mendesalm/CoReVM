@@ -29,6 +29,7 @@ class Regiao(Base):
     itens_patrimonio = relationship("ItemPatrimonio", back_populates="regiao")
     emprestimos_patrimonio = relationship("EmprestimoPatrimonio", back_populates="regiao")
     documentos = relationship("DocumentoRegional", back_populates="regiao")
+    topicos_comunicacao = relationship("TopicoComunicacao", back_populates="regiao")
 
 class DiretoriaConselho(Base):
     """
@@ -307,6 +308,74 @@ class DocumentoRegional(Base):
     deletado_visualmente = Column(Boolean, default=False)
 
     regiao = relationship("Regiao", back_populates="documentos")
+
+
+class TopicoComunicacao(Base):
+    """
+    Tópico/Protocolo de Comunicação Oficial Interna.
+    Alcances:
+    - CONSELHO_LOJA: Bilateral privativo entre a Diretoria do Conselho e uma Loja específica.
+    - LOJA_LOJA: Canal restrito inter-lojas (exclusivo entre a Loja de Origem e a Loja de Destino).
+    - CIRCULAR: Prancha oficial de difusão geral da Diretoria para todas as Lojas.
+    """
+    __tablename__ = "topicos_comunicacao"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    assunto = Column(String(255), nullable=False)
+    categoria = Column(String(50), nullable=False, default="ADMINISTRATIVO") # ADMINISTRATIVO, FINANCEIRO, LITURGICO, INTER_LOJAS, SINDICANCIA_CONFIDENCIAL, PROTOCOLO
+    tipo_alcance = Column(String(50), nullable=False, default="CONSELHO_LOJA") # CONSELHO_LOJA, LOJA_LOJA, CIRCULAR
+
+    # Loja de Origem (quem abriu o chamado ou prancha)
+    loja_origem_id = Column(String(36), nullable=True)
+    loja_origem_nome = Column(String(255), nullable=True)
+    loja_origem_numero = Column(String(50), nullable=True)
+
+    # Loja de Destino (em caso de LOJA_LOJA ou CONSELHO_LOJA)
+    loja_destino_id = Column(String(36), nullable=True)
+    loja_destino_nome = Column(String(255), nullable=True)
+    loja_destino_numero = Column(String(50), nullable=True)
+
+    prioridade = Column(String(20), nullable=False, default="NORMAL") # NORMAL, URGENTE, CONFIDENCIAL
+    status = Column(String(30), nullable=False, default="ABERTA") # ABERTA, RESPONDIDA, CONCLUIDA, ARQUIVADA
+
+    criado_por_id = Column(String(255), nullable=False)
+    criado_por_nome = Column(String(255), nullable=False)
+    criado_por_tipo = Column(String(20), nullable=False, default="DIRETORIA") # DIRETORIA, LOJA
+
+    data_criacao = Column(DateTime, default=datetime.utcnow)
+    data_ultima_mensagem = Column(DateTime, default=datetime.utcnow)
+    deletado_visualmente = Column(Boolean, default=False)
+
+    regiao = relationship("Regiao", back_populates="topicos_comunicacao")
+    mensagens = relationship("MensagemComunicacao", back_populates="topico", cascade="all, delete-orphan", order_by="MensagemComunicacao.data_envio.asc()")
+
+
+class MensagemComunicacao(Base):
+    """
+    Mensagem/Prancha oficial enviada dentro de um tópico de comunicação.
+    """
+    __tablename__ = "mensagens_comunicacao"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    topico_id = Column(String(36), ForeignKey("topicos_comunicacao.id"), nullable=False)
+    remetente_id = Column(String(255), nullable=False)
+    remetente_nome = Column(String(255), nullable=False)
+    remetente_cargo = Column(String(100), nullable=True)
+    tipo_remetente = Column(String(20), nullable=False, default="DIRETORIA") # DIRETORIA, LOJA
+    loja_remetente_id = Column(String(36), nullable=True)
+
+    conteudo = Column(String(5000), nullable=False)
+    data_envio = Column(DateTime, default=datetime.utcnow)
+    arquivo_url = Column(String(500), nullable=True)
+    arquivo_nome = Column(String(255), nullable=True)
+
+    lida = Column(Boolean, default=False)
+    data_leitura = Column(DateTime, nullable=True)
+    lida_por_nome = Column(String(255), nullable=True)
+    deletado_visualmente = Column(Boolean, default=False)
+
+    topico = relationship("TopicoComunicacao", back_populates="mensagens")
 
 
 

@@ -674,3 +674,203 @@ def gerar_pdf_relatorio_patrimonio(
     return caminho_saida
 
 
+def gerar_pdf_prancha_comunicacao(
+    caminho_saida: str,
+    topico_assunto: str,
+    categoria: str,
+    tipo_alcance: str,
+    remetente_nome: str,
+    remetente_cargo: str,
+    origem_entidade: str,
+    destinatario_entidade: str,
+    conteudo_mensagem: str,
+    data_envio: datetime,
+    prioridade: str = "NORMAL",
+    conselho_nome: str = "Conselho Regional de Veneráveis Mestres de Anápolis e Região"
+) -> str:
+    """
+    Gera Prancha Oficial Canônica de Comunicação Interna / Inter-Lojas.
+    """
+    os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
+    doc = SimpleDocTemplate(
+        caminho_saida,
+        pagesize=letter,
+        rightMargin=45,
+        leftMargin=45,
+        topMargin=45,
+        bottomMargin=45
+    )
+
+    styles = getSampleStyleSheet()
+
+    style_agadu = ParagraphStyle(
+        name="PranchaAGADU",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=11,
+        leading=14,
+        alignment=1,
+        textColor=colors.HexColor("#262626")
+    )
+
+    style_header = ParagraphStyle(
+        name="PranchaHeader",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=10.5,
+        leading=13,
+        alignment=1,
+        textColor=colors.HexColor("#1e293b")
+    )
+
+    style_sub = ParagraphStyle(
+        name="PranchaSub",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8.5,
+        leading=11,
+        alignment=1,
+        textColor=colors.HexColor("#64748b")
+    )
+
+    style_tipo = ParagraphStyle(
+        name="PranchaTipo",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=10,
+        leading=13,
+        alignment=1,
+        textColor=colors.HexColor("#b45309")
+    )
+
+    style_assunto = ParagraphStyle(
+        name="PranchaAssunto",
+        parent=styles["Heading1"],
+        fontName="Helvetica-Bold",
+        fontSize=13.5,
+        leading=17,
+        alignment=1,
+        textColor=colors.HexColor("#0f172a"),
+        spaceAfter=10
+    )
+
+    style_meta_label = ParagraphStyle(
+        name="PranchaMetaL",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor("#475569")
+    )
+
+    style_meta_val = ParagraphStyle(
+        name="PranchaMetaV",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor("#0f172a")
+    )
+
+    style_corpo = ParagraphStyle(
+        name="PranchaCorpo",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=10,
+        leading=15,
+        textColor=colors.HexColor("#1e293b"),
+        alignment=4, # Justified
+        spaceAfter=10
+    )
+
+    story = []
+
+    # 1. Cabeçalho Canônico
+    story.append(Paragraph("A.'. G.'. D.'. G.'. A.'. D.'. U.'.", style_agadu))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph(conselho_nome.upper(), style_header))
+    story.append(Paragraph("SISTEMA INTEGRADO DE COMUNICAÇÃO E PROTOCOLO REGIONAL", style_sub))
+    story.append(Spacer(1, 10))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#facc15"), spaceAfter=12))
+
+    # 2. Tipo de Prancha e Assunto
+    tipo_rotulo = {
+        "CONSELHO_LOJA": "PRANCHA ADMINISTRATIVA OFICIAL (CONSELHO ↔ LOJA)",
+        "LOJA_LOJA": "PRANCHA INTER-LOJAS (CANAL RESTRITO BILATERAL)",
+        "CIRCULAR": "PRANCHA CIRCULAR GERAL (DIFUSÃO REGIONAL)"
+    }.get(tipo_alcance.upper(), "PRANCHA OFICIAL")
+
+    story.append(Paragraph(tipo_rotulo, style_tipo))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph(topico_assunto, style_assunto))
+    story.append(Spacer(1, 6))
+
+    # 3. Metadados da Correspondência
+    data_formatada = data_envio.strftime("%d de %B de %Y às %H:%M") if hasattr(data_envio, "strftime") else str(data_envio)
+    dados_meta = [
+        [
+            Paragraph("<b>Origem / Emissor:</b>", style_meta_label),
+            Paragraph(f"<b>{origem_entidade}</b> ({remetente_nome} - {remetente_cargo or 'Oficial'})", style_meta_val),
+            Paragraph("<b>Categoria:</b>", style_meta_label),
+            Paragraph(categoria, style_meta_val)
+        ],
+        [
+            Paragraph("<b>Destinatário:</b>", style_meta_label),
+            Paragraph(f"<b>{destinatario_entidade}</b>", style_meta_val),
+            Paragraph("<b>Prioridade:</b>", style_meta_label),
+            Paragraph(f"<b>{prioridade}</b>", style_meta_val)
+        ],
+        [
+            Paragraph("<b>Data de Expedição:</b>", style_meta_label),
+            Paragraph(data_formatada, style_meta_val),
+            Paragraph("<b>Sigilo:</b>", style_meta_label),
+            Paragraph("CONFIDENCIAL / RESTRITO AOS SIGNATÁRIOS", style_meta_val)
+        ]
+    ]
+    tabela_meta = Table(dados_meta, colWidths=[1.4 * inch, 3.1 * inch, 1.0 * inch, 1.5 * inch])
+    tabela_meta.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f8fafc")),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#cbd5e1")),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+    ]))
+    story.append(tabela_meta)
+    story.append(Spacer(1, 16))
+
+    # 4. Saudação e Conteúdo da Mensagem
+    story.append(Paragraph("<b>Ilustres Irmãos e Autoridades Maçônicas,</b>", ParagraphStyle('Saudacao', parent=styles['Normal'], fontName="Helvetica-Bold", fontSize=10.5, spaceAfter=8)))
+
+    if conteudo_mensagem:
+        paragrafos = conteudo_mensagem.split("\n\n") if "\n\n" in conteudo_mensagem else conteudo_mensagem.split("\n")
+        for p in paragrafos:
+            p_limpo = p.strip().replace("\n", "<br/>")
+            if p_limpo:
+                story.append(Paragraph(p_limpo, style_corpo))
+    else:
+        story.append(Paragraph("Conteúdo da prancha protocolado e arquivado nos registros eletrônicos do CoReVM.", style_corpo))
+
+    story.append(Spacer(1, 35))
+
+    # 5. Fecho de Assinaturas
+    dados_ass = [
+        [
+            Paragraph(f"________________________________________<br/><b>{remetente_nome}</b><br/>{remetente_cargo or 'Oficial'}<br/>{origem_entidade}", ParagraphStyle('Ass1', parent=style_sub, alignment=1)),
+            Paragraph(f"________________________________________<br/><b>Protocolo & Registro</b><br/>Destinatário: {destinatario_entidade}", ParagraphStyle('Ass2', parent=style_sub, alignment=1))
+        ]
+    ]
+    tabela_ass = Table(dados_ass, colWidths=[3.5 * inch, 3.5 * inch])
+    tabela_ass.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    story.append(tabela_ass)
+    story.append(Spacer(1, 25))
+
+    # 6. Rodapé
+    story.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#e2e8f0"), spaceAfter=5))
+    story.append(Paragraph("DOCUMENTO ELETRÔNICO GERADO PELO SISTEMA CoReVM • VALIDADE JURÍDICA E CANÔNICA INTERNA", ParagraphStyle('F', parent=style_sub, fontSize=7, textColor=colors.HexColor("#94a3b8"))))
+
+    doc.build(story)
+    return caminho_saida
+
+

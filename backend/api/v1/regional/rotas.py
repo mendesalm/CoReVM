@@ -16,7 +16,7 @@ from models.models import (
     Regiao, DiretoriaConselho, LojaAgregada, SuplenteConselho, AvisoRegional, 
     PreviaAdmissao, ConsideracaoPrevia, VotacaoRegional, VotoLoja,
     ItemPatrimonio, EmprestimoPatrimonio, FilaEsperaPatrimonio,
-    DocumentoRegional
+    DocumentoRegional, TopicoComunicacao, MensagemComunicacao
 )
 from models.lojas_models import ObreiroIntegracao, LojaIntegracao
 from core.constants import CargoConselho
@@ -24,7 +24,8 @@ from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUp
 from core.dependencies import get_current_director, get_current_regional_user, RegionalUserContext
 from utils.pdf_generator import (
     gerar_pdf_previa, gerar_pdf_documento_regional,
-    gerar_pdf_relatorio_executivo, gerar_pdf_relatorio_integrantes, gerar_pdf_relatorio_patrimonio
+    gerar_pdf_relatorio_executivo, gerar_pdf_relatorio_integrantes, gerar_pdf_relatorio_patrimonio,
+    gerar_pdf_prancha_comunicacao
 )
 
 router = APIRouter()
@@ -2632,6 +2633,624 @@ def exportar_relatorio_pdf(
     return FileResponse(
         path=caminho_pdf,
         filename=nome_download,
+        media_type="application/pdf"
+    )
+
+
+# ==============================================================================
+# MÓDULO 10: COMUNICAÇÃO INTERNA & INTER-LOJAS (CANAL RESTRITO)
+# ==============================================================================
+
+class TopicoCriarPayload(BaseModel):
+    assunto: str
+    categoria: str = "ADMINISTRATIVO" # ADMINISTRATIVO, FINANCEIRO, LITURGICO, INTER_LOJAS, SINDICANCIA_CONFIDENCIAL, PROTOCOLO
+    tipo_alcance: str = "CONSELHO_LOJA" # CONSELHO_LOJA, LOJA_LOJA, CIRCULAR
+    loja_origem_id: Optional[str] = None
+    loja_origem_nome: Optional[str] = None
+    loja_origem_numero: Optional[str] = None
+    loja_destino_id: Optional[str] = None
+    loja_destino_nome: Optional[str] = None
+    loja_destino_numero: Optional[str] = None
+    prioridade: str = "NORMAL" # NORMAL, URGENTE, CONFIDENCIAL
+    mensagem_inicial: str
+    arquivo_url: Optional[str] = None
+    arquivo_nome: Optional[str] = None
+
+class MensagemCriarPayload(BaseModel):
+    conteudo: str
+    arquivo_url: Optional[str] = None
+    arquivo_nome: Optional[str] = None
+
+class TopicoStatusPayload(BaseModel):
+    status: str # ABERTA, RESPONDIDA, CONCLUIDA, ARQUIVADA
+
+
+@router.get("/{regiao_id}/comunicacao/estatisticas", summary="Estatísticas da Central de Comunicação Interna")
+def obter_estatisticas_comunicacao(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Retorna totalizadores e contadores de mensagens não lidas conforme o perfil do usuário.
+    """
+    query = db_core.query(TopicoComunicacao).filter(
+        TopicoComunicacao.regiao_id == regiao_id,
+        TopicoComunicacao.deletado_visualmente == False
+    )
+
+    is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+    user_loja = user.loja_id
+
+    if not is_diretoria:
+        query = query.filter(
+            (TopicoComunicacao.tipo_alcance == "CIRCULAR") |
+            (TopicoComunicacao.loja_origem_id == user_loja) |
+            (TopicoComunicacao.loja_destino_id == user_loja)
+        )
+
+    topicos = query.all()
+    topico_ids = [t.id for t in topicos]
+
+    total_topicos = len(topicos)
+    topicos_abertos = sum(1 for t in topicos if t.status in ["ABERTA", "RESPONDIDA"])
+    topicos_concluidos = sum(1 for t in topicos if t.status == "CONCLUIDA")
+    inter_lojas_total = sum(1 for t in topicos if t.tipo_alcance == "LOJA_LOJA")
+    circulares_total = sum(1 for t in topicos if t.tipo_alcance == "CIRCULAR")
+    conselho_loja_total = sum(1 for t in topicos if t.tipo_alcance == "CONSELHO_LOJA")
+
+    # Mensagens não lidas
+    mensagens_nao_lidas = 0
+    if topico_ids:
+        msg_query = db_core.query(MensagemComunicacao).filter(
+            MensagemComunicacao.topico_id.in_(topico_ids),
+            MensagemComunicacao.lida == False,
+            MensagemComunicacao.deletado_visualmente == False,
+            MensagemComunicacao.remetente_id != user.usuario_id
+        )
+        mensagens_nao_lidas = msg_query.count()
+
+    return {
+        "total_topicos": total_topicos,
+        "topicos_abertos": topicos_abertos,
+        "topicos_concluidos": topicos_concluidos,
+        "inter_lojas_total": inter_lojas_total,
+        "circulares_total": circulares_total,
+        "conselho_loja_total": conselho_loja_total,
+        "mensagens_nao_lidas": mensagens_nao_lidas
+    }
+
+
+@router.get("/{regiao_id}/comunicacao/topicos", summary="Lista tópicos de correspondência oficial com filtros e sigilo")
+def listar_topicos_comunicacao(
+    regiao_id: str,
+    categoria: Optional[str] = None,
+    status: Optional[str] = None,
+    tipo_alcance: Optional[str] = None,
+    busca: Optional[str] = None,
+    loja_id: Optional[str] = None,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Lista os tópicos de comunicação respeitando estritamente o sigilo e isolamento entre lojas.
+    """
+    query = db_core.query(TopicoComunicacao).filter(
+        TopicoComunicacao.regiao_id == regiao_id,
+        TopicoComunicacao.deletado_visualmente == False
+    )
+
+    is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+    user_loja = user.loja_id
+
+    # Regra de Ouro do Sigilo Maçônico
+    if not is_diretoria:
+        query = query.filter(
+            (TopicoComunicacao.tipo_alcance == "CIRCULAR") |
+            (TopicoComunicacao.loja_origem_id == user_loja) |
+            (TopicoComunicacao.loja_destino_id == user_loja)
+        )
+
+    # Filtros
+    if categoria and categoria.upper() != "TODAS":
+        query = query.filter(TopicoComunicacao.categoria == categoria.upper())
+
+    if status and status.upper() != "TODOS":
+        query = query.filter(TopicoComunicacao.status == status.upper())
+
+    if tipo_alcance and tipo_alcance.upper() != "TODOS":
+        query = query.filter(TopicoComunicacao.tipo_alcance == tipo_alcance.upper())
+
+    if loja_id:
+        query = query.filter(
+            (TopicoComunicacao.loja_origem_id == loja_id) |
+            (TopicoComunicacao.loja_destino_id == loja_id)
+        )
+
+    if busca:
+        termo = f"%{busca.strip()}%"
+        query = query.filter(
+            (TopicoComunicacao.assunto.ilike(termo)) |
+            (TopicoComunicacao.loja_origem_nome.ilike(termo)) |
+            (TopicoComunicacao.loja_destino_nome.ilike(termo)) |
+            (TopicoComunicacao.criado_por_nome.ilike(termo))
+        )
+
+    topicos = query.order_by(TopicoComunicacao.data_ultima_mensagem.desc()).all()
+
+    resultado = []
+    for t in topicos:
+        total_msgs = len(t.mensagens)
+        ultima_msg = t.mensagens[-1] if total_msgs > 0 else None
+
+        nao_lidas = sum(
+            1 for m in t.mensagens 
+            if not m.lida and m.remetente_id != user.usuario_id
+        )
+
+        resultado.append({
+            "id": t.id,
+            "regiao_id": t.regiao_id,
+            "assunto": t.assunto,
+            "categoria": t.categoria,
+            "tipo_alcance": t.tipo_alcance,
+            "loja_origem_id": t.loja_origem_id,
+            "loja_origem_nome": t.loja_origem_nome,
+            "loja_origem_numero": t.loja_origem_numero,
+            "loja_destino_id": t.loja_destino_id,
+            "loja_destino_nome": t.loja_destino_nome,
+            "loja_destino_numero": t.loja_destino_numero,
+            "prioridade": t.prioridade,
+            "status": t.status,
+            "criado_por_id": t.criado_por_id,
+            "criado_por_nome": t.criado_por_nome,
+            "criado_por_tipo": t.criado_por_tipo,
+            "data_criacao": t.data_criacao.strftime("%d/%m/%Y %H:%M") if t.data_criacao else "",
+            "data_ultima_mensagem": t.data_ultima_mensagem.strftime("%d/%m/%Y %H:%M") if t.data_ultima_mensagem else "",
+            "total_mensagens": total_msgs,
+            "mensagens_nao_lidas": nao_lidas,
+            "ultima_mensagem_preview": ultima_msg.conteudo[:120] if ultima_msg else "",
+            "ultimo_remetente_nome": ultima_msg.remetente_nome if ultima_msg else "",
+            "ultimo_remetente_tipo": ultima_msg.tipo_remetente if ultima_msg else ""
+        })
+
+    return resultado
+
+
+@router.post("/{regiao_id}/comunicacao/topicos", summary="Cria novo tópico de comunicação ou prancha oficial")
+def criar_topico_comunicacao(
+    regiao_id: str,
+    payload: TopicoCriarPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Abre um novo tópico/prancha (Conselho ↔ Loja, Inter-Lojas ou Circular Regional).
+    """
+    from models.lojas_models import LojaIntegracao, ObreiroIntegracao
+
+    is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+    tipo = payload.tipo_alcance.upper()
+
+    if tipo == "CIRCULAR" and not is_diretoria:
+        raise HTTPException(status_code=403, detail="Apenas a Diretoria do Conselho pode emitir Pranchas Circulares Gerais.")
+
+    if tipo == "LOJA_LOJA" and not payload.loja_destino_id:
+        raise HTTPException(status_code=400, detail="Para canal restrito Inter-Lojas é obrigatório indicar a Loja de Destino.")
+
+    # Resolver nome do autor
+    autor_nome = f"Ir.'. {user.usuario_id}"
+    autor_cargo = user.role
+    obreiro = db_lojas.query(ObreiroIntegracao).filter(
+        (ObreiroIntegracao.cim == user.usuario_id) | 
+        (ObreiroIntegracao.cpf == user.usuario_id) |
+        (ObreiroIntegracao.id == int(user.usuario_id) if user.usuario_id.isdigit() else False)
+    ).first()
+    if obreiro:
+        autor_nome = obreiro.nome_completo
+
+    # Resolver dados das Lojas
+    origem_id = payload.loja_origem_id or user.loja_id
+    origem_nome = payload.loja_origem_nome
+    origem_num = payload.loja_origem_numero
+
+    if origem_id and (not origem_nome or not origem_num):
+        loja_orig = db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id == int(origem_id) if origem_id.isdigit() else False).first()
+        if loja_orig:
+            origem_nome = loja_orig.nome_loja
+            origem_num = loja_orig.numero_loja
+
+    destino_id = payload.loja_destino_id
+    destino_nome = payload.loja_destino_nome
+    destino_num = payload.loja_destino_numero
+
+    if destino_id and (not destino_nome or not destino_num):
+        loja_dest = db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id == int(destino_id) if destino_id.isdigit() else False).first()
+        if loja_dest:
+            destino_nome = loja_dest.nome_loja
+            destino_num = loja_dest.numero_loja
+
+    novo_topico = TopicoComunicacao(
+        regiao_id=regiao_id,
+        assunto=payload.assunto.strip(),
+        categoria=payload.categoria.upper(),
+        tipo_alcance=tipo,
+        loja_origem_id=origem_id,
+        loja_origem_nome=origem_nome,
+        loja_origem_numero=origem_num,
+        loja_destino_id=destino_id,
+        loja_destino_nome=destino_nome,
+        loja_destino_numero=destino_num,
+        prioridade=payload.prioridade.upper(),
+        status="ABERTA",
+        criado_por_id=user.usuario_id,
+        criado_por_nome=autor_nome,
+        criado_por_tipo="DIRETORIA" if is_diretoria else "LOJA",
+        data_criacao=datetime.utcnow(),
+        data_ultima_mensagem=datetime.utcnow()
+    )
+
+    db_core.add(novo_topico)
+    db_core.commit()
+    db_core.refresh(novo_topico)
+
+    # Criação da primeira mensagem / prancha inicial
+    msg_inicial = MensagemComunicacao(
+        topico_id=novo_topico.id,
+        remetente_id=user.usuario_id,
+        remetente_nome=autor_nome,
+        remetente_cargo=autor_cargo,
+        tipo_remetente="DIRETORIA" if is_diretoria else "LOJA",
+        loja_remetente_id=user.loja_id,
+        conteudo=payload.mensagem_inicial.strip(),
+        data_envio=datetime.utcnow(),
+        arquivo_url=payload.arquivo_url,
+        arquivo_nome=payload.arquivo_nome,
+        lida=True, # Lida pelo próprio autor
+        data_leitura=datetime.utcnow(),
+        lida_por_nome=autor_nome
+    )
+
+    db_core.add(msg_inicial)
+    db_core.commit()
+
+    return {
+        "status": "success",
+        "topico_id": novo_topico.id,
+        "assunto": novo_topico.assunto,
+        "tipo_alcance": novo_topico.tipo_alcance,
+        "message": "Tópico de comunicação aberto e prancha inicial protocolada com sucesso."
+    }
+
+
+@router.get("/{regiao_id}/comunicacao/topicos/{topico_id}", summary="Obtém detalhes do tópico com mensagens e marca leitura")
+def obter_topico_comunicacao(
+    regiao_id: str,
+    topico_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Retorna o histórico cronológico de mensagens e marca automaticamente como vistas.
+    """
+    topico = db_core.query(TopicoComunicacao).filter(
+        TopicoComunicacao.id == topico_id,
+        TopicoComunicacao.regiao_id == regiao_id,
+        TopicoComunicacao.deletado_visualmente == False
+    ).first()
+
+    if not topico:
+        raise HTTPException(status_code=404, detail="Tópico de comunicação não encontrado.")
+
+    is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+    user_loja = user.loja_id
+
+    # Validação de Sigilo
+    if not is_diretoria:
+        pode_acessar = (
+            topico.tipo_alcance == "CIRCULAR" or
+            topico.loja_origem_id == user_loja or
+            topico.loja_destino_id == user_loja
+        )
+        if not pode_acessar:
+            raise HTTPException(status_code=403, detail="Acesso restrito: Você não tem permissão para acessar esta correspondência privada.")
+
+    # Resolver nome do leitor
+    leitor_nome = f"Ir.'. {user.usuario_id}"
+    if is_diretoria:
+        leitor_nome = f"{user.role} Regional"
+    elif user_loja:
+        leitor_nome = f"Venerável Mestre (Loja {user_loja})"
+
+    # Marcar mensagens como lidas
+    agora = datetime.utcnow()
+    houve_leitura = False
+    for m in topico.mensagens:
+        if not m.lida and m.remetente_id != user.usuario_id:
+            m.lida = True
+            m.data_leitura = agora
+            m.lida_por_nome = leitor_nome
+            houve_leitura = True
+
+    if houve_leitura:
+        db_core.commit()
+
+    mensagens_formatadas = []
+    for m in topico.mensagens:
+        if m.deletado_visualmente:
+            continue
+        mensagens_formatadas.append({
+            "id": m.id,
+            "remetente_id": m.remetente_id,
+            "remetente_nome": m.remetente_nome,
+            "remetente_cargo": m.remetente_cargo,
+            "tipo_remetente": m.tipo_remetente,
+            "loja_remetente_id": m.loja_remetente_id,
+            "conteudo": m.conteudo,
+            "data_envio": m.data_envio.strftime("%d/%m/%Y %H:%M"),
+            "arquivo_url": m.arquivo_url,
+            "arquivo_nome": m.arquivo_nome,
+            "lida": m.lida,
+            "data_leitura": m.data_leitura.strftime("%d/%m/%Y %H:%M") if m.data_leitura else None,
+            "lida_por_nome": m.lida_por_nome,
+            "sou_autor": m.remetente_id == user.usuario_id
+        })
+
+    return {
+        "id": topico.id,
+        "assunto": topico.assunto,
+        "categoria": topico.categoria,
+        "tipo_alcance": topico.tipo_alcance,
+        "loja_origem_id": topico.loja_origem_id,
+        "loja_origem_nome": topico.loja_origem_nome,
+        "loja_origem_numero": topico.loja_origem_numero,
+        "loja_destino_id": topico.loja_destino_id,
+        "loja_destino_nome": topico.loja_destino_nome,
+        "loja_destino_numero": topico.loja_destino_numero,
+        "prioridade": topico.prioridade,
+        "status": topico.status,
+        "criado_por_id": topico.criado_por_id,
+        "criado_por_nome": topico.criado_por_nome,
+        "criado_por_tipo": topico.criado_por_tipo,
+        "data_criacao": topico.data_criacao.strftime("%d/%m/%Y %H:%M"),
+        "mensagens": mensagens_formatadas
+    }
+
+
+@router.post("/{regiao_id}/comunicacao/topicos/{topico_id}/mensagens", summary="Envia nova resposta ou prancha no tópico")
+def enviar_mensagem_comunicacao(
+    regiao_id: str,
+    topico_id: str,
+    payload: MensagemCriarPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Envia uma nova réplica oficial dentro do canal.
+    """
+    from models.lojas_models import ObreiroIntegracao
+
+    topico = db_core.query(TopicoComunicacao).filter(
+        TopicoComunicacao.id == topico_id,
+        TopicoComunicacao.regiao_id == regiao_id,
+        TopicoComunicacao.deletado_visualmente == False
+    ).first()
+
+    if not topico:
+        raise HTTPException(status_code=404, detail="Tópico não encontrado.")
+
+    is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+    user_loja = user.loja_id
+
+    # Checagem de permissão
+    if not is_diretoria:
+        pode_enviar = (
+            topico.tipo_alcance == "CIRCULAR" or
+            topico.loja_origem_id == user_loja or
+            topico.loja_destino_id == user_loja
+        )
+        if not pode_enviar:
+            raise HTTPException(status_code=403, detail="Sem permissão para responder neste canal restrito.")
+
+    autor_nome = f"Ir.'. {user.usuario_id}"
+    autor_cargo = user.role
+    obreiro = db_lojas.query(ObreiroIntegracao).filter(
+        (ObreiroIntegracao.cim == user.usuario_id) | 
+        (ObreiroIntegracao.cpf == user.usuario_id) |
+        (ObreiroIntegracao.id == int(user.usuario_id) if user.usuario_id.isdigit() else False)
+    ).first()
+    if obreiro:
+        autor_nome = obreiro.nome_completo
+
+    nova_msg = MensagemComunicacao(
+        topico_id=topico.id,
+        remetente_id=user.usuario_id,
+        remetente_nome=autor_nome,
+        remetente_cargo=autor_cargo,
+        tipo_remetente="DIRETORIA" if is_diretoria else "LOJA",
+        loja_remetente_id=user.loja_id,
+        conteudo=payload.conteudo.strip(),
+        data_envio=datetime.utcnow(),
+        arquivo_url=payload.arquivo_url,
+        arquivo_nome=payload.arquivo_nome,
+        lida=False
+    )
+
+    topico.data_ultima_mensagem = datetime.utcnow()
+    if topico.status == "ABERTA":
+        topico.status = "RESPONDIDA"
+
+    db_core.add(nova_msg)
+    db_core.commit()
+    db_core.refresh(nova_msg)
+
+    return {
+        "status": "success",
+        "mensagem_id": nova_msg.id,
+        "data_envio": nova_msg.data_envio.strftime("%d/%m/%Y %H:%M"),
+        "message": "Prancha enviada com sucesso."
+    }
+
+
+@router.post("/{regiao_id}/comunicacao/topicos/{topico_id}/upload", summary="Envia resposta com upload físico de anexo")
+def upload_anexo_comunicacao(
+    regiao_id: str,
+    topico_id: str,
+    conteudo: str = Form(...),
+    arquivo: UploadFile = File(...),
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Envia resposta com arquivo físico anexado.
+    """
+    from models.lojas_models import ObreiroIntegracao
+
+    topico = db_core.query(TopicoComunicacao).filter(
+        TopicoComunicacao.id == topico_id,
+        TopicoComunicacao.regiao_id == regiao_id
+    ).first()
+
+    if not topico:
+        raise HTTPException(status_code=404, detail="Tópico não encontrado.")
+
+    is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+    user_loja = user.loja_id
+
+    if not is_diretoria:
+        pode_enviar = (
+            topico.tipo_alcance == "CIRCULAR" or
+            topico.loja_origem_id == user_loja or
+            topico.loja_destino_id == user_loja
+        )
+        if not pode_enviar:
+            raise HTTPException(status_code=403, detail="Sem permissão para responder neste canal.")
+
+    diretorio_destino = os.path.join("uploads", "comunicacao", regiao_id, topico_id)
+    os.makedirs(diretorio_destino, exist_ok=True)
+    
+    ext = os.path.splitext(arquivo.filename)[1] if arquivo.filename else ".pdf"
+    msg_id = str(uuid.uuid4())
+    caminho_final = os.path.join(diretorio_destino, f"{msg_id}{ext}")
+
+    with open(caminho_final, "wb") as buffer:
+        shutil.copyfileobj(arquivo.file, buffer)
+
+    autor_nome = f"Ir.'. {user.usuario_id}"
+    autor_cargo = user.role
+    obreiro = db_lojas.query(ObreiroIntegracao).filter(
+        (ObreiroIntegracao.cim == user.usuario_id) | 
+        (ObreiroIntegracao.cpf == user.usuario_id) |
+        (ObreiroIntegracao.id == int(user.usuario_id) if user.usuario_id.isdigit() else False)
+    ).first()
+    if obreiro:
+        autor_nome = obreiro.nome_completo
+
+    nova_msg = MensagemComunicacao(
+        id=msg_id,
+        topico_id=topico.id,
+        remetente_id=user.usuario_id,
+        remetente_nome=autor_nome,
+        remetente_cargo=autor_cargo,
+        tipo_remetente="DIRETORIA" if is_diretoria else "LOJA",
+        loja_remetente_id=user.loja_id,
+        conteudo=conteudo.strip(),
+        data_envio=datetime.utcnow(),
+        arquivo_url=caminho_final,
+        arquivo_nome=arquivo.filename,
+        lida=False
+    )
+
+    topico.data_ultima_mensagem = datetime.utcnow()
+    db_core.add(nova_msg)
+    db_core.commit()
+
+    return {
+        "status": "success",
+        "mensagem_id": nova_msg.id,
+        "arquivo_nome": arquivo.filename,
+        "message": "Prancha e anexo protocolados com sucesso."
+    }
+
+
+@router.put("/{regiao_id}/comunicacao/topicos/{topico_id}/status", summary="Altera status do chamado/prancha")
+def atualizar_status_topico(
+    regiao_id: str,
+    topico_id: str,
+    payload: TopicoStatusPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    topico = db_core.query(TopicoComunicacao).filter(
+        TopicoComunicacao.id == topico_id,
+        TopicoComunicacao.regiao_id == regiao_id
+    ).first()
+
+    if not topico:
+        raise HTTPException(status_code=404, detail="Tópico não encontrado.")
+
+    novo_status = payload.status.upper()
+    if novo_status not in ["ABERTA", "RESPONDIDA", "CONCLUIDA", "ARQUIVADA"]:
+        raise HTTPException(status_code=400, detail="Status inválido.")
+
+    topico.status = novo_status
+    db_core.commit()
+
+    return {"status": "success", "novo_status": topico.status, "message": f"Status atualizado para {topico.status}."}
+
+
+@router.get("/{regiao_id}/comunicacao/mensagens/{mensagem_id}/pdf", summary="Exporta certidão oficial da prancha em PDF")
+def exportar_prancha_pdf(
+    regiao_id: str,
+    mensagem_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Gera a prancha canônica individual com timbre e assinaturas para arquivo formal.
+    """
+    msg = db_core.query(MensagemComunicacao).filter(
+        MensagemComunicacao.id == mensagem_id,
+        MensagemComunicacao.deletado_visualmente == False
+    ).first()
+
+    if not msg:
+        raise HTTPException(status_code=404, detail="Mensagem não encontrada.")
+
+    topico = msg.topico
+    regiao = db_core.query(Regiao).filter(Regiao.id == regiao_id).first()
+    conselho_nome = regiao.nome if regiao else "Conselho Regional de Veneráveis Mestres"
+
+    # Resolver entidades
+    origem = conselho_nome if msg.tipo_remetente == "DIRETORIA" else (topico.loja_origem_nome or f"Loja {msg.loja_remetente_id}")
+    destinatario = "Todas as Lojas Federadas" if topico.tipo_alcance == "CIRCULAR" else (topico.loja_destino_nome or "Conselho Regional")
+
+    diretorio_relatorios = os.path.join("uploads", "comunicacao", "pdf", regiao_id)
+    os.makedirs(diretorio_relatorios, exist_ok=True)
+    caminho_pdf = os.path.join(diretorio_relatorios, f"Prancha_{msg.id[:8]}.pdf")
+
+    gerar_pdf_prancha_comunicacao(
+        caminho_saida=caminho_pdf,
+        topico_assunto=topico.assunto,
+        categoria=topico.categoria,
+        tipo_alcance=topico.tipo_alcance,
+        remetente_nome=msg.remetente_nome,
+        remetente_cargo=msg.remetente_cargo or "Oficial",
+        origem_entidade=origem,
+        destinatario_entidade=destinatario,
+        conteudo_mensagem=msg.conteudo,
+        data_envio=msg.data_envio,
+        prioridade=topico.prioridade,
+        conselho_nome=conselho_nome
+    )
+
+    return FileResponse(
+        path=caminho_pdf,
+        filename=f"Prancha_Oficial_{msg.id[:8]}.pdf",
         media_type="application/pdf"
     )
 
