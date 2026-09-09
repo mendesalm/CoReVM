@@ -1,23 +1,8 @@
 import React from 'react';
 import { 
-  BookOpenCheck, Vote, Landmark, FileText, BarChart3, MessageSquare 
+  Vote, Landmark, FileText, BarChart3, MessageSquare 
 } from 'lucide-react';
 import ModuloGenericoConselho from '../../../compartilhado/componentes/ModuloGenericoConselho';
-
-export const PaginaAdmissoes: React.FC = () => (
-  <ModuloGenericoConselho
-    numero={3}
-    titulo="Mural de Pedidos de Admissão (Livros)"
-    subtitulo="Pranchas de admissão, pedidos de iniciação, filiação e sindicâncias do conselho"
-    icone={BookOpenCheck}
-    descricaoRegras="Acesso para consulta regional unificada. Lojas podem submeter e gerenciar seus próprios pedidos com deleção visual."
-    regrasRbac={{
-      superadmin: "Acesso total irrestrito + Exclusão definitiva (Hard Delete)",
-      diretoria: "Edição e Deleção Visual de todos os pedidos submetidos",
-      lojas: "Leitura geral e Edição/Deleção Visual exclusiva dos próprios pedidos"
-    }}
-  />
-);
 
 export const PaginaVotacoes: React.FC = () => (
   <ModuloGenericoConselho

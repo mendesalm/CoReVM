@@ -1,6 +1,7 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import uuid
-from sqlalchemy import Column, String, Boolean, Date, ForeignKey, Enum as SQLAlchemyEnum
+from datetime import datetime
+from sqlalchemy import Column, String, Boolean, Date, DateTime, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 from database import Base
 from core.constants import CargoConselho
@@ -23,6 +24,7 @@ class Regiao(Base):
     # Relacionamentos
     diretoria = relationship("DiretoriaConselho", back_populates="regiao")
     lojas = relationship("LojaAgregada", back_populates="regiao")
+    previas = relationship("PreviaAdmissao", back_populates="regiao")
 
 class DiretoriaConselho(Base):
     """
@@ -86,6 +88,52 @@ class AvisoRegional(Base):
     data_publicacao = Column(Date, nullable=False)
     data_validade = Column(Date, nullable=True)
     deletado_visualmente = Column(Boolean, default=False)
+
+class PreviaAdmissao(Base):
+    """
+    Mural de Pedidos de Admissão (Prévias de Iniciação, Filiação ou Regularização).
+    """
+    __tablename__ = "previas_admissao"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False)
+    tipo = Column(String(50), nullable=False) # INICIACAO, REGULARIZACAO, FILIACAO
+    loja_id = Column(String(36), nullable=False)
+    loja_nome = Column(String(255), nullable=False)
+    loja_numero = Column(String(50), nullable=False)
+    candidato_nome = Column(String(255), nullable=False)
+    pdf_url = Column(String(500), nullable=False)
+    pdf_nome_original = Column(String(255), nullable=True)
+    data_postagem = Column(Date, nullable=False)
+    data_limite = Column(Date, nullable=True)
+    status = Column(String(50), default="EM_ANDAMENTO") # EM_ANDAMENTO, CONCLUIDO
+    autor_id = Column(String(255), nullable=True)
+    autor_nome = Column(String(255), nullable=True)
+    deletado_visualmente = Column(Boolean, default=False)
+
+    regiao = relationship("Regiao", back_populates="previas")
+    consideracoes = relationship("ConsideracaoPrevia", back_populates="previa", cascade="all, delete-orphan", order_by="ConsideracaoPrevia.data_criacao.asc()")
+
+class ConsideracaoPrevia(Base):
+    """
+    Apontamentos e pareceres incrementais e confidenciais registrados pelos Veneráveis Mestres.
+    """
+    __tablename__ = "consideracoes_previa"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    previa_id = Column(String(36), ForeignKey("previas_admissao.id"), nullable=False)
+    autor_id = Column(String(255), nullable=True)
+    autor_nome = Column(String(255), nullable=False)
+    autor_cargo = Column(String(100), nullable=True)
+    loja_id = Column(String(36), nullable=True)
+    loja_nome = Column(String(255), nullable=True)
+    loja_numero = Column(String(50), nullable=True)
+    conteudo = Column(String(4000), nullable=False)
+    data_criacao = Column(DateTime, nullable=False, default=datetime.utcnow)
+    deletado_visualmente = Column(Boolean, default=False)
+
+    previa = relationship("PreviaAdmissao", back_populates="consideracoes")
+
 
 
 

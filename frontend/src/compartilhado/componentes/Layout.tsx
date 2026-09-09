@@ -105,7 +105,7 @@ export default function Layout() {
       titulo: 'Mural de Admissão',
       to: `/regiao/${id}/admissoes`,
       icone: BookOpenCheck,
-      descricao: 'Livros, sindicâncias e pranchas'
+      descricao: 'Propostas de Iniciação, Filiação ou Regularização'
     },
     {
       id: 'votacoes',

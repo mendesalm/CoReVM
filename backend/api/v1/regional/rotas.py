@@ -1,17 +1,22 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import shutil
+import uuid
+from datetime import date, datetime, timedelta
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from loguru import logger
-from typing import List, Optional
-from datetime import date, timedelta
 from pydantic import BaseModel
 
 from database import get_db_core, get_db_lojas
-from models.models import Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional
+from models.models import Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional, PreviaAdmissao, ConsideracaoPrevia
 from models.lojas_models import ObreiroIntegracao
 from core.constants import CargoConselho
 from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
 from core.dependencies import get_current_director, get_current_regional_user, RegionalUserContext
+from utils.pdf_generator import gerar_pdf_previa
 
 router = APIRouter()
 
@@ -362,5 +367,383 @@ def excluir_aviso_regional(
         aviso.deletado_visualmente = True
         db.commit()
         return {"status": "success", "tipo_delecao": "VISUAL", "message": "Aviso ocultado visualmente com sucesso (registro mantido no banco)."}
+
+# -------------------------------------------------------------
+# MÓDULO 03: MURAL DE PEDIDOS DE ADMISSÃO (PRÉVIAS E CONSIDERAÇÕES)
+# -------------------------------------------------------------
+
+UPLOADS_ADMISSOES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "uploads", "admissoes")
+os.makedirs(UPLOADS_ADMISSOES_DIR, exist_ok=True)
+
+class PreviaCreatePayload(BaseModel):
+    tipo: str # INICIACAO, REGULARIZACAO, FILIACAO
+    loja_id: str
+    loja_nome: str
+    loja_numero: str
+    candidato_nome: str
+    data_limite: Optional[date] = None
+
+class ConsideracaoCreatePayload(BaseModel):
+    conteudo: str
+    autor_nome: Optional[str] = None
+    autor_cargo: Optional[str] = None
+    loja_nome: Optional[str] = None
+    loja_numero: Optional[str] = None
+
+@router.get("/{regiao_id}/admissoes", summary="Lista prévias de admissão do conselho")
+def listar_previas_admissao(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Retorna as prévias de admissão (Iniciação, Filiação, Regularização) ativas no conselho.
+    """
+    previas = db.query(PreviaAdmissao).filter(
+        PreviaAdmissao.regiao_id == regiao_id,
+        PreviaAdmissao.deletado_visualmente == False
+    ).order_by(PreviaAdmissao.data_postagem.desc()).all()
+
+    resultado = []
+    for p in previas:
+        cons_ativas = [c for c in p.consideracoes if not c.deletado_visualmente]
+        
+        pode_editar = (
+            user.role.upper() == 'SUPERADMIN' 
+            or user.is_diretoria 
+            or (user.loja_id and str(user.loja_id) == str(p.loja_id))
+            or (user.usuario_id and user.usuario_id == p.autor_id)
+        )
+        
+        tipo_label = p.tipo.capitalize()
+        if p.tipo.upper() == 'INICIACAO':
+            tipo_label = 'Iniciação'
+        elif p.tipo.upper() == 'REGULARIZACAO':
+            tipo_label = 'Regularização'
+        elif p.tipo.upper() == 'FILIACAO':
+            tipo_label = 'Filiação'
+
+        titulo_formatado = f"Prévia de {tipo_label} - Loja {p.loja_nome}, nº {p.loja_numero}"
+
+        resultado.append({
+            "id": p.id,
+            "regiao_id": p.regiao_id,
+            "tipo": p.tipo,
+            "tipo_label": tipo_label,
+            "titulo_formatado": titulo_formatado,
+            "loja_id": p.loja_id,
+            "loja_nome": p.loja_nome,
+            "loja_numero": p.loja_numero,
+            "candidato_nome": p.candidato_nome,
+            "pdf_url": f"/api/v1/regional/{regiao_id}/admissoes/{p.id}/pdf",
+            "pdf_nome_original": p.pdf_nome_original or f"Previa_{p.candidato_nome.replace(' ', '_')}.pdf",
+            "data_postagem": p.data_postagem.isoformat() if p.data_postagem else None,
+            "data_limite": p.data_limite.isoformat() if p.data_limite else None,
+            "status": p.status,
+            "autor_id": p.autor_id,
+            "autor_nome": p.autor_nome,
+            "total_consideracoes": len(cons_ativas),
+            "pode_editar": pode_editar,
+            "pode_considerar": True
+        })
+
+    return resultado
+
+@router.post("/{regiao_id}/admissoes/upload", summary="Cria nova prévia com upload de arquivo PDF")
+async def criar_previa_com_upload(
+    regiao_id: str,
+    tipo: str = Form(...),
+    loja_id: str = Form(...),
+    loja_nome: str = Form(...),
+    loja_numero: str = Form(...),
+    candidato_nome: str = Form(...),
+    data_limite: Optional[str] = Form(None),
+    arquivo: Optional[UploadFile] = File(None),
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    previa_id = str(uuid.uuid4())
+    limite_dt = None
+    if data_limite:
+        try:
+            limite_dt = datetime.strptime(data_limite, "%Y-%m-%d").date()
+        except Exception:
+            limite_dt = date.today() + timedelta(days=30)
+    else:
+        limite_dt = date.today() + timedelta(days=30)
+
+    pdf_nome_salvo = f"{previa_id}.pdf"
+    pdf_path_destino = os.path.join(UPLOADS_ADMISSOES_DIR, pdf_nome_salvo)
+    nome_original = f"Previa_{candidato_nome.replace(' ', '_')}.pdf"
+
+    if arquivo and arquivo.filename:
+        nome_original = arquivo.filename
+        with open(pdf_path_destino, "wb") as buffer:
+            shutil.copyfileobj(arquivo.file, buffer)
+    else:
+        gerar_pdf_previa(
+            caminho_saida=pdf_path_destino,
+            tipo=tipo,
+            loja_nome=loja_nome,
+            loja_numero=loja_numero,
+            candidato_nome=candidato_nome,
+            data_postagem=date.today(),
+            data_limite=limite_dt
+        )
+
+    nova_previa = PreviaAdmissao(
+        id=previa_id,
+        regiao_id=regiao_id,
+        tipo=tipo.upper(),
+        loja_id=loja_id,
+        loja_nome=loja_nome,
+        loja_numero=loja_numero,
+        candidato_nome=candidato_nome.strip(),
+        pdf_url=pdf_nome_salvo,
+        pdf_nome_original=nome_original,
+        data_postagem=date.today(),
+        data_limite=limite_dt,
+        status="EM_ANDAMENTO",
+        autor_id=user.usuario_id,
+        autor_nome=f"Ir. {user.usuario_id}" if user.usuario_id else "Venerável Mestre",
+        deletado_visualmente=False
+    )
+    db.add(nova_previa)
+    db.commit()
+    db.refresh(nova_previa)
+    return {"status": "success", "previa_id": nova_previa.id, "message": "Prévia de admissão publicada com sucesso."}
+
+@router.post("/{regiao_id}/admissoes", summary="Cria nova prévia com geração automática de PDF")
+def criar_previa_json(
+    regiao_id: str,
+    payload: PreviaCreatePayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    previa_id = str(uuid.uuid4())
+    limite_dt = payload.data_limite or (date.today() + timedelta(days=30))
+    pdf_nome_salvo = f"{previa_id}.pdf"
+    pdf_path_destino = os.path.join(UPLOADS_ADMISSOES_DIR, pdf_nome_salvo)
+
+    gerar_pdf_previa(
+        caminho_saida=pdf_path_destino,
+        tipo=payload.tipo,
+        loja_nome=payload.loja_nome,
+        loja_numero=payload.loja_numero,
+        candidato_nome=payload.candidato_nome,
+        data_postagem=date.today(),
+        data_limite=limite_dt
+    )
+
+    nova_previa = PreviaAdmissao(
+        id=previa_id,
+        regiao_id=regiao_id,
+        tipo=payload.tipo.upper(),
+        loja_id=payload.loja_id,
+        loja_nome=payload.loja_nome,
+        loja_numero=payload.loja_numero,
+        candidato_nome=payload.candidato_nome.strip(),
+        pdf_url=pdf_nome_salvo,
+        pdf_nome_original=f"Prancha_{payload.candidato_nome.replace(' ', '_')}.pdf",
+        data_postagem=date.today(),
+        data_limite=limite_dt,
+        status="EM_ANDAMENTO",
+        autor_id=user.usuario_id,
+        autor_nome=f"Ir. {user.usuario_id}" if user.usuario_id else "Venerável Mestre",
+        deletado_visualmente=False
+    )
+    db.add(nova_previa)
+    db.commit()
+    db.refresh(nova_previa)
+    return {"status": "success", "previa_id": nova_previa.id, "message": "Prévia criada e documento oficial gerado com sucesso."}
+
+@router.get("/{regiao_id}/admissoes/{previa_id}/pdf", summary="Retorna o documento PDF da prévia")
+def obter_pdf_previa(
+    regiao_id: str,
+    previa_id: str,
+    download: bool = False,
+    db: Session = Depends(get_db_core)
+):
+    previa = db.query(PreviaAdmissao).filter(
+        PreviaAdmissao.id == previa_id,
+        PreviaAdmissao.regiao_id == regiao_id
+    ).first()
+    if not previa:
+        raise HTTPException(status_code=404, detail="Prévia de admissão não encontrada.")
+
+    pdf_path = os.path.join(UPLOADS_ADMISSOES_DIR, previa.pdf_url)
+    if not os.path.exists(pdf_path):
+        gerar_pdf_previa(
+            caminho_saida=pdf_path,
+            tipo=previa.tipo,
+            loja_nome=previa.loja_nome,
+            loja_numero=previa.loja_numero,
+            candidato_nome=previa.candidato_nome,
+            data_postagem=previa.data_postagem,
+            data_limite=previa.data_limite
+        )
+
+    disposition = "attachment" if download else "inline"
+    filename = previa.pdf_nome_original or f"Previa_{previa.candidato_nome}.pdf"
+    return FileResponse(
+        pdf_path, 
+        media_type="application/pdf", 
+        filename=filename,
+        headers={"Content-Disposition": f'{disposition}; filename="{filename}"'}
+    )
+
+@router.get("/{regiao_id}/admissoes/{previa_id}/consideracoes", summary="Lista histórico cronológico de considerações")
+def listar_consideracoes_previa(
+    regiao_id: str,
+    previa_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    previa = db.query(PreviaAdmissao).filter(
+        PreviaAdmissao.id == previa_id,
+        PreviaAdmissao.regiao_id == regiao_id
+    ).first()
+    if not previa:
+        raise HTTPException(status_code=404, detail="Prévia não encontrada.")
+
+    consideracoes = db.query(ConsideracaoPrevia).filter(
+        ConsideracaoPrevia.previa_id == previa_id,
+        ConsideracaoPrevia.deletado_visualmente == False
+    ).order_by(ConsideracaoPrevia.data_criacao.asc()).all()
+
+    resultado = []
+    for c in consideracoes:
+        pode_excluir = (
+            user.role.upper() == 'SUPERADMIN'
+            or user.is_diretoria
+            or (user.usuario_id and user.usuario_id == c.autor_id)
+        )
+        resultado.append({
+            "id": c.id,
+            "previa_id": c.previa_id,
+            "autor_id": c.autor_id,
+            "autor_nome": c.autor_nome,
+            "autor_cargo": c.autor_cargo or "Venerável Mestre",
+            "loja_id": c.loja_id,
+            "loja_nome": c.loja_nome or "Conselho Regional",
+            "loja_numero": c.loja_numero,
+            "conteudo": c.conteudo,
+            "data_criacao": c.data_criacao.isoformat(),
+            "pode_excluir": pode_excluir
+        })
+    return resultado
+
+@router.post("/{regiao_id}/admissoes/{previa_id}/consideracoes", summary="Adiciona nova consideração incremental")
+def adicionar_consideracao_previa(
+    regiao_id: str,
+    previa_id: str,
+    payload: ConsideracaoCreatePayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    previa = db_core.query(PreviaAdmissao).filter(
+        PreviaAdmissao.id == previa_id,
+        PreviaAdmissao.regiao_id == regiao_id
+    ).first()
+    if not previa:
+        raise HTTPException(status_code=404, detail="Prévia de admissão não encontrada.")
+
+    if not payload.conteudo or not payload.conteudo.strip():
+        raise HTTPException(status_code=400, detail="O teor da consideração não pode ser vazio.")
+
+    autor_nome = payload.autor_nome
+    autor_cargo = payload.autor_cargo or user.role
+    loja_nome = payload.loja_nome
+    loja_numero = payload.loja_numero
+
+    if not autor_nome:
+        if user.is_diretoria:
+            autor_nome = f"Mesa Diretora ({user.role})"
+        elif user.loja_id:
+            autor_nome = f"VM da Loja {user.loja_id}"
+        else:
+            autor_nome = f"Ir. {user.usuario_id}"
+
+    nova_consideracao = ConsideracaoPrevia(
+        previa_id=previa_id,
+        autor_id=user.usuario_id,
+        autor_nome=autor_nome,
+        autor_cargo=autor_cargo,
+        loja_id=str(user.loja_id) if user.loja_id else None,
+        loja_nome=loja_nome or "Loja Jurisdicionada",
+        loja_numero=loja_numero,
+        conteudo=payload.conteudo.strip(),
+        data_criacao=datetime.utcnow(),
+        deletado_visualmente=False
+    )
+    db_core.add(nova_consideracao)
+    db_core.commit()
+    db_core.refresh(nova_consideracao)
+
+    return {"status": "success", "consideracao_id": nova_consideracao.id, "message": "Consideração registrada com sucesso."}
+
+@router.delete("/{regiao_id}/admissoes/{previa_id}", summary="Remove ou oculta visualmente uma prévia")
+def excluir_previa_admissao(
+    regiao_id: str,
+    previa_id: str,
+    hard_delete: bool = False,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    previa = db.query(PreviaAdmissao).filter(
+        PreviaAdmissao.id == previa_id,
+        PreviaAdmissao.regiao_id == regiao_id
+    ).first()
+    if not previa:
+        raise HTTPException(status_code=404, detail="Prévia não encontrada.")
+
+    pode_excluir = (
+        user.role.upper() == 'SUPERADMIN'
+        or user.is_diretoria
+        or (user.loja_id and str(user.loja_id) == str(previa.loja_id))
+        or (user.usuario_id and user.usuario_id == previa.autor_id)
+    )
+    if not pode_excluir:
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode remover prévias de sua própria Loja.")
+
+    if hard_delete:
+        if user.role.upper() != 'SUPERADMIN':
+            raise HTTPException(status_code=403, detail="Apenas o SuperAdmin pode deletar fisicamente registros.")
+        db.delete(previa)
+        db.commit()
+        return {"status": "success", "tipo_delecao": "FISICA", "message": "Prévia deletada permanentemente."}
+    else:
+        previa.deletado_visualmente = True
+        db.commit()
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Prévia ocultada visualmente com sucesso."}
+
+@router.delete("/{regiao_id}/admissoes/{previa_id}/consideracoes/{consideracao_id}", summary="Remove consideração")
+def excluir_consideracao_previa(
+    regiao_id: str,
+    previa_id: str,
+    consideracao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    cons = db.query(ConsideracaoPrevia).filter(
+        ConsideracaoPrevia.id == consideracao_id,
+        ConsideracaoPrevia.previa_id == previa_id
+    ).first()
+    if not cons:
+        raise HTTPException(status_code=404, detail="Consideração não encontrada.")
+
+    pode_excluir = (
+        user.role.upper() == 'SUPERADMIN'
+        or user.is_diretoria
+        or (user.usuario_id and user.usuario_id == cons.autor_id)
+    )
+    if not pode_excluir:
+        raise HTTPException(status_code=403, detail="Permissão negada para excluir este parecer.")
+
+    cons.deletado_visualmente = True
+    db.commit()
+    return {"status": "success", "message": "Consideração removida com sucesso."}
+
 
 
