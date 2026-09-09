@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from database import get_db_core, get_db_lojas
 from models.models import Regiao, DiretoriaConselho, LojaAgregada, AvisoRegional, PreviaAdmissao, ConsideracaoPrevia
-from models.lojas_models import ObreiroIntegracao
+from models.lojas_models import ObreiroIntegracao, LojaIntegracao
 from core.constants import CargoConselho
 from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
 from core.dependencies import get_current_director, get_current_regional_user, RegionalUserContext
@@ -130,6 +130,46 @@ def atualizar_diretoria_regional(
 
     db_core.commit()
     return {"message": "Diretoria e mandatos atualizados com sucesso"}
+
+@router.get("/{regiao_id}/lojas", summary="Lista as Lojas Jurisdicionadas do Conselho")
+def listar_lojas_conselho(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Retorna as lojas agregadas ao conselho com nomes, números e detalhes de lojas_db.
+    """
+    agregadas = db_core.query(LojaAgregada).filter(
+        LojaAgregada.regiao_id == regiao_id,
+        LojaAgregada.ativa == True
+    ).all()
+    
+    if not agregadas:
+        return {"lojas": []}
+
+    ids = [int(a.loja_id) for a in agregadas if a.loja_id.isdigit()]
+    lojas_info = {}
+    if ids:
+        lojas_db_list = db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id.in_(ids)).all()
+        for l in lojas_db_list:
+            lojas_info[str(l.id)] = l
+
+    resultado = []
+    for a in agregadas:
+        info = lojas_info.get(a.loja_id)
+        resultado.append({
+            "id": a.loja_id,
+            "nome": info.nome_loja if info else f"Loja {a.loja_id}",
+            "numero": info.numero_loja if info else "S/N",
+            "rito": info.rito if info else None,
+            "cidade": info.cidade if info else None,
+            "ativa": a.ativa
+        })
+
+    resultado.sort(key=lambda x: int(x["numero"]) if x["numero"] and x["numero"].isdigit() else 999999)
+    return {"lojas": resultado}
 
 class LojaAddRequest(BaseModel):
     loja_id: str

@@ -93,29 +93,44 @@ export default function PaginaAdmissoes() {
   // Carregar dados
   const carregarDados = async () => {
     setLoading(true);
+    setErro('');
+    const headers = { 'X-User-Id': activeUserId };
+
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      
-      const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
-      setUserContext(userRes.data);
-
-      const previasRes = await axios.get(`${API_URL}/regional/${id}/admissoes`, { headers });
-      setPrevias(previasRes.data || []);
-
-      const lojasRes = await axios.get(`${API_URL}/regional/${id}/lojas`, { headers });
-      const lojasList = lojasRes.data?.lojas || [];
-      setLojasConselho(lojasList);
-
-      if (lojasList.length > 0 && !formPrevia.loja_id) {
-        setFormPrevia(prev => ({
-          ...prev,
-          loja_id: lojasList[0].id.toString(),
-          loja_nome: lojasList[0].nome,
-          loja_numero: lojasList[0].numero || 'S/N'
-        }));
+      // 1. Prévias de Admissão (essencial)
+      try {
+        const previasRes = await axios.get(`${API_URL}/regional/${id}/admissoes`, { headers });
+        setPrevias(previasRes.data || []);
+      } catch (errPrevias: any) {
+        console.error('Erro ao buscar prévias:', errPrevias);
+        setErro(errPrevias.response?.data?.detail || 'Não foi possível carregar os pedidos de admissão do conselho.');
       }
-    } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao carregar dados do mural de admissão.');
+
+      // 2. Contexto do Usuário (RBAC)
+      try {
+        const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
+        if (userRes.data) setUserContext(userRes.data);
+      } catch (errUser) {
+        console.warn('Contexto do usuário não pôde ser carregado:', errUser);
+      }
+
+      // 3. Lojas do Conselho (para o select de nova prévia)
+      try {
+        const lojasRes = await axios.get(`${API_URL}/regional/${id}/lojas`, { headers });
+        const lojasList = lojasRes.data?.lojas || [];
+        setLojasConselho(lojasList);
+
+        if (lojasList.length > 0 && !formPrevia.loja_id) {
+          setFormPrevia(prev => ({
+            ...prev,
+            loja_id: lojasList[0].id.toString(),
+            loja_nome: lojasList[0].nome,
+            loja_numero: lojasList[0].numero || 'S/N'
+          }));
+        }
+      } catch (errLojas) {
+        console.warn('Lista de lojas não pôde ser carregada:', errLojas);
+      }
     } finally {
       setLoading(false);
     }
@@ -303,12 +318,40 @@ export default function PaginaAdmissoes() {
     );
   }
 
-  if (erro) {
+  if (erro && previas.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto p-8 text-center text-red-400 bg-red-950/20 border border-red-800/40 rounded-2xl">
-        <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-red-500" />
-        <h2 className="text-lg font-bold mb-1">Acesso Restrito</h2>
-        <p className="text-sm">{erro}</p>
+      <div className="min-h-screen bg-[#080808] flex items-center justify-center p-6 text-gray-200">
+        <div className="max-w-md w-full p-8 text-center bg-[#141414] border border-[#2b2b2b] rounded-2xl shadow-2xl space-y-4">
+          <div className="w-16 h-16 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white mb-1">Acesso Restrito ao Mural</h2>
+            <p className="text-xs text-gray-400">{erro}</p>
+          </div>
+
+          <div className="bg-[#0c0c0c] border border-[#222] p-3 rounded-xl text-xs space-y-2">
+            <span className="text-gray-400 font-semibold block">Simular Acesso Autorizado:</span>
+            <select
+              value={activeUserId}
+              onChange={(e) => setActiveUserId(e.target.value)}
+              className="w-full bg-[#181818] text-[#facc15] border border-[#333] rounded-lg px-2.5 py-1.5 font-semibold focus:outline-none cursor-pointer"
+            >
+              <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
+              <option value="272875">Secretário (Mesa Diretora)</option>
+              <option value="superadmin">SuperAdmin</option>
+              <option value="VM_1">VM - João Pedro Junqueira nº 2181</option>
+              <option value="VM_135">VM - Acácia Amarela nº 4305</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => carregarDados()}
+            className="w-full py-2.5 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs rounded-xl transition-all shadow-md"
+          >
+            Tentar Novamente
+          </button>
+        </div>
       </div>
     );
   }
