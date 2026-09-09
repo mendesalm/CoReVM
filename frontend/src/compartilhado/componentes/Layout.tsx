@@ -38,74 +38,74 @@ export default function Layout() {
     if (id) fetchRegiao();
   }, [id]);
 
-  // Lista dos 10 módulos solicitados
+  // Lista dos 10 módulos solicitados (sem numeração)
   const itensMenu = [
     {
-      numero: 1,
-      titulo: 'Notificações e Avisos',
+      id: 'avisos',
+      titulo: 'Avisos e Notificações',
       to: `/regiao/${id}`,
       exact: true,
       icone: Bell,
-      descricao: 'Comunicados, novidades e alertas regionais'
+      descricao: 'Comunicados, novidades e alertas'
     },
     {
-      numero: 2,
-      titulo: 'Calendário de Eventos',
+      id: 'agenda',
+      titulo: 'Agenda do Conselho',
       to: `/regiao/${id}/calendario`,
       icone: Calendar,
-      descricao: 'Agenda drag & drop e calendário do conselho'
+      descricao: 'Calendário e eventos regionais'
     },
     {
-      numero: 3,
-      titulo: 'Mural de Pedidos de Admissão',
+      id: 'admissao',
+      titulo: 'Mural de Admissão',
       to: `/regiao/${id}/admissoes`,
       icone: BookOpenCheck,
       descricao: 'Livros, sindicâncias e pranchas'
     },
     {
-      numero: 4,
+      id: 'votacoes',
       titulo: 'Enquetes e Votações',
       to: `/regiao/${id}/votacoes`,
       icone: Vote,
       descricao: 'Consultas oficiais e deliberações'
     },
     {
-      numero: 5,
-      titulo: 'Gestão de Patrimônio Geral',
+      id: 'patrimonio',
+      titulo: 'Patrimônio',
       to: `/regiao/${id}/patrimonio`,
       icone: Landmark,
       descricao: 'Inventário e bens do conselho'
     },
     {
-      numero: 6,
-      titulo: 'Documentos do Conselho',
+      id: 'documentos',
+      titulo: 'Documentos',
       to: `/regiao/${id}/documentos`,
       icone: FileText,
       descricao: 'Atas, convites e regulamentos'
     },
     {
-      numero: 7,
-      titulo: 'Gestão de Lojas Jurisdicionadas',
+      id: 'relatorios',
+      titulo: 'Relatórios',
+      to: `/regiao/${id}/relatorios`,
+      icone: BarChart3,
+      descricao: 'Métricas e estatísticas de gestão'
+    },
+    {
+      id: 'diretoria',
+      titulo: 'Mesa Diretora',
+      to: `/regiao/${id}/diretoria`,
+      icone: Award,
+      descricao: 'Liderança executiva e mandatos'
+    },
+    {
+      id: 'lojas',
+      titulo: 'Lojas Jurisdicionadas',
       to: `/regiao/${id}/lojas`,
       icone: Building2,
       descricao: 'Quadro de lojas e veneráveis'
     },
     {
-      numero: 8,
-      titulo: 'Gestão da Mesa Diretora',
-      to: `/regiao/${id}/diretoria`,
-      icone: Award,
-      descricao: 'Mesa diretora e mandatos'
-    },
-    {
-      numero: 9,
-      titulo: 'Relatórios de Gestão',
-      to: `/regiao/${id}/relatorios`,
-      icone: BarChart3,
-      descricao: 'Métricas, estatísticas e consolidados'
-    },
-    {
-      numero: 10,
+      id: 'comunicacao',
       titulo: 'Comunicação Interna',
       to: `/regiao/${id}/comunicacao`,
       icone: MessageSquare,
@@ -225,7 +225,7 @@ export default function Layout() {
               )}
             </div>
 
-            {/* Itens 1 a 10 */}
+            {/* Itens do Menu */}
             {itensMenu.map((item) => {
               const Icone = item.icone;
               const isActive = item.exact 
@@ -234,9 +234,9 @@ export default function Layout() {
 
               return (
                 <NavLink
-                  key={item.numero}
+                  key={item.id}
                   to={item.to}
-                  title={!isExpanded ? `${item.numero}. ${item.titulo}` : undefined}
+                  title={!isExpanded ? item.titulo : undefined}
                   className={`group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all ${
                     isActive 
                       ? 'bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/30 shadow-sm font-semibold' 
@@ -251,14 +251,9 @@ export default function Layout() {
                   {/* Texto Expandido */}
                   {isExpanded && (
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${isActive ? 'bg-[#facc15]/20 text-[#facc15]' : 'bg-[#222] text-gray-500'}`}>
-                          {item.numero}
-                        </span>
-                        <p className="text-xs font-semibold truncate leading-tight">
-                          {item.titulo}
-                        </p>
-                      </div>
+                      <p className="text-xs font-semibold truncate leading-tight">
+                        {item.titulo}
+                      </p>
                       <p className="text-[10px] text-gray-500 truncate mt-0.5">
                         {item.descricao}
                       </p>
@@ -268,7 +263,6 @@ export default function Layout() {
                   {/* Tooltip flutuante no modo colapsado */}
                   {!isExpanded && (
                     <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#1a1a1a] text-white text-xs font-medium rounded-lg shadow-xl border border-[#333] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
-                      <span className="text-[#facc15] font-bold mr-1.5">{item.numero}.</span>
                       {item.titulo}
                     </div>
                   )}
