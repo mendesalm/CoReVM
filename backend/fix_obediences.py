@@ -1,11 +1,12 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import psycopg2
+from database import SQLALCHEMY_DATABASE_URL_LISTA, SQLALCHEMY_DATABASE_URL_LOJAS
 
 def fix_db():
     print("Fixing lista_de_lojas_db...")
-    conn_lista = psycopg2.connect("postgresql://esigma:BsysT23754RthfFg@69.62.89.211:5432/lista_de_lojas_db")
+    conn_lista = psycopg2.connect(SQLALCHEMY_DATABASE_URL_LISTA)
     cur_lista = conn_lista.cursor()
-    
+
     # GOBGO (13) becomes Potência GOB (12), Obediência GOBGO (13)
     cur_lista.execute("UPDATE lodges SET obedience_id = 12, subobedience_id = 13 WHERE obedience_id = 13;")
     # Everything else that doesn't have a subobedience copies its obedience
@@ -14,9 +15,9 @@ def fix_db():
     print("lista_de_lojas_db OK.")
 
     print("Fixing lojas_db...")
-    conn_lojas = psycopg2.connect("postgresql://esigma:BsysT23754RthfFg@69.62.89.211:5432/lojas_db")
+    conn_lojas = psycopg2.connect(SQLALCHEMY_DATABASE_URL_LOJAS)
     cur_lojas = conn_lojas.cursor()
-    
+
     # In lojas_db, there is one lodge with obediencia_id=12 which is actually GOBGO. Let's find it in lista and fix it if needed.
     # Actually, the lodge "João Pedro Junqueira" was seeded with obediencia_id=12 and subobediencia_id=NULL.
     # If we just run the same rules:

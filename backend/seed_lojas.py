@@ -1,15 +1,23 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from database import SQLALCHEMY_DATABASE_URL_LEGACY_REF, SQLALCHEMY_DATABASE_URL_LOJAS
 
 def seed():
+    if not SQLALCHEMY_DATABASE_URL_LEGACY_REF:
+        raise RuntimeError(
+            "Variável de ambiente 'DATABASE_URL_LEGACY_REF' não configurada. "
+            "Este script de migração precisa dela — preencha-a no backend/.env "
+            "(veja backend/.env.example) antes de rodar seed_lojas.py."
+        )
+
     print("Conectando aos bancos...")
-    # Conexão com o banco legado
-    conn_legacy = psycopg2.connect("postgresql://esigma:BsysT23754RthfFg@69.62.89.211:5432/esigma_db_ref")
+    # Conexão com o banco legado (snapshot de referência do projeto "sigma")
+    conn_legacy = psycopg2.connect(SQLALCHEMY_DATABASE_URL_LEGACY_REF)
     cur_legacy = conn_legacy.cursor(cursor_factory=RealDictCursor)
 
     # Conexão com o banco atual
-    conn_lojas = psycopg2.connect("postgresql://esigma:BsysT23754RthfFg@69.62.89.211:5432/lojas_db")
+    conn_lojas = psycopg2.connect(SQLALCHEMY_DATABASE_URL_LOJAS)
     cur_lojas = conn_lojas.cursor()
 
     try:
@@ -19,7 +27,7 @@ def seed():
         for obed in obediences:
             cur_lojas.execute("SELECT id FROM obediencias WHERE id = %s", (obed['id'],))
             if cur_lojas.fetchone(): continue
-            cur_lojas.execute("""INSERT INTO obediencias (id, nome, sigla, tipo, nome_contato_tecnico, email_contato_tecnico) 
+            cur_lojas.execute("""INSERT INTO obediencias (id, nome, sigla, tipo, nome_contato_tecnico, email_contato_tecnico)
                                  VALUES (%s, %s, %s, %s, %s, %s)""",
                 (obed['id'], obed['name'], obed['acronym'], 'Federal', 'Admin', 'admin@admin.com'))
         conn_lojas.commit()
@@ -30,9 +38,15 @@ def seed():
         for lodge in lodges:
             cur_lojas.execute("SELECT id FROM lojas WHERE id = %s", (lodge['id'],))
             if cur_lojas.fetchone(): continue
-                
+
+            # ALTERAÇÃO (2026-09-11, seção 9.9): coluna de destino renomeada de
+            # "obediencia_id" para "potencia_id" em lojas_db (Potência = nível
+            # superior; a coluna de origem "obedience_id" é do banco legado
+            # esigma_db_ref e não muda). Migração legada assume que toda Loja,
+            # sem mais informação, está vinculada direto à Potência — sem
+            # Obediência intermediária definida (fica NULL).
             cur_lojas.execute("""
-                INSERT INTO lojas (id, nome_loja, numero_loja, codigo_loja, obediencia_id, status, ativo, nome_contato_tecnico, email_contato_tecnico)
+                INSERT INTO lojas (id, nome_loja, numero_loja, codigo_loja, potencia_id, status, ativo, nome_contato_tecnico, email_contato_tecnico)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 lodge['id'],
@@ -56,7 +70,7 @@ def seed():
         for member in members:
             cur_lojas.execute("SELECT id FROM obreiros WHERE id = %s", (member['id'],))
             if cur_lojas.fetchone(): continue
-            
+
             # Mapeamento do Grau legado (inteiro) para o novo formato (enum string)
             grau_map = {1: 'Aprendiz', 2: 'Companheiro', 3: 'Mestre', 4: 'Mestre Instalado'}
             grau_nome = grau_map.get(member['degree'], 'Mestre')
@@ -79,7 +93,7 @@ def seed():
                 # Caso o CIM ou email seja duplicado
                 conn_lojas.rollback()
                 continue
-            
+
             # Se deu certo o insert (ou não falhou), damos commit em blocos, mas no caso precisa ser aqui ou no fim.
             # Como usamos try-except, precisamos dar commit a cada row se falhar, senao a transação fica invalida.
             conn_lojas.commit()
