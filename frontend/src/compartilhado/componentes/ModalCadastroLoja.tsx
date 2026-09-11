@@ -14,8 +14,8 @@ export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
     nome_loja: '',
     numero_loja: '',
     titulo_loja: 'ARLS',
-    rito: 'Rito Escocês Antigo e Aceito',
-    obediencia_id: 1, // Exemplo GOB
+    rito: 'REAA', // ALTERAÇÃO (2026-09-11): valor canônico passou a ser a sigla, não o nome completo.
+    potencia_id: 1, // Exemplo GOB (nível Potência) — ALTERAÇÃO (2026-09-11): campo renomeado de obediencia_id.
     cidade: '',
     estado: 'GO',
     cep: ''
@@ -82,7 +82,7 @@ export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
           <div>
             <label className="block text-sm text-gray-400">Rito</label>
             <select value={formData.rito} onChange={e => setFormData({...formData, rito: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white">
-              <option value="Rito Escocês Antigo e Aceito">REAA</option>
+              <option value="REAA">REAA</option>
               <option value="Rito York">York</option>
               <option value="Rito Brasileiro">Brasileiro</option>
             </select>

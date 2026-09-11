@@ -15,8 +15,14 @@ class LojaIntegracao(Base):
     codigo_loja = Column(String(36), unique=True, index=True, default=generate_uuid)
     numero_loja = Column(String(255))
     rito = Column(String(50), nullable=True)
-    obediencia_id = Column(Integer, ForeignKey("obediencias.id"), nullable=False)
-    subobediencia_id = Column(Integer, ForeignKey("obediencias.id"), nullable=True)
+    # ALTERAÇÃO (2026-09-11): hierarquia redefinida pelo usuário — Potência é
+    # o nível superior, Obediência passou a ser a organização subordinada à
+    # Potência (com Lojas subordinadas à Obediência). Antes, "obediencia_id"
+    # apontava para o nível superior e "subobediencia_id" para o nível
+    # intermediário — os nomes ficavam invertidos em relação ao uso comum.
+    # Ver seção 9.9 do contexto de implementação.
+    potencia_id = Column(Integer, ForeignKey("obediencias.id"), nullable=False)
+    obediencia_id = Column(Integer, ForeignKey("obediencias.id"), nullable=True)
     cidade = Column(String(100), nullable=True)
     estado = Column(String(2), nullable=True)
     cep = Column(String(9), nullable=True)

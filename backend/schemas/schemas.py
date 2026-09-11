@@ -95,7 +95,12 @@ class LojaCreateOnTheFly(BaseModel):
     numero_loja: str
     titulo_loja: str
     rito: str
-    obediencia_id: int
+    # ALTERAÇÃO (2026-09-11): hierarquia redefinida pelo usuário — Potência
+    # é o nível superior (federal/estadual), Obediência agora é a
+    # organização subordinada à Potência, com Lojas subordinadas à
+    # Obediência. Antes este campo se chamava "obediencia_id" e representava
+    # o nível superior; ver seção 9.9 do contexto de implementação.
+    potencia_id: int
     cidade: str
     estado: str
     cep: Optional[str] = None

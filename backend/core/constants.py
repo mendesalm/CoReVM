@@ -2,7 +2,10 @@
 from enum import Enum
 
 class RitoMaconico(str, Enum):
-    REAA = "Rito Escocês Antigo e Aceito"
+    # ALTERAÇÃO (2026-09-11, seção 9.7): valor canônico do REAA passou de
+    # "Rito Escocês Antigo e Aceito" para a sigla "REAA", em todo o
+    # ecossistema (lista_de_lojas_db, lojas_db e código dependente).
+    REAA = "REAA"
     YORK = "Rito de York"
     ADONHIRAMITA = "Rito Adonhiramita"
     BRASILEIRO = "Rito Brasileiro"

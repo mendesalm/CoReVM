@@ -1,10 +1,11 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  Building2, ShieldCheck, Loader2, Award, 
-  Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft 
+import {
+  Building2, ShieldCheck, Loader2, Award,
+  Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft
 } from 'lucide-react';
 import BuscadorLoja from '../../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../../compartilhado/componentes/ModalCadastroObreiro';
@@ -12,18 +13,45 @@ import ModalGestaoVM from '../../../compartilhado/componentes/ModalGestaoVM';
 
 const API_URL = 'http://localhost:8003/api/v1';
 
+// ALTERAÇÃO (2026-09-11, correção de bug): o `detail` de um erro 422 do
+// FastAPI (falha de validação, ex.: header Authorization ausente) vem como
+// uma LISTA de objetos ({type, loc, msg, input}), não uma string — renderizar
+// esse valor direto como filho de um elemento React quebra a página
+// ("Objects are not valid as a React child"). Esta função normaliza qualquer
+// formato de erro do backend (string simples, lista de erros de validação,
+// ou erro de rede) para uma string segura de exibir.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((d: any) => (typeof d === 'string' ? d : d?.msg))
+      .filter(Boolean);
+    if (mensagens.length > 0) return mensagens.join('; ');
+  }
+  return mensagemPadrao;
+}
+
+// ALTERAÇÃO (2026-09-11, auditoria pós-fix de segurança): esta página usava
+// axios puro + um seletor "Simular Acesso" que enviava um header X-User-Id
+// não autenticado — mecanismo de teste anterior ao fix de segurança do
+// e-Sigma. As rotas /regional/{id}/me, /dashboard, POST e DELETE lojas agora
+// exigem Authorization: Bearer real (via get_current_regional_user), então
+// o simulador nunca mais funcionaria. Substituído por clienteHttp (injeta o
+// token real do login via AuthContext) e o contexto de usuário passou a vir
+// inteiramente da resposta de /regional/{id}/me.
+
 export default function PaginaLojas() {
   const { id } = useParams();
   const [conselho, setConselho] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
-  
-  // Controle de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+
+  // Contexto de Usuário e RBAC — vem de /regional/{id}/me (Authorization real)
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: null,
+    role: null,
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -53,7 +81,7 @@ export default function PaginaLojas() {
     setEditLojaForm({
       nome: loja.nome ? loja.nome.replace(/^Loja\s+/i, '') : '',
       numero: loja.numero || '',
-      rito: loja.rito || 'Rito Escocês Antigo e Aceito',
+      rito: loja.rito || 'REAA',
       cidade: loja.cidade || ''
     });
   };
@@ -68,7 +96,7 @@ export default function PaginaLojas() {
       setEditLojaModal(null);
       setReloadKey(k => k + 1);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao atualizar dados da loja');
+      alert(extrairMensagemErro(err, 'Erro ao atualizar dados da loja'));
     } finally {
       setSalvandoLoja(false);
     }
@@ -78,11 +106,9 @@ export default function PaginaLojas() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const headers = { 'X-User-Id': activeUserId };
-
       const [userRes, resDashboard] = await Promise.all([
-        axios.get(`${API_URL}/regional/${id}/me`, { headers }),
-        axios.get(`${API_URL}/regional/${id}/dashboard`, { headers })
+        clienteHttp.get(`${API_URL}/regional/${id}/me`),
+        clienteHttp.get(`${API_URL}/regional/${id}/dashboard`)
       ]);
 
       setUserContext(userRes.data);
@@ -119,7 +145,7 @@ export default function PaginaLojas() {
       }
       setConselho(data);
     } catch (err: any) {
-      setErro(err.response?.data?.detail || "Erro ao carregar dados das lojas.");
+      setErro(extrairMensagemErro(err, "Erro ao carregar dados das lojas."));
     } finally {
       setLoading(false);
     }
@@ -127,31 +153,27 @@ export default function PaginaLojas() {
 
   useEffect(() => {
     if (id) fetchData();
-  }, [id, activeUserId, reloadKey]);
+  }, [id, reloadKey]);
 
   const vincularLoja = async (lojaId: number) => {
     try {
-      await axios.post(`${API_URL}/regional/${id}/lojas`, { loja_id: lojaId.toString() }, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      await clienteHttp.post(`${API_URL}/regional/${id}/lojas`, { loja_id: lojaId.toString() });
       alert('Loja vinculada ao conselho com sucesso!');
       setShowAddLojaModal(false);
       setReloadKey(k => k + 1);
     } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erro ao vincular loja');
+      alert(extrairMensagemErro(e, 'Erro ao vincular loja'));
     }
   };
 
   const removerLoja = async (lojaId: string) => {
     if (!confirm('Deseja realmente remover esta loja do conselho?')) return;
     try {
-      await axios.delete(`${API_URL}/regional/${id}/lojas/${lojaId}`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      await clienteHttp.delete(`${API_URL}/regional/${id}/lojas/${lojaId}`);
       alert('Loja removida com sucesso!');
       setReloadKey(k => k + 1);
     } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erro ao remover loja');
+      alert(extrairMensagemErro(e, 'Erro ao remover loja'));
     }
   };
 
@@ -195,7 +217,7 @@ export default function PaginaLojas() {
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
       
-      {/* Sub-Header Contextual & Seletor de Simulação */}
+      {/* Sub-Header Contextual */}
       <div className="bg-[#111] border-b border-[#222]">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -221,22 +243,6 @@ export default function PaginaLojas() {
                 {conselho?.nome || 'Conselho Regional'} — Quadro de lojas, potências, ritos e veneráveis mestres
               </p>
             </div>
-          </div>
-
-          {/* Teste Rápido de RBAC */}
-          <div className="flex items-center gap-2 bg-[#181818] border border-[#333] px-3 py-1.5 rounded-xl text-xs">
-            <span className="text-gray-400 font-medium">Simular Acesso:</span>
-            <select 
-              value={activeUserId} 
-              onChange={(e) => setActiveUserId(e.target.value)}
-              className="bg-[#0a0a0a] text-[#facc15] border border-[#444] rounded-lg px-2.5 py-1 font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
-              <option value="272875">Secretário (André - CIM 272875)</option>
-              <option value="superadmin">SuperAdmin</option>
-              <option value="VM_1">VM - Loja 1</option>
-              <option value="VM_135">VM - Loja 135</option>
-            </select>
           </div>
         </div>
       </div>
@@ -386,7 +392,7 @@ export default function PaginaLojas() {
 
                         <td className="p-3.5">
                           <span className="text-gray-400 font-medium">
-                            {l.rito || 'Rito Escocês Antigo e Aceito'}
+                            {l.rito || 'REAA'}
                           </span>
                         </td>
 
@@ -622,7 +628,7 @@ export default function PaginaLojas() {
                   onChange={(e) => setEditLojaForm({...editLojaForm, rito: e.target.value})}
                   className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                 >
-                  <option value="Rito Escocês Antigo e Aceito">Rito Escocês Antigo e Aceito</option>
+                  <option value="REAA">REAA</option>
                   <option value="Rito York">Rito de York</option>
                   <option value="Rito Adonhiramita">Rito Adonhiramita</option>
                   <option value="Rito Brasileiro">Rito Brasileiro</option>
