@@ -5,6 +5,7 @@ from api.v1.regioes.rotas import router as regioes_router
 from api.v1.integracao.rotas import router as integracao_router
 from api.v1.regional.rotas import router as regional_router
 from api.v1.email.rotas import router as email_router
+from api.v1.superadmin.rotas import router as superadmin_router
 
 app = FastAPI(
     title="CoReVM API",
@@ -24,6 +25,7 @@ app.include_router(regioes_router, prefix="/api/v1/regioes", tags=["Regiões"])
 app.include_router(integracao_router, prefix="/api/v1/integracao", tags=["Integração e-Sigma"])
 app.include_router(regional_router, prefix="/api/v1/regional", tags=["Gestão Regional"])
 app.include_router(email_router, prefix="/api/v1/email", tags=["Email e Notificações"])
+app.include_router(superadmin_router, prefix="/api/v1/superadmin", tags=["SuperAdmin"])
 
 @app.get("/")
 def read_root():

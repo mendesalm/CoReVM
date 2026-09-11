@@ -378,8 +378,27 @@ class MensagemComunicacao(Base):
     topico = relationship("TopicoComunicacao", back_populates="mensagens")
 
 
+class TemplateRelatorio(Base):
+    """
+    Template HTML de relatório gerenciado pelo SuperAdmin.
+    O conteúdo usa sintaxe Jinja2 para variáveis dinâmicas.
+    Templates são globais (disponíveis para todos os conselhos).
+    """
+    __tablename__ = "templates_relatorio"
 
-
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    nome = Column(String(150), nullable=False)
+    descricao = Column(String(500), nullable=True)
+    tipo = Column(
+        String(50), nullable=False, default="livre"
+        # Valores: "prancha" | "relatorio_lojas" | "patrimonio" | "integrantes" | "livre"
+    )
+    conteudo_html = Column(String(1000000), nullable=False)  # HTML com Jinja2
+    variaveis_disponiveis = Column(String(5000), nullable=True)  # JSON com vars disponíveis
+    criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
+    atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    ativo = Column(Boolean, default=True)
+    criado_por = Column(String(36), nullable=True)  # usuario_id do superadmin
 
 
 
