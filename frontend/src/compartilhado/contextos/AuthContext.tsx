@@ -34,6 +34,29 @@ clienteHttp.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * Decodifica (sem verificar assinatura — isso é responsabilidade do e-Sigma,
+ * que já assinou o token no login) o payload de um JWT real emitido pelo
+ * e-Sigma, só para restaurar os dados de exibição do usuário ao recarregar
+ * a página. Duplicada de PaginaLogin.tsx por serem módulos pequenos e sem
+ * um util compartilhado ainda — se surgir um terceiro uso, mover para
+ * compartilhado/utils.
+ */
+function decodificarPayloadJwt(token: string): any {
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const payloadJson = decodeURIComponent(
+      atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'))
+        .split('')
+        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('')
+    );
+    return JSON.parse(payloadJson);
+  } catch {
+    return {};
+  }
+}
+
 export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -44,16 +67,19 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       const storedToken = localStorage.getItem('@corevm:token');
       if (storedToken) {
         try {
-          // Em um app real, bateriamos no /auth/me
-          // Aqui vamos mockar a decodificação
+          // ALTERAÇÃO (2026-09-11): antes esta função fabricava um usuário
+          // mockado ("Usuário Logado", role decidido por uma string mágica
+          // dentro do próprio token) — resquício de quando o login inteiro
+          // era simulado (PaginaLogin.tsx). Agora que o login guarda um JWT
+          // real emitido pelo e-Sigma, decodificamos o payload de verdade
+          // para restaurar a sessão ao recarregar a página.
           setToken(storedToken);
-          // TODO: Fetch user details from e-Sigma or CoReVM backend
+          const payload = decodificarPayloadJwt(storedToken);
           setUsuario({
-            id: "1",
-            nome: "Usuário Logado",
-            email: "teste@corevm.com",
-            roles: storedToken.includes("super") ? ["superadmin"] : ["presidente_conselho"],
-            conselho_id: "fake-uuid-conselho"
+            id: payload.user_id || '',
+            nome: payload.sub || '',
+            email: payload.sub || '',
+            roles: payload.role ? [payload.role] : [],
           });
         } catch (error) {
           localStorage.removeItem('@corevm:token');

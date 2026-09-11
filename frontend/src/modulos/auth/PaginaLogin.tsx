@@ -1,96 +1,116 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
-import { Mail, Lock, Shield, FlaskConical } from 'lucide-react';
+import axios from 'axios';
+import { Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../compartilhado/contextos/AuthContext';
+import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 import { GoogleLogin } from '@react-oauth/google';
 
-// Dados dos VMs de Ceres para o simulador de acesso
-const VMS_CERES = [
-  { cim: '9900001', nome: 'Bernardo Silveira', loja: '901 — Ceres Fraterna', cargo: 'VM + Pres. Regional' },
-  { cim: '9900008', nome: 'Ícaro Beltrão',     loja: '902 — Luz de São Patrício', cargo: 'VM + Vice Pres.' },
-  { cim: '9900015', nome: 'Lucas Medeiros',    loja: '903 — União do Vale', cargo: 'VM + Secretário' },
-  { cim: '9900022', nome: 'Marcelo Queiroz',   loja: '904 — Acácia de Ceres', cargo: 'VM + Delegado' },
-  { cim: '9900029', nome: 'Otávio Bueno',      loja: '905 — Guardiões do Rio', cargo: 'VM (sem cargo)' },
-];
+// ALTERAÇÃO (2026-09-11): login real contra o e-Sigma (IdP central do
+// ecossistema — ver seção 9 do documento de contexto de implementação).
+// Antes, esta tela era 100% mock: nenhuma chamada de rede acontecia, e um
+// token fabricado (ex.: "token_presidente_fake") era guardado direto no
+// localStorage. Isso nunca foi detectado como problema porque a tela do
+// CoReVM que de fato lia esse token (PaginaLojas.tsx) também nunca usava o
+// token — ela mandava um header X-User-Id simulado à parte. Depois que
+// PaginaLojas.tsx foi corrigida para exigir Authorization real (auditoria de
+// 2026-09-11), esse acidente parou de "funcionar", e ficou claro que não
+// havia nenhum caminho de login de verdade no CoReVM.
+const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8001/api/v1';
+const API_URL = 'http://localhost:8003/api/v1';
 
-function SimuladorVM({ navigate, login }: { navigate: (path: string, opts?: any) => void; login: (token: string, user: any) => void }) {
-  const [cimSelecionado, setCimSelecionado] = useState(VMS_CERES[0].cim);
-
-  const entrarComoVM = () => {
-    const vm = VMS_CERES.find(v => v.cim === cimSelecionado)!;
-    const ceresConselhoId = "test-core-ceres-go-001";
-    login(`token_vm_${vm.cim}_fake`, {
-      id: vm.cim,
-      nome: `${vm.nome} [TESTE-CORE]`,
-      email: `contato+cim${vm.cim}@e-sigma.app`,
-      roles: ["veneravel"],
-      conselho_id: ceresConselhoId
-    });
-    navigate(`/regiao/${ceresConselhoId}`, { replace: true });
-  };
-
-  const vmInfo = VMS_CERES.find(v => v.cim === cimSelecionado)!;
-
-  return (
-    <div className="space-y-2">
-      <select
-        value={cimSelecionado}
-        onChange={e => setCimSelecionado(e.target.value)}
-        className="w-full bg-[#080808] border border-blue-800/50 rounded-lg p-2 text-xs text-blue-200 focus:border-blue-500 focus:outline-none"
-      >
-        {VMS_CERES.map(vm => (
-          <option key={vm.cim} value={vm.cim}>
-            CIM {vm.cim} — {vm.nome} ({vm.loja})
-          </option>
-        ))}
-      </select>
-      <div className="text-[10px] text-blue-500 px-1">
-        Cargo: <span className="text-blue-300">{vmInfo.cargo}</span> · CIM: <span className="font-mono text-blue-300">{vmInfo.cim}</span>
-      </div>
-      <button
-        type="button"
-        onClick={entrarComoVM}
-        className="w-full text-[11px] bg-blue-900/60 hover:bg-blue-800/60 text-blue-200 py-2 rounded-lg flex items-center justify-center gap-1.5 border border-blue-700/50 transition-colors"
-      >
-        <FlaskConical size={12} className="text-blue-400" />
-        Entrar como VM — {vmInfo.nome.split(' ')[0]}
-      </button>
-    </div>
-  );
+interface RegiaoVinculada {
+  regiao_id: string;
+  nome: string;
+  papel: string;
 }
 
+/**
+ * Decodifica (sem verificar assinatura — isso já foi feito pelo e-Sigma)
+ * o payload de um JWT só para preencher os dados de exibição do usuário no
+ * AuthContext local. A fonte de verdade da identidade continua sendo o
+ * e-Sigma: qualquer chamada de API sensível revalida o token no backend via
+ * GET /auth/validate (core/auth_esigma.py do CoReVM), nunca confia só no que
+ * está decodificado aqui no cliente.
+ */
+function decodificarPayloadJwt(token: string): any {
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const payloadJson = decodeURIComponent(
+      atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'))
+        .split('')
+        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('')
+    );
+    return JSON.parse(payloadJson);
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Depois de autenticar contra o e-Sigma, o CoReVM ainda precisa descobrir a
+ * quais Conselhos Regionais (conceito que só existe no CoReVM, o e-Sigma não
+ * sabe o que é uma "Região") essa identidade tem vínculo, para decidir para
+ * onde navegar. Consulta a rota nova GET /regional/minhas-regioes (criada
+ * junto com este login real).
+ */
+async function buscarMinhasRegioes(): Promise<RegiaoVinculada[]> {
+  const resposta = await clienteHttp.get(`${API_URL}/regional/minhas-regioes`);
+  return resposta.data || [];
+}
+
+function navegarAposLogin(regioes: RegiaoVinculada[], role: string | undefined, navigate: (path: string, opts?: any) => void) {
+  if (role === 'super_admin') {
+    navigate('/superadmin', { replace: true });
+    return;
+  }
+  if (regioes.length === 0) {
+    throw new Error('Login realizado, mas este usuário não possui vínculo com nenhum Conselho Regional cadastrado no CoReVM.');
+  }
+  // LIMITAÇÃO CONHECIDA: se a pessoa tem vínculo com mais de uma Região
+  // (ex.: VM de Loja que participa de dois Conselhos), navegamos para a
+  // primeira encontrada. Ainda não existe uma tela de seleção de Região —
+  // registrar como próximo passo se isso for um caso real no ecossistema.
+  navigate(`/regiao/${regioes[0].regiao_id}`, { replace: true });
+}
 
 export default function PaginaLogin() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
-  
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleGoogleSuccess = async (_credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: any) => {
     setErro(null);
     setCarregando(true);
     try {
-      // Mock do Login do Google
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const tokenMock = "token_google_fake";
-      // Assumindo que o google traz alguem logado como presidente por padrao
-      const fakeConselhoId = "123e4567-e89b-12d3-a456-426614174000"; 
-      login(tokenMock, {
-        id: "102",
-        nome: "Usuário Google",
-        email: "usuario@gmail.com",
-        roles: ["presidente_conselho"],
-        conselho_id: fakeConselhoId
+      const credential = credentialResponse?.credential;
+      if (!credential) throw new Error('O Google não retornou uma credencial válida.');
+
+      const resposta = await axios.post(`${ESIGMA_API_URL}/auth/google`, {
+        credential,
+        modulo_origem: 'corevm'
       });
-      navigate(`/regiao/${fakeConselhoId}`, { replace: true });
+      const { access_token } = resposta.data;
+      const payload = decodificarPayloadJwt(access_token);
+
+      login(access_token, {
+        id: payload.user_id,
+        nome: payload.sub,
+        email: payload.sub,
+        roles: payload.role ? [payload.role] : [],
+      });
+
+      const regioes = await buscarMinhasRegioes();
+      navegarAposLogin(regioes, payload.role, navigate);
     } catch (err: any) {
-      setErro('Falha no login com Google.');
+      setErro(err.response?.data?.detail || err.message || 'Falha no login com Google.');
     } finally {
       setCarregando(false);
     }
@@ -102,92 +122,45 @@ export default function PaginaLogin() {
     setCarregando(true);
 
     try {
-      // MOCK DE LOGIN PARA O COREVM
-      // 1. Simula requisição para a API do e-Sigma
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Login real: POST /auth/login no e-Sigma (IdP central). Retorna um
+      // JWT genuíno assinado com a JWT_SECRET_KEY do e-Sigma — o mesmo token
+      // que o backend do CoReVM valida via GET /auth/validate a cada
+      // requisição protegida (core/auth_esigma.py).
+      const resposta = await axios.post(`${ESIGMA_API_URL}/auth/login`, {
+        username: email,
+        password: senha,
+        modulo_origem: 'corevm'
+      });
+      const { access_token } = resposta.data;
+      const payload = decodificarPayloadJwt(access_token);
 
-      if (email === 'superadmin@esigma.com') {
-        const tokenMock = "token_superadmin_fake";
-        login(tokenMock, {
-          id: "999",
-          nome: "Super Administrador",
-          email: email,
-          roles: ["superadmin"]
-        });
-        navigate('/superadmin', { replace: true });
-        
-      } else if (email === 'presidente@conselho.com') {
-        const tokenMock = "token_presidente_fake";
-        const fakeConselhoId = "123e4567-e89b-12d3-a456-426614174000"; // UUID mockado
-        login(tokenMock, {
-          id: "101",
-          nome: "Presidente Regional",
-          email: email,
-          roles: ["presidente_conselho"],
-          conselho_id: fakeConselhoId
-        });
-        navigate(`/regiao/${fakeConselhoId}`, { replace: true });
+      login(access_token, {
+        id: payload.user_id,
+        nome: payload.sub,
+        email: payload.sub,
+        roles: payload.role ? [payload.role] : [],
+      });
 
-      } else if (email === 'teste@ceres.com') {
-        const tokenMock = "token_teste_ceres_fake";
-        const ceresConselhoId = "test-core-ceres-go-001";
-        login(tokenMock, {
-          id: "9900001",
-          nome: "Bernardo Silveira [TESTE-CORE]",
-          email: email,
-          roles: ["presidente_conselho"],
-          conselho_id: ceresConselhoId
-        });
-        navigate(`/regiao/${ceresConselhoId}`, { replace: true });
-
-      } else if (email.startsWith('cim:')) {
-        // Login por CIM simulado — VM de Loja
-        const cim = email.replace('cim:', '').trim();
-        const ceresConselhoId = "test-core-ceres-go-001";
-        login(`token_vm_${cim}_fake`, {
-          id: cim,
-          nome: `VM CIM ${cim} [TESTE-CORE]`,
-          email: `contato+cim${cim}@e-sigma.app`,
-          roles: ["veneravel"],
-          conselho_id: ceresConselhoId
-        });
-        navigate(`/regiao/${ceresConselhoId}`, { replace: true });
-
-      } else {
-        throw new Error('Credenciais inválidas. Use superadmin@esigma.com, presidente@conselho.com ou teste@ceres.com');
-      }
-
+      const regioes = await buscarMinhasRegioes();
+      navegarAposLogin(regioes, payload.role, navigate);
     } catch (err: any) {
-      setErro(err.message || 'Falha na autenticação. Verifique seu e-mail e senha.');
+      setErro(err.response?.data?.detail || err.message || 'Falha na autenticação. Verifique seu e-mail e senha.');
     } finally {
       setCarregando(false);
     }
   };
 
-  const preencherCredencialRapida = (tipo: 'SUPER' | 'PRESIDENTE' | 'CERES') => {
-    if (tipo === 'SUPER') {
-      setEmail('superadmin@esigma.com');
-      setSenha('senha123');
-    } else if (tipo === 'CERES') {
-      setEmail('teste@ceres.com');
-      setSenha('senha123');
-    } else {
-      setEmail('presidente@conselho.com');
-      setSenha('senha123');
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden z-0">
-      
+
       {/* Background Animado */}
       <HeroBackground />
 
       <div className="w-full max-w-md relative z-10">
-        
+
         {/* Cartão de Login - Glassmorphism */}
         <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
-          
+
           {/* Logo e Título */}
           <div className="flex flex-col items-center text-center mb-8">
             <div id="hero-logo" className="mb-4">
@@ -222,7 +195,7 @@ export default function PaginaLogin() {
                   placeholder=" "
                   className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
-                <label 
+                <label
                   htmlFor="email"
                   className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
                 >
@@ -243,7 +216,7 @@ export default function PaginaLogin() {
                   placeholder=" "
                   className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
-                <label 
+                <label
                   htmlFor="senha"
                   className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
                 >
@@ -280,40 +253,6 @@ export default function PaginaLogin() {
               text="continue_with"
               width="100%"
             />
-          </div>
-
-          {/* Botões MOCK Temporários para UX testing */}
-          <div className="mt-8 border-t border-gray-800 pt-6">
-            <p className="text-[10px] text-gray-500 text-center mb-3">TESTE RÁPIDO (MOCK)</p>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => preencherCredencialRapida('SUPER')}
-                className="flex-1 text-[11px] bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg flex items-center justify-center gap-1 border border-gray-700"
-              >
-                <Shield size={12} className="text-purple-400" />
-                SuperAdmin
-              </button>
-              <button 
-                onClick={() => preencherCredencialRapida('PRESIDENTE')}
-                className="flex-1 text-[11px] bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg flex items-center justify-center gap-1 border border-gray-700"
-              >
-                <Shield size={12} className="text-yellow-500" />
-                Presidente
-              </button>
-              <button 
-                onClick={() => preencherCredencialRapida('CERES')}
-                className="flex-1 text-[11px] bg-green-900/50 hover:bg-green-800/50 text-green-300 py-2 rounded-lg flex items-center justify-center gap-1 border border-green-700/50"
-              >
-                <Shield size={12} className="text-green-400" />
-                Ceres [TESTE]
-              </button>
-            </div>
-
-            {/* Simulador de VM de Loja — acesso como Venerável Mestre */}
-            <div className="mt-4 p-3 bg-blue-950/30 border border-blue-800/40 rounded-xl">
-              <p className="text-[10px] text-blue-400 font-semibold text-center mb-2 uppercase tracking-wider">Simular Acesso como VM de Loja (Ceres)</p>
-              <SimuladorVM navigate={navigate} login={login} />
-            </div>
           </div>
 
         </div>

@@ -18,10 +18,11 @@ from models.models import (
     ItemPatrimonio, EmprestimoPatrimonio, FilaEsperaPatrimonio,
     DocumentoRegional, TopicoComunicacao, MensagemComunicacao
 )
-from models.lojas_models import ObreiroIntegracao, LojaIntegracao
+from models.lojas_models import ObreiroIntegracao, LojaIntegracao, Mandato
 from core.constants import CargoConselho
 from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
 from core.dependencies import get_current_director, get_current_regional_user, RegionalUserContext
+from core.auth_esigma import UsuarioEsigma, obter_usuario_esigma
 from utils.pdf_generator import (
     gerar_pdf_previa, gerar_pdf_documento_regional,
     gerar_pdf_relatorio_executivo, gerar_pdf_relatorio_integrantes, gerar_pdf_relatorio_patrimonio,
@@ -62,6 +63,72 @@ def obter_meu_contexto_regional(
         "loja_id": user.loja_id,
         "regiao_id": user.regiao_id
     }
+
+# ALTERAÇÃO (2026-09-11): rota nova, criada junto com a implementação do
+# login real do CoReVM contra o e-Sigma (ver PaginaLogin.tsx). Antes, o
+# frontend "sabia" para qual Região navegar só porque os logins eram
+# simulados com um regiao_id fabricado à mão. Com login real, o e-Sigma
+# autentica a pessoa mas não tem nenhum conceito de "Conselho Regional" do
+# CoReVM — então o CoReVM precisa, ele mesmo, resolver a quais Regiões essa
+# identidade (CIM/CPF/e-mail) tem vínculo, para a tela de login poder
+# escolher para onde navegar (ou listar as opções, se houver mais de uma).
+# Depende só de `obter_usuario_esigma` (não de `get_current_regional_user`),
+# porque aqui ainda não sabemos qual regiao_id usar — é justamente o que
+# esta rota descobre.
+@router.get("/minhas-regioes", summary="Lista as Regiões (Conselhos Regionais) às quais o usuário autenticado tem vínculo")
+def listar_minhas_regioes(
+    usuario: UsuarioEsigma = Depends(obter_usuario_esigma),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    identificador = usuario.identificador_negocio
+
+    if usuario.is_super_admin:
+        regioes = db_core.query(Regiao).filter(Regiao.ativa == True).all()
+        return [{"regiao_id": r.id, "nome": r.nome, "papel": "SUPERADMIN"} for r in regioes]
+
+    if not identificador:
+        return []
+
+    encontradas = {}
+
+    # 1. Diretoria do Conselho (Presidente, Vice, Secretário, Delegado)
+    for diretor in db_core.query(DiretoriaConselho).filter(DiretoriaConselho.usuario_id == identificador).all():
+        encontradas[diretor.regiao_id] = diretor.cargo.value.upper()
+
+    # 2. Suplente de Loja do Conselho — resolve a Região via a Loja agregada
+    lojas_suplente = db_core.query(SuplenteConselho.loja_id).filter(SuplenteConselho.usuario_id == identificador).all()
+    if lojas_suplente:
+        lojas_ids = [l[0] for l in lojas_suplente]
+        for agregada in db_core.query(LojaAgregada).filter(LojaAgregada.loja_id.in_(lojas_ids), LojaAgregada.ativa == True).all():
+            encontradas.setdefault(agregada.regiao_id, "SUPLENTE")
+
+    # 3. Venerável Mestre — resolve via mandato ativo em lojas_db, depois via LojaAgregada
+    try:
+        obreiro = db_lojas.query(ObreiroIntegracao).filter(
+            (ObreiroIntegracao.cim == identificador) |
+            (ObreiroIntegracao.cpf == identificador) |
+            (ObreiroIntegracao.id == int(identificador) if identificador.isdigit() else False)
+        ).first()
+        if obreiro:
+            from sqlalchemy import or_, func as sa_func
+            mandatos = db_lojas.query(Mandato).filter(
+                Mandato.obreiro_id == obreiro.id,
+                Mandato.cargo_id == 1,
+                or_(Mandato.data_fim.is_(None), Mandato.data_fim >= sa_func.current_date())
+            ).all()
+            loja_ids_vm = [str(m.loja_id) for m in mandatos]
+            if loja_ids_vm:
+                for agregada in db_core.query(LojaAgregada).filter(LojaAgregada.loja_id.in_(loja_ids_vm), LojaAgregada.ativa == True).all():
+                    encontradas.setdefault(agregada.regiao_id, "VENERAVEL")
+    except Exception as e:
+        logger.warning(f"Erro ao checar mandato de VM em /minhas-regioes: {e}")
+
+    if not encontradas:
+        return []
+
+    regioes = db_core.query(Regiao).filter(Regiao.id.in_(list(encontradas.keys()))).all()
+    return [{"regiao_id": r.id, "nome": r.nome, "papel": encontradas[r.id]} for r in regioes]
 
 @router.get("/{regiao_id}/diretoria", response_model=List[DiretoriaMembroResponse], summary="Obtém Diretoria Enriquecida do Conselho")
 def obter_diretoria_regional(
