@@ -1,26 +1,49 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams } from 'react-router-dom';
-import { 
-  ShieldCheck, Loader2, Award, Calendar, 
-  Bell, Pin, Trash2, Plus, AlertTriangle, AlertOctagon, 
+import {
+  ShieldCheck, Loader2, Award, Calendar,
+  Bell, Pin, Trash2, Plus, AlertTriangle, AlertOctagon,
   Sparkles, Megaphone
 } from 'lucide-react';
+import { clienteHttp } from '../../compartilhado/contextos/AuthContext';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// CORREÇÃO (2026-09-12): normaliza o `detail` de erro do FastAPI, que pode
+// vir como string simples ou como lista de objetos de validação do Pydantic
+// ({type, loc, msg, input}) — renderizar essa lista direto no JSX quebra o
+// React ("Objects are not valid as a React child"). Mesmo bug/correção já
+// aplicados em PaginaLojas.tsx (seção 9.11 do histórico do projeto); este
+// arquivo havia ficado de fora daquela correção.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((d: any) => (typeof d === 'string' ? d : d?.msg))
+      .filter(Boolean);
+    if (mensagens.length > 0) return mensagens.join('; ');
+  }
+  return mensagemPadrao;
+}
 
 export default function PainelConselho() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
-  
+
   // Controle de Usuário e RBAC
-  const [activeUserId] = useState('CIM_12345_PRESIDENTE');
+  // CORREÇÃO (2026-09-12): removido o `activeUserId`/'CIM_12345_PRESIDENTE'
+  // fixo e o header X-User-Id (ver fetchDashboard/handleCriarAviso/
+  // handleExcluirAviso abaixo) — o backend não reconhece mais esse header
+  // desde a seção 9.5 do histórico (exige Authorization: Bearer real via
+  // e-Sigma). O contexto nasce neutro e é populado pela resposta real de
+  // GET /regional/{id}/me.
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: null,
+    role: null,
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -42,17 +65,16 @@ export default function PainelConselho() {
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const headers = { 'X-User-Id': activeUserId };
-
-      // 1. Contexto do usuário logado (RBAC)
-      const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
+      // 1. Contexto do usuário logado (RBAC) — via clienteHttp, que já injeta
+      // Authorization: Bearer <token> (ver AuthContext.tsx).
+      const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
       setUserContext(userRes.data);
 
       // 2. Avisos da Região
-      const resAvisos = await axios.get(`${API_URL}/regional/${id}/avisos`, { headers });
+      const resAvisos = await clienteHttp.get(`${API_URL}/regional/${id}/avisos`);
       setAvisos(resAvisos.data || []);
     } catch (err: any) {
-      setErro(err.response?.data?.detail || "Acesso negado ao painel regional.");
+      setErro(extrairMensagemErro(err, "Acesso negado ao painel regional."));
     } finally {
       setLoading(false);
     }
@@ -60,7 +82,7 @@ export default function PainelConselho() {
 
   useEffect(() => {
     if (id) fetchDashboard();
-  }, [id, activeUserId, reloadKey]);
+  }, [id, reloadKey]);
 
   // Abertura com tipo pré-selecionado
   const abrirModalNovo = (tipo: 'AVISO' | 'NOTIFICACAO') => {
@@ -86,17 +108,15 @@ export default function PainelConselho() {
 
     setSalvandoAviso(true);
     try {
-      await axios.post(`${API_URL}/regional/${id}/avisos`, {
+      await clienteHttp.post(`${API_URL}/regional/${id}/avisos`, {
         ...avisoForm,
         data_validade: avisoForm.data_validade || null
-      }, {
-        headers: { 'X-User-Id': activeUserId }
       });
       alert(`${avisoForm.tipo === 'NOTIFICACAO' ? 'Notificação' : 'Aviso'} publicado com sucesso no mural do conselho!`);
       setShowNovoAvisoModal(false);
       setReloadKey(k => k + 1);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao publicar aviso');
+      alert(extrairMensagemErro(err, 'Erro ao publicar aviso'));
     } finally {
       setSalvandoAviso(false);
     }
@@ -119,13 +139,11 @@ export default function PainelConselho() {
     }
 
     try {
-      const res = await axios.delete(`${API_URL}/regional/${id}/avisos/${avisoId}?hard_delete=${hardDelete}`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      const res = await clienteHttp.delete(`${API_URL}/regional/${id}/avisos/${avisoId}?hard_delete=${hardDelete}`);
       alert(res.data?.message || 'Item processado com sucesso.');
       setReloadKey(k => k + 1);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao remover item');
+      alert(extrairMensagemErro(err, 'Erro ao remover item'));
     }
   };
 

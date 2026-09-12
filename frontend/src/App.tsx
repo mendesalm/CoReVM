@@ -37,7 +37,13 @@ function AppRotas() {
       {/* Rota Global do SuperAdmin (Sem Sidebar Regional) */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/superadmin" element={
-        <RotaProtegida allowedRoles={['superadmin']}>
+        // CORREÇÃO (2026-09-12): o papel emitido pelo e-Sigma no JWT é
+        // "super_admin" (com underscore, minúsculo), tanto no backend do
+        // e-Sigma (role_primaria) quanto na navegação pós-login do CoReVM
+        // (PaginaLogin.tsx, navegarAposLogin). Antes esta rota exigia
+        // "superadmin" (sem underscore), o que bloqueava QUALQUER login de
+        // superadmin real com "Acesso negado" mesmo com token válido.
+        <RotaProtegida allowedRoles={['super_admin']}>
           <PainelSuperAdmin />
         </RotaProtegida>
       } />
