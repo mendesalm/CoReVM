@@ -1,6 +1,8 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import os
+from datetime import date
 from fastapi import HTTPException, Depends
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from loguru import logger
 from typing import Optional
@@ -28,17 +30,61 @@ _BYPASS_DEV_HABILITADO = os.getenv("COREVM_PERMITIR_BYPASS_DEV", "false").lower(
 
 
 class RegionalUserContext:
-    def __init__(self, usuario_id: str, role: str, regiao_id: str, is_diretoria: bool, loja_id: Optional[str] = None):
+    # CORREÇÃO (2026-09-12): um membro da Diretoria (Presidente/Vice/
+    # Secretário) costuma SER TAMBÉM o Venerável Mestre da própria Loja —
+    # são cargos acumuláveis, não excludentes. Antes, assim que a pessoa era
+    # reconhecida como Diretoria, o código nunca mais verificava o mandato
+    # de VM: `loja_id` ficava sempre None e a pessoa perdia qualquer vínculo
+    # com a própria Loja dentro do CoReVM (não aparecia como "sua Loja" em
+    # nenhuma tela). `is_veneravel` agora sinaliza esse acúmulo de papéis
+    # explicitamente, e `loja_id` é preenchido sempre que houver mandato de
+    # VM ativo — mesmo quando `is_diretoria` também é True. O acesso pleno
+    # de Diretoria (`can_edit_loja` sempre True) não muda: isto só ACRESCENTA
+    # informação de contexto, nunca restringe.
+    def __init__(self, usuario_id: str, role: str, regiao_id: str, is_diretoria: bool, loja_id: Optional[str] = None, is_veneravel: bool = False):
         self.usuario_id = usuario_id
         self.role = role
         self.regiao_id = regiao_id
         self.is_diretoria = is_diretoria
         self.loja_id = loja_id
+        self.is_veneravel = is_veneravel
 
     def can_edit_loja(self, target_loja_id: str) -> bool:
         if self.is_diretoria:
             return True
         return str(self.loja_id) == str(target_loja_id)
+
+
+def _resolver_loja_vm_ativa(identificador: str, lojas_ids: list, db_lojas: Session) -> Optional[str]:
+    """
+    Resolve, se houver, a Loja (dentre as agregadas a este Conselho) onde
+    `identificador` (CIM/CPF) possui mandato ATIVO de Venerável Mestre
+    (cargo_id=1) em lojas_db. Usada tanto para reconhecer um VM "puro"
+    quanto para enriquecer o contexto de um membro da Diretoria que também
+    seja VM da própria Loja.
+    """
+    try:
+        obreiro = db_lojas.query(ObreiroIntegracao).filter(
+            (ObreiroIntegracao.cim == identificador) |
+            (ObreiroIntegracao.cpf == identificador) |
+            (ObreiroIntegracao.id == int(identificador) if identificador.isdigit() else False)
+        ).first()
+
+        if not obreiro:
+            return None
+
+        mandato = db_lojas.query(Mandato).filter(
+            Mandato.obreiro_id == obreiro.id,
+            Mandato.cargo_id == 1,
+            or_(Mandato.data_fim.is_(None), Mandato.data_fim >= date.today())
+        ).first()
+
+        if mandato and str(mandato.loja_id) in lojas_ids:
+            return str(mandato.loja_id)
+    except Exception as e:
+        logger.warning(f"Erro ao checar mandato de VM em lojas_db para {identificador}: {e}")
+
+    return None
 
 def get_current_regional_user(
     regiao_id: str,
@@ -91,21 +137,31 @@ def get_current_regional_user(
         DiretoriaConselho.usuario_id == identificador
     ).first()
 
-    if diretor:
-        logger.info(f"RBAC Diretoria: {diretor.cargo.value} ({identificador}) na Região {regiao_id}")
-        return RegionalUserContext(
-            usuario_id=identificador,
-            role=diretor.cargo.value.upper(),
-            regiao_id=regiao_id,
-            is_diretoria=True
-        )
-
-    # 3. Obtém IDs das lojas agregadas a esta região
+    # 3. Obtém IDs das lojas agregadas a esta região (usado tanto para achar
+    # o mandato de VM quanto para validar o vínculo de Suplente abaixo).
     lojas_conselho = db_core.query(LojaAgregada.loja_id).filter(
         LojaAgregada.regiao_id == regiao_id,
         LojaAgregada.ativa == True
     ).all()
     lojas_ids = [str(l[0]) for l in lojas_conselho]
+
+    if diretor:
+        # Um Presidente/Vice/Secretário costuma SER TAMBÉM o Venerável
+        # Mestre da própria Loja — verificamos aqui para não perder esse
+        # vínculo (ver nota em RegionalUserContext acima).
+        loja_id_vm = _resolver_loja_vm_ativa(identificador, lojas_ids, db_lojas)
+        logger.info(
+            f"RBAC Diretoria: {diretor.cargo.value} ({identificador}) na Região {regiao_id}"
+            + (f" — também VM da Loja {loja_id_vm}" if loja_id_vm else "")
+        )
+        return RegionalUserContext(
+            usuario_id=identificador,
+            role=diretor.cargo.value.upper(),
+            regiao_id=regiao_id,
+            is_diretoria=True,
+            loja_id=loja_id_vm,
+            is_veneravel=bool(loja_id_vm)
+        )
 
     # 4. Verifica se é Suplente cadastrado no Conselho
     suplente = db_core.query(SuplenteConselho).filter(
@@ -124,32 +180,17 @@ def get_current_regional_user(
         )
 
     # 5. Verifica se é Venerável Mestre no banco lojas_db
-    try:
-        obreiro = db_lojas.query(ObreiroIntegracao).filter(
-            (ObreiroIntegracao.cim == identificador) |
-            (ObreiroIntegracao.cpf == identificador) |
-            (ObreiroIntegracao.id == int(identificador) if identificador.isdigit() else False)
-        ).first()
-
-        if obreiro:
-            from sqlalchemy import or_, func as sa_func
-            mandato = db_lojas.query(Mandato).filter(
-                Mandato.obreiro_id == obreiro.id,
-                Mandato.cargo_id == 1,
-                or_(Mandato.data_fim.is_(None), Mandato.data_fim >= sa_func.current_date())
-            ).first()
-
-            if mandato and str(mandato.loja_id) in lojas_ids:
-                logger.info(f"RBAC VM: {obreiro.nome_completo} ({identificador}) da Loja {mandato.loja_id}")
-                return RegionalUserContext(
-                    usuario_id=identificador,
-                    role="VENERAVEL",
-                    regiao_id=regiao_id,
-                    is_diretoria=False,
-                    loja_id=str(mandato.loja_id)
-                )
-    except Exception as e:
-        logger.warning(f"Erro ao checar mandato em lojas_db: {e}")
+    loja_id_vm = _resolver_loja_vm_ativa(identificador, lojas_ids, db_lojas)
+    if loja_id_vm:
+        logger.info(f"RBAC VM: {identificador} da Loja {loja_id_vm}")
+        return RegionalUserContext(
+            usuario_id=identificador,
+            role="VENERAVEL",
+            regiao_id=regiao_id,
+            is_diretoria=False,
+            loja_id=loja_id_vm,
+            is_veneravel=True
+        )
 
     logger.error(f"Acesso negado no CoReVM: {identificador} não possui vínculo ativo na Região {regiao_id}")
     raise HTTPException(status_code=403, detail="Acesso negado: Você não possui permissão de acesso a este Conselho Regional.")
