@@ -5,7 +5,8 @@ import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
 import { useParams, Link } from 'react-router-dom';
 import {
   Building2, ShieldCheck, Loader2, Award,
-  Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft
+  Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft,
+  Users, UserCog, X
 } from 'lucide-react';
 import BuscadorLoja from '../../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../../compartilhado/componentes/ModalCadastroObreiro';
@@ -66,6 +67,17 @@ export default function PaginaLojas() {
   const [showAddLojaModal, setShowAddLojaModal] = useState(false);
   const [editLojaModal, setEditLojaModal] = useState<any>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // ALTERAÇÃO (2026-09-12): "Designação Livre de Suplente" — o VM da própria
+  // Loja (ou a Diretoria do Conselho, para qualquer Loja) escolhe livremente
+  // qualquer um dos 7 oficiais eletivos da Loja para ocupar a cadeira de
+  // Suplente do Conselho. Usa as novas rotas GET /lojas/{id}/oficiais e
+  // PUT|DELETE /lojas/{id}/suplente (backend, seção 9.13 do histórico).
+  const [designarSuplenteModal, setDesignarSuplenteModal] = useState<any>(null);
+  const [oficiaisLoja, setOficiaisLoja] = useState<any[]>([]);
+  const [carregandoOficiais, setCarregandoOficiais] = useState(false);
+  const [suplenteEscolhido, setSuplenteEscolhido] = useState('');
+  const [salvandoSuplente, setSalvandoSuplente] = useState(false);
 
   // Form Edição de Loja
   const [editLojaForm, setEditLojaForm] = useState({
@@ -174,6 +186,56 @@ export default function PaginaLojas() {
       setReloadKey(k => k + 1);
     } catch (e: any) {
       alert(extrairMensagemErro(e, 'Erro ao remover loja'));
+    }
+  };
+
+  const abrirDesignarSuplente = async (loja: any) => {
+    setDesignarSuplenteModal(loja);
+    setSuplenteEscolhido(loja.suplente_usuario_id || '');
+    setOficiaisLoja([]);
+    setCarregandoOficiais(true);
+    try {
+      const res = await clienteHttp.get(`${API_URL}/regional/${id}/lojas/${loja.loja_id}/oficiais`);
+      setOficiaisLoja(res.data?.oficiais || []);
+    } catch (e: any) {
+      alert(extrairMensagemErro(e, 'Erro ao carregar os oficiais da loja'));
+      setDesignarSuplenteModal(null);
+    } finally {
+      setCarregandoOficiais(false);
+    }
+  };
+
+  const handleDesignarSuplente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!designarSuplenteModal || !suplenteEscolhido) return;
+    setSalvandoSuplente(true);
+    try {
+      await clienteHttp.put(`${API_URL}/regional/${id}/lojas/${designarSuplenteModal.loja_id}/suplente`, {
+        usuario_id: suplenteEscolhido
+      });
+      alert('Suplente do Conselho designado com sucesso!');
+      setDesignarSuplenteModal(null);
+      setReloadKey(k => k + 1);
+    } catch (e: any) {
+      alert(extrairMensagemErro(e, 'Erro ao designar suplente'));
+    } finally {
+      setSalvandoSuplente(false);
+    }
+  };
+
+  const handleRemoverSuplente = async () => {
+    if (!designarSuplenteModal) return;
+    if (!confirm('Deseja realmente remover a designação de Suplente desta loja?')) return;
+    setSalvandoSuplente(true);
+    try {
+      await clienteHttp.delete(`${API_URL}/regional/${id}/lojas/${designarSuplenteModal.loja_id}/suplente`);
+      alert('Designação de Suplente removida com sucesso!');
+      setDesignarSuplenteModal(null);
+      setReloadKey(k => k + 1);
+    } catch (e: any) {
+      alert(extrairMensagemErro(e, 'Erro ao remover suplente'));
+    } finally {
+      setSalvandoSuplente(false);
     }
   };
 
@@ -350,13 +412,14 @@ export default function PaginaLojas() {
                   <th className="p-3.5">Oriente</th>
                   <th className="p-3.5">Rito Trabalhado</th>
                   <th className="p-3.5">Venerável Mestre</th>
+                  <th className="p-3.5">Suplente do Conselho</th>
                   <th className="p-3.5 pr-5 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#202020] text-xs">
                 {lojasFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-gray-500">
+                    <td colSpan={7} className="text-center py-12 text-gray-500">
                       Nenhuma loja encontrada para o filtro informado.
                     </td>
                   </tr>
@@ -432,6 +495,41 @@ export default function PaginaLojas() {
                               <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
                               <span>Pendente</span>
                               {podeEditar && <span className="text-[10px] font-bold text-red-400 ml-1">+ Definir</span>}
+                            </button>
+                          )}
+                        </td>
+
+                        <td className="p-3.5">
+                          {l.suplente_nome ? (
+                            <button
+                              type="button"
+                              onClick={() => { if (podeEditar) abrirDesignarSuplente(l); }}
+                              disabled={!podeEditar}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                podeEditar
+                                  ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 cursor-pointer shadow-sm'
+                                  : 'bg-[#181818] text-gray-400 border border-[#2a2a2a] cursor-default'
+                              }`}
+                              title={podeEditar ? "Clique para trocar o Suplente designado" : "Suplente do Conselho"}
+                            >
+                              <Users className="w-3.5 h-3.5 text-blue-400" />
+                              <span>{l.suplente_nome}</span>
+                              {podeEditar && <span className="text-[10px] text-blue-400/70 ml-1 font-normal">✎</span>}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => { if (podeEditar) abrirDesignarSuplente(l); }}
+                              disabled={!podeEditar}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                                podeEditar
+                                  ? 'bg-[#181818] text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 border border-[#2a2a2a] hover:border-blue-500/30 cursor-pointer'
+                                  : 'bg-[#181818] text-gray-600 border border-[#2a2a2a] cursor-default'
+                              }`}
+                              title={podeEditar ? "Clique para designar o Suplente do Conselho" : "Nenhum Suplente designado"}
+                            >
+                              <UserCog className="w-3.5 h-3.5" />
+                              <span>{podeEditar ? 'Designar Suplente' : 'Não designado'}</span>
                             </button>
                           )}
                         </td>
@@ -655,6 +753,107 @@ export default function PaginaLojas() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Designação Livre de Suplente do Conselho */}
+      {designarSuplenteModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/30">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Designar Suplente do Conselho</h2>
+                  <p className="text-xs text-gray-400">
+                    {designarSuplenteModal.nome || `Loja ${designarSuplenteModal.loja_id}`} — escolha qualquer um dos 7 oficiais eletivos da loja.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDesignarSuplenteModal(null)}
+                className="p-1.5 text-gray-500 hover:text-white hover:bg-[#222] rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {carregandoOficiais ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+              </div>
+            ) : (
+              <form onSubmit={handleDesignarSuplente} className="space-y-4">
+                {oficiaisLoja.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-xs">
+                    Nenhum oficial com mandato ativo encontrado para esta loja.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {oficiaisLoja.map((o: any) => (
+                      <label
+                        key={o.usuario_id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          suplenteEscolhido === o.usuario_id
+                            ? 'bg-blue-500/10 border-blue-500/40'
+                            : 'bg-[#161616] border-[#2a2a2a] hover:border-[#3a3a3a]'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="suplente_escolhido"
+                          value={o.usuario_id}
+                          checked={suplenteEscolhido === o.usuario_id}
+                          onChange={() => setSuplenteEscolhido(o.usuario_id)}
+                          className="text-blue-400 focus:ring-blue-400"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-white truncate">{o.nome_completo}</div>
+                          <div className="text-[11px] text-gray-400">{o.cargo} · CIM {o.usuario_id}</div>
+                        </div>
+                        {designarSuplenteModal.suplente_usuario_id === o.usuario_id && (
+                          <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider shrink-0">Atual</span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#222]">
+                  {designarSuplenteModal.suplente_nome ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoverSuplente}
+                      disabled={salvandoSuplente}
+                      className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      Remover designação
+                    </button>
+                  ) : <span />}
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setDesignarSuplenteModal(null)}
+                      className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={salvandoSuplente || !suplenteEscolhido || oficiaisLoja.length === 0}
+                      className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl font-semibold text-xs transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      {salvandoSuplente ? 'Salvando...' : 'Confirmar Designação'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

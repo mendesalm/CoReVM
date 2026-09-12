@@ -61,7 +61,12 @@ def obter_meu_contexto_regional(
         "role": user.role,
         "is_diretoria": user.is_diretoria,
         "loja_id": user.loja_id,
-        "regiao_id": user.regiao_id
+        "regiao_id": user.regiao_id,
+        # ALTERAÇÃO (2026-09-12): sinaliza quando a pessoa também é Venerável
+        # Mestre de uma Loja agregada (mesmo sendo Diretoria) — ver correção
+        # em core/dependencies.py. Permite ao frontend exibir, por exemplo,
+        # "Presidente do Conselho e Venerável Mestre da Loja 901".
+        "is_veneravel": user.is_veneravel
     }
 
 # ALTERAÇÃO (2026-09-11): rota nova, criada junto com a implementação do
@@ -233,20 +238,190 @@ def listar_lojas_conselho(
         for l in lojas_db_list:
             lojas_info[str(l.id)] = l
 
+    # ALTERAÇÃO (2026-09-12): inclui o Suplente do Conselho atualmente
+    # designado para cada Loja (quando houver), para alimentar a tela de
+    # designação livre de Suplente sem precisar de uma chamada extra por Loja.
+    suplentes_map = {
+        s.loja_id: s for s in db_core.query(SuplenteConselho).filter(
+            SuplenteConselho.loja_id.in_([a.loja_id for a in agregadas])
+        ).all()
+    }
+
     resultado = []
     for a in agregadas:
         info = lojas_info.get(a.loja_id)
+        suplente = suplentes_map.get(a.loja_id)
         resultado.append({
             "id": a.loja_id,
             "nome": info.nome_loja if info else f"Loja {a.loja_id}",
             "numero": info.numero_loja if info else "S/N",
             "rito": info.rito if info else None,
             "cidade": info.cidade if info else None,
-            "ativa": a.ativa
+            "ativa": a.ativa,
+            "suplente_usuario_id": suplente.usuario_id if suplente else None,
+            "suplente_nome": suplente.nome_suplente if suplente else None,
+            "suplente_email": suplente.email_suplente if suplente else None,
         })
 
     resultado.sort(key=lambda x: int(x["numero"]) if x["numero"] and x["numero"].isdigit() else 999999)
     return {"lojas": resultado}
+
+# ALTERAÇÃO (2026-09-12): implementação da "designação livre de Suplente" —
+# até então NÃO existia nenhuma rota de escrita para suplentes_conselho,
+# só leitura (RBAC em core/dependencies.py e o relatório de integrantes).
+# O objetivo é permitir que o Venerável Mestre de uma Loja (ou a Diretoria
+# do Conselho, para qualquer Loja da Região) escolha livremente qualquer um
+# dos 7 oficiais eletivos da própria Loja para ocupar a cadeira de Suplente
+# no Conselho Regional — trocando o titular quando quiser, sem depender de
+# suporte técnico. Ver seção "Ambiente de Teste Ceres" no contexto de
+# implementação para o motivo desta feature (simular a troca de Suplente
+# entre os membros de teste das 5 Lojas).
+
+CARGOS_LOJA_ELEGIVEIS = [
+    (1, "Venerável Mestre"),
+    (2, "1º Vigilante"),
+    (3, "2º Vigilante"),
+    (4, "Orador"),
+    (5, "Secretário"),
+    (6, "Tesoureiro"),
+    (7, "Chanceler"),
+]
+
+class SuplenteDesignarPayload(BaseModel):
+    usuario_id: str  # CIM (ou CPF) do oficial escolhido dentre os 7 da própria Loja
+
+def _obter_loja_agregada_ou_404(db_core: Session, regiao_id: str, loja_id: str) -> LojaAgregada:
+    agregada = db_core.query(LojaAgregada).filter_by(
+        regiao_id=regiao_id, loja_id=str(loja_id), ativa=True
+    ).first()
+    if not agregada:
+        raise HTTPException(status_code=404, detail="Esta Loja não está vinculada (ou não está ativa) neste Conselho.")
+    return agregada
+
+def _exigir_vm_da_loja_ou_diretoria(user: RegionalUserContext, loja_id: str):
+    if user.is_diretoria:
+        return
+    if user.role == "VENERAVEL" and str(user.loja_id) == str(loja_id):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail="Acesso negado: apenas o Venerável Mestre desta Loja ou a Diretoria do Conselho podem designar o Suplente."
+    )
+
+@router.get("/{regiao_id}/lojas/{loja_id}/oficiais", summary="Lista os 7 oficiais eletivos (mandato ativo) de uma Loja Jurisdicionada")
+def listar_oficiais_loja(
+    regiao_id: str,
+    loja_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Retorna os ocupantes ativos dos 7 cargos eletivos da Loja (Venerável
+    Mestre, 1º e 2º Vigilantes, Orador, Secretário, Tesoureiro e Chanceler),
+    usados para popular o seletor de designação de Suplente do Conselho.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+
+    if not str(loja_id).isdigit():
+        return {"oficiais": []}
+
+    mandatos = db_lojas.query(Mandato, ObreiroIntegracao).join(
+        ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
+    ).filter(
+        Mandato.loja_id == int(loja_id),
+        Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_LOJA_ELEGIVEIS]),
+        (Mandato.data_fim.is_(None)) | (Mandato.data_fim >= date.today())
+    ).all()
+
+    mapa_cargo = dict(CARGOS_LOJA_ELEGIVEIS)
+    resultado = [
+        {
+            "usuario_id": obreiro.cim,
+            "nome_completo": obreiro.nome_completo,
+            "email": obreiro.email,
+            "cargo_id": mandato.cargo_id,
+            "cargo": mapa_cargo.get(mandato.cargo_id, f"Cargo {mandato.cargo_id}"),
+        }
+        for mandato, obreiro in mandatos
+    ]
+    resultado.sort(key=lambda o: o["cargo_id"])
+    return {"oficiais": resultado}
+
+@router.put("/{regiao_id}/lojas/{loja_id}/suplente", summary="Designa (ou substitui) o Suplente do Conselho de uma Loja")
+def designar_suplente_conselho(
+    regiao_id: str,
+    loja_id: str,
+    payload: SuplenteDesignarPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Designação livre de Suplente: o Venerável Mestre da própria Loja, ou
+    qualquer membro da Diretoria do Conselho (para qualquer Loja da Região),
+    pode escolher qualquer um dos 7 oficiais eletivos da Loja para ocupar a
+    cadeira de Suplente. Substitui o Suplente anterior, se houver — a
+    cadeira não é acumulativa, é sempre 1 Suplente por Loja.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+    _exigir_vm_da_loja_ou_diretoria(user, loja_id)
+
+    if not str(loja_id).isdigit():
+        raise HTTPException(status_code=400, detail="Loja inválida.")
+
+    escolhido = db_lojas.query(ObreiroIntegracao).filter(
+        (ObreiroIntegracao.cim == payload.usuario_id) | (ObreiroIntegracao.cpf == payload.usuario_id)
+    ).first()
+    if not escolhido:
+        raise HTTPException(status_code=404, detail="Oficial não encontrado.")
+
+    mandato_valido = db_lojas.query(Mandato).filter(
+        Mandato.obreiro_id == escolhido.id,
+        Mandato.loja_id == int(loja_id),
+        Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_LOJA_ELEGIVEIS]),
+        (Mandato.data_fim.is_(None)) | (Mandato.data_fim >= date.today())
+    ).first()
+    if not mandato_valido:
+        raise HTTPException(status_code=400, detail="O oficial escolhido não ocupa um dos 7 cargos eletivos ativos desta Loja.")
+
+    db_core.query(SuplenteConselho).filter_by(loja_id=str(loja_id)).delete()
+    novo_suplente = SuplenteConselho(
+        loja_id=str(loja_id),
+        usuario_id=escolhido.cim,
+        nome_suplente=escolhido.nome_completo,
+        email_suplente=escolhido.email,
+    )
+    db_core.add(novo_suplente)
+    db_core.commit()
+
+    logger.info(f"Suplente do Conselho designado: Loja {loja_id} -> {escolhido.nome_completo} ({escolhido.cim}), por {user.usuario_id} (Região {regiao_id})")
+    return {
+        "message": "Suplente designado com sucesso.",
+        "usuario_id": escolhido.cim,
+        "nome_suplente": escolhido.nome_completo,
+        "email_suplente": escolhido.email,
+    }
+
+@router.delete("/{regiao_id}/lojas/{loja_id}/suplente", summary="Remove a designação de Suplente do Conselho de uma Loja")
+def remover_suplente_conselho(
+    regiao_id: str,
+    loja_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Desfaz a designação atual de Suplente da Loja, se houver. Mesma regra de
+    acesso da designação: VM da própria Loja ou Diretoria do Conselho.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+    _exigir_vm_da_loja_ou_diretoria(user, loja_id)
+
+    removido = db_core.query(SuplenteConselho).filter_by(loja_id=str(loja_id)).delete()
+    db_core.commit()
+    if not removido:
+        raise HTTPException(status_code=404, detail="Esta Loja não possui Suplente designado atualmente.")
+    return {"message": "Designação de Suplente removida com sucesso."}
 
 class LojaAddRequest(BaseModel):
     loja_id: str
