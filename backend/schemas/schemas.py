@@ -74,6 +74,15 @@ class DiretoriaMembroResponse(BaseModel):
     cim: Optional[str] = None
     email: Optional[str] = None
     telefone: Optional[str] = None
+    # ALTERAÇÃO (2026-09-14): detecção de assento "órfão" — quando a Loja
+    # que este membro representava trocou de Venerável Mestre (ou ficou sem
+    # VM) depois que ele foi indicado à Diretoria. Ver nota em
+    # models.py::DiretoriaConselho.loja_id.
+    loja_id: Optional[str] = None
+    loja_numero: Optional[str] = None
+    vinculo_desatualizado: bool = False
+    loja_sem_vm: bool = False
+    sugestao_novo_veneravel: Optional["VeneravelElegivelResponse"] = None
 
 class DiretoriaUpdatePayload(BaseModel):
     presidente_id: Optional[str] = None
@@ -81,6 +90,35 @@ class DiretoriaUpdatePayload(BaseModel):
     secretario_id: Optional[str] = None
     inicio_mandato: Optional[date] = None
     termino_mandato: Optional[date] = None
+
+class VeneravelElegivelResponse(BaseModel):
+    """Venerável Mestre em exercício em uma Loja jurisdicionada ao Conselho
+    — usado para popular o seletor de Diretoria (em vez de aceitar
+    qualquer CIM digitado livremente, sem validação) e para sugerir a
+    atualização automática de um assento órfão."""
+    usuario_id: str
+    nome_completo: Optional[str] = None
+    loja_id: str
+    loja_nome: Optional[str] = None
+    loja_numero: Optional[str] = None
+
+class DiretoriaEmergenciaPayload(BaseModel):
+    usuario_id: str  # CIM (ou CPF) de um Venerável Mestre elegível
+
+# ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial de VM — ver
+# regional/rotas.py e claude/decisao-transmissao-cargo-vm.md no Project.
+class TransmissaoEmergencialVmPayload(BaseModel):
+    """Dados do novo Venerável Mestre indicado emergencialmente (posse
+    on-the-fly em lojas_db — mesmo formato de ObreiroCreateOnTheFly, sem o
+    campo loja_id, que já vem da URL)."""
+    cim: str
+    nome_completo: str
+    email: Optional[str] = None
+    cpf: Optional[str] = None
+    telefone: Optional[str] = None
+    data_inicio_mandato: Optional[date] = None
+
+DiretoriaMembroResponse.model_rebuild()
 
 class LojaAgregadaCreate(BaseModel):
     regiao_id: str

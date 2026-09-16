@@ -1,12 +1,14 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
+from datetime import date
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text, or_
 from sqlalchemy.sql import func
 from loguru import logger
-from database import get_db_lojas, get_db_lista
+from database import get_db_lojas
 from models.lojas_models import LojaIntegracao
-from schemas.schemas import LojaCreateOnTheFly
+from schemas.schemas import LojaCreateOnTheFly, ObreiroCreateOnTheFly
 
 router = APIRouter()
 
@@ -26,21 +28,45 @@ router = APIRouter()
 # Loja subordinada à Obediência) — antes "obediencia_id" apontava para o
 # nível superior e "subobediencia_id" para o intermediário. As queries e o
 # cadastro on-the-fly abaixo já usam potencia_id/obediencia_id.
+#
+# REMOÇÃO DA DEPENDÊNCIA DE lista_de_lojas_db (2026-09-16): este arquivo era
+# o ÚNICO consumidor real de lista_de_lojas_db em todo o ecossistema (busca
+# global de Loja abaixo, e o dual-write com compensação em
+# `atualizar_loja_integracao`) — achado confirmado por grep em e-Sigma, Lojas
+# e no restante do CoReVM antes desta mudança. `lista_de_lojas_db` nasceu em
+# 2026-09-11 como "banco de referência de nomenclatura" (separado de
+# `lojas_db` de propósito, ver contexto-implementacao.md seção 1.9), mas
+# depois que as colunas puramente operacionais foram removidas dele (seção
+# 9.8), o que sobrou é essencialmente as mesmas colunas de identidade que
+# `lojas_db.Loja`/`LojaIntegracao` já tem — uma segunda cópia sem nenhum
+# mecanismo de sincronização automática, exatamente a mesma forma do bug
+# encontrado e corrigido em `esigma.organizacoes` nesta mesma sessão (ver
+# claude/decisao-controle-acesso-cadastro.md, seção 13, no Project "Core").
+# Os dois endpoints abaixo passaram a ler/escrever só em `lojas_db` — a
+# mesma fonte que todo o resto deste arquivo (Mandato, ObreiroIntegracao)
+# já usa. `lista_de_lojas_db` continua existindo no Postgres por enquanto
+# (decisão de desligar o banco em si é do usuário, feita separadamente,
+# depois de confirmar estes dois endpoints em produção).
 
 
 @router.get(
     "/busca",
-    summary="Busca Lojas no banco global (lista_de_lojas_db)",
-    description="Busca lojas pelo nome ou número na base unificada de todas as lojas.",
+    summary="Busca Lojas (lojas_db)",
+    description="Busca lojas pelo nome, número ou cidade na base operacional do módulo Lojas.",
 )
-def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = Depends(get_db_lista)):
+def buscar_lojas_global(q: str = Query(..., min_length=3), db_lojas: Session = Depends(get_db_lojas)):
     """
-    Pesquisa as lojas globalmente na tabela 'lojas' do 'lista_de_lojas_db'.
-    Cruza a busca pelo nome, pelo número da loja e pela cidade.
+    Pesquisa as lojas pela tabela 'lojas' de 'lojas_db' (base operacional do
+    módulo Lojas). Cruza a busca pelo nome, pelo número da loja e pela cidade.
+
+    Antes desta correção (2026-09-16), a busca ia primeiro em
+    `lista_de_lojas_db` — uma segunda cópia desatualizada, sem sincronização
+    automática com `lojas_db` — com um fallback para `lojas_db` só se aquela
+    query falhasse. Ver nota no topo do arquivo.
     """
     termo = f"%{q}%"
     try:
-        result = db_lista.execute(
+        result = db_lojas.execute(
             text(
                 """
                 SELECT l.id, l.nome_loja, l.numero_loja, l.cidade, o.sigla
@@ -64,36 +90,8 @@ def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = D
             for row in result
         ]
     except Exception as e:
-        logger.error(f"Erro ao buscar na lista_de_lojas_db: {e}")
-        # Fallback para lojas_db, caso lista_de_lojas_db esteja indisponível.
-        # CORREÇÃO (2026-09-11): o fallback anterior montava a lista mas
-        # nunca retornava (bug — a função terminava sem `return` nesse
-        # caminho). Agora o resultado do fallback é de fato devolvido.
-        try:
-            db_lojas = next(get_db_lojas())
-            lojas = (
-                db_lojas.query(LojaIntegracao)
-                .filter(
-                    (LojaIntegracao.nome_loja.ilike(termo))
-                    | (LojaIntegracao.numero_loja.ilike(termo))
-                    | (LojaIntegracao.cidade.ilike(termo))
-                )
-                .limit(20)
-                .all()
-            )
-            return [
-                {
-                    "id": loja.id,
-                    "nome": loja.nome_loja,
-                    "numero_loja": loja.numero_loja,
-                    "cidade": loja.cidade or "",
-                    "potencia": "",
-                }
-                for loja in lojas
-            ]
-        except Exception as e2:
-            logger.error(f"Erro no fallback para lojas_db: {e2}")
-            return []
+        logger.error(f"Erro ao buscar Lojas em lojas_db: {e}")
+        return []
 
 
 @router.post(
@@ -101,7 +99,7 @@ def buscar_lojas_global(q: str = Query(..., min_length=3), db_lista: Session = D
     summary="Busca multiplas lojas por ID",
     description="Retorna os detalhes de varias lojas baseado em uma lista de IDs.",
 )
-def buscar_lojas_multiplas(ids: list[int], db_lista: Session = Depends(get_db_lista)):
+def buscar_lojas_multiplas(ids: list[int], db_lojas: Session = Depends(get_db_lojas)):
     if not ids:
         return []
 
@@ -115,7 +113,9 @@ def buscar_lojas_multiplas(ids: list[int], db_lista: Session = Depends(get_db_li
         # Funcionava sem risco de injeção só porque filtrava por isinstance(int)
         # antes, mas não é o padrão correto — agora usa bind parameter com
         # ANY(:ids), como o SQLAlchemy espera.
-        result = db_lista.execute(
+        # MIGRAÇÃO (2026-09-16): lia de lista_de_lojas_db, agora lê de lojas_db
+        # — ver nota no topo do arquivo.
+        result = db_lojas.execute(
             text(
                 """
                 SELECT l.id, l.nome_loja, l.numero_loja, l.cidade, o.sigla, l.rito
@@ -233,68 +233,34 @@ class LojaUpdatePayload(BaseModel):
 @router.put(
     "/{loja_id}",
     summary="Atualiza dados cadastrais de uma Loja",
-    description="Corrige dados da loja tanto na lista_de_lojas_db quanto no lojas_db.",
+    description="Corrige dados da loja em lojas_db.",
 )
 def atualizar_loja_integracao(
     loja_id: int,
     loja_in: LojaUpdatePayload,
-    db_lista: Session = Depends(get_db_lista),
     db_lojas: Session = Depends(get_db_lojas),
 ):
     """
-    Atualiza a Loja nos dois bancos. Escreve primeiro em lista_de_lojas_db
-    (fonte de verdade de nomenclatura) e só então em lojas_db (operacional).
+    Atualiza a Loja em lojas_db (base operacional do módulo Lojas).
 
-    CORREÇÃO (2026-09-11): antes desta correção, se a segunda escrita
-    (lojas_db) falhasse, o erro era só logado como warning e a resposta
-    ainda dizia "success" — deixando os dois bancos dessincronizados sem
-    aviso nenhum para quem chamou a API. Agora, se a escrita em lojas_db
-    falhar, o CoReVM tenta desfazer (compensar) a escrita já feita em
-    lista_de_lojas_db e retorna 502 deixando claro que a atualização NÃO
-    foi aplicada de forma consistente. Não é uma transação distribuída de
-    verdade (os dois bancos são serviços diferentes) — é um best-effort de
-    compensação; ainda existe uma janela pequena de inconsistência possível
-    se o próprio rollback falhar, o que é logado como ERROR para auditoria.
+    SIMPLIFICAÇÃO (2026-09-16): antes desta correção, esta rota fazia
+    dual-write em dois bancos (`lista_de_lojas_db` primeiro, depois
+    `lojas_db`), com uma lógica de compensação/rollback manual para o caso
+    da segunda escrita falhar depois da primeira já ter sido aplicada — ver
+    nota no topo do arquivo para o porquê de `lista_de_lojas_db` ter sido
+    removido deste fluxo. Com um único banco de destino, não há mais
+    necessidade de transação distribuída nem de compensação: ou a escrita
+    em `lojas_db` funciona, ou nada é alterado (dentro da mesma sessão/
+    transação).
     """
     logger.info(f"Atualizando cadastro da Loja {loja_id}: {loja_in}")
 
-    updates_lista = []
-    params_lista = {"id": loja_id}
-    valores_antigos_lista = {}
-
-    if any([loja_in.nome, loja_in.numero, loja_in.rito, loja_in.cidade]):
-        # Guarda os valores atuais em lista_de_lojas_db para permitir
-        # compensação (rollback manual) se a escrita em lojas_db falhar.
-        atual = db_lista.execute(
-            text("SELECT nome_loja, numero_loja, rito, cidade FROM lojas WHERE id = :id"),
-            {"id": loja_id},
-        ).fetchone()
-        if atual is None:
-            raise HTTPException(status_code=404, detail="Loja não encontrada em lista_de_lojas_db.")
-        valores_antigos_lista = {
-            "nome_loja": atual[0],
-            "numero_loja": atual[1],
-            "rito": atual[2],
-            "cidade": atual[3],
-        }
-
-    if loja_in.nome is not None:
-        updates_lista.append("nome_loja = :nome")
-        params_lista["nome"] = loja_in.nome
-    if loja_in.numero is not None:
-        updates_lista.append("numero_loja = :numero")
-        params_lista["numero"] = loja_in.numero
-    if loja_in.rito is not None:
-        updates_lista.append("rito = :rito")
-        params_lista["rito"] = loja_in.rito
-    if loja_in.cidade is not None:
-        updates_lista.append("cidade = :cidade")
-        params_lista["cidade"] = loja_in.cidade
-
-    if updates_lista:
-        sql = f"UPDATE lojas SET {', '.join(updates_lista)} WHERE id = :id"
-        db_lista.execute(text(sql), params_lista)
-        db_lista.commit()
+    existente = db_lojas.execute(
+        text("SELECT id FROM lojas WHERE id = :id"),
+        {"id": loja_id},
+    ).fetchone()
+    if existente is None:
+        raise HTTPException(status_code=404, detail="Loja não encontrada em lojas_db.")
 
     updates_lojas = []
     params_lojas = {"id": loja_id}
@@ -317,31 +283,11 @@ def atualizar_loja_integracao(
             db_lojas.execute(text(sql_lojas), params_lojas)
             db_lojas.commit()
         except Exception as e:
-            logger.error(f"Erro ao sincronizar lojas_db para Loja {loja_id}: {e}")
-            # Compensação: tenta desfazer a escrita já feita em lista_de_lojas_db.
-            if updates_lista and valores_antigos_lista:
-                try:
-                    db_lista.execute(
-                        text(
-                            "UPDATE lojas SET nome_loja = :nome_loja, numero_loja = :numero_loja, "
-                            "rito = :rito, cidade = :cidade WHERE id = :id"
-                        ),
-                        {**valores_antigos_lista, "id": loja_id},
-                    )
-                    db_lista.commit()
-                    logger.warning(
-                        f"Rollback de compensação aplicado em lista_de_lojas_db para Loja {loja_id} "
-                        f"após falha em lojas_db."
-                    )
-                except Exception as e_rollback:
-                    logger.error(
-                        f"FALHA CRÍTICA: não foi possível compensar lista_de_lojas_db para Loja "
-                        f"{loja_id} após falha em lojas_db. Bancos podem estar dessincronizados. "
-                        f"Erro original: {e}. Erro no rollback: {e_rollback}"
-                    )
+            db_lojas.rollback()
+            logger.error(f"Erro ao atualizar Loja {loja_id} em lojas_db: {e}")
             raise HTTPException(
                 status_code=502,
-                detail="Não foi possível sincronizar a atualização com o módulo Lojas. Nenhuma alteração foi aplicada.",
+                detail="Não foi possível atualizar a Loja no módulo Lojas. Nenhuma alteração foi aplicada.",
             )
 
     return {"status": "success", "message": "Loja atualizada com sucesso!", "loja_id": loja_id}
@@ -488,3 +434,149 @@ def historico_mandatos_vm(loja_id: int, db_lojas: Session = Depends(get_db_lojas
         }
         for r in resultados
     ]
+
+
+# ALTERAÇÃO (2026-09-14): posse de cargo em Loja, on-the-fly (localiza ou
+# cria o Obreiro pelo CIM) — hoje usada só para Venerável Mestre.
+#
+# CORREÇÃO (2026-09-14, bug descoberto durante a implementação da
+# transmissão de cargo emergencial, ver regional/rotas.py): esta rota
+# (`POST /integracao/obreiros/`) já era chamada pelo frontend desde a
+# criação da tela de Gestão de VM (`ModalGestaoVM.tsx::handleEmpossarNovoVM`),
+# mas nunca existia de fato no backend — toda tentativa de empossar um novo
+# Venerável Mestre pela UI normal (fora do contexto de emergência) sempre
+# falhava com 404 "Not Found". O schema `ObreiroCreateOnTheFly` já existia
+# em `schemas.py`, mas nenhuma rota o utilizava. A lógica de posse foi
+# extraída para `_empossar_obreiro_e_cargo`, reaproveitada também pela
+# transmissão de cargo emergencial (mesma operação de negócio, gatilhos e
+# autorização diferentes).
+def _empossar_obreiro_e_cargo(
+    db: Session,
+    cim: str,
+    nome_completo: str,
+    email: Optional[str],
+    cpf: Optional[str],
+    loja_id: int,
+    telefone: Optional[str],
+    cargo_atual: Optional[str],
+    data_inicio_mandato: Optional[date],
+) -> dict:
+    """
+    Localiza (ou cria) o Obreiro pelo CIM, garante o vínculo ativo dele com
+    a Loja e, quando `cargo_atual == "Venerável Mestre"`, encerra o mandato
+    de VM ativo da Loja (se houver) — marcando o titular anterior com o grau
+    tradicional "Mestre Instalado" (`GrauEnum.MESTRE_INSTALADO`, ver
+    `Lojas/backend/models/models.py`) e a data de instalação — e abre o
+    novo mandato. "Mestre Instalado" é gravado via SQL bruto (`text(...)`)
+    em vez de mapear a coluna no modelo espelho `ObreiroIntegracao`, para
+    não precisar reproduzir o tipo ENUM do Postgres (`grau_enum`) no lado do
+    CoReVM só para esta única gravação pontual.
+    """
+    from models.lojas_models import Mandato, ObreiroIntegracao, ObreiroLojaAssociacao
+
+    loja = db.query(LojaIntegracao).filter(LojaIntegracao.id == loja_id).first()
+    if not loja:
+        raise HTTPException(status_code=404, detail="Loja não encontrada.")
+
+    obreiro = db.query(ObreiroIntegracao).filter(ObreiroIntegracao.cim == cim).first()
+    if not obreiro:
+        obreiro = ObreiroIntegracao(
+            cim=cim,
+            nome_completo=nome_completo,
+            email=email,
+            cpf=cpf,
+            telefone=telefone,
+            status="Ativo",
+        )
+        db.add(obreiro)
+        db.flush()
+    else:
+        if nome_completo:
+            obreiro.nome_completo = nome_completo
+        if email:
+            obreiro.email = email
+        if cpf:
+            obreiro.cpf = cpf
+        if telefone:
+            obreiro.telefone = telefone
+
+    associacao = db.query(ObreiroLojaAssociacao).filter(
+        ObreiroLojaAssociacao.obreiro_id == obreiro.id,
+        ObreiroLojaAssociacao.loja_id == loja_id,
+    ).first()
+    if not associacao:
+        db.add(ObreiroLojaAssociacao(
+            obreiro_id=obreiro.id,
+            loja_id=loja_id,
+            status="Ativo",
+            data_inicio=data_inicio_mandato or date.today(),
+        ))
+
+    resultado = {
+        "status": "success",
+        "obreiro_id": obreiro.id,
+        "cim": obreiro.cim,
+        "nome_completo": obreiro.nome_completo,
+    }
+
+    if cargo_atual == "Venerável Mestre":
+        mandato_anterior = db.query(Mandato).filter(
+            Mandato.loja_id == loja_id, Mandato.cargo_id == 1, Mandato.data_fim.is_(None)
+        ).first()
+        if mandato_anterior:
+            mandato_anterior.data_fim = date.today()
+            db.flush()
+            if mandato_anterior.obreiro_id != obreiro.id:
+                obreiro_anterior = db.query(ObreiroIntegracao).filter(
+                    ObreiroIntegracao.id == mandato_anterior.obreiro_id
+                ).first()
+                if obreiro_anterior:
+                    db.execute(
+                        text("UPDATE obreiros SET grau = 'Mestre Instalado', data_instalacao = :hoje WHERE id = :id"),
+                        {"hoje": date.today(), "id": obreiro_anterior.id},
+                    )
+                    resultado["mestre_instalado_anterior"] = {
+                        "obreiro_id": obreiro_anterior.id,
+                        "cim": obreiro_anterior.cim,
+                        "nome_completo": obreiro_anterior.nome_completo,
+                    }
+
+        db.add(Mandato(
+            obreiro_id=obreiro.id,
+            cargo_id=1,
+            loja_id=loja_id,
+            data_inicio=data_inicio_mandato or date.today(),
+            data_fim=None,
+        ))
+        resultado["message"] = f"Novo Venerável Mestre (Ir. {obreiro.nome_completo}) empossado com sucesso."
+    else:
+        resultado["message"] = f"Obreiro {obreiro.nome_completo} cadastrado/atualizado com sucesso."
+
+    db.commit()
+    logger.info(f"Posse/atualização de obreiro CIM={cim} na Loja {loja_id} (cargo_atual={cargo_atual})")
+    return resultado
+
+
+@router.post(
+    "/obreiros/",
+    response_model=dict,
+    summary="Cadastra/Atualiza Obreiro On-the-Fly e Empossa Cargo (ex.: Venerável Mestre)",
+    description=(
+        "Localiza o Obreiro pelo CIM (cria se não existir) e, quando "
+        "cargo_atual='Venerável Mestre', encerra o mandato de VM ativo da "
+        "Loja (se houver) e abre um novo. Usada pela tela de Gestão de VM "
+        "(posse normal, não-emergencial)."
+    ),
+)
+def cadastrar_obreiro_integracao(obreiro_in: ObreiroCreateOnTheFly, db: Session = Depends(get_db_lojas)):
+    return _empossar_obreiro_e_cargo(
+        db,
+        cim=obreiro_in.cim,
+        nome_completo=obreiro_in.nome_completo,
+        email=obreiro_in.email,
+        cpf=obreiro_in.cpf,
+        loja_id=obreiro_in.loja_id,
+        telefone=obreiro_in.telefone,
+        cargo_atual=obreiro_in.cargo_atual,
+        data_inicio_mandato=obreiro_in.data_inicio_mandato,
+    )

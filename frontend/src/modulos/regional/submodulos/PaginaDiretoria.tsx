@@ -1,13 +1,38 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  Award, ShieldCheck, Loader2, Calendar, 
-  Edit3, ArrowLeft, CheckCircle2, UserCheck, Shield
+import {
+  Award, ShieldCheck, Loader2, Calendar,
+  Edit3, ArrowLeft, CheckCircle2, UserCheck, Shield, AlertTriangle, Zap
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// CORREÇÃO (2026-09-14, bug reportado em teste): esta página nunca tinha
+// sido migrada para o login real contra o e-Sigma (fix de segurança de
+// 2026-09-11, ver PaginaLojas.tsx e PainelConselho.tsx) — ainda usava
+// `axios` puro com um seletor "Simular Acesso" enviando um header
+// `X-User-Id` não autenticado. Como toda rota de `/regional` agora exige
+// `Authorization: Bearer` real (via `get_current_regional_user` /
+// `obter_usuario_esigma`, ambos com `Header(...)` obrigatório), a ausência
+// desse header fazia o FastAPI devolver 422 (erro de validação, não 401/403)
+// em toda chamada — e o `detail` desse 422 é uma LISTA de objetos de erro,
+// não uma string, o que quebrava a página ao tentar renderizá-lo direto
+// como filho de um elemento React ("Objects are not valid as a React
+// child"). Corrigido: usa `clienteHttp` (injeta o token real do login) e
+// normaliza qualquer formato de erro do backend antes de exibir.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((d: any) => (typeof d === 'string' ? d : d?.msg))
+      .filter(Boolean);
+    if (mensagens.length > 0) return mensagens.join('; ');
+  }
+  return mensagemPadrao;
+}
 
 export default function PaginaDiretoria() {
   const { id } = useParams();
@@ -15,13 +40,13 @@ export default function PaginaDiretoria() {
   const [diretoria, setDiretoria] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
-  
-  // Controle de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+
+  // Contexto de Usuário e RBAC — vem de /regional/{id}/me (Authorization
+  // real), preenchido depois do fetchData. Nada de simulação por aqui.
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: null,
+    role: null,
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -37,26 +62,42 @@ export default function PaginaDiretoria() {
     termino_mandato: ''
   });
 
+  // ALTERAÇÃO (2026-09-14, bug reportado em teste): antes o formulário
+  // aceitava qualquer CIM digitado livremente, sem preview nem validação —
+  // foi possível designar um membro aleatório, inclusive um CIM inexistente.
+  // Agora os 3 campos são seletores populados só com os Veneráveis Mestres
+  // em exercício das Lojas jurisdicionadas ao Conselho
+  // (GET /veneraveis-elegiveis), a mesma validação que o backend também
+  // aplica (defesa em profundidade).
+  const [veneraveisElegiveis, setVeneraveisElegiveis] = useState<any[]>([]);
+
+  // Assento "órfão": quando a Loja que um membro da Diretoria representava
+  // trocou de Venerável Mestre (ou ficou sem VM) e a Diretoria não foi
+  // atualizada. Estado do seletor emergencial (por cargo).
+  const [emergenciaCargoAberto, setEmergenciaCargoAberto] = useState<string | null>(null);
+  const [emergenciaSelecionado, setEmergenciaSelecionado] = useState('');
+  const [salvandoEmergencia, setSalvandoEmergencia] = useState(false);
+
   // Carregar dados
   const fetchData = async () => {
     setLoading(true);
     try {
-      const headers = { 'X-User-Id': activeUserId };
-
-      const [userRes, resDashboard, resDiretoria] = await Promise.all([
-        axios.get(`${API_URL}/regional/${id}/me`, { headers }),
-        axios.get(`${API_URL}/regional/${id}/dashboard`, { headers }),
-        axios.get(`${API_URL}/regional/${id}/diretoria`, { headers })
+      const [userRes, resDashboard, resDiretoria, resElegiveis] = await Promise.all([
+        clienteHttp.get(`${API_URL}/regional/${id}/me`),
+        clienteHttp.get(`${API_URL}/regional/${id}/dashboard`),
+        clienteHttp.get(`${API_URL}/regional/${id}/diretoria`),
+        clienteHttp.get(`${API_URL}/regional/${id}/veneraveis-elegiveis`)
       ]);
 
       setUserContext(userRes.data);
       setConselho(resDashboard.data);
       setDiretoria(resDiretoria.data || []);
+      setVeneraveisElegiveis(resElegiveis.data || []);
 
       const pres = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'presidente');
       const vice = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
       const sec = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'secretario');
-      
+
       setDiretoriaForm({
         presidente_id: pres?.usuario_id || '',
         vice_presidente_id: vice?.usuario_id || '',
@@ -66,7 +107,7 @@ export default function PaginaDiretoria() {
       });
 
     } catch (err: any) {
-      setErro(err.response?.data?.detail || "Erro ao carregar diretoria.");
+      setErro(extrairMensagemErro(err, "Erro ao carregar diretoria."));
     } finally {
       setLoading(false);
     }
@@ -74,29 +115,129 @@ export default function PaginaDiretoria() {
 
   useEffect(() => {
     if (id) fetchData();
-  }, [id, activeUserId, reloadKey]);
+  }, [id, reloadKey]);
 
   // Salvar alterações na Diretoria
   const handleSalvarDiretoria = async (e: React.FormEvent) => {
     e.preventDefault();
     setSalvandoDiretoria(true);
     try {
-      await axios.put(`${API_URL}/regional/${id}/diretoria`, diretoriaForm, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      await clienteHttp.put(`${API_URL}/regional/${id}/diretoria`, diretoriaForm);
       alert('Composição da Diretoria e Mandatos atualizados com sucesso!');
       setShowDiretoriaModal(false);
       setReloadKey(k => k + 1);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao atualizar diretoria');
+      alert(extrairMensagemErro(err, 'Erro ao atualizar diretoria'));
     } finally {
       setSalvandoDiretoria(false);
+    }
+  };
+
+  // Substitui emergencialmente um único assento (sem afetar os outros
+  // dois), usado quando o card mostra o aviso de assento órfão — tanto
+  // para aceitar a sugestão automática (mesmo botão de aviso) quanto para
+  // apontar manualmente outro Venerável Mestre elegível.
+  const handleAtualizarEmergencia = async (cargoValor: string, usuarioId: string) => {
+    if (!usuarioId) return;
+    setSalvandoEmergencia(true);
+    try {
+      await clienteHttp.put(`${API_URL}/regional/${id}/diretoria/${cargoValor}/emergencia`, { usuario_id: usuarioId });
+      setEmergenciaCargoAberto(null);
+      setEmergenciaSelecionado('');
+      setReloadKey(k => k + 1);
+    } catch (err: any) {
+      alert(extrairMensagemErro(err, 'Erro ao atualizar o assento emergencialmente'));
+    } finally {
+      setSalvandoEmergencia(false);
     }
   };
 
   const presidente = diretoria.find(d => d.cargo.toLowerCase() === 'presidente');
   const vicePresidente = diretoria.find(d => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
   const secretario = diretoria.find(d => d.cargo.toLowerCase() === 'secretario');
+
+  // Aviso de assento órfão exibido no card do respectivo cargo — cobre os
+  // dois casos: a Loja já tem um novo VM (sugestão pronta, um clique
+  // resolve) ou a Loja ficou sem VM (é preciso escolher manualmente
+  // qualquer Venerável elegível, de forma emergencial, para a Loja não
+  // ficar sem representação).
+  const renderAvisoOrfao = (membro: any, cargoValor: string) => {
+    if (!membro || (!membro.vinculo_desatualizado && !membro.loja_sem_vm)) return null;
+    const aberto = emergenciaCargoAberto === cargoValor;
+    return (
+      <div className="mt-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[11px] space-y-2">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          {membro.vinculo_desatualizado && membro.sugestao_novo_veneravel ? (
+            <span>
+              A Loja {membro.loja_numero ? `nº ${membro.loja_numero}` : ''} já possui novo Venerável Mestre
+              (<strong>{membro.sugestao_novo_veneravel.nome_completo || membro.sugestao_novo_veneravel.usuario_id}</strong>),
+              mas a Diretoria ainda não foi atualizada.
+            </span>
+          ) : (
+            <span>
+              A Loja {membro.loja_numero ? `nº ${membro.loja_numero}` : ''} que este titular representava está
+              sem Venerável Mestre empossado. Escolha emergencialmente outro Venerável elegível para não deixar
+              este assento sem representação.
+            </span>
+          )}
+        </div>
+
+        {membro.vinculo_desatualizado && membro.sugestao_novo_veneravel && !aberto && (
+          <button
+            type="button"
+            disabled={salvandoEmergencia}
+            onClick={() => handleAtualizarEmergencia(cargoValor, membro.sugestao_novo_veneravel.usuario_id)}
+            className="inline-flex items-center gap-1.5 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-200 font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Zap className="w-3.5 h-3.5" /> Atualizar para o novo VM
+          </button>
+        )}
+
+        {!aberto ? (
+          <button
+            type="button"
+            onClick={() => { setEmergenciaCargoAberto(cargoValor); setEmergenciaSelecionado(''); }}
+            className="text-orange-300 underline underline-offset-2 hover:text-orange-100 cursor-pointer"
+          >
+            Escolher outro Venerável manualmente
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2 pt-1">
+            <select
+              value={emergenciaSelecionado}
+              onChange={(e) => setEmergenciaSelecionado(e.target.value)}
+              className="w-full bg-[#080808] border border-orange-500/40 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+            >
+              <option value="">Selecione um Venerável Mestre elegível...</option>
+              {veneraveisElegiveis.map((v) => (
+                <option key={v.usuario_id} value={v.usuario_id}>
+                  {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setEmergenciaCargoAberto(null)}
+                className="px-3 py-1.5 text-gray-400 hover:text-white cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!emergenciaSelecionado || salvandoEmergencia}
+                onClick={() => handleAtualizarEmergencia(cargoValor, emergenciaSelecionado)}
+                className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-3 py-1.5 rounded-lg cursor-pointer disabled:opacity-50"
+              >
+                {salvandoEmergencia ? 'Gravando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -143,22 +284,6 @@ export default function PaginaDiretoria() {
                 {conselho?.nome || 'Conselho Regional'} — Liderança executiva, titulares e vigência do mandato
               </p>
             </div>
-          </div>
-
-          {/* Teste Rápido de RBAC */}
-          <div className="flex items-center gap-2 bg-[#181818] border border-[#333] px-3 py-1.5 rounded-xl text-xs">
-            <span className="text-gray-400 font-medium">Simular Acesso:</span>
-            <select 
-              value={activeUserId} 
-              onChange={(e) => setActiveUserId(e.target.value)}
-              className="bg-[#0a0a0a] text-[#facc15] border border-[#444] rounded-lg px-2.5 py-1 font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
-              <option value="272875">Secretário (André - CIM 272875)</option>
-              <option value="superadmin">SuperAdmin</option>
-              <option value="VM_1">VM - Loja 1</option>
-              <option value="VM_135">VM - Loja 135</option>
-            </select>
           </div>
         </div>
       </div>
@@ -233,11 +358,19 @@ export default function PaginaDiretoria() {
                 </div>
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Status do Titular:</span>
-                  <span className="text-green-400 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Titular Ativo
-                  </span>
+                  {presidente?.vinculo_desatualizado || presidente?.loja_sem_vm ? (
+                    <span className="text-orange-400 font-semibold flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Assento a Atualizar
+                    </span>
+                  ) : (
+                    <span className="text-green-400 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Titular Ativo
+                    </span>
+                  )}
                 </div>
               </div>
+
+              {userContext.is_diretoria && renderAvisoOrfao(presidente, 'presidente')}
             </div>
 
             <div className="mt-6 pt-3 border-t border-[#222] text-[11px] text-gray-500">
@@ -278,11 +411,19 @@ export default function PaginaDiretoria() {
                 </div>
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Status do Titular:</span>
-                  <span className="text-green-400 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Titular Ativo
-                  </span>
+                  {vicePresidente?.vinculo_desatualizado || vicePresidente?.loja_sem_vm ? (
+                    <span className="text-orange-400 font-semibold flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Assento a Atualizar
+                    </span>
+                  ) : (
+                    <span className="text-green-400 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Titular Ativo
+                    </span>
+                  )}
                 </div>
               </div>
+
+              {userContext.is_diretoria && renderAvisoOrfao(vicePresidente, 'vice-presidente')}
             </div>
 
             <div className="mt-6 pt-3 border-t border-[#222] text-[11px] text-gray-500">
@@ -323,11 +464,19 @@ export default function PaginaDiretoria() {
                 </div>
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Status do Titular:</span>
-                  <span className="text-green-400 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Titular Ativo
-                  </span>
+                  {secretario?.vinculo_desatualizado || secretario?.loja_sem_vm ? (
+                    <span className="text-orange-400 font-semibold flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Assento a Atualizar
+                    </span>
+                  ) : (
+                    <span className="text-green-400 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Titular Ativo
+                    </span>
+                  )}
                 </div>
               </div>
+
+              {userContext.is_diretoria && renderAvisoOrfao(secretario, 'secretario')}
             </div>
 
             <div className="mt-6 pt-3 border-t border-[#222] text-[11px] text-gray-500">
@@ -373,48 +522,71 @@ export default function PaginaDiretoria() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Gerenciar Mesa Diretora</h2>
-                <p className="text-xs text-gray-400">Defina os obreiros titulares por CIM e o período de vigência.</p>
+                <p className="text-xs text-gray-400">Escolha os Veneráveis Mestres titulares e o período de vigência.</p>
               </div>
             </div>
 
+            {/* CORREÇÃO (2026-09-14, bug reportado em teste): os 3 campos
+                eram <input type="text"> de CIM livre, sem nenhuma validação
+                ou prévia de quem seria designado — permitia inclusive um CIM
+                inexistente. Agora são seletores populados só com os
+                Veneráveis Mestres em exercício das Lojas jurisdicionadas
+                (GET /veneraveis-elegiveis), com o nome do titular visível
+                antes de salvar. O backend valida de novo (defesa em
+                profundidade). */}
             <form onSubmit={handleSalvarDiretoria} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
-                  Presidente do Conselho (CIM)
+                  Presidente do Conselho
                 </label>
-                <input 
-                  type="text" 
+                <select
                   value={diretoriaForm.presidente_id}
                   onChange={(e) => setDiretoriaForm({...diretoriaForm, presidente_id: e.target.value})}
-                  placeholder="Informe o CIM do Presidente eleito..."
                   className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
-                />
+                >
+                  <option value="">Selecione o Venerável Mestre...</option>
+                  {veneraveisElegiveis.map((v) => (
+                    <option key={v.usuario_id} value={v.usuario_id}>
+                      {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
-                  Vice-Presidente (CIM)
+                  Vice-Presidente
                 </label>
-                <input 
-                  type="text" 
+                <select
                   value={diretoriaForm.vice_presidente_id}
                   onChange={(e) => setDiretoriaForm({...diretoriaForm, vice_presidente_id: e.target.value})}
-                  placeholder="Informe o CIM do Vice-Presidente..."
                   className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
-                />
+                >
+                  <option value="">Selecione o Venerável Mestre...</option>
+                  {veneraveisElegiveis.map((v) => (
+                    <option key={v.usuario_id} value={v.usuario_id}>
+                      {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1">
-                  Secretário do Conselho (CIM)
+                  Secretário do Conselho
                 </label>
-                <input 
-                  type="text" 
+                <select
                   value={diretoriaForm.secretario_id}
                   onChange={(e) => setDiretoriaForm({...diretoriaForm, secretario_id: e.target.value})}
-                  placeholder="Informe o CIM do Secretário..."
                   className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-purple-400 focus:outline-none"
-                />
+                >
+                  <option value="">Selecione o Venerável Mestre...</option>
+                  {veneraveisElegiveis.map((v) => (
+                    <option key={v.usuario_id} value={v.usuario_id}>
+                      {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2">

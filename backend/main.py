@@ -6,6 +6,7 @@ from api.v1.integracao.rotas import router as integracao_router
 from api.v1.regional.rotas import router as regional_router
 from api.v1.email.rotas import router as email_router
 from api.v1.superadmin.rotas import router as superadmin_router
+from core.tarefas_agendadas import iniciar_agendador
 
 app = FastAPI(
     title="CoReVM API",
@@ -26,6 +27,14 @@ app.include_router(integracao_router, prefix="/api/v1/integracao", tags=["Integr
 app.include_router(regional_router, prefix="/api/v1/regional", tags=["Gestão Regional"])
 app.include_router(email_router, prefix="/api/v1/email", tags=["Email e Notificações"])
 app.include_router(superadmin_router, prefix="/api/v1/superadmin", tags=["SuperAdmin"])
+
+@app.on_event("startup")
+def iniciar_tarefas_agendadas():
+    # ALTERAÇÃO (2026-09-12): arquivamento automático de Avisos/Notificações
+    # vencidos (ver core/tarefas_agendadas.py). Roda em processo, uma vez
+    # por dia — nada acontece se o backend cair entre execuções, só perde a
+    # "pontualidade" do arquivamento daquele dia, sem risco de duplicar.
+    iniciar_agendador()
 
 @app.get("/")
 def read_root():

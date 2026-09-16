@@ -6,7 +6,7 @@ import { useParams, Link } from 'react-router-dom';
 import {
   Building2, ShieldCheck, Loader2, Award,
   Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft,
-  Users, UserCog, X
+  Users, UserCog, X, Zap
 } from 'lucide-react';
 import BuscadorLoja from '../../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../../compartilhado/componentes/ModalCadastroObreiro';
@@ -70,7 +70,8 @@ export default function PaginaLojas() {
 
   // ALTERAÇÃO (2026-09-12): "Designação Livre de Suplente" — o VM da própria
   // Loja (ou a Diretoria do Conselho, para qualquer Loja) escolhe livremente
-  // qualquer um dos 7 oficiais eletivos da Loja para ocupar a cadeira de
+  // qualquer um dos 6 oficiais eletivos da Loja (VM excluído, ver correção
+  // 2026-09-14 em CARGOS_SUPLENTE_ELEGIVEIS) para ocupar a cadeira de
   // Suplente do Conselho. Usa as novas rotas GET /lojas/{id}/oficiais e
   // PUT|DELETE /lojas/{id}/suplente (backend, seção 9.13 do histórico).
   const [designarSuplenteModal, setDesignarSuplenteModal] = useState<any>(null);
@@ -78,6 +79,17 @@ export default function PaginaLojas() {
   const [carregandoOficiais, setCarregandoOficiais] = useState(false);
   const [suplenteEscolhido, setSuplenteEscolhido] = useState('');
   const [salvandoSuplente, setSalvandoSuplente] = useState(false);
+
+  // ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial de VM — quando
+  // uma Loja fica órfã (sem VM) e não regulariza pelo módulo Lojas. Ver
+  // regional/rotas.py (conceder/executar) e
+  // claude/decisao-transmissao-cargo-vm.md no Project.
+  const [concedendoTransmissao, setConcedendoTransmissao] = useState<string | null>(null); // loja_id em andamento
+  const [transmissaoModal, setTransmissaoModal] = useState<any>(null); // loja alvo, quando o form está aberto
+  const [transmissaoForm, setTransmissaoForm] = useState({
+    cim: '', nome_completo: '', email: '', cpf: '', telefone: '', data_inicio_mandato: new Date().toISOString().split('T')[0]
+  });
+  const [salvandoTransmissao, setSalvandoTransmissao] = useState(false);
 
   // Form Edição de Loja
   const [editLojaForm, setEditLojaForm] = useState({
@@ -118,13 +130,25 @@ export default function PaginaLojas() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [userRes, resDashboard] = await Promise.all([
+      const [userRes, resDashboard, resLojas] = await Promise.all([
         clienteHttp.get(`${API_URL}/regional/${id}/me`),
-        clienteHttp.get(`${API_URL}/regional/${id}/dashboard`)
+        clienteHttp.get(`${API_URL}/regional/${id}/dashboard`),
+        // CORREÇÃO (2026-09-14, bug reportado em teste): a designação de
+        // Suplente funcionava no backend, mas a tabela nunca mostrava o
+        // nome — porque esta tela nunca chamava a única rota que retorna
+        // `suplente_nome`/`suplente_usuario_id` (GET /regional/{id}/lojas,
+        // já existente, criada junto com a feature). O `/dashboard` usado
+        // aqui devolve só o vínculo bruto (LojaAgregadaResponse), sem
+        // esses campos.
+        clienteHttp.get(`${API_URL}/regional/${id}/lojas`)
       ]);
 
       setUserContext(userRes.data);
       const data = resDashboard.data;
+      const suplentesPorLoja: Record<string, any> = {};
+      (resLojas.data?.lojas || []).forEach((l: any) => {
+        suplentesPorLoja[String(l.id)] = l;
+      });
 
       if (data.lojas && data.lojas.length > 0) {
         const ids = data.lojas.map((l: any) => parseInt(l.loja_id)).filter((n: number) => !isNaN(n));
@@ -135,15 +159,34 @@ export default function PaginaLojas() {
           ]);
           data.lojas = data.lojas.map((l: any) => {
             const det = detailsRes.data.find((d: any) => String(d.id) === String(l.loja_id));
-            const hasVm = vmStatusRes.data[l.loja_id];
-            return { 
-              ...l, 
-              nome: det?.nome, 
-              numero: det?.numero, 
-              cidade: det?.cidade, 
-              potencia: det?.potencia, 
-              rito: det?.rito, 
-              hasVm 
+            const suplenteInfo = suplentesPorLoja[String(l.loja_id)];
+            // CORREÇÃO (2026-09-14, bug reportado em teste): POST
+            // /integracao/lojas/status_vm já retorna o NOME do Venerável Mestre
+            // ativo (ou null), não um booleano — mas a página nunca preenchia
+            // `veneravel_nome`, então a tag da tabela sempre caía no texto
+            // genérico "VM Cadastrado". Também faltava o campo `id` (numérico)
+            // esperado pelo ModalGestaoVM — sem ele, o modal chamava
+            // GET /integracao/lojas/undefined/vm e sempre mostrava "Nenhum
+            // Venerável Mestre Ativo", mesmo quando a tabela indicava VM
+            // cadastrado.
+            const nomeVmAtivo = vmStatusRes.data[l.loja_id];
+            return {
+              ...l,
+              id: parseInt(l.loja_id),
+              nome: det?.nome,
+              numero: det?.numero,
+              cidade: det?.cidade,
+              potencia: det?.potencia,
+              rito: det?.rito,
+              veneravel_nome: nomeVmAtivo || null,
+              hasVm: nomeVmAtivo,
+              suplente_nome: suplenteInfo?.suplente_nome || null,
+              suplente_usuario_id: suplenteInfo?.suplente_usuario_id || null,
+              // ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial —
+              // true quando o Suplente desta Loja é um "Mestre Instalado
+              // imediato" com o poder de uso único de indicar o próximo VM
+              // ainda não exercido.
+              suplente_pode_indicar_veneravel: !!suplenteInfo?.suplente_pode_indicar_veneravel
             };
           });
           // Ordena por Potência e depois por Número da Loja
@@ -186,6 +229,58 @@ export default function PaginaLojas() {
       setReloadKey(k => k + 1);
     } catch (e: any) {
       alert(extrairMensagemErro(e, 'Erro ao remover loja'));
+    }
+  };
+
+  // ALTERAÇÃO (2026-09-14): passo 1 da transmissão de cargo emergencial —
+  // Diretoria concede ao último VM da Loja ("Mestre Instalado imediato",
+  // identificado automaticamente pelo backend) o poder de uso único de
+  // indicar o próximo VM. Só se aplica a Lojas órfãs (sem VM em exercício).
+  const concederTransmissaoEmergencial = async (loja: any) => {
+    if (!confirm(
+      `Conceder ao último Venerável Mestre desta Loja (identificado automaticamente pelo sistema) o poder de indicar, ` +
+      `em caráter excepcional e de uso único, o próximo Venerável Mestre?`
+    )) return;
+    setConcedendoTransmissao(loja.loja_id);
+    try {
+      const res = await clienteHttp.post(`${API_URL}/regional/${id}/lojas/${loja.loja_id}/transmissao-emergencial/conceder`);
+      alert(res.data?.message || 'Poder concedido com sucesso.');
+      setReloadKey(k => k + 1);
+    } catch (e: any) {
+      alert(extrairMensagemErro(e, 'Erro ao conceder o poder de transmissão emergencial'));
+    } finally {
+      setConcedendoTransmissao(null);
+    }
+  };
+
+  // Passo 2 (execução): abre o formulário de indicação do novo VM — usado
+  // tanto pela Diretoria (a qualquer momento, para uma Loja órfã) quanto
+  // pelo próprio Suplente-regente (Mestre Instalado imediato), enquanto o
+  // poder de uso único ainda não tiver sido exercido.
+  const abrirTransmissaoEmergencial = (loja: any) => {
+    setTransmissaoModal(loja);
+    setTransmissaoForm({
+      cim: '', nome_completo: '', email: '', cpf: '', telefone: '',
+      data_inicio_mandato: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleExecutarTransmissaoEmergencial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transmissaoModal) return;
+    setSalvandoTransmissao(true);
+    try {
+      const res = await clienteHttp.post(
+        `${API_URL}/regional/${id}/lojas/${transmissaoModal.loja_id}/transmissao-emergencial/executar`,
+        transmissaoForm
+      );
+      alert(res.data?.message || 'Transmissão de cargo concluída com sucesso.');
+      setTransmissaoModal(null);
+      setReloadKey(k => k + 1);
+    } catch (e: any) {
+      alert(extrairMensagemErro(e, 'Erro ao executar a transmissão de cargo emergencial'));
+    } finally {
+      setSalvandoTransmissao(false);
     }
   };
 
@@ -407,7 +502,7 @@ export default function PaginaLojas() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#262626] text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-[#101010]">
-                  <th className="p-3.5 pl-5">Loja & Número</th>
+                  <th className="p-3.5 pl-5">Loja</th>
                   <th className="p-3.5">Potência</th>
                   <th className="p-3.5">Oriente</th>
                   <th className="p-3.5">Rito Trabalhado</th>
@@ -427,20 +522,34 @@ export default function PaginaLojas() {
                   lojasFiltradas.map((l: any) => {
                     const podeEditar = userContext.is_diretoria || userContext.loja_id === l.loja_id;
                     const temVm = !!l.hasVm;
+                    // ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial
+                    // — o Suplente-regente (Mestre Instalado imediato) precisa
+                    // agir mesmo sem ser Diretoria nem VM desta Loja (ele é,
+                    // por definição, o titular ANTERIOR — já não tem mais
+                    // vínculo ativo). Ver regional/rotas.py.
+                    const ehSuplenteRegente = !!userContext.usuario_id
+                      && l.suplente_usuario_id === userContext.usuario_id
+                      && l.suplente_pode_indicar_veneravel
+                      && !temVm;
 
                     return (
                       <tr key={l.loja_id} className="hover:bg-[#181818] transition-colors group">
+                        {/* ALTERAÇÃO (2026-09-14, redesenho pós-teste): coluna
+                            unificada em um único texto "Loja {nome}, nº
+                            {número}" no lugar de nome + tag separada — o
+                            `nome` vindo do lojas_db às vezes já traz o
+                            prefixo "Loja " (ver mesmo strip em
+                            `abrirEdicaoLoja`), então removemos antes de
+                            remontar para não duplicar. */}
                         <td className="p-3.5 pl-5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-white text-sm">
-                              {l.nome || `Loja #${l.loja_id}`}
-                            </span>
-                            {l.numero && (
-                              <span className="px-2 py-0.5 rounded bg-[#202020] text-gray-300 font-mono text-[11px] border border-[#333]">
-                                Nº {l.numero}
-                              </span>
-                            )}
-                          </div>
+                          <span className="font-bold text-white">
+                            {(() => {
+                              const nomeBase = (l.nome || `#${l.loja_id}`).replace(/^Loja\s+/i, '');
+                              return l.numero
+                                ? `Loja ${nomeBase}, nº ${l.numero}`
+                                : `Loja ${nomeBase}`;
+                            })()}
+                          </span>
                         </td>
 
                         <td className="p-3.5">
@@ -459,92 +568,65 @@ export default function PaginaLojas() {
                           </span>
                         </td>
 
+                        {/* ALTERAÇÃO (2026-09-14, redesenho pós-teste): a coluna
+                            antes mostrava uma "tag" clicável cujo nome nunca
+                            aparecia (bug de dado, corrigido acima) e que
+                            duplicava a ação do botão "Gerenciar VM" da coluna
+                            Ações — dois pontos de entrada para o mesmo modal.
+                            Agora a célula só exibe o nome (texto), e a edição
+                            fica concentrada nos ícones de Ações da linha. */}
                         <td className="p-3.5">
                           {temVm ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (podeEditar) setGestaoVmModal(l);
-                              }}
-                              disabled={!podeEditar}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                                podeEditar 
-                                  ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/30 cursor-pointer shadow-sm' 
-                                  : 'bg-[#181818] text-gray-400 border border-[#2a2a2a] cursor-default'
-                              }`}
-                              title={podeEditar ? "Clique para gerenciar dados do VM e mandato" : "Venerável Mestre empossado"}
-                            >
-                              <Award className="w-3.5 h-3.5 text-green-400" />
-                              <span>{l.veneravel_nome || 'VM Cadastrado'}</span>
-                              {podeEditar && <span className="text-[10px] text-green-500/70 ml-1 font-normal">✎</span>}
-                            </button>
+                            <div className="flex items-center gap-1.5 text-green-400 font-semibold" title="Venerável Mestre empossado">
+                              <Award className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">{l.veneravel_nome}</span>
+                            </div>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (podeEditar) setGestaoVmModal(l);
-                              }}
-                              disabled={!podeEditar}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                                podeEditar 
-                                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30 cursor-pointer' 
-                                  : 'bg-[#181818] text-red-500/70 border border-[#2a2a2a] cursor-default'
-                              }`}
-                              title={podeEditar ? "Clique para empossar Venerável Mestre" : "Mandato Pendente"}
-                            >
-                              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                            <div className="flex items-center gap-1.5 text-red-400/90 font-medium" title="Mandato pendente de posse">
+                              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                               <span>Pendente</span>
-                              {podeEditar && <span className="text-[10px] font-bold text-red-400 ml-1">+ Definir</span>}
-                            </button>
+                            </div>
                           )}
                         </td>
 
                         <td className="p-3.5">
                           {l.suplente_nome ? (
-                            <button
-                              type="button"
-                              onClick={() => { if (podeEditar) abrirDesignarSuplente(l); }}
-                              disabled={!podeEditar}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                                podeEditar
-                                  ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 cursor-pointer shadow-sm'
-                                  : 'bg-[#181818] text-gray-400 border border-[#2a2a2a] cursor-default'
-                              }`}
-                              title={podeEditar ? "Clique para trocar o Suplente designado" : "Suplente do Conselho"}
-                            >
-                              <Users className="w-3.5 h-3.5 text-blue-400" />
-                              <span>{l.suplente_nome}</span>
-                              {podeEditar && <span className="text-[10px] text-blue-400/70 ml-1 font-normal">✎</span>}
-                            </button>
+                            <div className="flex items-center gap-1.5 text-blue-400 font-medium" title="Suplente do Conselho designado">
+                              <Users className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">{l.suplente_nome}</span>
+                              {l.suplente_pode_indicar_veneravel && !temVm && (
+                                <span
+                                  className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-orange-500/15 text-orange-300 border border-orange-500/30"
+                                  title="Mestre Instalado imediato — pode indicar o próximo VM (poder de uso único)"
+                                >
+                                  Mestre Instalado
+                                </span>
+                              )}
+                            </div>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => { if (podeEditar) abrirDesignarSuplente(l); }}
-                              disabled={!podeEditar}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                                podeEditar
-                                  ? 'bg-[#181818] text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 border border-[#2a2a2a] hover:border-blue-500/30 cursor-pointer'
-                                  : 'bg-[#181818] text-gray-600 border border-[#2a2a2a] cursor-default'
-                              }`}
-                              title={podeEditar ? "Clique para designar o Suplente do Conselho" : "Nenhum Suplente designado"}
-                            >
-                              <UserCog className="w-3.5 h-3.5" />
-                              <span>{podeEditar ? 'Designar Suplente' : 'Não designado'}</span>
-                            </button>
+                            <span className="text-gray-600 text-[11px] italic">Não designado</span>
                           )}
                         </td>
 
                         <td className="p-3.5 pr-5 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1">
                             {podeEditar ? (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => setGestaoVmModal(l)}
-                                  className="px-2.5 py-1 text-xs font-semibold bg-[#202020] hover:bg-[#2c2c2c] text-[#facc15] border border-[#3a3a3a] rounded-lg transition-colors cursor-pointer"
-                                  title="Ficha completa de Governança do VM"
+                                  className="p-1.5 text-[#facc15] hover:text-black hover:bg-[#facc15] rounded-lg transition-colors cursor-pointer"
+                                  title={temVm ? "Gerenciar Venerável Mestre" : "Empossar Venerável Mestre"}
                                 >
-                                  {temVm ? 'Gerenciar VM' : '+ VM'}
+                                  <Award className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => abrirDesignarSuplente(l)}
+                                  className="p-1.5 text-blue-400 hover:text-white hover:bg-blue-500/80 rounded-lg transition-colors cursor-pointer"
+                                  title={l.suplente_nome ? "Trocar Suplente do Conselho" : "Designar Suplente do Conselho"}
+                                >
+                                  <UserCog className="w-4 h-4" />
                                 </button>
                                 <button
                                   type="button"
@@ -564,7 +646,42 @@ export default function PaginaLojas() {
                                     <Trash2 className="w-4 h-4" />
                                   </button>
                                 )}
+                                {/* ALTERAÇÃO (2026-09-14): transmissão de cargo
+                                    emergencial — só a Diretoria concede o poder
+                                    ao Mestre Instalado imediato, e só para
+                                    Lojas órfãs (sem VM) que ainda não têm o
+                                    poder concedido. */}
+                                {userContext.is_diretoria && !temVm && !l.suplente_pode_indicar_veneravel && (
+                                  <button
+                                    type="button"
+                                    disabled={concedendoTransmissao === l.loja_id}
+                                    onClick={() => concederTransmissaoEmergencial(l)}
+                                    className="p-1.5 text-orange-400 hover:text-black hover:bg-orange-400 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                    title="Conceder ao Mestre Instalado imediato o poder de indicar o novo VM (transmissão emergencial)"
+                                  >
+                                    <Zap className="w-4 h-4" />
+                                  </button>
+                                )}
+                                {userContext.is_diretoria && !temVm && (
+                                  <button
+                                    type="button"
+                                    onClick={() => abrirTransmissaoEmergencial(l)}
+                                    className="p-1.5 text-orange-400 hover:text-black hover:bg-orange-400 rounded-lg transition-colors cursor-pointer"
+                                    title="Cadastrar novo Venerável Mestre emergencialmente (Diretoria)"
+                                  >
+                                    <Award className="w-4 h-4 opacity-60" />
+                                  </button>
+                                )}
                               </>
+                            ) : ehSuplenteRegente ? (
+                              <button
+                                type="button"
+                                onClick={() => abrirTransmissaoEmergencial(l)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-bold text-black bg-orange-400 hover:bg-orange-300 rounded-lg transition-colors cursor-pointer"
+                                title="Indicar o próximo Venerável Mestre desta Loja (poder de uso único)"
+                              >
+                                <Zap className="w-3.5 h-3.5" /> Indicar novo VM
+                              </button>
                             ) : (
                               <span className="text-[11px] text-gray-600 italic">Somente Leitura</span>
                             )}
@@ -769,7 +886,7 @@ export default function PaginaLojas() {
                 <div>
                   <h2 className="text-lg font-bold text-white">Designar Suplente do Conselho</h2>
                   <p className="text-xs text-gray-400">
-                    {designarSuplenteModal.nome || `Loja ${designarSuplenteModal.loja_id}`} — escolha qualquer um dos 7 oficiais eletivos da loja.
+                    {designarSuplenteModal.nome || `Loja ${designarSuplenteModal.loja_id}`} — escolha qualquer um dos 6 oficiais eletivos da loja (o Venerável Mestre não pode ser Suplente de si mesmo).
                   </p>
                 </div>
               </div>
@@ -854,6 +971,130 @@ export default function PaginaLojas() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial — formulário
+          de indicação do novo VM, usado tanto pela Diretoria quanto pelo
+          Mestre Instalado imediato (Suplente-regente com poder de uso único).
+          Ver regional/rotas.py e claude/decisao-transmissao-cargo-vm.md no
+          Project. */}
+      {transmissaoModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+          <div className="bg-[#111] border border-orange-500/30 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-orange-500/10 rounded-xl text-orange-400 border border-orange-500/30">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Transmissão de Cargo Emergencial</h2>
+                  <p className="text-xs text-gray-400">
+                    {transmissaoModal.nome || `Loja ${transmissaoModal.loja_id}`} — indique o novo Venerável Mestre. Esta Loja está sem VM em exercício no sistema.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTransmissaoModal(null)}
+                className="p-1.5 text-gray-500 hover:text-white hover:bg-[#222] rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-300 text-[11px] flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                Esta ação encerra o mandato de VM anterior (se ainda constar como ativo por engano), marca o titular
+                anterior como "Mestre Instalado" e abre um novo mandato para o Irmão indicado abaixo — direto no
+                cadastro da Loja (módulo Lojas).
+              </span>
+            </div>
+
+            <form onSubmit={handleExecutarTransmissaoEmergencial} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-orange-400 uppercase tracking-wider mb-1">CIM *</label>
+                  <input
+                    type="text"
+                    required
+                    value={transmissaoForm.cim}
+                    onChange={(e) => setTransmissaoForm({ ...transmissaoForm, cim: e.target.value })}
+                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-orange-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Início do Mandato</label>
+                  <input
+                    type="date"
+                    value={transmissaoForm.data_inicio_mandato}
+                    onChange={(e) => setTransmissaoForm({ ...transmissaoForm, data_inicio_mandato: e.target.value })}
+                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-orange-400 uppercase tracking-wider mb-1">Nome Completo *</label>
+                <input
+                  type="text"
+                  required
+                  value={transmissaoForm.nome_completo}
+                  onChange={(e) => setTransmissaoForm({ ...transmissaoForm, nome_completo: e.target.value })}
+                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-orange-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">E-mail</label>
+                  <input
+                    type="email"
+                    value={transmissaoForm.email}
+                    onChange={(e) => setTransmissaoForm({ ...transmissaoForm, email: e.target.value })}
+                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Telefone</label>
+                  <input
+                    type="text"
+                    value={transmissaoForm.telefone}
+                    onChange={(e) => setTransmissaoForm({ ...transmissaoForm, telefone: e.target.value })}
+                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">CPF</label>
+                <input
+                  type="text"
+                  value={transmissaoForm.cpf}
+                  onChange={(e) => setTransmissaoForm({ ...transmissaoForm, cpf: e.target.value })}
+                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                <button
+                  type="button"
+                  onClick={() => setTransmissaoModal(null)}
+                  className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvandoTransmissao}
+                  className="bg-orange-500 hover:bg-orange-400 text-black px-5 py-2 rounded-xl font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {salvandoTransmissao ? 'Gravando...' : 'Confirmar Transmissão'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

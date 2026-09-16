@@ -63,3 +63,17 @@ class Mandato(Base):
     data_inicio = Column(Date, nullable=False)
     data_fim = Column(Date, nullable=True)
     gestao_id = Column(Integer, nullable=True)
+
+
+class WebmasterIntegracao(Base):
+    """Espelho mínimo de `webmasters` (lojas_db) — adicionado 2026-09-14
+    para a reconciliação semanal Diretoria×Lojas poder notificar o(s)
+    Webmaster(s) de uma Loja específica quando o cadastro dela diverge do
+    que o Conselho tem registrado (ver
+    `core/reconciliacao_diretoria_lojas.py`)."""
+    __tablename__ = "webmasters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, nullable=False)
+    ativo = Column(Boolean, default=True)
+    loja_id = Column(Integer, ForeignKey("lojas.id"), nullable=True)

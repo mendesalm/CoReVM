@@ -1,7 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Mail, Lock } from 'lucide-react';
+import { UserCircle2, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
@@ -97,7 +97,7 @@ export default function PaginaLogin() {
         credential,
         modulo_origem: 'corevm'
       });
-      const { access_token } = resposta.data;
+      const { access_token, deve_trocar_senha } = resposta.data;
       const payload = decodificarPayloadJwt(access_token);
 
       login(access_token, {
@@ -106,6 +106,11 @@ export default function PaginaLogin() {
         email: payload.sub,
         roles: payload.role ? [payload.role] : [],
       });
+
+      if (deve_trocar_senha) {
+        navigate('/trocar-senha-obrigatoria', { replace: true });
+        return;
+      }
 
       const regioes = await buscarMinhasRegioes();
       navegarAposLogin(regioes, payload.role, navigate);
@@ -131,7 +136,7 @@ export default function PaginaLogin() {
         password: senha,
         modulo_origem: 'corevm'
       });
-      const { access_token } = resposta.data;
+      const { access_token, deve_trocar_senha } = resposta.data;
       const payload = decodificarPayloadJwt(access_token);
 
       login(access_token, {
@@ -141,10 +146,20 @@ export default function PaginaLogin() {
         roles: payload.role ? [payload.role] : [],
       });
 
+      // ALTERAÇÃO (2026-09-16): `deve_trocar_senha` vem `true` quando esta
+      // Pessoa nasceu de uma Solicitação de Cadastro aprovada e ainda está
+      // usando a senha provisória enviada por e-mail (ver
+      // PaginaTrocarSenhaObrigatoria.tsx) — nunca pula direto para o
+      // painel normal nesse caso.
+      if (deve_trocar_senha) {
+        navigate('/trocar-senha-obrigatoria', { replace: true });
+        return;
+      }
+
       const regioes = await buscarMinhasRegioes();
       navegarAposLogin(regioes, payload.role, navigate);
     } catch (err: any) {
-      setErro(err.response?.data?.detail || err.message || 'Falha na autenticação. Verifique seu e-mail e senha.');
+      setErro(err.response?.data?.detail || err.message || 'Falha na autenticação. Verifique seu e-mail, CIM ou CPF e a senha.');
     } finally {
       setCarregando(false);
     }
@@ -187,8 +202,9 @@ export default function PaginaLogin() {
             <div>
               <div className="relative group">
                 <input
-                  type="email"
-                  id="email"
+                  type="text"
+                  id="identificador"
+                  autoComplete="username"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -196,12 +212,12 @@ export default function PaginaLogin() {
                   className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <label
-                  htmlFor="email"
+                  htmlFor="identificador"
                   className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
                 >
-                  E-mail do Usuário
+                  E-mail, CIM ou CPF
                 </label>
-                <Mail className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
+                <UserCircle2 className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
               </div>
             </div>
 
@@ -238,6 +254,23 @@ export default function PaginaLogin() {
               )}
             </button>
           </form>
+
+          {/* Solicitação de Cadastro / Via 2 (2026-09-16): substitui o
+              link de "Ativação de Cadastro" removido no mesmo dia (aquele
+              fluxo permitia auto-aprovação sem validação humana — ver
+              claude/decisao-controle-acesso-cadastro.md, seções 2 e 12).
+              Este link leva ao formulário público que cai numa fila de
+              aprovação (SuperAdmin ou VM/Suplente da própria Loja); só na
+              aprovação uma senha provisória é enviada por e-mail. */}
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => navigate('/solicitar-cadastro')}
+              className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+            >
+              Ainda não tem cadastro? Solicite seu acesso aqui
+            </button>
+          </div>
 
           <div className="flex items-center my-6">
             <div className="flex-1 h-px bg-white/10"></div>

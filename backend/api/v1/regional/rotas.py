@@ -11,17 +11,26 @@ from sqlalchemy.orm import Session
 from loguru import logger
 from pydantic import BaseModel
 
+from sqlalchemy import or_, func
 from database import get_db_core, get_db_lojas
 from models.models import (
-    Regiao, DiretoriaConselho, LojaAgregada, SuplenteConselho, AvisoRegional, 
+    Regiao, DiretoriaConselho, LojaAgregada, SuplenteConselho, AvisoRegional, AvisoLido,
     PreviaAdmissao, ConsideracaoPrevia, VotacaoRegional, VotoLoja,
     ItemPatrimonio, EmprestimoPatrimonio, FilaEsperaPatrimonio,
-    DocumentoRegional, TopicoComunicacao, MensagemComunicacao
+    DocumentoRegional, TopicoComunicacao, MensagemComunicacao,
+    HistoricoLiderancaLoja, OperadorAdministrativoLoja, EventoAgenda
 )
 from models.lojas_models import ObreiroIntegracao, LojaIntegracao, Mandato
 from core.constants import CargoConselho
-from schemas.schemas import RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload
-from core.dependencies import get_current_director, get_current_regional_user, RegionalUserContext
+from schemas.schemas import (
+    RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload,
+    VeneravelElegivelResponse, DiretoriaEmergenciaPayload,
+    TransmissaoEmergencialVmPayload
+)
+from core.dependencies import (
+    get_current_director, get_current_regional_user, RegionalUserContext,
+    obter_identidade_regional_ou_operador_administrativo, OperadorAdministrativoContext
+)
 from core.auth_esigma import UsuarioEsigma, obter_usuario_esigma
 from utils.pdf_generator import (
     gerar_pdf_previa, gerar_pdf_documento_regional,
@@ -135,6 +144,87 @@ def listar_minhas_regioes(
     regioes = db_core.query(Regiao).filter(Regiao.id.in_(list(encontradas.keys()))).all()
     return [{"regiao_id": r.id, "nome": r.nome, "papel": encontradas[r.id]} for r in regioes]
 
+# ALTERAÇÃO (2026-09-14): validação da Diretoria do Conselho + detecção de
+# assento "órfão" — até aqui, PUT /diretoria aceitava qualquer CIM digitado
+# livremente, sem checar se o usuário existe ou se é Venerável Mestre em
+# exercício de alguma Loja jurisdicionada (bug reportado em teste: foi
+# possível designar um membro aleatório, inclusive CIM inexistente). Além
+# disso, se uma Loja troca de VM sem que a Diretoria seja atualizada, o
+# assento fica "órfão" (aponta para um usuário que já não é mais VM de
+# Loja nenhuma) sem nenhum aviso. As duas funções abaixo são a fonte única
+# de verdade para "quem pode ocupar um assento na Diretoria" — usadas tanto
+# para popular o seletor no frontend (GET /veneraveis-elegiveis) quanto
+# para validar no backend (defesa em profundidade), mesmo padrão já
+# aplicado à designação de Suplente (ver CARGOS_SUPLENTE_ELEGIVEIS, abaixo
+# neste arquivo).
+
+def _obter_veneraveis_elegiveis(db_core: Session, db_lojas: Session, regiao_id: str) -> list[dict]:
+    """
+    Veneráveis Mestres em exercício (mandato ativo, cargo_id=1) das Lojas
+    jurisdicionadas (LojaAgregada ativa) a este Conselho.
+    """
+    agregadas = db_core.query(LojaAgregada).filter(
+        LojaAgregada.regiao_id == regiao_id,
+        LojaAgregada.ativa == True
+    ).all()
+    ids_lojas = [int(a.loja_id) for a in agregadas if a.loja_id.isdigit()]
+    if not ids_lojas:
+        return []
+
+    mandatos = db_lojas.query(Mandato, ObreiroIntegracao, LojaIntegracao).join(
+        ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
+    ).join(
+        LojaIntegracao, Mandato.loja_id == LojaIntegracao.id
+    ).filter(
+        Mandato.loja_id.in_(ids_lojas),
+        Mandato.cargo_id == 1,
+        or_(Mandato.data_fim.is_(None), Mandato.data_fim >= func.current_date())
+    ).all()
+
+    return [
+        {
+            "usuario_id": obreiro.cim,
+            "nome_completo": obreiro.nome_completo,
+            "loja_id": str(loja.id),
+            "loja_nome": loja.nome_loja,
+            "loja_numero": str(loja.numero_loja) if loja.numero_loja is not None else None,
+        }
+        for mandato, obreiro, loja in mandatos
+    ]
+
+
+def _resolver_veneravel_atual_da_loja(db_lojas: Session, loja_id: str) -> Optional[dict]:
+    """VM em exercício de UMA Loja específica (ou None se a Loja estiver pendente/sem VM)."""
+    if not loja_id or not str(loja_id).isdigit():
+        return None
+    resultado = db_lojas.query(Mandato, ObreiroIntegracao).join(
+        ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
+    ).filter(
+        Mandato.loja_id == int(loja_id),
+        Mandato.cargo_id == 1,
+        or_(Mandato.data_fim.is_(None), Mandato.data_fim >= func.current_date())
+    ).first()
+    if not resultado:
+        return None
+    mandato, obreiro = resultado
+    return {"usuario_id": obreiro.cim, "nome_completo": obreiro.nome_completo}
+
+
+@router.get("/{regiao_id}/veneraveis-elegiveis", response_model=List[VeneravelElegivelResponse], summary="Lista os Veneráveis Mestres elegíveis à Diretoria do Conselho")
+def listar_veneraveis_elegiveis_diretoria(
+    regiao_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Fonte para o seletor de Presidente/Vice/Secretário no frontend — só
+    Veneráveis Mestres em exercício de Lojas jurisdicionadas ao Conselho
+    podem ocupar um assento na Diretoria.
+    """
+    return _obter_veneraveis_elegiveis(db_core, db_lojas, regiao_id)
+
+
 @router.get("/{regiao_id}/diretoria", response_model=List[DiretoriaMembroResponse], summary="Obtém Diretoria Enriquecida do Conselho")
 def obter_diretoria_regional(
     regiao_id: str,
@@ -144,6 +234,13 @@ def obter_diretoria_regional(
 ):
     """
     Retorna a composição da mesa diretora do conselho com os dados cadastrais (nome, CIM, e-mail) obtidos de lojas_db.
+
+    ALTERAÇÃO (2026-09-14): para cada membro cujo assento está vinculado a
+    uma Loja (loja_id preenchido), verifica se aquela Loja ainda tem o mesmo
+    VM. Se a Loja trocou de VM, marca vinculo_desatualizado=True e sugere o
+    novo VM (sugestao_novo_veneravel). Se a Loja ficou sem VM (pendente),
+    marca loja_sem_vm=True. Assentos legados (loja_id nulo, de antes desta
+    alteração) não são verificados — permanecem como estavam.
     """
     diretoria = db_core.query(DiretoriaConselho).filter(DiretoriaConselho.regiao_id == regiao_id).all()
     if not diretoria:
@@ -162,9 +259,38 @@ def obter_diretoria_regional(
                 obreiros_map[o.cpf] = o
             obreiros_map[str(o.id)] = o
 
+    lojas_info = {}
+    if any(d.loja_id for d in diretoria):
+        ids_lojas = [int(d.loja_id) for d in diretoria if d.loja_id and str(d.loja_id).isdigit()]
+        if ids_lojas:
+            for l in db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id.in_(ids_lojas)).all():
+                lojas_info[str(l.id)] = l
+
     resultado = []
     for d in diretoria:
         o = obreiros_map.get(d.usuario_id)
+
+        vinculo_desatualizado = False
+        loja_sem_vm = False
+        sugestao = None
+        loja_numero = None
+
+        if d.loja_id:
+            loja_numero = lojas_info.get(d.loja_id).numero_loja if lojas_info.get(d.loja_id) else None
+            vm_atual = _resolver_veneravel_atual_da_loja(db_lojas, d.loja_id)
+            if not vm_atual:
+                loja_sem_vm = True
+            elif vm_atual["usuario_id"] != d.usuario_id:
+                vinculo_desatualizado = True
+                info_loja = lojas_info.get(d.loja_id)
+                sugestao = VeneravelElegivelResponse(
+                    usuario_id=vm_atual["usuario_id"],
+                    nome_completo=vm_atual["nome_completo"],
+                    loja_id=d.loja_id,
+                    loja_nome=info_loja.nome_loja if info_loja else None,
+                    loja_numero=str(info_loja.numero_loja) if info_loja and info_loja.numero_loja is not None else None,
+                )
+
         resultado.append(DiretoriaMembroResponse(
             id=d.id,
             usuario_id=d.usuario_id,
@@ -174,7 +300,12 @@ def obter_diretoria_regional(
             nome_completo=o.nome_completo if o else None,
             cim=o.cim if o else (d.usuario_id if d.usuario_id.isdigit() else None),
             email=o.email if o else None,
-            telefone=o.telefone if o else None
+            telefone=o.telefone if o else None,
+            loja_id=d.loja_id,
+            loja_numero=str(loja_numero) if loja_numero is not None else None,
+            vinculo_desatualizado=vinculo_desatualizado,
+            loja_sem_vm=loja_sem_vm,
+            sugestao_novo_veneravel=sugestao,
         ))
     return resultado
 
@@ -183,35 +314,119 @@ def atualizar_diretoria_regional(
     regiao_id: str,
     payload: DiretoriaUpdatePayload,
     diretor: RegionalUserContext = Depends(get_current_director),
-    db_core: Session = Depends(get_db_core)
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
 ):
     """
     Atualiza a composição da mesa diretora e as datas do mandato. Exclusivo para Diretoria/SuperAdmin.
+
+    CORREÇÃO (2026-09-14, bug reportado em teste): antes, qualquer CIM
+    digitado era aceito sem validação alguma — foi possível designar um
+    membro aleatório, inclusive um CIM que não existia. Agora cada CIM
+    informado é validado contra a lista de Veneráveis Mestres em exercício
+    das Lojas jurisdicionadas ao Conselho (_obter_veneraveis_elegiveis); se
+    não corresponder a nenhum, a requisição é bloqueada com 400. O loja_id
+    do VM escolhido é persistido no assento, para permitir a detecção de
+    assento "órfão" futuramente (ver obter_diretoria_regional).
     """
     logger.info(f"Atualizando diretoria da Região {regiao_id} por {diretor.usuario_id}")
-    db_core.query(DiretoriaConselho).filter(DiretoriaConselho.regiao_id == regiao_id).delete()
+
+    elegiveis = _obter_veneraveis_elegiveis(db_core, db_lojas, regiao_id)
+    elegiveis_map = {e["usuario_id"]: e for e in elegiveis}
 
     inicio = payload.inicio_mandato or date.today()
     termino = payload.termino_mandato or (date.today() + timedelta(days=365))
 
     novos = [
-        (payload.presidente_id, CargoConselho.PRESIDENTE),
-        (payload.vice_presidente_id, CargoConselho.VICE_PRESIDENTE),
-        (payload.secretario_id, CargoConselho.SECRETARIO),
+        (payload.presidente_id, CargoConselho.PRESIDENTE, "Presidente"),
+        (payload.vice_presidente_id, CargoConselho.VICE_PRESIDENTE, "Vice-Presidente"),
+        (payload.secretario_id, CargoConselho.SECRETARIO, "Secretário"),
     ]
 
-    for uid, cargo in novos:
+    a_inserir = []
+    for uid, cargo, rotulo in novos:
         if uid and uid.strip():
-            db_core.add(DiretoriaConselho(
-                regiao_id=regiao_id,
-                usuario_id=uid.strip(),
-                cargo=cargo,
-                inicio_mandato=inicio,
-                termino_mandato=termino
-            ))
+            uid = uid.strip()
+            elegivel = elegiveis_map.get(uid)
+            if not elegivel:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"O CIM '{uid}' informado para {rotulo} não corresponde a um Venerável "
+                        "Mestre em exercício em nenhuma Loja jurisdicionada a este Conselho. "
+                        "Verifique se o CIM está correto e se o cadastro da Loja foi atualizado "
+                        "com o novo Venerável Mestre."
+                    )
+                )
+            a_inserir.append((elegivel, cargo))
+
+    db_core.query(DiretoriaConselho).filter(DiretoriaConselho.regiao_id == regiao_id).delete()
+
+    for elegivel, cargo in a_inserir:
+        db_core.add(DiretoriaConselho(
+            regiao_id=regiao_id,
+            usuario_id=elegivel["usuario_id"],
+            cargo=cargo,
+            inicio_mandato=inicio,
+            termino_mandato=termino,
+            loja_id=elegivel["loja_id"],
+        ))
 
     db_core.commit()
     return {"message": "Diretoria e mandatos atualizados com sucesso"}
+
+
+@router.put("/{regiao_id}/diretoria/{cargo}/emergencia", summary="Substitui emergencialmente um único assento órfão da Diretoria")
+def atualizar_assento_diretoria_emergencia(
+    regiao_id: str,
+    cargo: CargoConselho,
+    payload: DiretoriaEmergenciaPayload,
+    diretor: RegionalUserContext = Depends(get_current_director),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Substitui um único assento da Diretoria (Presidente, Vice-Presidente ou
+    Secretário) sem afetar os demais — usado quando uma Loja trocou de
+    Venerável Mestre e o assento ficou "órfão" (vinculo_desatualizado ou
+    loja_sem_vm em GET /diretoria). Permite tanto aceitar a sugestão
+    automática (o novo VM da mesma Loja) quanto apontar, de forma
+    emergencial, o Venerável Mestre de outra Loja jurisdicionada, para que
+    nenhuma Loja fique sem representação na Diretoria. Exclusivo para
+    Diretoria/SuperAdmin.
+    """
+    elegiveis = _obter_veneraveis_elegiveis(db_core, db_lojas, regiao_id)
+    elegiveis_map = {e["usuario_id"]: e for e in elegiveis}
+    uid = payload.usuario_id.strip()
+    elegivel = elegiveis_map.get(uid)
+    if not elegivel:
+        raise HTTPException(
+            status_code=400,
+            detail=f"O CIM '{uid}' não corresponde a um Venerável Mestre em exercício em nenhuma Loja jurisdicionada a este Conselho."
+        )
+
+    existente = db_core.query(DiretoriaConselho).filter(
+        DiretoriaConselho.regiao_id == regiao_id,
+        DiretoriaConselho.cargo == cargo
+    ).first()
+    inicio = existente.inicio_mandato if existente else date.today()
+    termino = existente.termino_mandato if existente else (date.today() + timedelta(days=365))
+
+    db_core.query(DiretoriaConselho).filter(
+        DiretoriaConselho.regiao_id == regiao_id,
+        DiretoriaConselho.cargo == cargo
+    ).delete()
+    db_core.add(DiretoriaConselho(
+        regiao_id=regiao_id,
+        usuario_id=elegivel["usuario_id"],
+        cargo=cargo,
+        inicio_mandato=inicio,
+        termino_mandato=termino,
+        loja_id=elegivel["loja_id"],
+    ))
+    db_core.commit()
+    logger.info(f"Assento de {cargo.value} da Região {regiao_id} atualizado emergencialmente por {diretor.usuario_id} para {elegivel['usuario_id']}")
+    return {"message": f"Assento de {cargo.value} atualizado com sucesso para {elegivel.get('nome_completo') or elegivel['usuario_id']}."}
 
 @router.get("/{regiao_id}/lojas", summary="Lista as Lojas Jurisdicionadas do Conselho")
 def listar_lojas_conselho(
@@ -261,6 +476,11 @@ def listar_lojas_conselho(
             "suplente_usuario_id": suplente.usuario_id if suplente else None,
             "suplente_nome": suplente.nome_suplente if suplente else None,
             "suplente_email": suplente.email_suplente if suplente else None,
+            # ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial — true
+            # quando este Suplente é um "Mestre Instalado imediato" com o
+            # poder de uso único de indicar o próximo VM ainda não exercido
+            # (ver /transmissao-emergencial/conceder e /executar).
+            "suplente_pode_indicar_veneravel": bool(suplente.pode_indicar_veneravel) if suplente else False,
         })
 
     resultado.sort(key=lambda x: int(x["numero"]) if x["numero"] and x["numero"].isdigit() else 999999)
@@ -287,6 +507,15 @@ CARGOS_LOJA_ELEGIVEIS = [
     (7, "Chanceler"),
 ]
 
+# CORREÇÃO (2026-09-14, bug reportado em teste): o seletor de "Designar
+# Suplente" listava os 7 cargos eletivos da Loja, incluindo o próprio
+# Venerável Mestre — mas o VM não pode ser Suplente de si mesmo (ele já
+# ocupa a cadeira do Conselho pela própria Loja). Lista separada, sem o
+# cargo_id 1, usada tanto para popular o seletor quanto para validar a
+# designação no backend (defesa em profundidade — bloqueia mesmo uma
+# chamada direta à API tentando designar o VM como seu próprio Suplente).
+CARGOS_SUPLENTE_ELEGIVEIS = [(cargo_id, nome) for cargo_id, nome in CARGOS_LOJA_ELEGIVEIS if cargo_id != 1]
+
 class SuplenteDesignarPayload(BaseModel):
     usuario_id: str  # CIM (ou CPF) do oficial escolhido dentre os 7 da própria Loja
 
@@ -308,7 +537,7 @@ def _exigir_vm_da_loja_ou_diretoria(user: RegionalUserContext, loja_id: str):
         detail="Acesso negado: apenas o Venerável Mestre desta Loja ou a Diretoria do Conselho podem designar o Suplente."
     )
 
-@router.get("/{regiao_id}/lojas/{loja_id}/oficiais", summary="Lista os 7 oficiais eletivos (mandato ativo) de uma Loja Jurisdicionada")
+@router.get("/{regiao_id}/lojas/{loja_id}/oficiais", summary="Lista os oficiais elegíveis a Suplente do Conselho (mandato ativo) de uma Loja Jurisdicionada")
 def listar_oficiais_loja(
     regiao_id: str,
     loja_id: str,
@@ -317,9 +546,12 @@ def listar_oficiais_loja(
     db_lojas: Session = Depends(get_db_lojas)
 ):
     """
-    Retorna os ocupantes ativos dos 7 cargos eletivos da Loja (Venerável
-    Mestre, 1º e 2º Vigilantes, Orador, Secretário, Tesoureiro e Chanceler),
-    usados para popular o seletor de designação de Suplente do Conselho.
+    Retorna os ocupantes ativos dos 6 cargos eletivos da Loja elegíveis à
+    cadeira de Suplente do Conselho (1º e 2º Vigilantes, Orador, Secretário,
+    Tesoureiro e Chanceler) — o Venerável Mestre é excluído propositalmente
+    desta lista, já que não pode ser Suplente de si mesmo (ele já ocupa a
+    cadeira da própria Loja no Conselho). Usado para popular o seletor de
+    designação de Suplente do Conselho.
     """
     _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
 
@@ -330,7 +562,7 @@ def listar_oficiais_loja(
         ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
     ).filter(
         Mandato.loja_id == int(loja_id),
-        Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_LOJA_ELEGIVEIS]),
+        Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_SUPLENTE_ELEGIVEIS]),
         (Mandato.data_fim.is_(None)) | (Mandato.data_fim >= date.today())
     ).all()
 
@@ -360,9 +592,10 @@ def designar_suplente_conselho(
     """
     Designação livre de Suplente: o Venerável Mestre da própria Loja, ou
     qualquer membro da Diretoria do Conselho (para qualquer Loja da Região),
-    pode escolher qualquer um dos 7 oficiais eletivos da Loja para ocupar a
-    cadeira de Suplente. Substitui o Suplente anterior, se houver — a
-    cadeira não é acumulativa, é sempre 1 Suplente por Loja.
+    pode escolher qualquer um dos 6 oficiais eletivos da Loja elegíveis
+    (o próprio Venerável Mestre fica de fora) para ocupar a cadeira de
+    Suplente. Substitui o Suplente anterior, se houver — a cadeira não é
+    acumulativa, é sempre 1 Suplente por Loja.
     """
     _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
     _exigir_vm_da_loja_ou_diretoria(user, loja_id)
@@ -379,11 +612,11 @@ def designar_suplente_conselho(
     mandato_valido = db_lojas.query(Mandato).filter(
         Mandato.obreiro_id == escolhido.id,
         Mandato.loja_id == int(loja_id),
-        Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_LOJA_ELEGIVEIS]),
+        Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_SUPLENTE_ELEGIVEIS]),
         (Mandato.data_fim.is_(None)) | (Mandato.data_fim >= date.today())
     ).first()
     if not mandato_valido:
-        raise HTTPException(status_code=400, detail="O oficial escolhido não ocupa um dos 7 cargos eletivos ativos desta Loja.")
+        raise HTTPException(status_code=400, detail="O oficial escolhido não ocupa um dos 6 cargos eletivos elegíveis a Suplente desta Loja (o Venerável Mestre não pode ser Suplente de si mesmo).")
 
     db_core.query(SuplenteConselho).filter_by(loja_id=str(loja_id)).delete()
     novo_suplente = SuplenteConselho(
@@ -422,6 +655,328 @@ def remover_suplente_conselho(
     if not removido:
         raise HTTPException(status_code=404, detail="Esta Loja não possui Suplente designado atualmente.")
     return {"message": "Designação de Suplente removida com sucesso."}
+
+# ADIÇÃO (2026-09-15): perfil "Operador Administrativo da Loja" — ver
+# claude/decisao-controle-acesso-cadastro.md no Project, seção 5. Slot
+# duplo (SECRETARIO/CHANCELER) por Loja, designação livre pelo VM/Diretoria
+# dentro da mesma lista de elegíveis do Suplente (CARGOS_SUPLENTE_ELEGIVEIS,
+# incluindo Mestre Instalado com vínculo ativo) — não existe cargo formal
+# de "Adjunto" em lojas_db (confirmado por consulta direta em 2026-09-15),
+# por isso o rótulo do slot é organizacional, não uma amarração de cargo.
+# Reaproveita a mesma checagem de acesso da designação de Suplente
+# (_exigir_vm_da_loja_ou_diretoria) — só quem já pode gerenciar a Loja no
+# Conselho pode designar quem ocupa os slots administrativos dela.
+
+SLOTS_OPERADOR_ADMINISTRATIVO_VALIDOS = ["SECRETARIO", "CHANCELER"]
+
+class OperadorAdministrativoDesignarPayload(BaseModel):
+    usuario_id: str  # CIM (ou CPF) do oficial escolhido dentre os elegíveis da própria Loja
+
+@router.get("/{regiao_id}/lojas/{loja_id}/operadores-administrativos", summary="Lista quem ocupa os slots de Operador Administrativo (Secretário/Chanceler) de uma Loja")
+def listar_operadores_administrativos(
+    regiao_id: str,
+    loja_id: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Retorna o estado atual dos dois slots (SECRETARIO/CHANCELER) desta
+    Loja — quem ocupa cada um, se algum, ou "vago" quando não há
+    designação ativa.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+
+    operadores = db_core.query(OperadorAdministrativoLoja).filter(
+        OperadorAdministrativoLoja.loja_id == str(loja_id),
+        OperadorAdministrativoLoja.ativo == True,
+    ).all()
+    mapa = {o.slot: o for o in operadores}
+
+    return {
+        "slots": [
+            {
+                "slot": slot,
+                "ocupado": slot in mapa,
+                "usuario_id": mapa[slot].usuario_id if slot in mapa else None,
+                "nome_operador": mapa[slot].nome_operador if slot in mapa else None,
+                "email_operador": mapa[slot].email_operador if slot in mapa else None,
+                "designado_por": mapa[slot].designado_por if slot in mapa else None,
+                "designado_em": mapa[slot].designado_em if slot in mapa else None,
+            }
+            for slot in SLOTS_OPERADOR_ADMINISTRATIVO_VALIDOS
+        ]
+    }
+
+@router.put("/{regiao_id}/lojas/{loja_id}/operador-administrativo/{slot}", summary="Designa (ou substitui) o ocupante de um slot de Operador Administrativo da Loja")
+def designar_operador_administrativo(
+    regiao_id: str,
+    loja_id: str,
+    slot: str,
+    payload: OperadorAdministrativoDesignarPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Designação livre de Operador Administrativo: o Venerável Mestre da
+    própria Loja, ou a Diretoria do Conselho (para qualquer Loja da
+    Região), pode escolher qualquer oficial elegível da própria Loja (os 6
+    cargos eletivos, ou um Mestre Instalado com vínculo ativo — mesma
+    elegibilidade do Suplente) para ocupar o slot "SECRETARIO" ou
+    "CHANCELER". Substitui o ocupante anterior daquele slot especificamente
+    — o outro slot não é afetado.
+
+    Este perfil NÃO acumula nenhum poder de decisão política da Loja: quem
+    o ocupa não pode designar/trocar o Suplente do Conselho nem acionar a
+    transmissão de cargo emergencial — só tarefas administrativas.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+    _exigir_vm_da_loja_ou_diretoria(user, loja_id)
+
+    slot = slot.upper()
+    if slot not in SLOTS_OPERADOR_ADMINISTRATIVO_VALIDOS:
+        raise HTTPException(status_code=400, detail=f"Slot inválido. Use um de: {', '.join(SLOTS_OPERADOR_ADMINISTRATIVO_VALIDOS)}.")
+
+    if not str(loja_id).isdigit():
+        raise HTTPException(status_code=400, detail="Loja inválida.")
+
+    escolhido = db_lojas.query(ObreiroIntegracao).filter(
+        (ObreiroIntegracao.cim == payload.usuario_id) | (ObreiroIntegracao.cpf == payload.usuario_id)
+    ).first()
+    if not escolhido:
+        raise HTTPException(status_code=404, detail="Oficial não encontrado.")
+
+    mandato_valido = db_lojas.query(Mandato).filter(
+        Mandato.obreiro_id == escolhido.id,
+        Mandato.loja_id == int(loja_id),
+        Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_SUPLENTE_ELEGIVEIS]),
+        (Mandato.data_fim.is_(None)) | (Mandato.data_fim >= date.today())
+    ).first()
+    if not mandato_valido and not _obreiro_e_mestre_instalado_ativo_na_loja(db_lojas, escolhido.id, int(loja_id)):
+        raise HTTPException(
+            status_code=400,
+            detail="O oficial escolhido não ocupa um dos 6 cargos eletivos elegíveis desta Loja, "
+                   "nem tem status de Mestre Instalado com vínculo ativo nesta Loja."
+        )
+
+    db_core.query(OperadorAdministrativoLoja).filter_by(loja_id=str(loja_id), slot=slot).delete()
+    novo_operador = OperadorAdministrativoLoja(
+        loja_id=str(loja_id),
+        slot=slot,
+        usuario_id=escolhido.cim,
+        nome_operador=escolhido.nome_completo,
+        email_operador=escolhido.email,
+        designado_por=user.usuario_id,
+    )
+    db_core.add(novo_operador)
+    db_core.commit()
+
+    logger.info(f"Operador Administrativo ({slot}) designado: Loja {loja_id} -> {escolhido.nome_completo} ({escolhido.cim}), por {user.usuario_id} (Região {regiao_id})")
+    return {
+        "message": f"Operador Administrativo ({slot}) designado com sucesso.",
+        "slot": slot,
+        "usuario_id": escolhido.cim,
+        "nome_operador": escolhido.nome_completo,
+    }
+
+@router.delete("/{regiao_id}/lojas/{loja_id}/operador-administrativo/{slot}", summary="Remove a designação de um slot de Operador Administrativo da Loja")
+def remover_operador_administrativo(
+    regiao_id: str,
+    loja_id: str,
+    slot: str,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Desfaz a designação atual do slot informado, se houver. Mesma regra de
+    acesso da designação: VM da própria Loja ou Diretoria do Conselho.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+    _exigir_vm_da_loja_ou_diretoria(user, loja_id)
+
+    slot = slot.upper()
+    if slot not in SLOTS_OPERADOR_ADMINISTRATIVO_VALIDOS:
+        raise HTTPException(status_code=400, detail=f"Slot inválido. Use um de: {', '.join(SLOTS_OPERADOR_ADMINISTRATIVO_VALIDOS)}.")
+
+    removido = db_core.query(OperadorAdministrativoLoja).filter_by(loja_id=str(loja_id), slot=slot).delete()
+    db_core.commit()
+    if not removido:
+        raise HTTPException(status_code=404, detail=f"Esta Loja não possui Operador Administrativo designado no slot {slot} atualmente.")
+    return {"message": f"Designação de Operador Administrativo ({slot}) removida com sucesso."}
+
+# ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial de VM — quando
+# uma Loja fica órfã (sem Venerável Mestre em exercício) e não regulariza
+# pelo módulo Lojas, resolve a vacância sem depender da Loja agir primeiro.
+# Decisão de escopo completa em claude/decisao-transmissao-cargo-vm.md no
+# Project: por ora a escrita é feita diretamente em lojas_db (o módulo
+# Lojas ainda não tem API própria de escrita), reaproveitando a mesma
+# lógica de posse da tela normal de Gestão de VM
+# (_empossar_obreiro_e_cargo, em api/v1/integracao/rotas_lojas.py) — dívida
+# técnica registrada para quando o módulo Lojas ganhar sua própria API.
+
+def _resolver_ultimo_vm_da_loja(db_lojas: Session, loja_id: str) -> Optional[dict]:
+    """
+    Último Venerável Mestre da Loja (mandato mais recente, ativo ou já
+    encerrado) — usado para identificar automaticamente o "Mestre Instalado
+    imediato" ao conceder o poder de transmissão emergencial. Diferente de
+    _resolver_veneravel_atual_da_loja (que só considera mandato ATIVO).
+    """
+    if not loja_id or not str(loja_id).isdigit():
+        return None
+    resultado = db_lojas.query(Mandato, ObreiroIntegracao).join(
+        ObreiroIntegracao, Mandato.obreiro_id == ObreiroIntegracao.id
+    ).filter(
+        Mandato.loja_id == int(loja_id), Mandato.cargo_id == 1
+    ).order_by(Mandato.data_fim.desc().nullslast(), Mandato.data_inicio.desc()).first()
+    if not resultado:
+        return None
+    mandato, obreiro = resultado
+    return {
+        "usuario_id": obreiro.cim,
+        "nome_completo": obreiro.nome_completo,
+        "email": obreiro.email,
+    }
+
+
+@router.post("/{regiao_id}/lojas/{loja_id}/transmissao-emergencial/conceder", summary="Concede ao Mestre Instalado imediato o poder emergencial de indicar o novo VM")
+def conceder_transmissao_emergencial_vm(
+    regiao_id: str,
+    loja_id: str,
+    diretor: RegionalUserContext = Depends(get_current_director),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Passo 1 da transmissão de cargo emergencial: quando a Loja fica órfã de
+    VM (não regularizou pelo módulo Lojas), a Diretoria concede ao "Mestre
+    Instalado imediato" — o último VM da própria Loja, identificado
+    automaticamente pelo mandato mais recente — o poder de USO ÚNICO de
+    indicar diretamente o próximo Venerável Mestre, transformando-o no
+    Suplente do Conselho desta Loja com esse poder excepcional. Exclusivo
+    para Diretoria/SuperAdmin. Se o Mestre Instalado não agir, o mecanismo
+    de emergência já existente da própria Diretoria (designar Suplente/VM
+    manualmente, ou PUT /diretoria/{cargo}/emergencia se o assento também
+    for de Diretoria) continua disponível como plano B.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+    if not str(loja_id).isdigit():
+        raise HTTPException(status_code=400, detail="Loja inválida.")
+
+    vm_atual = _resolver_veneravel_atual_da_loja(db_lojas, loja_id)
+    if vm_atual:
+        raise HTTPException(
+            status_code=400,
+            detail="Esta Loja já possui Venerável Mestre em exercício — a transmissão emergencial só se aplica a Lojas órfãs (sem VM)."
+        )
+
+    ultimo_vm = _resolver_ultimo_vm_da_loja(db_lojas, loja_id)
+    if not ultimo_vm:
+        raise HTTPException(
+            status_code=400,
+            detail="Não foi encontrado nenhum Venerável Mestre anterior para esta Loja — não há a quem conceder o poder de transmissão. Cadastre o novo VM manualmente pela tela de Gestão de VM."
+        )
+
+    db_core.query(SuplenteConselho).filter_by(loja_id=str(loja_id)).delete()
+    novo_suplente = SuplenteConselho(
+        loja_id=str(loja_id),
+        usuario_id=ultimo_vm["usuario_id"],
+        nome_suplente=ultimo_vm["nome_completo"],
+        email_suplente=ultimo_vm["email"],
+        pode_indicar_veneravel=True,
+        concedido_em=datetime.utcnow(),
+    )
+    db_core.add(novo_suplente)
+    db_core.commit()
+
+    logger.info(
+        f"Poder de transmissão emergencial concedido: Loja {loja_id} -> "
+        f"{ultimo_vm['nome_completo']} ({ultimo_vm['usuario_id']}), por {diretor.usuario_id} (Região {regiao_id})"
+    )
+    return {
+        "message": f"Poder de indicar o novo Venerável Mestre concedido a {ultimo_vm['nome_completo']} (Mestre Instalado imediato desta Loja).",
+        "usuario_id": ultimo_vm["usuario_id"],
+        "nome_completo": ultimo_vm["nome_completo"],
+    }
+
+
+@router.post("/{regiao_id}/lojas/{loja_id}/transmissao-emergencial/executar", summary="Executa a transmissão de cargo emergencial, empossando o novo Venerável Mestre")
+def executar_transmissao_emergencial_vm(
+    regiao_id: str,
+    loja_id: str,
+    payload: TransmissaoEmergencialVmPayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db_core: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Passo 2 (execução): empossa o novo Venerável Mestre indicado, via a
+    mesma lógica de posse usada na tela normal de Gestão de VM
+    (_empossar_obreiro_e_cargo, em api/v1/integracao/rotas_lojas.py) — para
+    não duplicar a regra de negócio de posse/troca de mandato. Só é
+    permitida quando a Loja está de fato órfã (sem VM em exercício), e só
+    pode ser chamada por:
+    - qualquer membro da Diretoria/SuperAdmin, a qualquer momento; ou
+    - o próprio Suplente-regente da Loja (o "Mestre Instalado imediato"),
+      SOMENTE se tiver recebido o poder via /conceder e ainda não o tiver
+      exercido (pode_indicar_veneravel=True) — poder de USO ÚNICO, consumido
+      (volta a False) imediatamente após a execução.
+
+    Defesa em profundidade: mesmo numa chamada direta à API (sem passar
+    pela UI), quem não for Diretoria nem o Suplente-regente autorizado
+    recebe 403.
+    """
+    _obter_loja_agregada_ou_404(db_core, regiao_id, loja_id)
+    if not str(loja_id).isdigit():
+        raise HTTPException(status_code=400, detail="Loja inválida.")
+
+    suplente = db_core.query(SuplenteConselho).filter_by(loja_id=str(loja_id)).first()
+    e_suplente_regente_autorizado = (
+        suplente is not None
+        and suplente.usuario_id == user.usuario_id
+        and suplente.pode_indicar_veneravel
+    )
+
+    if not (user.is_diretoria or e_suplente_regente_autorizado):
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas a Diretoria do Conselho ou o Mestre Instalado imediato desta Loja (com poder de transmissão concedido) podem executar esta ação."
+        )
+
+    vm_atual = _resolver_veneravel_atual_da_loja(db_lojas, loja_id)
+    if vm_atual:
+        raise HTTPException(
+            status_code=400,
+            detail="Esta Loja já possui Venerável Mestre em exercício — a transmissão emergencial só se aplica a Lojas órfãs (sem VM)."
+        )
+
+    from api.v1.integracao.rotas_lojas import _empossar_obreiro_e_cargo
+
+    resultado = _empossar_obreiro_e_cargo(
+        db_lojas,
+        cim=payload.cim,
+        nome_completo=payload.nome_completo,
+        email=payload.email,
+        cpf=payload.cpf,
+        loja_id=int(loja_id),
+        telefone=payload.telefone,
+        cargo_atual="Venerável Mestre",
+        data_inicio_mandato=payload.data_inicio_mandato,
+    )
+
+    if e_suplente_regente_autorizado:
+        suplente.pode_indicar_veneravel = False
+        db_core.commit()
+
+    logger.info(
+        f"Transmissão de cargo emergencial executada: Loja {loja_id} -> novo VM "
+        f"{resultado.get('nome_completo')} ({resultado.get('cim')}), por {user.usuario_id} "
+        f"(Região {regiao_id}, via {'Suplente-regente' if e_suplente_regente_autorizado else 'Diretoria'})"
+    )
+
+    return {
+        "message": f"Transmissão de cargo concluída: {resultado.get('message')}",
+        **resultado,
+    }
 
 class LojaAddRequest(BaseModel):
     loja_id: str
@@ -462,6 +1017,29 @@ def remover_loja_conselho(
     db.commit()
     return {"message": "Loja desvinculada do conselho com sucesso"}
 
+# ALTERAÇÃO (2026-09-12): antes, `autor_nome` era gravado como
+# f"Ir. {usuario_id}" (ex.: "Ir. 9900001") — nunca o nome real da pessoa.
+# Esta função resolve o nome completo de verdade em lojas_db (mesmo padrão
+# já usado em `obter_diretoria_regional`), com fallback para o próprio
+# identificador se a pessoa não for encontrada (nunca deve quebrar a
+# publicação de um aviso por causa disso).
+def _obter_nome_completo(identificador: Optional[str], db_lojas: Session) -> str:
+    if not identificador:
+        return "Irmão do Conselho"
+    obreiro = db_lojas.query(ObreiroIntegracao).filter(
+        (ObreiroIntegracao.cim == identificador) | (ObreiroIntegracao.cpf == identificador)
+    ).first()
+    return obreiro.nome_completo if obreiro else identificador
+
+
+# ALTERAÇÃO (2026-09-12): avisos de nível ALTO (Urgência) devem sempre
+# aparecer fixados no topo — não faz sentido depender de alguém lembrar de
+# marcar "fixar" manualmente numa urgência. Aplicado tanto na criação
+# quanto na edição.
+def _fixado_efetivo(nivel: str, fixado_solicitado: bool) -> bool:
+    return True if nivel == "ALTO" else fixado_solicitado
+
+
 class AvisoCreatePayload(BaseModel):
     titulo: str
     conteudo: str # Limite máximo: 200 palavras
@@ -481,33 +1059,85 @@ class AvisoUpdatePayload(BaseModel):
 @router.get("/{regiao_id}/avisos", summary="Lista os avisos e notificações do conselho")
 def listar_avisos_regionais(
     regiao_id: str,
-    incluir_deletados: bool = False,
-    user: RegionalUserContext = Depends(get_current_regional_user),
-    db: Session = Depends(get_db_core)
+    incluir_arquivados: bool = False,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
 ):
     """
-    Retorna os avisos da região ordenados por fixados primeiro e data mais recente.
-    Avisos deletados visualmente são ocultados para usuários comuns.
-    SuperAdmin pode visualizar todos (inclusive deletados visualmente para auditoria).
+    Retorna os avisos da região ordenados por prioridade de exibição:
+    1) Urgência (ALTO, mais recente primeiro) — sempre no topo, mesmo sobre fixados de outro nível;
+    2) Alerta (MEDIO) fixado, mais recente primeiro;
+    3) Alerta (MEDIO) não fixado;
+    4) Informativo (BAIXO) fixado, mais recente primeiro;
+    5) Informativo (BAIXO).
+
+    Avisos arquivados só aparecem para Diretoria/SuperAdmin que pedirem
+    explicitamente via `incluir_arquivados=true` (ALTERAÇÃO 2026-09-12: antes
+    só SuperAdmin podia ver; agora a Mesa Diretora também, para poder
+    reativar um item arquivado por engano ou por expiração automática).
     """
+    pode_ver_arquivados = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+
     query = db.query(AvisoRegional).filter(AvisoRegional.regiao_id == regiao_id)
-    
-    # Filtro de Deleção Visual
-    if not (user.role.upper() == 'SUPERADMIN' and incluir_deletados):
-        query = query.filter(AvisoRegional.deletado_visualmente == False)
-        
-    # Filtro de Validade para membros regulares
+
+    if not (pode_ver_arquivados and incluir_arquivados):
+        query = query.filter(AvisoRegional.arquivado == False)
+
+    # Filtro de Validade para membros regulares (Diretoria/SuperAdmin veem mesmo vencido)
     if not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
         query = query.filter(
             (AvisoRegional.data_validade == None) | (AvisoRegional.data_validade >= date.today())
         )
 
-    avisos = query.order_by(
-        AvisoRegional.fixado.desc(),
-        AvisoRegional.data_publicacao.desc(),
-        AvisoRegional.id.desc()
-    ).all()
-    
+    avisos = query.all()
+
+    # ALTERAÇÃO (2026-09-12): prioridade de exibição pedida pelo usuário —
+    # feita em Python (não em SQL) porque a lista já costuma ser pequena por
+    # Região e fica mais legível/fácil de manter do que um CASE gigante.
+    def _prioridade(a: AvisoRegional) -> int:
+        if a.nivel == "ALTO":
+            return 0
+        if a.nivel == "MEDIO" and a.fixado:
+            return 1
+        if a.nivel == "MEDIO":
+            return 2
+        if a.fixado:
+            return 3
+        return 4
+
+    # Sort estável do Python: aplica primeiro o critério menos importante
+    # (mais recente primeiro) e por último o mais importante (prioridade),
+    # que então prevalece sem perder o desempate por data dentro do grupo.
+    avisos.sort(key=lambda a: a.data_publicacao or date.min, reverse=True)
+    avisos.sort(key=_prioridade)
+
+    # Tag "lido": quais desses avisos o usuário atual já leu.
+    ids_avisos = [a.id for a in avisos]
+    ids_lidos = set()
+    if ids_avisos and user.usuario_id:
+        ids_lidos = {
+            l.aviso_id for l in db.query(AvisoLido).filter(
+                AvisoLido.aviso_id.in_(ids_avisos),
+                AvisoLido.usuario_id == user.usuario_id
+            ).all()
+        }
+
+    # CORREÇÃO (2026-09-14): `loja_id` aqui é sempre o ID INTERNO de
+    # `lojas_db` (ex.: 266), nunca o "número da loja" que as pessoas usam
+    # para se identificar (ex.: 901) — achado durante os testes com o
+    # usuário 9900001 (Presidente/VM), que mostrava "(Loja 266)" na tela em
+    # vez de "(Loja 901)". Resolve aqui o número real de cada Loja envolvida,
+    # numa única consulta, para o frontend exibir o número correto sem
+    # precisar decodificar o ID interno.
+    ids_lojas_num = {a.loja_id for a in avisos if a.loja_id and str(a.loja_id).isdigit()}
+    numeros_loja = {}
+    if ids_lojas_num:
+        numeros_loja = {
+            str(l.id): l.numero_loja
+            for l in db_lojas.query(LojaIntegracao).filter(LojaIntegracao.id.in_([int(i) for i in ids_lojas_num])).all()
+        }
+
     return [
         {
             "id": a.id,
@@ -519,48 +1149,93 @@ def listar_avisos_regionais(
             "autor_nome": a.autor_nome,
             "autor_cargo": a.autor_cargo,
             "loja_id": a.loja_id,
+            "loja_numero": numeros_loja.get(str(a.loja_id)) if a.loja_id else None,
             "fixado": a.fixado,
             "data_publicacao": a.data_publicacao.isoformat() if a.data_publicacao else None,
             "data_validade": a.data_validade.isoformat() if a.data_validade else None,
-            "deletado_visualmente": a.deletado_visualmente,
+            "arquivado": a.arquivado,
+            "arquivado_em": a.arquivado_em.isoformat() if a.arquivado_em else None,
+            "arquivado_por": a.arquivado_por,
+            "lido": a.id in ids_lidos,
             "pode_editar": (user.role.upper() == 'SUPERADMIN' or user.is_diretoria or (user.loja_id and str(user.loja_id) == str(a.loja_id)) or user.usuario_id == a.autor_id),
             "pode_excluir": (user.role.upper() == 'SUPERADMIN' or user.is_diretoria or (user.loja_id and str(user.loja_id) == str(a.loja_id)) or user.usuario_id == a.autor_id),
+            "pode_reativar": pode_ver_arquivados,
             "eh_superadmin": user.role.upper() == 'SUPERADMIN'
         }
         for a in avisos
     ]
 
-@router.post("/{regiao_id}/avisos", summary="Publica um novo aviso ou notificação no conselho")
-def criar_aviso_regional(
+
+@router.post("/{regiao_id}/avisos/{aviso_id}/marcar-lido", summary="Marca um aviso/notificação como lido pelo usuário atual")
+def marcar_aviso_como_lido(
     regiao_id: str,
-    payload: AvisoCreatePayload,
+    aviso_id: str,
     user: RegionalUserContext = Depends(get_current_regional_user),
     db: Session = Depends(get_db_core)
 ):
     """
-    Todos os membros do conselho podem postar avisos com limite máximo de 200 palavras.
+    Registra a leitura do aviso pelo usuário atual (tag "lido"). Idempotente
+    — marcar de novo um aviso já lido não gera duplicata nem erro.
+    """
+    aviso = db.query(AvisoRegional).filter(
+        AvisoRegional.id == aviso_id, AvisoRegional.regiao_id == regiao_id
+    ).first()
+    if not aviso:
+        raise HTTPException(status_code=404, detail="Aviso não encontrado.")
+
+    if not user.usuario_id:
+        return {"message": "Sem identificador de usuário para registrar leitura."}
+
+    ja_lido = db.query(AvisoLido).filter(
+        AvisoLido.aviso_id == aviso_id, AvisoLido.usuario_id == user.usuario_id
+    ).first()
+    if not ja_lido:
+        db.add(AvisoLido(aviso_id=aviso_id, usuario_id=user.usuario_id))
+        db.commit()
+
+    return {"message": "Leitura registrada."}
+
+@router.post("/{regiao_id}/avisos", summary="Publica um novo aviso ou notificação no conselho")
+def criar_aviso_regional(
+    regiao_id: str,
+    payload: AvisoCreatePayload,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Todos os membros do conselho podem postar avisos com limite máximo de 200 palavras
+    — incluindo o Operador Administrativo da Loja (ver
+    `claude/decisao-controle-acesso-cadastro.md`, seção 9), sempre com `loja_id`
+    travado na própria Loja (linha `loja_id=str(user.loja_id)...` abaixo já
+    faz isso automaticamente, sem precisar de lógica extra aqui).
     """
     palavras = [w for w in payload.conteudo.strip().split() if w]
     if len(palavras) > 200:
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=f"O conteúdo excede o limite máximo permitido de 200 palavras (contém {len(palavras)} palavras)."
         )
+
+    nivel = payload.nivel.upper() if payload.nivel else "BAIXO"
+    fixado_solicitado = bool(payload.fixado and (user.is_diretoria or user.role.upper() == 'SUPERADMIN'))
 
     novo_aviso = AvisoRegional(
         regiao_id=regiao_id,
         titulo=payload.titulo.strip(),
         conteudo=payload.conteudo.strip(),
-        nivel=payload.nivel.upper() if payload.nivel else "BAIXO",
+        nivel=nivel,
         tipo=payload.tipo.upper() if payload.tipo else "AVISO",
         data_validade=payload.data_validade,
         autor_id=user.usuario_id,
-        autor_nome=f"Ir. {user.usuario_id}" if user.usuario_id else "Irmão do Conselho",
-        autor_cargo=user.role,
+        # CORREÇÃO (2026-09-12): antes gravava f"Ir. {usuario_id}" (ex.: "Ir.
+        # 9900001"), nunca o nome real da pessoa — ver _obter_nome_completo.
+        autor_nome=_obter_nome_completo(user.usuario_id, db_lojas),
+        autor_cargo=(f"Operador Administrativo ({user.slot.capitalize()})" if isinstance(user, OperadorAdministrativoContext) else user.role),
         loja_id=str(user.loja_id) if user.loja_id else None,
-        fixado=bool(payload.fixado and (user.is_diretoria or user.role.upper() == 'SUPERADMIN')),
+        fixado=_fixado_efetivo(nivel, fixado_solicitado),
         data_publicacao=date.today(),
-        deletado_visualmente=False
+        arquivado=False
     )
     db.add(novo_aviso)
     db.commit()
@@ -572,12 +1247,14 @@ def atualizar_aviso_regional(
     regiao_id: str,
     aviso_id: str,
     payload: AvisoUpdatePayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     """
     Edição de aviso: SuperAdmin e Diretoria podem editar qualquer post.
-    Lojas podem editar exclusivamente seus próprios posts.
+    Lojas podem editar exclusivamente seus próprios posts — inclui o
+    Operador Administrativo, que só edita avisos da própria Loja
+    (a checagem `user.loja_id == aviso.loja_id` abaixo já cobre isso).
     """
     aviso = db.query(AvisoRegional).filter(
         AvisoRegional.id == aviso_id,
@@ -615,23 +1292,32 @@ def atualizar_aviso_regional(
     if payload.fixado is not None and (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
         aviso.fixado = payload.fixado
 
+    # Urgência é sempre fixada, mesmo que ninguém tenha marcado explicitamente
+    # (e mesmo que o nível já fosse ALTO antes desta edição).
+    aviso.fixado = _fixado_efetivo(aviso.nivel, aviso.fixado)
+
     db.commit()
     db.refresh(aviso)
     return {"status": "success", "message": "Aviso atualizado com sucesso."}
 
-@router.delete("/{regiao_id}/avisos/{aviso_id}", summary="Remove ou deleta visualmente um aviso do conselho")
+@router.delete("/{regiao_id}/avisos/{aviso_id}", summary="Arquiva ou remove definitivamente um aviso do conselho")
 def excluir_aviso_regional(
     regiao_id: str,
     aviso_id: str,
     hard_delete: bool = False,
-    user: RegionalUserContext = Depends(get_current_regional_user),
-    db: Session = Depends(get_db_core)
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
 ):
     """
-    Deleção:
-    - SuperAdmin: pode fazer Hard Delete (exclusão definitiva física) ou deleção visual.
-    - Diretoria: deleção visual de qualquer post.
-    - Lojas: deleção visual exclusivamente de posts da própria loja.
+    ALTERAÇÃO (2026-09-12): o soft-delete passou a se chamar "arquivamento"
+    (ver AvisoRegional.arquivado) — mesma mecânica de sempre, mas agora com
+    log de quem/quando (arquivado_em/arquivado_por) e reversível via
+    `PUT /avisos/{id}/reativar`.
+
+    - SuperAdmin: pode fazer Hard Delete (exclusão definitiva física) ou arquivar.
+    - Diretoria: arquiva qualquer post.
+    - Lojas: arquiva exclusivamente posts da própria loja.
     """
     aviso = db.query(AvisoRegional).filter(
         AvisoRegional.id == aviso_id,
@@ -641,24 +1327,61 @@ def excluir_aviso_regional(
         raise HTTPException(status_code=404, detail="Aviso não encontrado.")
 
     pode_excluir = (
-        user.role.upper() == 'SUPERADMIN' 
-        or user.is_diretoria 
+        user.role.upper() == 'SUPERADMIN'
+        or user.is_diretoria
         or (user.loja_id and str(user.loja_id) == str(aviso.loja_id))
         or (user.usuario_id and user.usuario_id == aviso.autor_id)
     )
     if not pode_excluir:
-        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode deletar avisos criados por sua própria Loja.")
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode arquivar avisos criados por sua própria Loja.")
+
+    rotulo_tipo = "Notificação" if aviso.tipo == "NOTIFICACAO" else "Aviso"
+    # CORREÇÃO (2026-09-12): concordância de gênero exata pedida pelo usuário
+    # ("Aviso arquivado" / "Notificação arquivada") — antes usava a forma
+    # genérica "arquivado(a)" para os dois casos.
+    sufixo_genero = "a" if aviso.tipo == "NOTIFICACAO" else "o"
 
     if hard_delete:
         if user.role.upper() != 'SUPERADMIN':
             raise HTTPException(status_code=403, detail="Apenas o SuperAdmin possui permissão para deletar fisicamente um registro do banco de dados.")
         db.delete(aviso)
         db.commit()
-        return {"status": "success", "tipo_delecao": "FISICA", "message": "Registro deletado definitivamente do banco de dados."}
+        return {"status": "success", "tipo_delecao": "FISICA", "message": f"{rotulo_tipo} deletad{sufixo_genero} definitivamente do banco de dados."}
     else:
-        aviso.deletado_visualmente = True
+        aviso.arquivado = True
+        aviso.arquivado_em = datetime.utcnow()
+        aviso.arquivado_por = _obter_nome_completo(user.usuario_id, db_lojas)
         db.commit()
-        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Aviso ocultado visualmente com sucesso (registro mantido no banco)."}
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": f"{rotulo_tipo} arquivad{sufixo_genero} com sucesso."}
+
+@router.put("/{regiao_id}/avisos/{aviso_id}/reativar", summary="Reativa (desarquiva) um aviso ou notificação")
+def reativar_aviso_regional(
+    regiao_id: str,
+    aviso_id: str,
+    diretor: RegionalUserContext = Depends(get_current_director),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Desfaz o arquivamento de um Aviso/Notificação — seja ele manual ou
+    automático (por expiração, ver `arquivar_avisos_vencidos_automaticamente`
+    em `core/tarefas_agendadas.py`). Exclusivo para Diretoria/SuperAdmin.
+    """
+    aviso = db.query(AvisoRegional).filter(
+        AvisoRegional.id == aviso_id, AvisoRegional.regiao_id == regiao_id
+    ).first()
+    if not aviso:
+        raise HTTPException(status_code=404, detail="Aviso não encontrado.")
+
+    rotulo_tipo = "Notificação" if aviso.tipo == "NOTIFICACAO" else "Aviso"
+    sufixo_genero = "a" if aviso.tipo == "NOTIFICACAO" else "o"
+
+    aviso.arquivado = False
+    aviso.arquivado_em = None
+    aviso.arquivado_por = None
+    db.commit()
+
+    logger.info(f"{rotulo_tipo} {aviso_id} reativad{sufixo_genero} por {diretor.usuario_id} na Região {regiao_id}")
+    return {"status": "success", "message": f"{rotulo_tipo} reativad{sufixo_genero} com sucesso."}
 
 # -------------------------------------------------------------
 # MÓDULO 03: MURAL DE PEDIDOS DE ADMISSÃO (PRÉVIAS E CONSIDERAÇÕES)
@@ -685,16 +1408,28 @@ class ConsideracaoCreatePayload(BaseModel):
 @router.get("/{regiao_id}/admissoes", summary="Lista prévias de admissão do conselho")
 def listar_previas_admissao(
     regiao_id: str,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     """
     Retorna as prévias de admissão (Iniciação, Filiação, Regularização) ativas no conselho.
+
+    RESTRIÇÃO (2026-09-15): para o Operador Administrativo da Loja, a
+    listagem é restrita à própria Loja (`claude/decisao-controle-acesso-cadastro.md`,
+    seção 9) — diferente de VM/Suplente/Diretoria, que veem as prévias de
+    todas as Lojas do conselho (é assim que o parecer entre Lojas funciona).
+    Abrir a mesma visão para o Operador Administrativo exporia dado pessoal
+    de candidato de Loja alheia a um perfil puramente administrativo.
     """
-    previas = db.query(PreviaAdmissao).filter(
+    query = db.query(PreviaAdmissao).filter(
         PreviaAdmissao.regiao_id == regiao_id,
         PreviaAdmissao.deletado_visualmente == False
-    ).order_by(PreviaAdmissao.data_postagem.desc()).all()
+    )
+    is_operador = isinstance(user, OperadorAdministrativoContext)
+    if is_operador:
+        query = query.filter(PreviaAdmissao.loja_id == str(user.loja_id))
+
+    previas = query.order_by(PreviaAdmissao.data_postagem.desc()).all()
 
     resultado = []
     for p in previas:
@@ -738,7 +1473,11 @@ def listar_previas_admissao(
             "autor_nome": p.autor_nome,
             "total_consideracoes": len(cons_ativas),
             "pode_editar": pode_editar,
-            "pode_considerar": True
+            # Considerações são parecer/julgamento entre Lojas — decisão
+            # política que o Operador Administrativo não tem (ver seção 5/9
+            # do documento de decisão). Para qualquer outro perfil resolvido
+            # aqui, continua True como sempre foi.
+            "pode_considerar": not is_operador
         })
 
     return resultado
@@ -752,7 +1491,7 @@ def atualizar_status_previa(
     regiao_id: str,
     previa_id: str,
     payload: StatusUpdatePayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     previa = db.query(PreviaAdmissao).filter(
@@ -762,12 +1501,21 @@ def atualizar_status_previa(
     if not previa:
         raise HTTPException(status_code=404, detail="Prévia não encontrada.")
 
+    # Diferente de VM/Suplente/Diretoria (que acompanham status de qualquer
+    # Loja, peer review), o Operador Administrativo só pode atualizar o
+    # status de prévia da PRÓPRIA Loja — acompanhamento secretarial, não
+    # decisão política.
+    if isinstance(user, OperadorAdministrativoContext) and str(user.loja_id) != str(previa.loja_id):
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode atualizar o status de prévias de sua própria Loja.")
+
     novo_status = payload.status.upper()
     previa.status = novo_status
 
     if novo_status in ["AVERIGUADO", "CONCLUIDO"]:
         if user.is_diretoria:
             previa.verificado_por_nome = f"Mesa Diretora ({user.role})"
+        elif isinstance(user, OperadorAdministrativoContext):
+            previa.verificado_por_nome = f"Operador Administrativo ({user.slot.capitalize()}) da Loja {user.loja_id}"
         elif user.loja_id:
             previa.verificado_por_nome = f"VM da Loja {user.loja_id}"
         else:
@@ -798,9 +1546,15 @@ async def criar_previa_com_upload(
     candidato_nome: str = Form(...),
     data_limite: Optional[str] = Form(None),
     arquivo: Optional[UploadFile] = File(None),
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
+    # O Operador Administrativo só pode criar prévia para a própria Loja
+    # (ver seção 9 do documento de decisão) — diferente de VM/Suplente/
+    # Diretoria, para quem esse campo nunca foi restrito.
+    if isinstance(user, OperadorAdministrativoContext) and str(loja_id) != str(user.loja_id):
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode criar prévia de admissão para a própria Loja.")
+
     previa_id = str(uuid.uuid4())
     limite_dt = None
     if data_limite:
@@ -856,9 +1610,12 @@ async def criar_previa_com_upload(
 def criar_previa_json(
     regiao_id: str,
     payload: PreviaCreatePayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
+    if isinstance(user, OperadorAdministrativoContext) and str(payload.loja_id) != str(user.loja_id):
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode criar prévia de admissão para a própria Loja.")
+
     previa_id = str(uuid.uuid4())
     limite_dt = payload.data_limite or (date.today() + timedelta(days=30))
     pdf_nome_salvo = f"{previa_id}.pdf"
@@ -935,7 +1692,7 @@ def obter_pdf_previa(
 def listar_consideracoes_previa(
     regiao_id: str,
     previa_id: str,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     previa = db.query(PreviaAdmissao).filter(
@@ -944,6 +1701,9 @@ def listar_consideracoes_previa(
     ).first()
     if not previa:
         raise HTTPException(status_code=404, detail="Prévia não encontrada.")
+
+    if isinstance(user, OperadorAdministrativoContext) and str(user.loja_id) != str(previa.loja_id):
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode ver considerações de prévias de sua própria Loja.")
 
     consideracoes = db.query(ConsideracaoPrevia).filter(
         ConsideracaoPrevia.previa_id == previa_id,
@@ -1027,7 +1787,7 @@ def excluir_previa_admissao(
     regiao_id: str,
     previa_id: str,
     hard_delete: bool = False,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     previa = db.query(PreviaAdmissao).filter(
@@ -1045,6 +1805,8 @@ def excluir_previa_admissao(
     )
     if not pode_excluir:
         raise HTTPException(status_code=403, detail="Permissão negada. Você só pode remover prévias de sua própria Loja.")
+    # hard_delete abaixo já exige role SUPERADMIN explicitamente — Operador
+    # Administrativo nunca passa dessa checagem, só arquivamento visual.
 
     if hard_delete:
         if user.role.upper() != 'SUPERADMIN':
@@ -2018,7 +2780,7 @@ def listar_documentos_regionais(
     categoria: Optional[str] = None,
     tipo_origem: Optional[str] = None,
     busca: Optional[str] = None,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     query = db.query(DocumentoRegional).filter(
@@ -2086,13 +2848,18 @@ def listar_documentos_regionais(
 def publicar_documento_regional(
     regiao_id: str,
     payload: DocumentoPayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     tipo_orig = payload.tipo_origem.upper()
 
     if tipo_orig == "CONSELHO" and not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
         raise HTTPException(status_code=403, detail="Apenas a Mesa Diretora ou SuperAdmin podem publicar documentos oficiais do Conselho.")
+
+    # O Operador Administrativo só publica documento tipo LOJA em nome da
+    # própria Loja (ver seção 9 do documento de decisão).
+    if isinstance(user, OperadorAdministrativoContext) and str(payload.loja_emissora_id) != str(user.loja_id):
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode publicar documentos em nome da própria Loja.")
 
     regiao = db.query(Regiao).filter(Regiao.id == regiao_id).first()
     conselho_nome = regiao.nome if regiao else "Conselho Regional de Veneráveis Mestres"
@@ -2129,6 +2896,9 @@ def publicar_documento_regional(
     if user.is_diretoria:
         autor_nome = f"Ir.'. {user.usuario_id}"
         autor_cargo = f"{user.role} Regional"
+    elif isinstance(user, OperadorAdministrativoContext):
+        autor_nome = f"Ir.'. {user.usuario_id}"
+        autor_cargo = f"Operador Administrativo ({user.slot.capitalize()})"
     elif user.loja_id:
         autor_nome = f"Ir.'. {user.usuario_id}"
         autor_cargo = "Venerável Mestre"
@@ -2200,12 +2970,15 @@ def upload_documento_regional(
     data_documento: Optional[str] = Form(None),
     visibilidade: str = Form("PUBLICO_CONSELHO"),
     arquivo: UploadFile = File(...),
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     tipo_orig = tipo_origem.upper()
     if tipo_orig == "CONSELHO" and not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
         raise HTTPException(status_code=403, detail="Apenas a Mesa Diretora ou SuperAdmin podem publicar documentos do Conselho.")
+
+    if isinstance(user, OperadorAdministrativoContext) and str(loja_emissora_id) != str(user.loja_id):
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode publicar documentos em nome da própria Loja.")
 
     dt_doc = date.today()
     if data_documento:
@@ -2301,7 +3074,7 @@ def atualizar_documento_regional(
     regiao_id: str,
     documento_id: str,
     payload: DocumentoPayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     doc = db.query(DocumentoRegional).filter(
@@ -2331,7 +3104,7 @@ def excluir_documento_regional(
     regiao_id: str,
     documento_id: str,
     hard_delete: bool = False,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     doc = db.query(DocumentoRegional).filter(
@@ -2971,7 +3744,7 @@ def listar_topicos_comunicacao(
     tipo_alcance: Optional[str] = None,
     busca: Optional[str] = None,
     loja_id: Optional[str] = None,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core)
 ):
     """
@@ -3063,7 +3836,7 @@ def listar_topicos_comunicacao(
 def criar_topico_comunicacao(
     regiao_id: str,
     payload: TopicoCriarPayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core),
     db_lojas: Session = Depends(get_db_lojas)
 ):
@@ -3074,12 +3847,21 @@ def criar_topico_comunicacao(
 
     is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
     tipo = payload.tipo_alcance.upper()
+    is_operador = isinstance(user, OperadorAdministrativoContext)
 
     if tipo == "CIRCULAR" and not is_diretoria:
         raise HTTPException(status_code=403, detail="Apenas a Diretoria do Conselho pode emitir Pranchas Circulares Gerais.")
 
     if tipo == "LOJA_LOJA" and not payload.loja_destino_id:
         raise HTTPException(status_code=400, detail="Para canal restrito Inter-Lojas é obrigatório indicar a Loja de Destino.")
+
+    # O Operador Administrativo só abre tópico em nome da própria Loja —
+    # a origem nunca é aceita do payload para esse perfil, sempre travada
+    # na própria Loja (ver seção 9 do documento de decisão).
+    if is_operador:
+        payload.loja_origem_id = str(user.loja_id)
+        payload.loja_origem_nome = None
+        payload.loja_origem_numero = None
 
     # Resolver nome do autor
     autor_nome = f"Ir.'. {user.usuario_id}"
@@ -3170,7 +3952,7 @@ def criar_topico_comunicacao(
 def obter_topico_comunicacao(
     regiao_id: str,
     topico_id: str,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core),
     db_lojas: Session = Depends(get_db_lojas)
 ):
@@ -3266,7 +4048,7 @@ def enviar_mensagem_comunicacao(
     regiao_id: str,
     topico_id: str,
     payload: MensagemCriarPayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core),
     db_lojas: Session = Depends(get_db_lojas)
 ):
@@ -3343,7 +4125,7 @@ def upload_anexo_comunicacao(
     topico_id: str,
     conteudo: str = Form(...),
     arquivo: UploadFile = File(...),
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core),
     db_lojas: Session = Depends(get_db_lojas)
 ):
@@ -3424,7 +4206,7 @@ def atualizar_status_topico(
     regiao_id: str,
     topico_id: str,
     payload: TopicoStatusPayload,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core)
 ):
     topico = db_core.query(TopicoComunicacao).filter(
@@ -3434,6 +4216,12 @@ def atualizar_status_topico(
 
     if not topico:
         raise HTTPException(status_code=404, detail="Tópico não encontrado.")
+
+    # O Operador Administrativo só altera status de tópico que envolva a
+    # própria Loja (origem ou destino) — diferente de VM/Suplente/Diretoria,
+    # para quem esta rota nunca teve restrição de posse.
+    if isinstance(user, OperadorAdministrativoContext) and str(user.loja_id) not in (str(topico.loja_origem_id), str(topico.loja_destino_id)):
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode alterar o status de tópicos que envolvam sua própria Loja.")
 
     novo_status = payload.status.upper()
     if novo_status not in ["ABERTA", "RESPONDIDA", "CONCLUIDA", "ARQUIVADA"]:
@@ -3496,3 +4284,387 @@ def exportar_prancha_pdf(
         media_type="application/pdf"
     )
 
+
+# ==============================================================================
+# MÓDULO 11: AGENDA DO CONSELHO (CALENDÁRIO DE EVENTOS)
+# ==============================================================================
+# Módulo novo (2026-09-15) — ver `claude/decisao-controle-acesso-cadastro.md`,
+# seção 9. Leitura SEMPRE region-wide (mural, igual Avisos); escrita aberta a
+# VM/Suplente/Diretoria/SuperAdmin e também ao Operador Administrativo da
+# Loja, sempre com `loja_organizadora_id` travado na Loja de quem cria.
+# Integra com Admissões (`previa_admissao_id`) e com Avisos (`gerar_aviso`).
+
+TIPOS_EVENTO_AGENDA_VALIDOS = ["SESSAO", "REUNIAO", "VISITA", "ADMINISTRATIVO", "INICIACAO", "OUTRO"]
+STATUS_EVENTO_AGENDA_VALIDOS = ["AGENDADO", "REALIZADO", "CANCELADO"]
+
+
+class EventoAgendaCreatePayload(BaseModel):
+    titulo: str
+    descricao: Optional[str] = None
+    tipo: str = "OUTRO"
+    data_inicio: datetime
+    data_fim: Optional[datetime] = None
+    previa_admissao_id: Optional[str] = None
+    gerar_aviso: bool = False
+
+
+class EventoAgendaUpdatePayload(BaseModel):
+    titulo: Optional[str] = None
+    descricao: Optional[str] = None
+    tipo: Optional[str] = None
+    data_inicio: Optional[datetime] = None
+    data_fim: Optional[datetime] = None
+    status: Optional[str] = None
+
+
+@router.get("/{regiao_id}/agenda/eventos", summary="Lista os eventos da agenda do conselho")
+def listar_eventos_agenda(
+    regiao_id: str,
+    tipo: Optional[str] = None,
+    loja_id: Optional[str] = None,
+    status: Optional[str] = None,
+    data_de: Optional[date] = None,
+    data_ate: Optional[date] = None,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core)
+):
+    """
+    Mural de eventos SEMPRE visível a todo o conselho — decisão explícita do
+    usuário (diferente de Documentos/Comunicação, que isolam por Loja). O
+    Operador Administrativo enxerga a mesma lista que VM/Suplente/Diretoria.
+    """
+    query = db.query(EventoAgenda).filter(EventoAgenda.regiao_id == regiao_id)
+
+    if tipo and tipo.upper() != "TODOS":
+        query = query.filter(EventoAgenda.tipo == tipo.upper())
+    if status and status.upper() != "TODOS":
+        query = query.filter(EventoAgenda.status == status.upper())
+    if loja_id:
+        query = query.filter(EventoAgenda.loja_organizadora_id == str(loja_id))
+    if data_de:
+        query = query.filter(EventoAgenda.data_inicio >= datetime.combine(data_de, datetime.min.time()))
+    if data_ate:
+        query = query.filter(EventoAgenda.data_inicio <= datetime.combine(data_ate, datetime.max.time()))
+
+    eventos = query.order_by(EventoAgenda.data_inicio.asc()).all()
+
+    return [
+        {
+            "id": e.id,
+            "regiao_id": e.regiao_id,
+            "titulo": e.titulo,
+            "descricao": e.descricao,
+            "tipo": e.tipo,
+            "data_inicio": e.data_inicio.isoformat(),
+            "data_fim": e.data_fim.isoformat() if e.data_fim else None,
+            "loja_organizadora_id": e.loja_organizadora_id,
+            "loja_organizadora_nome": e.loja_organizadora_nome,
+            "loja_organizadora_numero": e.loja_organizadora_numero,
+            "criado_por_id": e.criado_por_id,
+            "criado_por_nome": e.criado_por_nome,
+            "criado_por_tipo": e.criado_por_tipo,
+            "previa_admissao_id": e.previa_admissao_id,
+            "aviso_gerado_id": e.aviso_gerado_id,
+            "status": e.status,
+            "criado_em": e.criado_em.isoformat() if e.criado_em else None,
+            "pode_editar": (
+                user.role.upper() == 'SUPERADMIN'
+                or user.is_diretoria
+                or (user.loja_id and str(user.loja_id) == str(e.loja_organizadora_id))
+                or (user.usuario_id and user.usuario_id == e.criado_por_id)
+            )
+        }
+        for e in eventos
+    ]
+
+
+@router.post("/{regiao_id}/agenda/eventos", summary="Cria novo evento na agenda do conselho")
+def criar_evento_agenda(
+    regiao_id: str,
+    payload: EventoAgendaCreatePayload,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core),
+    db_lojas: Session = Depends(get_db_lojas)
+):
+    """
+    Aberto a VM, Suplente, Diretoria, SuperAdmin e Operador Administrativo —
+    esta é justamente a necessidade que motivou o módulo (Secretário/
+    Chanceler cadastrando a agenda da própria Loja sem depender do VM).
+    """
+    tipo = (payload.tipo or "OUTRO").upper()
+    if tipo not in TIPOS_EVENTO_AGENDA_VALIDOS:
+        raise HTTPException(status_code=400, detail=f"Tipo de evento inválido. Use um de: {', '.join(TIPOS_EVENTO_AGENDA_VALIDOS)}.")
+
+    is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
+    is_operador = isinstance(user, OperadorAdministrativoContext)
+
+    # Vínculo com Admissões: só aceita prévia da própria Região e, se quem
+    # cria for Operador Administrativo, só a própria Loja (a prévia carrega
+    # dado pessoal de candidato — mesma restrição já aplicada em Admissões).
+    if payload.previa_admissao_id:
+        previa = db.query(PreviaAdmissao).filter(
+            PreviaAdmissao.id == payload.previa_admissao_id,
+            PreviaAdmissao.regiao_id == regiao_id
+        ).first()
+        if not previa:
+            raise HTTPException(status_code=404, detail="Prévia de admissão referenciada não foi encontrada nesta região.")
+        if is_operador and str(previa.loja_id) != str(user.loja_id):
+            raise HTTPException(status_code=403, detail="Você só pode vincular o evento a uma prévia de admissão da própria Loja.")
+
+    # Loja organizadora: travada na própria Loja de quem cria, quando
+    # aplicável — nunca aceita um valor arbitrário vindo do cliente.
+    loja_organizadora_id = None
+    loja_organizadora_nome = None
+    loja_organizadora_numero = None
+    if user.loja_id:
+        loja_organizadora_id = str(user.loja_id)
+        loja_info = db_lojas.query(LojaIntegracao).filter(
+            LojaIntegracao.id == int(user.loja_id) if str(user.loja_id).isdigit() else False
+        ).first()
+        if loja_info:
+            loja_organizadora_nome = loja_info.nome_loja
+            loja_organizadora_numero = loja_info.numero_loja
+
+    if is_operador:
+        criado_por_tipo = f"OPERADOR_ADMINISTRATIVO_{user.slot}"
+        criado_por_nome = f"Operador Administrativo ({user.slot.capitalize()}) — {_obter_nome_completo(user.usuario_id, db_lojas)}"
+    elif is_diretoria:
+        criado_por_tipo = "DIRETORIA"
+        criado_por_nome = f"Mesa Diretora ({user.role})"
+    else:
+        criado_por_tipo = "LOJA"
+        criado_por_nome = _obter_nome_completo(user.usuario_id, db_lojas)
+
+    novo_evento = EventoAgenda(
+        regiao_id=regiao_id,
+        titulo=payload.titulo.strip(),
+        descricao=payload.descricao.strip() if payload.descricao else None,
+        tipo=tipo,
+        data_inicio=payload.data_inicio,
+        data_fim=payload.data_fim,
+        loja_organizadora_id=loja_organizadora_id,
+        loja_organizadora_nome=loja_organizadora_nome,
+        loja_organizadora_numero=loja_organizadora_numero,
+        criado_por_id=user.usuario_id,
+        criado_por_nome=criado_por_nome,
+        criado_por_tipo=criado_por_tipo,
+        previa_admissao_id=payload.previa_admissao_id,
+        status="AGENDADO"
+    )
+    db.add(novo_evento)
+    db.commit()
+    db.refresh(novo_evento)
+
+    aviso_gerado_id = None
+    if payload.gerar_aviso:
+        quando = novo_evento.data_inicio.strftime("%d/%m/%Y às %H:%M")
+        local = f" — {loja_organizadora_nome}" if loja_organizadora_nome else ""
+        novo_aviso = AvisoRegional(
+            regiao_id=regiao_id,
+            titulo=f"Lembrete: {novo_evento.titulo}",
+            conteudo=f"Evento agendado para {quando}{local}." + (f"\n\n{novo_evento.descricao}" if novo_evento.descricao else ""),
+            nivel="MEDIO",
+            tipo="NOTIFICACAO",
+            autor_id=user.usuario_id,
+            autor_nome=criado_por_nome,
+            autor_cargo=criado_por_tipo,
+            loja_id=loja_organizadora_id,
+            fixado=False,
+            data_publicacao=date.today(),
+            arquivado=False
+        )
+        db.add(novo_aviso)
+        db.commit()
+        db.refresh(novo_aviso)
+        aviso_gerado_id = novo_aviso.id
+        novo_evento.aviso_gerado_id = aviso_gerado_id
+        db.commit()
+
+    return {
+        "status": "success",
+        "evento_id": novo_evento.id,
+        "aviso_gerado_id": aviso_gerado_id,
+        "message": "Evento criado com sucesso."
+    }
+
+
+@router.put("/{regiao_id}/agenda/eventos/{evento_id}", summary="Edita um evento da agenda")
+def atualizar_evento_agenda(
+    regiao_id: str,
+    evento_id: str,
+    payload: EventoAgendaUpdatePayload,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core)
+):
+    evento = db.query(EventoAgenda).filter(
+        EventoAgenda.id == evento_id,
+        EventoAgenda.regiao_id == regiao_id
+    ).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+
+    pode_editar = (
+        user.role.upper() == 'SUPERADMIN'
+        or user.is_diretoria
+        or (user.loja_id and str(user.loja_id) == str(evento.loja_organizadora_id))
+        or (user.usuario_id and user.usuario_id == evento.criado_por_id)
+    )
+    if not pode_editar:
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode editar eventos organizados pela própria Loja.")
+
+    if payload.titulo is not None:
+        evento.titulo = payload.titulo.strip()
+    if payload.descricao is not None:
+        evento.descricao = payload.descricao.strip()
+    if payload.tipo is not None:
+        tipo = payload.tipo.upper()
+        if tipo not in TIPOS_EVENTO_AGENDA_VALIDOS:
+            raise HTTPException(status_code=400, detail=f"Tipo de evento inválido. Use um de: {', '.join(TIPOS_EVENTO_AGENDA_VALIDOS)}.")
+        evento.tipo = tipo
+    if payload.data_inicio is not None:
+        evento.data_inicio = payload.data_inicio
+    if payload.data_fim is not None:
+        evento.data_fim = payload.data_fim
+    if payload.status is not None:
+        status_novo = payload.status.upper()
+        if status_novo not in STATUS_EVENTO_AGENDA_VALIDOS:
+            raise HTTPException(status_code=400, detail=f"Status inválido. Use um de: {', '.join(STATUS_EVENTO_AGENDA_VALIDOS)}.")
+        evento.status = status_novo
+
+    evento.atualizado_em = datetime.utcnow()
+    db.commit()
+    return {"status": "success", "message": "Evento atualizado com sucesso."}
+
+
+@router.delete("/{regiao_id}/agenda/eventos/{evento_id}", summary="Cancela ou remove definitivamente um evento")
+def excluir_evento_agenda(
+    regiao_id: str,
+    evento_id: str,
+    hard_delete: bool = False,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core)
+):
+    evento = db.query(EventoAgenda).filter(
+        EventoAgenda.id == evento_id,
+        EventoAgenda.regiao_id == regiao_id
+    ).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+
+    pode_excluir = (
+        user.role.upper() == 'SUPERADMIN'
+        or user.is_diretoria
+        or (user.loja_id and str(user.loja_id) == str(evento.loja_organizadora_id))
+        or (user.usuario_id and user.usuario_id == evento.criado_por_id)
+    )
+    if not pode_excluir:
+        raise HTTPException(status_code=403, detail="Permissão negada. Você só pode cancelar eventos organizados pela própria Loja.")
+
+    if hard_delete:
+        if user.role.upper() != 'SUPERADMIN':
+            raise HTTPException(status_code=403, detail="Apenas o SuperAdmin pode deletar fisicamente um evento.")
+        db.delete(evento)
+        db.commit()
+        return {"status": "success", "tipo_delecao": "FISICA", "message": "Evento deletado permanentemente."}
+    else:
+        evento.status = "CANCELADO"
+        evento.atualizado_em = datetime.utcnow()
+        db.commit()
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Evento cancelado com sucesso."}
+
+
+@router.get(
+    "/{regiao_id}/diretoria/discrepancias",
+    summary="Lista divergências Diretoria×Lojas",
+    description="Lista os registros de Venerável Mestre/Suplente atualmente divergentes entre o registro próprio do Conselho e o cadastro em lojas_db. Exclusivo para Diretoria/SuperAdmin."
+)
+def listar_discrepancias_diretoria_lojas(
+    regiao_id: str,
+    diretor: RegionalUserContext = Depends(get_current_director),
+    db_core: Session = Depends(get_db_core)
+):
+    """
+    Parte da decisão de tornar o Core semi-autônomo (2026-09-14, ver
+    `core/reconciliacao_diretoria_lojas.py` e
+    `claude/decisao-resiliencia-core-semiautonomo.md` no Project "Core").
+
+    Retorna, para a Região informada:
+    - `veneraveis_divergentes`: Lojas cujo `HistoricoLiderancaLoja.divergente`
+      está True (VM registrado pelo Conselho não bate com o VM atual em
+      lojas_db, incluindo o caso de Loja órfã).
+    - `suplentes_com_vinculo_invalido`: Suplentes do Conselho cujo
+      `vinculo_valido` está False (o oficial indicado como Suplente já não
+      ocupa mais um cargo eletivo elegível na Loja, segundo lojas_db).
+
+    Não dispara nenhuma verificação nova — apenas lê o estado já calculado
+    pela última reconciliação (job semanal, ou disparo manual via
+    `POST /{regiao_id}/diretoria/reconciliar-agora`).
+    """
+    veneraveis_divergentes = db_core.query(HistoricoLiderancaLoja).filter(
+        HistoricoLiderancaLoja.regiao_id == regiao_id,
+        HistoricoLiderancaLoja.divergente == True
+    ).all()
+
+    suplentes_invalidos = db_core.query(SuplenteConselho).filter(
+        SuplenteConselho.loja_id.in_(
+            db_core.query(LojaAgregada.id).filter(LojaAgregada.regiao_id == regiao_id)
+        ),
+        SuplenteConselho.vinculo_valido == False
+    ).all()
+
+    return {
+        "veneraveis_divergentes": [
+            {
+                "loja_id": h.loja_id,
+                "veneravel_cim": h.veneravel_cim,
+                "veneravel_nome": h.veneravel_nome,
+                "fonte": h.fonte,
+                "divergencia_detalhe": h.divergencia_detalhe,
+                "ultima_verificacao_em": h.ultima_verificacao_em,
+                "ultimo_alerta_em": h.ultimo_alerta_em,
+            }
+            for h in veneraveis_divergentes
+        ],
+        "suplentes_com_vinculo_invalido": [
+            {
+                "loja_id": s.loja_id,
+                "usuario_id": s.usuario_id,
+                "nome_suplente": s.nome_suplente,
+                "vinculo_invalido_detalhe": s.vinculo_invalido_detalhe,
+                "vinculo_verificado_em": s.vinculo_verificado_em,
+            }
+            for s in suplentes_invalidos
+        ],
+    }
+
+
+@router.post(
+    "/{regiao_id}/diretoria/reconciliar-agora",
+    summary="Dispara reconciliação Diretoria×Lojas sob demanda",
+    description="Roda imediatamente a mesma verificação que o job semanal faz, sem esperar a próxima segunda-feira. Útil para testes e para forçar uma checagem após uma posse recente. Exclusivo para Diretoria/SuperAdmin."
+)
+def reconciliar_diretoria_lojas_agora(
+    regiao_id: str,
+    diretor: RegionalUserContext = Depends(get_current_director)
+):
+    """
+    Disparo manual de `executar_reconciliacao_diretoria_lojas` (ver
+    `core/reconciliacao_diretoria_lojas.py`), restrito à Região do chamador
+    — mesma lógica do job agendado semanalmente (segunda-feira 03:00, ver
+    `core/tarefas_agendadas.py`), só que síncrono e sob demanda.
+
+    Import tardio proposital (mesmo padrão do wrapper usado pelo
+    agendador), para não acoplar este router aos módulos de negócio da
+    reconciliação na importação.
+    """
+    from core.reconciliacao_diretoria_lojas import executar_reconciliacao_diretoria_lojas
+
+    logger.info(f"Reconciliação Diretoria×Lojas disparada manualmente para Região {regiao_id} por {diretor.usuario_id}")
+
+    try:
+        resultado = executar_reconciliacao_diretoria_lojas(regiao_id=regiao_id)
+    except Exception as e:
+        logger.error(f"Erro na reconciliação manual Diretoria×Lojas (Região {regiao_id}): {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao executar a reconciliação: {e}")
+
+    return resultado

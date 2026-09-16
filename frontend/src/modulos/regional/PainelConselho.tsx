@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   ShieldCheck, Loader2, Award, Calendar,
-  Bell, Pin, Trash2, Plus, AlertTriangle, AlertOctagon,
-  Sparkles, Megaphone
+  Bell, Pin, Archive, ArchiveRestore, Plus, AlertTriangle, AlertOctagon,
+  Sparkles, Megaphone, CheckCheck, Eye
 } from 'lucide-react';
 import { clienteHttp } from '../../compartilhado/contextos/AuthContext';
 
@@ -52,6 +52,9 @@ export default function PainelConselho() {
   const [showNovoAvisoModal, setShowNovoAvisoModal] = useState(false);
   const [salvandoAviso, setSalvandoAviso] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  // ALTERAÇÃO (2026-09-12): toggle "ver arquivados", exclusivo Diretoria/
+  // SuperAdmin — permite reativar um item arquivado manual ou automaticamente.
+  const [mostrarArquivados, setMostrarArquivados] = useState(false);
   const [avisoForm, setAvisoForm] = useState({
     titulo: '',
     conteudo: '',
@@ -62,16 +65,23 @@ export default function PainelConselho() {
   });
 
   // Carregar dados e avisos
+  // CORREÇÃO (2026-09-14): as duas chamadas não dependem uma da outra —
+  // antes eram sequenciais (`await` uma depois da outra), o que somava o
+  // tempo das duas + a validação remota do token no e-Sigma (repetida em
+  // cada requisição) e contribuía para o delay de 3-5s observado nos
+  // primeiros testes. Disparando em paralelo com `Promise.all`, o tempo
+  // total passa a ser o da mais lenta das duas, não a soma.
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      // 1. Contexto do usuário logado (RBAC) — via clienteHttp, que já injeta
-      // Authorization: Bearer <token> (ver AuthContext.tsx).
-      const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
+      const [userRes, resAvisos] = await Promise.all([
+        // 1. Contexto do usuário logado (RBAC) — via clienteHttp, que já
+        // injeta Authorization: Bearer <token> (ver AuthContext.tsx).
+        clienteHttp.get(`${API_URL}/regional/${id}/me`),
+        // 2. Avisos da Região
+        clienteHttp.get(`${API_URL}/regional/${id}/avisos?incluir_arquivados=${mostrarArquivados}`)
+      ]);
       setUserContext(userRes.data);
-
-      // 2. Avisos da Região
-      const resAvisos = await clienteHttp.get(`${API_URL}/regional/${id}/avisos`);
       setAvisos(resAvisos.data || []);
     } catch (err: any) {
       setErro(extrairMensagemErro(err, "Acesso negado ao painel regional."));
@@ -82,7 +92,28 @@ export default function PainelConselho() {
 
   useEffect(() => {
     if (id) fetchDashboard();
-  }, [id, reloadKey]);
+  }, [id, reloadKey, mostrarArquivados]);
+
+  // Marcar como lido (tag "lido") — chamada explícita ao clicar na tag.
+  const handleMarcarLido = async (avisoId: string) => {
+    try {
+      await clienteHttp.post(`${API_URL}/regional/${id}/avisos/${avisoId}/marcar-lido`);
+      setAvisos(prev => prev.map(a => a.id === avisoId ? { ...a, lido: true } : a));
+    } catch (err: any) {
+      // Silencioso: marcar como lido não deve interromper a leitura do usuário.
+    }
+  };
+
+  // Reativar (desarquivar) — exclusivo Diretoria/SuperAdmin.
+  const handleReativarAviso = async (avisoId: string) => {
+    try {
+      const res = await clienteHttp.put(`${API_URL}/regional/${id}/avisos/${avisoId}/reativar`);
+      alert(res.data?.message || 'Item reativado com sucesso.');
+      setReloadKey(k => k + 1);
+    } catch (err: any) {
+      alert(extrairMensagemErro(err, 'Erro ao reativar item'));
+    }
+  };
 
   // Abertura com tipo pré-selecionado
   const abrirModalNovo = (tipo: 'AVISO' | 'NOTIFICACAO') => {
@@ -135,7 +166,7 @@ export default function PainelConselho() {
         hardDelete = true;
       }
     } else {
-      if (!window.confirm('Tem certeza que deseja ocultar este item do mural? O registro será arquivado com deleção visual.')) return;
+      if (!window.confirm('Tem certeza que deseja arquivar este item do mural? A Diretoria poderá reativá-lo depois, se necessário.')) return;
     }
 
     try {
@@ -172,6 +203,25 @@ export default function PainelConselho() {
       
       {/* Container Principal: Grid de 2 Colunas (Avisos à esquerda, Notificações à direita) */}
       <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* ALTERAÇÃO (2026-09-12): toggle "ver arquivados" — só Diretoria/
+            SuperAdmin, que são os únicos com permissão de reativar. */}
+        {(userContext.is_diretoria || userContext.role?.toUpperCase() === 'SUPERADMIN') && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setMostrarArquivados(v => !v)}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer border ${
+                mostrarArquivados
+                  ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/40'
+                  : 'bg-[#181818] text-gray-400 border-[#333] hover:text-white'
+              }`}
+            >
+              {mostrarArquivados ? <Eye className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+              {mostrarArquivados ? 'Ocultar arquivados' : 'Ver arquivados'}
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           
@@ -232,7 +282,7 @@ export default function PainelConselho() {
                     <div
                       key={a.id}
                       className={`p-4 sm:p-5 rounded-2xl transition-all ${borderClass} ${
-                        a.deletado_visualmente
+                        a.arquivado
                           ? 'bg-[#111] opacity-60'
                           : a.fixado
                             ? 'bg-gradient-to-r from-[#1c1a12] via-[#161510] to-[#121212]'
@@ -244,7 +294,11 @@ export default function PainelConselho() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            {a.fixado && (
+                            {/* ALTERAÇÃO (2026-09-12): urgência (ALTO) já é
+                                fixada automaticamente e exibida em destaque —
+                                mostrar também a tag "FIXADO" seria redundante,
+                                então ela só aparece para MEDIO/BAIXO fixados. */}
+                            {a.fixado && !isUrgente && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/30">
                                 <Pin className="w-3 h-3" /> FIXADO
                               </span>
@@ -264,10 +318,26 @@ export default function PainelConselho() {
                               {isUrgente ? 'Urgência' : isAlerta ? 'Alerta' : 'Informativo'}
                             </span>
 
-                            {a.deletado_visualmente && (
+                            {a.arquivado && (
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-300 border border-red-800">
-                                OCULTADO
+                                ARQUIVADO
                               </span>
+                            )}
+
+                            {/* Tag "lido" — clicável quando ainda não lido. */}
+                            {a.lido ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                <CheckCheck className="w-3 h-3" /> LIDO
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleMarcarLido(a.id)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#1e1e1e] text-gray-400 border border-[#333] hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
+                                title="Marcar como lido"
+                              >
+                                <Eye className="w-3 h-3" /> NÃO LIDO
+                              </button>
                             )}
 
                             <h3 className="text-sm sm:text-base font-bold text-white ml-0.5">{a.titulo}</h3>
@@ -276,26 +346,47 @@ export default function PainelConselho() {
                           <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-line pt-0.5">
                             {a.conteudo}
                           </p>
+
+                          {/* Log de arquivamento (pedido do usuário). */}
+                          {a.arquivado && a.arquivado_em && (
+                            <p className="text-[10px] text-red-300/80 font-medium pt-0.5">
+                              Arquivado em {a.arquivado_em.split('T')[0].split('-').reverse().join('/')} por {a.arquivado_por || 'Sistema'}
+                            </p>
+                          )}
                         </div>
 
-                        {/* Botão Excluir */}
-                        {a.pode_excluir && (
-                          <button
-                            type="button"
-                            onClick={() => handleExcluirAviso(a.id)}
-                            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors shrink-0 cursor-pointer"
-                            title={userContext.role?.toUpperCase() === 'SUPERADMIN' ? "Opção de Deleção Visual ou Hard Delete" : "Ocultar aviso"}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {/* Botão Reativar — só quando arquivado e o usuário pode reativar. */}
+                          {a.arquivado && a.pode_reativar && (
+                            <button
+                              type="button"
+                              onClick={() => handleReativarAviso(a.id)}
+                              className="p-1.5 text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-colors cursor-pointer"
+                              title="Reativar (desarquivar)"
+                            >
+                              <ArchiveRestore className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {/* Botão Arquivar */}
+                          {a.pode_excluir && !a.arquivado && (
+                            <button
+                              type="button"
+                              onClick={() => handleExcluirAviso(a.id)}
+                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
+                              title={userContext.role?.toUpperCase() === 'SUPERADMIN' ? "Opção de Arquivamento ou Hard Delete" : "Arquivar aviso"}
+                            >
+                              <Archive className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <div className="mt-3.5 pt-2.5 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
                         <span className="flex items-center gap-1.5">
                           <Award className="w-3.5 h-3.5 text-[#facc15]" />
                           <span className="text-gray-300 font-medium">{a.autor_nome || 'Conselho'}</span>
-                          {a.loja_id && <span className="text-[#facc15]/90 font-medium">(Loja {a.loja_id})</span>}
+                          {a.loja_id && <span className="text-[#facc15]/90 font-medium">(Loja {a.loja_numero || a.loja_id})</span>}
                         </span>
 
                         <div className="flex items-center gap-3 text-gray-400">
@@ -388,7 +479,7 @@ export default function PainelConselho() {
                     <div
                       key={n.id}
                       className={`p-4 rounded-xl border border-[#242730] hover:border-[#353a47] transition-all flex gap-3.5 items-start ${
-                        n.deletado_visualmente
+                        n.arquivado
                           ? 'bg-[#101114] opacity-60'
                           : isUrgente
                             ? 'bg-gradient-to-r from-[#1c1214] to-[#121317]'
@@ -407,31 +498,68 @@ export default function PainelConselho() {
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${badgeColor}`}>
                               {isUrgente ? 'Urgência' : isAlerta ? 'Alerta' : 'Informe'}
                             </span>
+                            {n.arquivado && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-300 border border-red-800">
+                                ARQUIVADO
+                              </span>
+                            )}
+                            {n.lido ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                <CheckCheck className="w-3 h-3" /> LIDO
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleMarcarLido(n.id)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#1e1e1e] text-gray-400 border border-[#333] hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
+                                title="Marcar como lido"
+                              >
+                                <Eye className="w-3 h-3" /> NÃO LIDO
+                              </button>
+                            )}
                             <h4 className="text-xs sm:text-sm font-bold text-white truncate max-w-[220px] sm:max-w-[280px]">
                               {n.titulo}
                             </h4>
                           </div>
 
-                          {n.pode_excluir && (
-                            <button
-                              type="button"
-                              onClick={() => handleExcluirAviso(n.id)}
-                              className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 cursor-pointer"
-                              title="Ocultar notificação"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {n.arquivado && n.pode_reativar && (
+                              <button
+                                type="button"
+                                onClick={() => handleReativarAviso(n.id)}
+                                className="p-1 text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer"
+                                title="Reativar (desarquivar)"
+                              >
+                                <ArchiveRestore className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {n.pode_excluir && !n.arquivado && (
+                              <button
+                                type="button"
+                                onClick={() => handleExcluirAviso(n.id)}
+                                className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                title="Arquivar notificação"
+                              >
+                                <Archive className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         <p className="text-xs text-gray-300 leading-relaxed mt-1.5 whitespace-pre-line">
                           {n.conteudo}
                         </p>
 
+                        {n.arquivado && n.arquivado_em && (
+                          <p className="text-[10px] text-red-300/80 font-medium mt-1">
+                            Arquivado em {n.arquivado_em.split('T')[0].split('-').reverse().join('/')} por {n.arquivado_por || 'Sistema'}
+                          </p>
+                        )}
+
                         <div className="mt-2.5 pt-2 border-t border-[#1c1e26] flex items-center justify-between text-[10px] text-gray-500 flex-wrap gap-2">
                           <span>
                             Por: <strong className="text-gray-300">{n.autor_nome || 'Conselho'}</strong>
-                            {n.loja_id && <span className="text-[#facc15]/80 ml-1">(Loja {n.loja_id})</span>}
+                            {n.loja_id && <span className="text-[#facc15]/80 ml-1">(Loja {n.loja_numero || n.loja_id})</span>}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />

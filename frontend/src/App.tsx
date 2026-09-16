@@ -7,6 +7,8 @@ import PainelConselho from './modulos/regional/PainelConselho';
 import PainelVM from './modulos/local/PainelVM';
 import PaginaCalendario from './modulos/calendario/PaginaCalendario';
 import PaginaLogin from './modulos/auth/PaginaLogin';
+import PaginaSolicitarCadastro from './modulos/auth/PaginaSolicitarCadastro';
+import PaginaTrocarSenhaObrigatoria from './modulos/auth/PaginaTrocarSenhaObrigatoria';
 import PaginaComunicacao from './modulos/regional/submodulos/PaginaComunicacao';
 import PaginaLojas from './modulos/regional/submodulos/PaginaLojas';
 import PaginaDiretoria from './modulos/regional/submodulos/PaginaDiretoria';
@@ -33,6 +35,18 @@ function AppRotas() {
   return (
     <Routes>
       <Route path="/login" element={<PaginaLogin />} />
+      {/* Solicitação de Cadastro (Via 2, 2026-09-16) — substitui a rota
+          /ativar-cadastro (removida no mesmo dia junto com a "Ativação de
+          Cadastro", que permitia auto-aprovação sem validação humana).
+          Pública por natureza: o candidato ainda não existe no sistema. */}
+      <Route path="/solicitar-cadastro" element={<PaginaSolicitarCadastro />} />
+      {/* Troca obrigatória da senha provisória enviada por e-mail na
+          aprovação de uma Solicitação de Cadastro — exige estar
+          autenticado (RotaProtegida), mas sem exigir vínculo com uma
+          Região ainda, já que é o primeiro passo depois do login. */}
+      <Route path="/trocar-senha-obrigatoria" element={
+        <RotaProtegida><PaginaTrocarSenhaObrigatoria /></RotaProtegida>
+      } />
 
       {/* Rota Global do SuperAdmin (Sem Sidebar Regional) */}
       <Route path="/" element={<Navigate to="/login" replace />} />
