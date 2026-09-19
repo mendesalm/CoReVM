@@ -1,6 +1,6 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
 import { useParams, Link } from 'react-router-dom';
 import { 
   Vote, ShieldCheck, Loader2, 
@@ -11,6 +11,35 @@ import {
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// CORREÇÃO (2026-09-19): esta página ainda usava axios puro + um seletor
+// "Simular Acesso" que enviava um header `X-User-Id` não autenticado —
+// mesmo padrão pré-fix de segurança de 2026-09-11 já corrigido em
+// PaginaAdmissoes.tsx (B.5 do roteiro de testes). Desde esse fix,
+// `/regional/{id}/me` e `/votacoes` exigem `Authorization: Bearer` real
+// (validado via get_current_regional_user), então o header X-User-Id nunca
+// mais foi aceito: toda chamada desta página vinha retornando 422 sem que
+// ninguém notasse, até o usuário reportar o erro ao tentar acessar o menu
+// Enquetes e Votações. Substituído por `clienteHttp` (injeta o token real
+// do login via AuthContext, mesmo padrão já usado em PaginaLojas.tsx e
+// PaginaAdmissoes.tsx).
+//
+// Mesmo bug de renderização de PaginaAdmissoes.tsx também estava latente
+// aqui: `setErro(err.response?.data?.detail || ...)` jogaria a lista de
+// objetos de validação do FastAPI direto no estado, quebrando a página ao
+// renderizar `{erro}` num <p>. `extrairMensagemErro()` normaliza qualquer
+// formato de erro do backend para uma string segura de exibir.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((d: any) => (typeof d === 'string' ? d : d?.msg))
+      .filter(Boolean);
+    if (mensagens.length > 0) return mensagens.join('; ');
+  }
+  return mensagemPadrao;
+}
 
 interface ApuracaoItem {
   opcao: string;
@@ -61,12 +90,12 @@ export default function PaginaVotacoes() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   
-  // Controle de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+  // Controle de Usuário e RBAC (resolvido inteiramente por GET /me, a
+  // partir do token real de login — ver correção de 2026-09-19 acima)
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: '',
+    role: '',
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -101,21 +130,20 @@ export default function PaginaVotacoes() {
   const carregarDados = async () => {
     setLoading(true);
     setErro('');
-    const headers = { 'X-User-Id': activeUserId };
 
     try {
       try {
-        const votacoesRes = await axios.get(`${API_URL}/regional/${id}/votacoes`, { headers });
+        const votacoesRes = await clienteHttp.get(`${API_URL}/regional/${id}/votacoes`);
         const items = Array.isArray(votacoesRes.data) ? votacoesRes.data : (votacoesRes.data?.votacoes || []);
         setVotacoes(items);
       } catch (errVotacoes: any) {
         console.error('Erro ao buscar votações:', errVotacoes);
-        setErro(errVotacoes.response?.data?.detail || 'Não foi possível carregar as votações do conselho.');
+        setErro(extrairMensagemErro(errVotacoes, 'Não foi possível carregar as votações do conselho.'));
       }
 
       // 2. Contexto do Usuário
       try {
-        const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
+        const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
         if (userRes.data) setUserContext(userRes.data);
       } catch (errUser) {
         console.warn('Contexto do usuário não pôde ser carregado:', errUser);
@@ -128,7 +156,7 @@ export default function PaginaVotacoes() {
 
   useEffect(() => {
     if (id) carregarDados();
-  }, [id, activeUserId]);
+  }, [id]);
 
   // Resetar paginação ao filtrar ou buscar
   useEffect(() => {
@@ -149,19 +177,16 @@ export default function PaginaVotacoes() {
 
     setEnviandoVoto(true);
     try {
-      await axios.post(
+      await clienteHttp.post(
         `${API_URL}/regional/${id}/votacoes/${votacaoSelecionada.id}/votar`,
         {
           opcao_escolhida: opcaoVotoEscolhida,
           justificativa: justificativaVoto.trim() || null
-        },
-        { headers: { 'X-User-Id': activeUserId } }
+        }
       );
 
       // Recarregar votações e atualizar modal ativo
-      const res = await axios.get(`${API_URL}/regional/${id}/votacoes`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      const res = await clienteHttp.get(`${API_URL}/regional/${id}/votacoes`);
       const listaAtualizada: VotacaoItem[] = res.data || [];
       setVotacoes(listaAtualizada);
       
@@ -170,7 +195,7 @@ export default function PaginaVotacoes() {
         setVotacaoSelecionada(atualizada);
       }
     } catch (err: any) {
-      alert('Erro ao registrar voto: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao registrar voto'));
     } finally {
       setEnviandoVoto(false);
     }
@@ -183,10 +208,9 @@ export default function PaginaVotacoes() {
     if (!confirm(`Deseja realmente ${acaoLabel} esta votação no Conselho?`)) return;
 
     try {
-      await axios.put(
+      await clienteHttp.put(
         `${API_URL}/regional/${id}/votacoes/${votacaoId}/status`,
-        { status: novoStatus },
-        { headers: { 'X-User-Id': activeUserId } }
+        { status: novoStatus }
       );
       
       setVotacoes(prev => prev.map(v => v.id === votacaoId ? { ...v, status: novoStatus } : v));
@@ -194,7 +218,7 @@ export default function PaginaVotacoes() {
         setVotacaoSelecionada(prev => prev ? { ...prev, status: novoStatus } : null);
       }
     } catch (err: any) {
-      alert('Erro ao alterar status: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao alterar status'));
     }
   };
 
@@ -202,15 +226,13 @@ export default function PaginaVotacoes() {
   const handleExcluirVotacao = async (votacaoId: string) => {
     if (!confirm('Deseja realmente ocultar esta deliberação do conselho?')) return;
     try {
-      await axios.delete(`${API_URL}/regional/${id}/votacoes/${votacaoId}`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      await clienteHttp.delete(`${API_URL}/regional/${id}/votacoes/${votacaoId}`);
       setVotacoes(prev => prev.filter(v => v.id !== votacaoId));
       if (votacaoSelecionada?.id === votacaoId) {
         setVotacaoSelecionada(null);
       }
     } catch (err: any) {
-      alert('Erro ao excluir votação: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao excluir votação'));
     }
   };
 
@@ -228,7 +250,7 @@ export default function PaginaVotacoes() {
 
     setSalvandoVotacao(true);
     try {
-      await axios.post(
+      await clienteHttp.post(
         `${API_URL}/regional/${id}/votacoes`,
         {
           titulo: formVotacao.titulo.trim(),
@@ -237,8 +259,7 @@ export default function PaginaVotacoes() {
           opcoes: formVotacao.opcoes,
           data_encerramento: formVotacao.data_encerramento || null,
           quorum_minimo: formVotacao.quorum_minimo
-        },
-        { headers: { 'X-User-Id': activeUserId } }
+        }
       );
 
       setShowNovaVotacaoModal(false);
@@ -252,7 +273,7 @@ export default function PaginaVotacoes() {
       });
       carregarDados();
     } catch (err: any) {
-      alert('Erro ao abrir votação: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao abrir votação'));
     } finally {
       setSalvandoVotacao(false);
     }
@@ -364,21 +385,6 @@ export default function PaginaVotacoes() {
             <p className="text-xs text-gray-400">{erro}</p>
           </div>
 
-          <div className="bg-[#0c0c0c] border border-[#222] p-3 rounded-xl text-xs space-y-2">
-            <span className="text-gray-400 font-semibold block">Simular Acesso Autorizado:</span>
-            <select
-              value={activeUserId}
-              onChange={(e) => setActiveUserId(e.target.value)}
-              className="w-full bg-[#181818] text-[#facc15] border border-[#333] rounded-lg px-2.5 py-1.5 font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
-              <option value="272875">Secretário (Mesa Diretora)</option>
-              <option value="superadmin">SuperAdmin</option>
-              <option value="VM_1">VM - João Pedro Junqueira nº 2181</option>
-              <option value="VM_135">VM - Acácia Amarela nº 4305</option>
-            </select>
-          </div>
-
           <button
             onClick={() => carregarDados()}
             className="w-full py-2.5 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs rounded-xl transition-all shadow-md"
@@ -429,22 +435,6 @@ export default function PaginaVotacoes() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-[#141414] border border-[#2a2a2a] px-3 py-1.5 rounded-xl text-xs">
-              <span className="text-gray-400 font-medium">Acesso Simulado:</span>
-              <select 
-                value={activeUserId} 
-                onChange={(e) => setActiveUserId(e.target.value)}
-                className="bg-[#0c0c0c] text-[#facc15] border border-[#333] rounded-lg px-2.5 py-1 font-semibold focus:outline-none cursor-pointer"
-              >
-                <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
-                <option value="272875">Secretário (Mesa Diretora)</option>
-                <option value="superadmin">SuperAdmin</option>
-                <option value="VM_1">VM - João Pedro Junqueira nº 2181</option>
-                <option value="VM_135">VM - Acácia Amarela nº 4305</option>
-                <option value="VM_141">VM - Winston Churchill nº 2216</option>
-              </select>
-            </div>
-
             <button
               onClick={() => setShowNovaVotacaoModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs rounded-xl shadow-lg shadow-[#facc15]/10 transition-all hover:scale-[1.02] active:scale-[0.98]"

@@ -253,6 +253,49 @@ export default function PaginaLogin() {
                 <span>Acessar Painel</span>
               )}
             </button>
+
+            {/* Recuperacao de senha (2026-09-16), a pedido explicito
+                do usuario -- para quem JA TEM cadastro e esqueceu a
+                senha (POST /auth/esqueci-senha no e-Sigma). */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => navigate('/esqueci-senha')}
+                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+
+            {/* Magic link (2026-09-17) -- primeiro dos metodos de login
+                moderno decididos em claude/decisao-modernizacao-login.md
+                (magic link, OTP, passkeys). Login sem senha: envia um
+                link de uso unico para o e-mail JA CADASTRADO. */}
+            <div className="text-center mt-2">
+              <button
+                type="button"
+                onClick={() => navigate('/entrar-com-link')}
+                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+              >
+                Entrar sem senha (link por e-mail)
+              </button>
+            </div>
+
+            {/* Passkey (2026-09-18) -- terceiro e ultimo metodo de login
+                moderno da lista (magic link -> OTP -> passkeys). So
+                aparece util para quem ja cadastrou uma passkey antes
+                (PaginaGerenciarPasskeys.tsx, /minhas-passkeys) -- quem
+                nunca cadastrou simplesmente ve a tela seguinte dizer que
+                nao ha passkey disponivel e volta para ca. */}
+            <div className="text-center mt-2">
+              <button
+                type="button"
+                onClick={() => navigate('/entrar-com-passkey')}
+                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+              >
+                Entrar com passkey
+              </button>
+            </div>
           </form>
 
           {/* Solicitação de Cadastro / Via 2 (2026-09-16): substitui o

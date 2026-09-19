@@ -1,6 +1,6 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import uuid
-from sqlalchemy import Column, Integer, String, Boolean, Date, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Date, Time, Enum, ForeignKey
 from database import Base
 
 def generate_uuid():
@@ -8,7 +8,7 @@ def generate_uuid():
 
 class LojaIntegracao(Base):
     __tablename__ = "lojas"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     nome_loja = Column(String(255), nullable=False)
     titulo_loja = Column(String(50), nullable=True, default="ARLS")
@@ -27,7 +27,32 @@ class LojaIntegracao(Base):
     estado = Column(String(2), nullable=True)
     cep = Column(String(9), nullable=True)
     ativo = Column(Boolean, default=True)
-    
+
+    # ALTERAÇÃO (2026-09-19): campos adicionais do painel "Minha Loja"
+    # (endereço completo, dia/horário de sessão e contato institucional).
+    # Estas colunas já existiam na tabela `lojas` de lojas_db (ver
+    # Lojas/backend/models/models.py, classe Loja) mas não estavam
+    # declaradas neste modelo-espelho do CoReVM, então o ORM as ignorava em
+    # SELECTs e não conseguia escrever nelas. `numero_endereco` mapeia para
+    # a coluna física "numero" (nome de atributo diferente do nome de
+    # coluna, para não colidir com `numero_loja` acima). `dia_sessao` e
+    # `periodicidade` são ENUMs no Postgres (ver dia_sessao_enum/
+    # periodicidade_enum em lojas_db) mas são lidos/gravados aqui como
+    # String simples — o SQLAlchemy não valida o valor contra o enum do lado
+    # do Python, só o Postgres valida no INSERT/UPDATE, o que é suficiente
+    # já que o formulário do frontend só envia os valores válidos do enum.
+    logradouro = Column(String(255), nullable=True)
+    numero_endereco = Column("numero", String(20), nullable=True)
+    complemento = Column(String(100), nullable=True)
+    bairro = Column(String(100), nullable=True)
+    email = Column(String(255), nullable=True)
+    telefone = Column(String(20), nullable=True)
+    site = Column(String(255), nullable=True)
+    cnpj = Column(String(18), nullable=True)
+    dia_sessao = Column(String(30), nullable=True)
+    periodicidade = Column(String(20), nullable=True)
+    horario_sessao = Column(Time, nullable=True)
+
     # Campos que parecem obrigatórios no BD original
     nome_contato_tecnico = Column(String(255), nullable=False, default="Admin")
     email_contato_tecnico = Column(String(255), nullable=False, default="admin@admin.com")

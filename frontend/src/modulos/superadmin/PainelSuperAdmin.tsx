@@ -1,7 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import { useState, useEffect } from 'react';
-import { Search, Plus, MapPin, Users, Activity, Settings, ChevronRight, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Plus, MapPin, Users, Activity, Settings, ChevronRight, Loader2, UserPlus, Fingerprint } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import BuscadorObreiro from '../../compartilhado/componentes/BuscadorObreiro';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
@@ -177,21 +177,46 @@ export default function PainelSuperAdmin() {
             <h1 className="text-3xl font-bold text-[#facc15] mb-2">Administração Global (CoRe)</h1>
             <p className="text-gray-400">Gerencie todos os Conselhos Regionais (Tenants) do sistema.</p>
           </div>
-          <button 
-            onClick={() => {
-              setStep(1);
-              setSelectedLojas([]);
-              setNome('');
-              setPresidenteId('');
-              setVicePresidenteId('');
-              setSecretarioId('');
-              setShowModal(true);
-            }}
-            className="bg-[#facc15] hover:bg-[#eab308] text-black px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Novo Conselho
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Adicionado em 2026-09-17 -- link direto para a tela de
+                aprovacao de Solicitacoes de Cadastro (antes so existia
+                via Swagger). Fica aqui porque o painel do SuperAdmin
+                (esta pagina) nao usa o Layout.tsx com a barra lateral
+                regional, onde o mesmo item de menu tambem foi adicionado. */}
+            <Link
+              to="/solicitacoes-cadastro"
+              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+            >
+              <UserPlus className="w-5 h-5" />
+              Solicitações de Cadastro
+            </Link>
+            {/* Adicionado em 2026-09-18, mesma razão do link acima: o
+                SuperAdmin também é uma Pessoa que pode querer cadastrar
+                a própria passkey, e este painel não usa o Layout.tsx
+                onde o item "Minhas Passkeys" também foi adicionado. */}
+            <Link
+              to="/minhas-passkeys"
+              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+            >
+              <Fingerprint className="w-5 h-5" />
+              Minhas Passkeys
+            </Link>
+            <button
+              onClick={() => {
+                setStep(1);
+                setSelectedLojas([]);
+                setNome('');
+                setPresidenteId('');
+                setVicePresidenteId('');
+                setSecretarioId('');
+                setShowModal(true);
+              }}
+              className="bg-[#facc15] hover:bg-[#eab308] text-black px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Novo Conselho
+            </button>
+          </div>
         </header>
 
         {/* Stats Row */}

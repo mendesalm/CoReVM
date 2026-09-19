@@ -311,14 +311,28 @@ def _operador_administrativo_ainda_elegivel(db_lojas: Session, identificador: st
 class OperadorAdministrativoContext:
     """Identidade resolvida para o perfil Operador Administrativo — bem
     mais restrita que `RegionalUserContext` de propósito: não carrega
-    `regiao_id` nem qualquer noção de acesso além da própria Loja."""
-    def __init__(self, usuario_id: str, loja_id: str, slot: str, nome: str):
+    nenhuma noção de acesso além da própria Loja (não enxerga dados de
+    outras Lojas do Conselho).
+
+    ALTERAÇÃO (2026-09-19): `regiao_id` passou a ser aceito (opcional, só
+    para o caso de uso de `/me` abaixo precisar devolvê-lo de volta ao
+    frontend) — antes este contexto genuinamente não sabia a região, porque
+    `obter_operador_administrativo_da_loja` (usado pelas rotas escopadas a
+    UMA Loja) nunca teve motivo pra saber. `obter_identidade_regional_ou_
+    operador_administrativo` (usado pelas rotas de âmbito `/regional/
+    {regiao_id}/...`) já conhece a região no ponto onde resolve este
+    contexto, então agora repassa. Não afeta nenhuma checagem de permissão
+    existente — é só um dado de contexto a mais, como `is_veneravel` foi
+    para `RegionalUserContext` em 2026-09-12."""
+    def __init__(self, usuario_id: str, loja_id: str, slot: str, nome: str, regiao_id: Optional[str] = None):
         self.usuario_id = usuario_id
         self.loja_id = loja_id
         self.slot = slot
         self.nome = nome
+        self.regiao_id = regiao_id
         self.role = "OPERADOR_ADMINISTRATIVO"
         self.is_diretoria = False
+        self.is_veneravel = False
 
 
 def obter_operador_administrativo_da_loja(
@@ -424,7 +438,8 @@ def obter_identidade_regional_ou_operador_administrativo(
             f"na Região {regiao_id}"
         )
         return OperadorAdministrativoContext(
-            usuario_id=identificador, loja_id=str(operador.loja_id), slot=operador.slot, nome=operador.nome_operador
+            usuario_id=identificador, loja_id=str(operador.loja_id), slot=operador.slot, nome=operador.nome_operador,
+            regiao_id=regiao_id
         )
 
     logger.error(f"Acesso negado no CoReVM: {identificador} não possui vínculo ativo (nem regional, nem Operador Administrativo) na Região {regiao_id}")

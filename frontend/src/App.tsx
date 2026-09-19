@@ -8,7 +8,13 @@ import PainelVM from './modulos/local/PainelVM';
 import PaginaCalendario from './modulos/calendario/PaginaCalendario';
 import PaginaLogin from './modulos/auth/PaginaLogin';
 import PaginaSolicitarCadastro from './modulos/auth/PaginaSolicitarCadastro';
+import PaginaEsqueciSenha from './modulos/auth/PaginaEsqueciSenha';
+import PaginaEntrarComLink from './modulos/auth/PaginaEntrarComLink';
+import PaginaConfirmarMagicLink from './modulos/auth/PaginaConfirmarMagicLink';
+import PaginaEntrarComPasskey from './modulos/auth/PaginaEntrarComPasskey';
+import PaginaGerenciarPasskeys from './modulos/auth/PaginaGerenciarPasskeys';
 import PaginaTrocarSenhaObrigatoria from './modulos/auth/PaginaTrocarSenhaObrigatoria';
+import PaginaSolicitacoesCadastro from './modulos/auth/PaginaSolicitacoesCadastro';
 import PaginaComunicacao from './modulos/regional/submodulos/PaginaComunicacao';
 import PaginaLojas from './modulos/regional/submodulos/PaginaLojas';
 import PaginaDiretoria from './modulos/regional/submodulos/PaginaDiretoria';
@@ -40,12 +46,45 @@ function AppRotas() {
           Cadastro", que permitia auto-aprovação sem validação humana).
           Pública por natureza: o candidato ainda não existe no sistema. */}
       <Route path="/solicitar-cadastro" element={<PaginaSolicitarCadastro />} />
+      {/* Recuperacao de senha (2026-09-16) -- para quem JA TEM cadastro
+          e esqueceu a senha; diferente da Solicitacao de Cadastro acima,
+          que e para quem ainda nao tem acesso nenhum. Publica por
+          natureza (o usuario ainda nao esta autenticado). */}
+      <Route path="/esqueci-senha" element={<PaginaEsqueciSenha />} />
+      {/* Magic link (2026-09-17) -- primeiro dos metodos de login moderno
+          decididos em claude/decisao-modernizacao-login.md (magic link,
+          OTP, passkeys; so magic link implementado nesta rodada). As duas
+          rotas sao publicas por natureza: /entrar-com-link pede o link
+          por e-mail, /magic-link e' onde o link enviado aterrissa
+          (le ?token= da URL e troca por uma sessao real). */}
+      <Route path="/entrar-com-link" element={<PaginaEntrarComLink />} />
+      <Route path="/magic-link" element={<PaginaConfirmarMagicLink />} />
+      {/* Passkeys (2026-09-18) -- terceiro e último método de login
+          moderno decidido em claude/decisao-modernizacao-login.md.
+          /entrar-com-passkey é pública por natureza (login sem sessão
+          prévia); /minhas-passkeys exige estar autenticado (é a tela de
+          autogestão das próprias passkeys, não fica sob /regiao/:id
+          porque não é um conceito de Região -- mesma razão de
+          /solicitacoes-cadastro acima). */}
+      <Route path="/entrar-com-passkey" element={<PaginaEntrarComPasskey />} />
+      <Route path="/minhas-passkeys" element={
+        <RotaProtegida><PaginaGerenciarPasskeys /></RotaProtegida>
+      } />
       {/* Troca obrigatória da senha provisória enviada por e-mail na
           aprovação de uma Solicitação de Cadastro — exige estar
           autenticado (RotaProtegida), mas sem exigir vínculo com uma
           Região ainda, já que é o primeiro passo depois do login. */}
       <Route path="/trocar-senha-obrigatoria" element={
         <RotaProtegida><PaginaTrocarSenhaObrigatoria /></RotaProtegida>
+      } />
+      {/* Aprovacao da Solicitacao de Cadastro (2026-09-17) -- tela nova,
+          fecha a lacuna que so existia via Swagger. Nao fica sob /regiao/:id
+          porque a Solicitacao de Cadastro e' um conceito do e-Sigma (Loja),
+          nao uma Regiao do CoReVM -- quem pode ver/decidir e' o proprio
+          backend do e-Sigma que resolve (SuperAdmin/webmaster ou VM/Suplente
+          da Loja da solicitacao). */}
+      <Route path="/solicitacoes-cadastro" element={
+        <RotaProtegida><PaginaSolicitacoesCadastro /></RotaProtegida>
       } />
 
       {/* Rota Global do SuperAdmin (Sem Sidebar Regional) */}

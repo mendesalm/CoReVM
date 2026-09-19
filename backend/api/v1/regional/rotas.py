@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from loguru import logger
 from pydantic import BaseModel
 
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, text
 from database import get_db_core, get_db_lojas
 from models.models import (
     Regiao, DiretoriaConselho, LojaAgregada, SuplenteConselho, AvisoRegional, AvisoLido,
@@ -20,7 +20,7 @@ from models.models import (
     DocumentoRegional, TopicoComunicacao, MensagemComunicacao,
     HistoricoLiderancaLoja, OperadorAdministrativoLoja, EventoAgenda
 )
-from models.lojas_models import ObreiroIntegracao, LojaIntegracao, Mandato
+from models.lojas_models import ObreiroIntegracao, LojaIntegracao, Mandato, ObreiroLojaAssociacao
 from core.constants import CargoConselho
 from schemas.schemas import (
     RegiaoResponse, DiretoriaMembroResponse, DiretoriaUpdatePayload,
@@ -29,7 +29,15 @@ from schemas.schemas import (
 )
 from core.dependencies import (
     get_current_director, get_current_regional_user, RegionalUserContext,
-    obter_identidade_regional_ou_operador_administrativo, OperadorAdministrativoContext
+    obter_identidade_regional_ou_operador_administrativo, OperadorAdministrativoContext,
+    # CORREÇÃO (2026-09-16, achado pelo teste automatizado do Módulo 12 --
+    # testar_modulo12_operador_administrativo.py): esta função era chamada
+    # em designar_operador_administrativo() mais abaixo, mas nunca tinha
+    # sido importada nem duplicada aqui -- qualquer designação de um
+    # oficial SEM cargo eletivo na Loja (o caso que deveria dar 400)
+    # quebrava com 500 (NameError), porque `mandato_valido` vinha None e o
+    # `and` avaliava o segundo operando, que não existia neste módulo.
+    _obreiro_e_mestre_instalado_ativo_na_loja,
 )
 from core.auth_esigma import UsuarioEsigma, obter_usuario_esigma
 from utils.pdf_generator import (
@@ -60,22 +68,37 @@ def obter_dashboard_regional(
 @router.get("/{regiao_id}/me", summary="Obtém o contexto e permissões do usuário atual no conselho")
 def obter_meu_contexto_regional(
     regiao_id: str,
-    user: RegionalUserContext = Depends(get_current_regional_user)
+    # ALTERAÇÃO (2026-09-19): trocado de `get_current_regional_user` (só
+    # SuperAdmin/Diretoria/Suplente/VM) para o resolvedor combinado — antes
+    # disso, um Secretário/Chanceler (Operador Administrativo) recebia 403
+    # já neste primeiro `/me`, então nunca conseguia nem carregar o menu do
+    # CoReVM, mesmo já tendo permissão de escrita nas rotas de Avisos/
+    # Agenda/Documentos/Admissões da própria Loja (ver claude/roteiro-
+    # testes-manuais.md, item B.9/B.10 no Project "Core"). `user` agora pode
+    # ser um `RegionalUserContext` OU um `OperadorAdministrativoContext`.
+    user = Depends(obter_identidade_regional_ou_operador_administrativo)
 ):
     """
-    Retorna papel e escopo do usuário ativo (ex: se é diretoria ou de qual loja específica é o VM).
+    Retorna papel e escopo do usuário ativo (ex: se é diretoria ou de qual loja específica é o VM,
+    ou, para Secretário/Chanceler, o slot de Operador Administrativo que ocupa).
     """
     return {
         "usuario_id": user.usuario_id,
         "role": user.role,
         "is_diretoria": user.is_diretoria,
         "loja_id": user.loja_id,
-        "regiao_id": user.regiao_id,
+        "regiao_id": getattr(user, "regiao_id", regiao_id) or regiao_id,
         # ALTERAÇÃO (2026-09-12): sinaliza quando a pessoa também é Venerável
         # Mestre de uma Loja agregada (mesmo sendo Diretoria) — ver correção
         # em core/dependencies.py. Permite ao frontend exibir, por exemplo,
         # "Presidente do Conselho e Venerável Mestre da Loja 901".
-        "is_veneravel": user.is_veneravel
+        "is_veneravel": getattr(user, "is_veneravel", False),
+        # ALTERAÇÃO (2026-09-19): campos só preenchidos quando `user` é um
+        # `OperadorAdministrativoContext` (Secretário/Chanceler) — `slot`
+        # diz qual dos dois papéis ("SECRETARIO"/"CHANCELER"), `nome` é o
+        # nome de exibição cadastrado na designação.
+        "slot": getattr(user, "slot", None),
+        "nome_operador": getattr(user, "nome", None),
     }
 
 # ALTERAÇÃO (2026-09-11): rota nova, criada junto com a implementação do
@@ -137,6 +160,23 @@ def listar_minhas_regioes(
                     encontradas.setdefault(agregada.regiao_id, "VENERAVEL")
     except Exception as e:
         logger.warning(f"Erro ao checar mandato de VM em /minhas-regioes: {e}")
+
+    # 4. ALTERAÇÃO (2026-09-19): Operador Administrativo (Secretário/
+    # Chanceler) — sem esta checagem, essa identidade nunca aparecia aqui e
+    # a pessoa não tinha como saber para qual Região navegar depois do
+    # login (a tela de login usa esta lista para decidir isso). Só
+    # preenche a Região se ainda não foi encontrada por um vínculo "mais
+    # forte" acima (Diretoria/Suplente/VM sempre tem prioridade sobre o
+    # papel puramente operacional, via `setdefault`).
+    operacoes = db_core.query(OperadorAdministrativoLoja.loja_id, OperadorAdministrativoLoja.slot).filter(
+        OperadorAdministrativoLoja.usuario_id == identificador,
+        OperadorAdministrativoLoja.ativo == True,
+    ).all()
+    if operacoes:
+        lojas_ids_operador = [str(o[0]) for o in operacoes]
+        slot_por_loja = {str(o[0]): o[1] for o in operacoes}
+        for agregada in db_core.query(LojaAgregada).filter(LojaAgregada.loja_id.in_(lojas_ids_operador), LojaAgregada.ativa == True).all():
+            encontradas.setdefault(agregada.regiao_id, slot_por_loja.get(agregada.loja_id, "OPERADOR_ADMINISTRATIVO"))
 
     if not encontradas:
         return []
@@ -431,18 +471,29 @@ def atualizar_assento_diretoria_emergencia(
 @router.get("/{regiao_id}/lojas", summary="Lista as Lojas Jurisdicionadas do Conselho")
 def listar_lojas_conselho(
     regiao_id: str,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    # ALTERAÇÃO (2026-09-19): trocado para o resolvedor combinado — é esta
+    # rota que alimenta tanto a tabela "Lojas Jurisdicionadas" quanto o
+    # `loja` usado por `PainelMinhaLoja.tsx` (via `PaginaLojas.tsx`, modo
+    # `?minha=1`). Um Secretário/Chanceler (Operador Administrativo) só
+    # pode ver a PRÓPRIA Loja — nunca a lista completa da Região — então o
+    # filtro abaixo, depois de montar `resultado`, restringe a resposta a
+    # um único item quando `user` é um `OperadorAdministrativoContext`.
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core),
     db_lojas: Session = Depends(get_db_lojas)
 ):
     """
     Retorna as lojas agregadas ao conselho com nomes, números e detalhes de lojas_db.
+    Um Operador Administrativo (Secretário/Chanceler) recebe só a própria Loja.
     """
     agregadas = db_core.query(LojaAgregada).filter(
         LojaAgregada.regiao_id == regiao_id,
         LojaAgregada.ativa == True
     ).all()
-    
+
+    if isinstance(user, OperadorAdministrativoContext):
+        agregadas = [a for a in agregadas if str(a.loja_id) == str(user.loja_id)]
+
     if not agregadas:
         return {"lojas": []}
 
@@ -473,6 +524,25 @@ def listar_lojas_conselho(
             "rito": info.rito if info else None,
             "cidade": info.cidade if info else None,
             "ativa": a.ativa,
+            # ALTERAÇÃO (2026-09-19): campos adicionais para o painel "Minha
+            # Loja" poder editar endereço completo, dia/horário de sessão e
+            # contato institucional (ver LojaUpdatePayload em
+            # api/v1/integracao/rotas_lojas.py e claude/decisao-... no
+            # Project "Core"). Vêm do modelo-espelho LojaIntegracao
+            # (models/lojas_models.py), que passou a declarar estas colunas.
+            "estado": info.estado if info else None,
+            "cep": info.cep if info else None,
+            "logradouro": info.logradouro if info else None,
+            "numero_endereco": info.numero_endereco if info else None,
+            "complemento": info.complemento if info else None,
+            "bairro": info.bairro if info else None,
+            "dia_sessao": info.dia_sessao if info else None,
+            "periodicidade": info.periodicidade if info else None,
+            "horario_sessao": info.horario_sessao.strftime("%H:%M") if info and info.horario_sessao else None,
+            "email": info.email if info else None,
+            "telefone": info.telefone if info else None,
+            "site": info.site if info else None,
+            "cnpj": info.cnpj if info else None,
             "suplente_usuario_id": suplente.usuario_id if suplente else None,
             "suplente_nome": suplente.nome_suplente if suplente else None,
             "suplente_email": suplente.email_suplente if suplente else None,
@@ -577,6 +647,43 @@ def listar_oficiais_loja(
         }
         for mandato, obreiro in mandatos
     ]
+
+    # CORREÇÃO (2026-09-18, achado no Bloco B do roteiro de testes manuais
+    # -- primeira vez que esta feature foi exercitada de ponta a ponta):
+    # esta rota nunca incluía o Mestre Instalado na lista, mesmo o desenho
+    # original (ver comentário acima de CARGOS_SUPLENTE_ELEGIVEIS e a nota
+    # de 2026-09-15 sobre o Operador Administrativo, que JÁ fazia essa
+    # checagem corretamente) sempre ter previsto essa elegibilidade. Sem
+    # aparecer aqui, um Mestre Instalado nunca conseguia ser selecionado no
+    # seletor do frontend -- mesmo que a validação do PUT abaixo aceitasse
+    # (o que também não acontecia, ver correção na mesma data). `grau` não
+    # é mapeado em `ObreiroIntegracao` (tipo ENUM do Postgres, mesmo motivo
+    # documentado em `Lojas/backend/services/mandatos_service.py`), por
+    # isso o SQL bruto -- mesmo padrão já usado em
+    # `_obreiro_e_mestre_instalado_ativo_na_loja`.
+    mestres_instalados_ids = [
+        row[0] for row in db_lojas.execute(
+            text(
+                "SELECT o.id FROM obreiros o "
+                "JOIN obreiro_loja_associacoes a ON a.obreiro_id = o.id "
+                "WHERE a.loja_id = :loja_id AND a.status = 'Ativo' AND o.grau = 'Mestre Instalado'"
+            ),
+            {"loja_id": int(loja_id)},
+        ).fetchall()
+    ]
+    if mestres_instalados_ids:
+        mestres_instalados = db_lojas.query(ObreiroIntegracao).filter(
+            ObreiroIntegracao.id.in_(mestres_instalados_ids)
+        ).all()
+        for obreiro in mestres_instalados:
+            resultado.append({
+                "usuario_id": obreiro.cim,
+                "nome_completo": obreiro.nome_completo,
+                "email": obreiro.email,
+                "cargo_id": 0,  # sentinela -- Mestre Instalado não tem cargo_id em CARGOS_LOJA_ELEGIVEIS
+                "cargo": "Mestre Instalado",
+            })
+
     resultado.sort(key=lambda o: o["cargo_id"])
     return {"oficiais": resultado}
 
@@ -615,8 +722,13 @@ def designar_suplente_conselho(
         Mandato.cargo_id.in_([cargo_id for cargo_id, _ in CARGOS_SUPLENTE_ELEGIVEIS]),
         (Mandato.data_fim.is_(None)) | (Mandato.data_fim >= date.today())
     ).first()
-    if not mandato_valido:
-        raise HTTPException(status_code=400, detail="O oficial escolhido não ocupa um dos 6 cargos eletivos elegíveis a Suplente desta Loja (o Venerável Mestre não pode ser Suplente de si mesmo).")
+    # CORREÇÃO (2026-09-18, mesmo achado do Bloco B documentado em
+    # listar_oficiais_loja acima): faltava a mesma checagem de Mestre
+    # Instalado que já existe em designar_operador_administrativo mais
+    # abaixo -- sem isso, mesmo que o frontend permitisse enviar o CIM de
+    # um Mestre Instalado, esta validação rejeitava com 400 incondicional.
+    if not mandato_valido and not _obreiro_e_mestre_instalado_ativo_na_loja(db_lojas, escolhido.id, int(loja_id)):
+        raise HTTPException(status_code=400, detail="O oficial escolhido não ocupa um dos 6 cargos eletivos elegíveis a Suplente desta Loja (o Venerável Mestre não pode ser Suplente de si mesmo), nem tem status de Mestre Instalado com vínculo ativo nesta Loja.")
 
     db_core.query(SuplenteConselho).filter_by(loja_id=str(loja_id)).delete()
     novo_suplente = SuplenteConselho(
@@ -1189,8 +1301,24 @@ def marcar_aviso_como_lido(
     ja_lido = db.query(AvisoLido).filter(
         AvisoLido.aviso_id == aviso_id, AvisoLido.usuario_id == user.usuario_id
     ).first()
+    precisa_commit = False
     if not ja_lido:
         db.add(AvisoLido(aviso_id=aviso_id, usuario_id=user.usuario_id))
+        precisa_commit = True
+
+    # ALTERAÇÃO (2026-09-19): a pedido do usuário — marcar como lido também
+    # desafixa o item ("sempre que um item for marcado como lido, será
+    # desafixado"). É uma ação de sistema (qualquer membro que marcar como
+    # lido dispara), não uma edição manual — por isso não passa pela checagem
+    # de permissão de Diretoria/SuperAdmin usada em `atualizar_aviso_regional`.
+    # Atualização (mesmo dia, a pedido do usuário): a exceção que mantinha
+    # itens de nível ALTO (urgência) sempre fixados mesmo após lidos foi
+    # removida — agora TODO item desafixa ao ser lido, sem exceção de nível.
+    if aviso.fixado:
+        aviso.fixado = False
+        precisa_commit = True
+
+    if precisa_commit:
         db.commit()
 
     return {"message": "Leitura registrada."}
@@ -2745,7 +2873,15 @@ class DocumentoPayload(BaseModel):
 @router.get("/{regiao_id}/documentos/estatisticas", summary="Métricas consolidadas do repositório documental")
 def obter_estatisticas_documentos(
     regiao_id: str,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    # ALTERAÇÃO (2026-09-19): trocado para o resolvedor combinado — a lista
+    # de Documentos (`GET /documentos`, logo abaixo) já aceitava Operador
+    # Administrativo, mas esta rota de estatísticas (chamada pela mesma
+    # tela, `PaginaDocumentos.tsx`) ainda usava o resolvedor estrito e
+    # quebrava a tela inteira com 403 para Secretário/Chanceler. Os
+    # totais aqui já são agregados de TODA a Região (não isolados por
+    # Loja) — mesmo comportamento de antes, só a checagem de identidade
+    # ficou mais permissiva.
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
     docs = db.query(DocumentoRegional).filter(
@@ -3683,7 +3819,12 @@ class TopicoStatusPayload(BaseModel):
 @router.get("/{regiao_id}/comunicacao/estatisticas", summary="Estatísticas da Central de Comunicação Interna")
 def obter_estatisticas_comunicacao(
     regiao_id: str,
-    user: RegionalUserContext = Depends(get_current_regional_user),
+    # ALTERAÇÃO (2026-09-19): trocado para o resolvedor combinado — mesmo
+    # motivo de `obter_estatisticas_documentos` acima: a tela de Comunicação
+    # já isola por `user.loja_id` no corpo desta função (compatível com
+    # `OperadorAdministrativoContext`), só a checagem de identidade em si
+    # ainda excluía Secretário/Chanceler.
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db_core: Session = Depends(get_db_core)
 ):
     """
@@ -4294,7 +4435,25 @@ def exportar_prancha_pdf(
 # Loja, sempre com `loja_organizadora_id` travado na Loja de quem cria.
 # Integra com Admissões (`previa_admissao_id`) e com Avisos (`gerar_aviso`).
 
-TIPOS_EVENTO_AGENDA_VALIDOS = ["SESSAO", "REUNIAO", "VISITA", "ADMINISTRATIVO", "INICIACAO", "OUTRO"]
+# CORREÇÃO (2026-09-17): catálogo fechado de fato implementado -- antes desta
+# correção, esta lista ainda era o rascunho genérico inicial (SESSAO/REUNIAO/
+# VISITA/ADMINISTRATIVO/INICIACAO/OUTRO), embora o docstring de EventoAgenda
+# (models/models.py) e a seção 10 de claude/decisao-controle-acesso-cadastro.md
+# já descrevessem o catálogo de 9 tipos com âmbito fixo. Achado durante a
+# investigação do Módulo 13 do roteiro de testes.
+TIPOS_EVENTO_AGENDA = {
+    "REUNIAO_ADMINISTRATIVA": {"rotulo": "Reunião Administrativa", "ambito": "CONSELHO", "quem_lanca": "Mesa Diretora"},
+    "ENCONTRO_REGIONAL":      {"rotulo": "Encontro Regional",      "ambito": "CONSELHO", "quem_lanca": "Mesa Diretora"},
+    "CONFERENCIA":            {"rotulo": "Conferência",            "ambito": "CONSELHO", "quem_lanca": "Mesa Diretora"},
+    "SESSAO_MAGNA":           {"rotulo": "Sessão Magna",           "ambito": "LOJA",      "quem_lanca": "Diretoria da Loja"},
+    "SESSAO_PUBLICA":         {"rotulo": "Sessão Pública",         "ambito": "LOJA",      "quem_lanca": "Diretoria da Loja"},
+    "AGAPE_RITUALISTICO":     {"rotulo": "Ágape Ritualístico",     "ambito": "LOJA",      "quem_lanca": "Diretoria da Loja"},
+    "EVENTO_BENEFICENTE":     {"rotulo": "Evento Beneficente",     "ambito": "AMBOS",     "quem_lanca": "Mesa Diretora / Diretoria da Loja"},
+    "EVENTO_ARRECADACAO":     {"rotulo": "Evento de Arrecadação",  "ambito": "AMBOS",     "quem_lanca": "Mesa Diretora / Diretoria da Loja"},
+    "HOMENAGEM_EXTERNA":      {"rotulo": "Homenagem Externa",      "ambito": "AMBOS",     "quem_lanca": "Mesa Diretora / Diretoria da Loja"},
+}
+TIPOS_EVENTO_AGENDA_VALIDOS = list(TIPOS_EVENTO_AGENDA.keys())
+SUBTIPOS_SESSAO_MAGNA_VALIDOS = ["INICIACAO", "ELEVACAO", "EXALTACAO", "POSSE", "INSTALACAO", "COMEMORATIVA"]
 STATUS_EVENTO_AGENDA_VALIDOS = ["AGENDADO", "REALIZADO", "CANCELADO"]
 
 
@@ -4302,6 +4461,7 @@ class EventoAgendaCreatePayload(BaseModel):
     titulo: str
     descricao: Optional[str] = None
     tipo: str = "OUTRO"
+    subtipo: Optional[str] = None
     data_inicio: datetime
     data_fim: Optional[datetime] = None
     previa_admissao_id: Optional[str] = None
@@ -4312,9 +4472,32 @@ class EventoAgendaUpdatePayload(BaseModel):
     titulo: Optional[str] = None
     descricao: Optional[str] = None
     tipo: Optional[str] = None
+    subtipo: Optional[str] = None
     data_inicio: Optional[datetime] = None
     data_fim: Optional[datetime] = None
     status: Optional[str] = None
+
+
+@router.get("/{regiao_id}/agenda/tipos-evento", summary="Lista o catálogo fechado de tipos de evento da Agenda")
+def listar_tipos_evento_agenda(
+    regiao_id: str,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo)
+):
+    """
+    Catálogo fechado -- ver seção 10 de claude/decisao-controle-acesso-cadastro.md.
+    Devolve, para cada tipo, o âmbito (CONSELHO/LOJA/AMBOS) e quem pode
+    lançá-lo, para a UI montar o formulário sem hardcodar a lista.
+    """
+    return [
+        {
+            "tipo": tipo,
+            "rotulo": info["rotulo"],
+            "ambito": info["ambito"],
+            "quem_lanca": info["quem_lanca"],
+            "subtipos_validos": SUBTIPOS_SESSAO_MAGNA_VALIDOS if tipo == "SESSAO_MAGNA" else None
+        }
+        for tipo, info in TIPOS_EVENTO_AGENDA.items()
+    ]
 
 
 @router.get("/{regiao_id}/agenda/eventos", summary="Lista os eventos da agenda do conselho")
@@ -4355,6 +4538,7 @@ def listar_eventos_agenda(
             "titulo": e.titulo,
             "descricao": e.descricao,
             "tipo": e.tipo,
+            "subtipo": e.subtipo,
             "data_inicio": e.data_inicio.isoformat(),
             "data_fim": e.data_fim.isoformat() if e.data_fim else None,
             "loja_organizadora_id": e.loja_organizadora_id,
@@ -4392,11 +4576,33 @@ def criar_evento_agenda(
     Chanceler cadastrando a agenda da própria Loja sem depender do VM).
     """
     tipo = (payload.tipo or "OUTRO").upper()
-    if tipo not in TIPOS_EVENTO_AGENDA_VALIDOS:
+    if tipo not in TIPOS_EVENTO_AGENDA:
         raise HTTPException(status_code=400, detail=f"Tipo de evento inválido. Use um de: {', '.join(TIPOS_EVENTO_AGENDA_VALIDOS)}.")
+    ambito = TIPOS_EVENTO_AGENDA[tipo]["ambito"]
 
     is_diretoria = user.is_diretoria or user.role.upper() == 'SUPERADMIN'
     is_operador = isinstance(user, OperadorAdministrativoContext)
+    tem_loja_propria = bool(user.loja_id)
+
+    # Âmbito fechado por tipo (seção 10.2 do documento de decisão): CONSELHO
+    # só pode ser lançado pela Mesa Diretora/SuperAdmin, e nunca tem Loja
+    # organizadora; LOJA exige vínculo com uma Loja (VM, Suplente ou
+    # Operador Administrativo, ou Diretoria que também é VM da própria
+    # Loja); AMBOS aceita qualquer um dos dois caminhos.
+    if ambito == "CONSELHO" and not is_diretoria:
+        raise HTTPException(status_code=403, detail="Este tipo de evento é exclusivo da Mesa Diretora/SuperAdmin.")
+    if ambito == "LOJA" and not tem_loja_propria:
+        raise HTTPException(status_code=403, detail="Este tipo de evento exige vínculo com uma Loja (VM, Suplente ou Operador Administrativo).")
+    if ambito == "AMBOS" and not (is_diretoria or tem_loja_propria):
+        raise HTTPException(status_code=403, detail="Você precisa ser Mesa Diretora/SuperAdmin ou ter vínculo com uma Loja para lançar este tipo de evento.")
+
+    # Subtipo: catálogo fechado só para SESSAO_MAGNA; demais tipos, livre.
+    subtipo = (payload.subtipo or "").strip().upper() or None
+    if tipo == "SESSAO_MAGNA":
+        if not subtipo:
+            raise HTTPException(status_code=400, detail=f"Sessão Magna exige subtipo. Use um de: {', '.join(SUBTIPOS_SESSAO_MAGNA_VALIDOS)}.")
+        if subtipo not in SUBTIPOS_SESSAO_MAGNA_VALIDOS:
+            raise HTTPException(status_code=400, detail=f"Subtipo inválido para Sessão Magna. Use um de: {', '.join(SUBTIPOS_SESSAO_MAGNA_VALIDOS)}.")
 
     # Vínculo com Admissões: só aceita prévia da própria Região e, se quem
     # cria for Operador Administrativo, só a própria Loja (a prévia carrega
@@ -4416,7 +4622,7 @@ def criar_evento_agenda(
     loja_organizadora_id = None
     loja_organizadora_nome = None
     loja_organizadora_numero = None
-    if user.loja_id:
+    if ambito != "CONSELHO" and user.loja_id:
         loja_organizadora_id = str(user.loja_id)
         loja_info = db_lojas.query(LojaIntegracao).filter(
             LojaIntegracao.id == int(user.loja_id) if str(user.loja_id).isdigit() else False
@@ -4440,6 +4646,7 @@ def criar_evento_agenda(
         titulo=payload.titulo.strip(),
         descricao=payload.descricao.strip() if payload.descricao else None,
         tipo=tipo,
+        subtipo=subtipo,
         data_inicio=payload.data_inicio,
         data_fim=payload.data_fim,
         loja_organizadora_id=loja_organizadora_id,
@@ -4518,9 +4725,15 @@ def atualizar_evento_agenda(
         evento.descricao = payload.descricao.strip()
     if payload.tipo is not None:
         tipo = payload.tipo.upper()
-        if tipo not in TIPOS_EVENTO_AGENDA_VALIDOS:
+        if tipo not in TIPOS_EVENTO_AGENDA:
             raise HTTPException(status_code=400, detail=f"Tipo de evento inválido. Use um de: {', '.join(TIPOS_EVENTO_AGENDA_VALIDOS)}.")
         evento.tipo = tipo
+    if payload.subtipo is not None:
+        subtipo_novo = payload.subtipo.strip().upper() or None
+        tipo_vigente = payload.tipo.upper() if payload.tipo is not None else evento.tipo
+        if tipo_vigente == "SESSAO_MAGNA" and subtipo_novo and subtipo_novo not in SUBTIPOS_SESSAO_MAGNA_VALIDOS:
+            raise HTTPException(status_code=400, detail=f"Subtipo inválido para Sessão Magna. Use um de: {', '.join(SUBTIPOS_SESSAO_MAGNA_VALIDOS)}.")
+        evento.subtipo = subtipo_novo
     if payload.data_inicio is not None:
         evento.data_inicio = payload.data_inicio
     if payload.data_fim is not None:

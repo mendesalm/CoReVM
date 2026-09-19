@@ -1,9 +1,9 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  BookOpenCheck, ShieldCheck, Loader2, Award, 
+import {
+  BookOpenCheck, ShieldCheck, Loader2, Award,
   Plus, Search, ArrowLeft, FileText, Download, ExternalLink,
   MessageSquare, Calendar, Trash2, Send, CheckCircle2,
   Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw,
@@ -11,6 +11,41 @@ import {
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// CORREÇÃO (2026-09-18): esta página ainda usava axios puro + um seletor
+// "Simular Acesso" que enviava um header `X-User-Id` não autenticado —
+// mecanismo de teste anterior ao fix de segurança do e-Sigma (2026-09-11,
+// ver core/auth_esigma.py). Desde então, `/regional/{id}/me`, `/lojas` e
+// `/admissoes` exigem `Authorization: Bearer` real (validado via
+// get_current_regional_user / obter_identidade_regional_ou_operador_administrativo),
+// então o header X-User-Id nunca mais foi aceito: toda chamada desta página
+// vinha retornando 422 (FastAPI reclamando do header `Authorization`
+// obrigatório e ausente) sem que ninguém notasse, até o simulador de acesso
+// mascarar o problema com a mensagem de erro que ele mesmo tentava mostrar
+// (ver bug abaixo). Substituído por `clienteHttp` (injeta o token real do
+// login via AuthContext, mesmo padrão já usado em PaginaLojas.tsx), e o
+// contexto de usuário passou a vir inteiramente da resposta de
+// `/regional/{id}/me`.
+//
+// CORREÇÃO (2026-09-18, bug de renderização): o `detail` de um erro 422 do
+// FastAPI vem como uma LISTA de objetos ({type, loc, msg, input}), não uma
+// string — `setErro(err.response?.data?.detail || ...)` estava jogando essa
+// lista direto no estado e, ao renderizar `{erro}` como filho de um <p>,
+// quebrava a página inteira ("Objects are not valid as a React child").
+// Esta função normaliza qualquer formato de erro do backend (string simples,
+// lista de erros de validação, ou erro de rede) para uma string segura de
+// exibir — mesmo padrão já usado em PaginaLojas.tsx.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((d: any) => (typeof d === 'string' ? d : d?.msg))
+      .filter(Boolean);
+    if (mensagens.length > 0) return mensagens.join('; ');
+  }
+  return mensagemPadrao;
+}
 
 interface PreviaAdmissaoItem {
   id: string;
@@ -57,12 +92,12 @@ export default function PaginaAdmissoes() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   
-  // Controle de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+  // Controle de Usuário e RBAC (resolvido inteiramente por GET /me, a
+  // partir do token real de login — ver correção de 2026-09-18 acima)
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: '',
+    role: '',
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -101,21 +136,20 @@ export default function PaginaAdmissoes() {
   const carregarDados = async () => {
     setLoading(true);
     setErro('');
-    const headers = { 'X-User-Id': activeUserId };
 
     try {
       // 1. Prévias de Admissão
       try {
-        const previasRes = await axios.get(`${API_URL}/regional/${id}/admissoes`, { headers });
+        const previasRes = await clienteHttp.get(`${API_URL}/regional/${id}/admissoes`);
         setPrevias(previasRes.data || []);
       } catch (errPrevias: any) {
         console.error('Erro ao buscar prévias:', errPrevias);
-        setErro(errPrevias.response?.data?.detail || 'Não foi possível carregar os pedidos de admissão do conselho.');
+        setErro(extrairMensagemErro(errPrevias, 'Não foi possível carregar os pedidos de admissão do conselho.'));
       }
 
       // 2. Contexto do Usuário (RBAC)
       try {
-        const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
+        const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
         if (userRes.data) setUserContext(userRes.data);
       } catch (errUser) {
         console.warn('Contexto do usuário não pôde ser carregado:', errUser);
@@ -123,7 +157,7 @@ export default function PaginaAdmissoes() {
 
       // 3. Lojas do Conselho (para o select de nova prévia)
       try {
-        const lojasRes = await axios.get(`${API_URL}/regional/${id}/lojas`, { headers });
+        const lojasRes = await clienteHttp.get(`${API_URL}/regional/${id}/lojas`);
         const lojasList = lojasRes.data?.lojas || [];
         setLojasConselho(lojasList);
 
@@ -145,7 +179,7 @@ export default function PaginaAdmissoes() {
 
   useEffect(() => {
     if (id) carregarDados();
-  }, [id, activeUserId]);
+  }, [id]);
 
   // Resetar paginação ao filtrar ou buscar
   useEffect(() => {
@@ -156,10 +190,9 @@ export default function PaginaAdmissoes() {
   const handleAlternarStatus = async (previaId: string, statusAtual: string) => {
     const novoStatus = statusAtual === 'AVERIGUADO' ? 'EM_ANDAMENTO' : 'AVERIGUADO';
     try {
-      const res = await axios.put(
+      const res = await clienteHttp.put(
         `${API_URL}/regional/${id}/admissoes/${previaId}/status`,
-        { status: novoStatus },
-        { headers: { 'X-User-Id': activeUserId } }
+        { status: novoStatus }
       );
       
       setPrevias(prev => prev.map(p => {
@@ -183,7 +216,7 @@ export default function PaginaAdmissoes() {
         } : null);
       }
     } catch (err: any) {
-      alert('Erro ao atualizar verificação: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao atualizar verificação'));
     }
   };
 
@@ -193,12 +226,10 @@ export default function PaginaAdmissoes() {
     setCarregandoConsideracoes(true);
     setNovaConsideracaoTexto('');
     try {
-      const res = await axios.get(`${API_URL}/regional/${id}/admissoes/${previa.id}/consideracoes`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      const res = await clienteHttp.get(`${API_URL}/regional/${id}/admissoes/${previa.id}/consideracoes`);
       setConsideracoes(res.data || []);
     } catch (err: any) {
-      alert('Erro ao carregar pareceres da prévia: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao carregar pareceres da prévia'));
     } finally {
       setCarregandoConsideracoes(false);
     }
@@ -220,25 +251,22 @@ export default function PaginaAdmissoes() {
         nomeAutor = `Ir. ${userContext.usuario_id}`;
       }
 
-      await axios.post(
+      await clienteHttp.post(
         `${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/consideracoes`,
         {
           conteudo: novaConsideracaoTexto.trim(),
           autor_nome: nomeAutor,
           autor_cargo: userContext.role || 'Venerável Mestre'
-        },
-        { headers: { 'X-User-Id': activeUserId } }
+        }
       );
 
-      const res = await axios.get(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/consideracoes`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      const res = await clienteHttp.get(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/consideracoes`);
       setConsideracoes(res.data || []);
       setNovaConsideracaoTexto('');
 
       setPrevias(prev => prev.map(p => p.id === previaSelecionada.id ? { ...p, total_consideracoes: res.data.length } : p));
     } catch (err: any) {
-      alert('Erro ao registrar consideração: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao registrar consideração'));
     } finally {
       setEnviandoConsideracao(false);
     }
@@ -248,13 +276,11 @@ export default function PaginaAdmissoes() {
   const handleExcluirConsideracao = async (consId: string) => {
     if (!previaSelecionada || !confirm('Deseja realmente ocultar este parecer?')) return;
     try {
-      await axios.delete(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/consideracoes/${consId}`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      await clienteHttp.delete(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/consideracoes/${consId}`);
       setConsideracoes(prev => prev.filter(c => c.id !== consId));
       setPrevias(prev => prev.map(p => p.id === previaSelecionada.id ? { ...p, total_consideracoes: Math.max(0, p.total_consideracoes - 1) } : p));
     } catch (err: any) {
-      alert('Erro ao excluir consideração: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao excluir consideração'));
     }
   };
 
@@ -262,15 +288,13 @@ export default function PaginaAdmissoes() {
   const handleExcluirPrevia = async (previaId: string) => {
     if (!confirm('Deseja realmente ocultar esta prévia do Mural de Admissão?')) return;
     try {
-      await axios.delete(`${API_URL}/regional/${id}/admissoes/${previaId}`, {
-        headers: { 'X-User-Id': activeUserId }
-      });
+      await clienteHttp.delete(`${API_URL}/regional/${id}/admissoes/${previaId}`);
       setPrevias(prev => prev.filter(p => p.id !== previaId));
       if (previaSelecionada?.id === previaId) {
         setPreviaSelecionada(null);
       }
     } catch (err: any) {
-      alert('Erro ao remover prévia: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao remover prévia'));
     }
   };
 
@@ -284,8 +308,6 @@ export default function PaginaAdmissoes() {
 
     setSalvandoPrevia(true);
     try {
-      const headers = { 'X-User-Id': activeUserId };
-
       if (arquivoPdf) {
         const formData = new FormData();
         formData.append('tipo', formPrevia.tipo);
@@ -296,18 +318,18 @@ export default function PaginaAdmissoes() {
         if (formPrevia.data_limite) formData.append('data_limite', formPrevia.data_limite);
         formData.append('arquivo', arquivoPdf);
 
-        await axios.post(`${API_URL}/regional/${id}/admissoes/upload`, formData, {
-          headers: { ...headers, 'Content-Type': 'multipart/form-data' }
+        await clienteHttp.post(`${API_URL}/regional/${id}/admissoes/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
       } else {
-        await axios.post(`${API_URL}/regional/${id}/admissoes`, {
+        await clienteHttp.post(`${API_URL}/regional/${id}/admissoes`, {
           tipo: formPrevia.tipo,
           loja_id: formPrevia.loja_id,
           loja_nome: formPrevia.loja_nome,
           loja_numero: formPrevia.loja_numero,
           candidato_nome: formPrevia.candidato_nome.trim(),
           data_limite: formPrevia.data_limite || null
-        }, { headers });
+        });
       }
 
       setShowNovaPreviaModal(false);
@@ -315,7 +337,7 @@ export default function PaginaAdmissoes() {
       setFormPrevia(prev => ({ ...prev, candidato_nome: '', data_limite: '' }));
       carregarDados();
     } catch (err: any) {
-      alert('Erro ao publicar prévia: ' + (err.response?.data?.detail || err.message));
+      alert(extrairMensagemErro(err, 'Erro ao publicar prévia'));
     } finally {
       setSalvandoPrevia(false);
     }
@@ -415,21 +437,6 @@ export default function PaginaAdmissoes() {
             <p className="text-xs text-gray-400">{erro}</p>
           </div>
 
-          <div className="bg-[#0c0c0c] border border-[#222] p-3 rounded-xl text-xs space-y-2">
-            <span className="text-gray-400 font-semibold block">Simular Acesso Autorizado:</span>
-            <select
-              value={activeUserId}
-              onChange={(e) => setActiveUserId(e.target.value)}
-              className="w-full bg-[#181818] text-[#facc15] border border-[#333] rounded-lg px-2.5 py-1.5 font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
-              <option value="272875">Secretário (Mesa Diretora)</option>
-              <option value="superadmin">SuperAdmin</option>
-              <option value="VM_1">VM - João Pedro Junqueira nº 2181</option>
-              <option value="VM_135">VM - Acácia Amarela nº 4305</option>
-            </select>
-          </div>
-
           <button
             onClick={() => carregarDados()}
             className="w-full py-2.5 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs rounded-xl transition-all shadow-md"
@@ -480,22 +487,6 @@ export default function PaginaAdmissoes() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-[#141414] border border-[#2a2a2a] px-3 py-1.5 rounded-xl text-xs">
-              <span className="text-gray-400 font-medium">Acesso Simulado:</span>
-              <select 
-                value={activeUserId} 
-                onChange={(e) => setActiveUserId(e.target.value)}
-                className="bg-[#0c0c0c] text-[#facc15] border border-[#333] rounded-lg px-2.5 py-1 font-semibold focus:outline-none cursor-pointer"
-              >
-                <option value="CIM_12345_PRESIDENTE">Presidente (Diretoria)</option>
-                <option value="272875">Secretário (Mesa Diretora)</option>
-                <option value="superadmin">SuperAdmin</option>
-                <option value="VM_1">VM - João Pedro Junqueira nº 2181</option>
-                <option value="VM_135">VM - Acácia Amarela nº 4305</option>
-                <option value="VM_141">VM - Winston Churchill nº 2216</option>
-              </select>
-            </div>
-
             <button
               onClick={() => setShowNovaPreviaModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs rounded-xl shadow-lg shadow-[#facc15]/10 transition-all hover:scale-[1.02] active:scale-[0.98]"

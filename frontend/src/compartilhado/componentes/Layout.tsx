@@ -1,13 +1,13 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import { useEffect, useState, useRef } from 'react';
 import { NavLink, Outlet, useParams, Link, useLocation } from 'react-router-dom';
-import { 
-  Bell, Calendar, BookOpenCheck, Vote, Landmark, 
-  FileText, Building2, Award, BarChart3, MessageSquare, 
-  Bug, Menu, ChevronLeft, ChevronRight, LogOut
+import {
+  Bell, Calendar, BookOpenCheck, Vote, Landmark,
+  FileText, Building2, Award, BarChart3, MessageSquare,
+  Bug, Menu, ChevronLeft, ChevronRight, LogOut, UserPlus, Fingerprint, Home
 } from 'lucide-react';
 import axios from 'axios';
-import { useAuth } from '../contextos/AuthContext';
+import { useAuth, clienteHttp } from '../contextos/AuthContext';
 import LogoAnimadaCore from './LogoAnimadaCore';
 import ModalReportarBug from './ModalReportarBug';
 
@@ -83,8 +83,47 @@ export default function Layout() {
     if (id) fetchRegiao();
   }, [id]);
 
+  // ALTERAÇÃO (2026-09-18, a pedido do usuário -- "para os veneráveis a
+  // configuração da própria loja não ficou em lugar trivial, podemos criar
+  // um botão exclusivo?"): descobre se a pessoa logada é Venerável Mestre de
+  // alguma Loja desta Região (mesmo campo `loja_id` já usado em
+  // PaginaLojas.tsx, vindo de GET /regional/{id}/me) só para decidir se o
+  // item de menu "Minha Loja" aparece. Falha silenciosa (ex.: usuário é só
+  // Diretoria, sem Loja própria) -- o item de menu simplesmente não aparece.
+  const [minhaLojaId, setMinhaLojaId] = useState<string | null>(null);
+  // ALTERAÇÃO (2026-09-19): também guarda o `role` inteiro (não só o
+  // `loja_id`) — necessário para o menu reduzido do Secretário/Chanceler
+  // (Operador Administrativo) abaixo, que não deve ver os módulos cujas
+  // rotas ainda exigem o perfil "cheio" (Diretoria/Suplente/VM). Ver
+  // claude/roteiro-testes-manuais.md, item B.10, no Project "Core".
+  const [meuRole, setMeuRole] = useState<string | null>(null);
+  useEffect(() => {
+    const fetchMeuContexto = async () => {
+      try {
+        const res = await clienteHttp.get(`http://localhost:8003/api/v1/regional/${id}/me`);
+        setMinhaLojaId(res.data?.loja_id || null);
+        setMeuRole(res.data?.role || null);
+      } catch (err) {
+        setMinhaLojaId(null);
+        setMeuRole(null);
+      }
+    };
+    if (id) fetchMeuContexto();
+  }, [id]);
+
+  // ALTERAÇÃO (2026-09-19): Secretário/Chanceler (Operador Administrativo)
+  // é um perfil "só a própria Loja" — as rotas de Diretoria, Lojas
+  // Jurisdicionadas (tabela completa), Votações, Patrimônio e Relatórios
+  // continuam exclusivas de Diretoria/Suplente/VM/SuperAdmin
+  // (`get_current_regional_user` estrito) e dariam 403 para este perfil.
+  // Os módulos abaixo já foram confirmados como compatíveis (ver
+  // core/dependencies.py: `obter_identidade_regional_ou_operador_
+  // administrativo`, usado por Avisos, Agenda, Admissões, Documentos e
+  // Comunicação).
+  const souOperadorAdministrativo = meuRole === 'OPERADOR_ADMINISTRATIVO';
+
   // Lista dos 10 módulos solicitados (sem numeração)
-  const itensMenu = [
+  const itensMenuCompleto = [
     {
       id: 'avisos',
       titulo: 'Avisos e Notificações',
@@ -93,6 +132,18 @@ export default function Layout() {
       icone: Bell,
       descricao: 'Comunicados, novidades e alertas'
     },
+    // ALTERAÇÃO (2026-09-18, a pedido do usuário): atalho exclusivo para o
+    // Venerável Mestre -- leva direto para a própria Loja dentro de "Lojas
+    // Jurisdicionadas" (filtro "Minha Loja" pré-selecionado via ?minha=1),
+    // sem precisar buscar a linha entre todas as lojas da Região. Só
+    // aparece para quem é VM de alguma Loja (minhaLojaId preenchido).
+    ...(minhaLojaId ? [{
+      id: 'minha-loja',
+      titulo: 'Minha Loja',
+      to: `/regiao/${id}/lojas?minha=1`,
+      icone: Home,
+      descricao: 'Acesso direto aos dados, oficiais e Suplente da sua própria Loja'
+    }] : []),
     {
       id: 'agenda',
       titulo: 'Agenda do Conselho',
@@ -155,8 +206,43 @@ export default function Layout() {
       to: `/regiao/${id}/comunicacao`,
       icone: MessageSquare,
       descricao: 'Canal oficial com as lojas'
+    },
+    {
+      // Adicionado em 2026-09-17. Nao fica sob /regiao/${id} porque a
+      // Solicitacao de Cadastro e' um conceito do e-Sigma (Loja), nao da
+      // Regiao do CoReVM -- por isso o "to" e' um caminho absoluto fixo,
+      // nao interpolado com o id da regiao atual. O proprio backend do
+      // e-Sigma decide quem ve/decide o que; quem nao for elegivel para
+      // nenhuma Loja simplesmente ve a lista vazia nesta tela.
+      id: 'solicitacoes-cadastro',
+      titulo: 'Solicitações de Cadastro',
+      to: '/solicitacoes-cadastro',
+      icone: UserPlus,
+      descricao: 'Aprovar ou rejeitar pedidos de acesso de novos membros'
+    },
+    {
+      // Adicionado em 2026-09-18, junto com o backend de passkeys. Mesma
+      // razão de caminho absoluto do item acima: gerenciar as PRÓPRIAS
+      // passkeys é um conceito de Pessoa (e-Sigma), não de Região.
+      id: 'minhas-passkeys',
+      titulo: 'Minhas Passkeys',
+      to: '/minhas-passkeys',
+      icone: Fingerprint,
+      descricao: 'Entrar sem senha usando biometria ou PIN do dispositivo'
     }
   ];
+
+  // ALTERAÇÃO (2026-09-19): para Secretário/Chanceler, restringe o menu aos
+  // módulos cujas rotas já aceitam Operador Administrativo — os demais
+  // ('diretoria', 'lojas' completa, 'votacoes', 'patrimonio', 'relatorios',
+  // 'solicitacoes-cadastro', que é escopo de Diretoria/SuperAdmin do
+  // e-Sigma) ficariam com telas quebradas (403) para este perfil.
+  const IDS_MODULOS_OPERADOR_ADMINISTRATIVO = [
+    'avisos', 'minha-loja', 'agenda', 'admissao', 'documentos', 'comunicacao', 'minhas-passkeys'
+  ];
+  const itensMenu = souOperadorAdministrativo
+    ? itensMenuCompleto.filter(item => IDS_MODULOS_OPERADOR_ADMINISTRATIVO.includes(item.id))
+    : itensMenuCompleto;
 
   return (
     <div className="flex flex-col h-screen bg-[#080808] text-gray-200 overflow-hidden font-sans">
@@ -276,9 +362,26 @@ export default function Layout() {
             {/* Itens do Menu */}
             {itensMenu.map((item) => {
               const Icone = item.icone;
-              const isActive = item.exact 
-                ? location.pathname === item.to 
-                : location.pathname.startsWith(item.to);
+              const [itemPath, itemQuery] = item.to.split('?');
+              // CORREÇÃO (2026-09-18, reportado pelo usuário): "Minha Loja"
+              // e "Lojas Jurisdicionadas" apontam pro mesmo caminho
+              // (/regiao/{id}/lojas), diferindo só pela query "?minha=1" --
+              // sem este ajuste, os dois ficavam destacados juntos sempre
+              // que "Minha Loja" estava ativo, porque o item sem query
+              // (Lojas Jurisdicionadas) só checava o prefixo do caminho,
+              // sem excluir a query "especial" de outro item que aponta pro
+              // mesmo lugar.
+              const outroItemComQueryMesmoCaminho = itensMenu.find(
+                (outro) => outro !== item && outro.to.includes('?') && outro.to.split('?')[0] === itemPath
+              );
+              const isActive = item.exact
+                ? location.pathname === itemPath
+                : itemQuery
+                  ? location.pathname.startsWith(itemPath) && location.search.includes(itemQuery)
+                  : location.pathname.startsWith(itemPath) && !(
+                      outroItemComQueryMesmoCaminho
+                      && location.search.includes(outroItemComQueryMesmoCaminho.to.split('?')[1])
+                    );
 
               return (
                 <NavLink

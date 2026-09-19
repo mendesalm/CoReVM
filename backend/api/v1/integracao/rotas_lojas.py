@@ -228,6 +228,23 @@ class LojaUpdatePayload(BaseModel):
     numero: Optional[str] = None
     rito: Optional[str] = None
     cidade: Optional[str] = None
+    # ALTERAÇÃO (2026-09-19): campos adicionais do painel "Minha Loja"
+    # (endereço completo, dia/horário de sessão, contato institucional) —
+    # colunas que já existiam em lojas_db mas não eram expostas nesta rota
+    # nem no modelo-espelho LojaIntegracao (ver models/lojas_models.py).
+    logradouro: Optional[str] = None
+    numero_endereco: Optional[str] = None
+    complemento: Optional[str] = None
+    bairro: Optional[str] = None
+    estado: Optional[str] = None
+    cep: Optional[str] = None
+    dia_sessao: Optional[str] = None
+    periodicidade: Optional[str] = None
+    horario_sessao: Optional[str] = None  # "HH:MM", casted pelo Postgres na gravação
+    email: Optional[str] = None
+    telefone: Optional[str] = None
+    site: Optional[str] = None
+    cnpj: Optional[str] = None
 
 
 @router.put(
@@ -276,6 +293,47 @@ def atualizar_loja_integracao(
     if loja_in.cidade is not None:
         updates_lojas.append("cidade = :cidade")
         params_lojas["cidade"] = loja_in.cidade
+    if loja_in.logradouro is not None:
+        updates_lojas.append("logradouro = :logradouro")
+        params_lojas["logradouro"] = loja_in.logradouro
+    if loja_in.numero_endereco is not None:
+        updates_lojas.append("numero = :numero_endereco")
+        params_lojas["numero_endereco"] = loja_in.numero_endereco
+    if loja_in.complemento is not None:
+        updates_lojas.append("complemento = :complemento")
+        params_lojas["complemento"] = loja_in.complemento
+    if loja_in.bairro is not None:
+        updates_lojas.append("bairro = :bairro")
+        params_lojas["bairro"] = loja_in.bairro
+    if loja_in.estado is not None:
+        updates_lojas.append("estado = :estado")
+        params_lojas["estado"] = loja_in.estado
+    if loja_in.cep is not None:
+        updates_lojas.append("cep = :cep")
+        params_lojas["cep"] = loja_in.cep
+    if loja_in.dia_sessao is not None:
+        updates_lojas.append("dia_sessao = :dia_sessao")
+        params_lojas["dia_sessao"] = loja_in.dia_sessao or None
+    if loja_in.periodicidade is not None:
+        updates_lojas.append("periodicidade = :periodicidade")
+        params_lojas["periodicidade"] = loja_in.periodicidade or None
+    if loja_in.horario_sessao is not None:
+        # CORREÇÃO: string vazia não converte para o tipo `time` do Postgres
+        # (erro de cast) — trata como "sem horário definido" (NULL).
+        updates_lojas.append("horario_sessao = :horario_sessao")
+        params_lojas["horario_sessao"] = loja_in.horario_sessao or None
+    if loja_in.email is not None:
+        updates_lojas.append("email = :email")
+        params_lojas["email"] = loja_in.email
+    if loja_in.telefone is not None:
+        updates_lojas.append("telefone = :telefone")
+        params_lojas["telefone"] = loja_in.telefone
+    if loja_in.site is not None:
+        updates_lojas.append("site = :site")
+        params_lojas["site"] = loja_in.site
+    if loja_in.cnpj is not None:
+        updates_lojas.append("cnpj = :cnpj")
+        params_lojas["cnpj"] = loja_in.cnpj or None
 
     if updates_lojas:
         sql_lojas = f"UPDATE lojas SET {', '.join(updates_lojas)} WHERE id = :id"

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   Building2, ShieldCheck, Loader2, Award,
   Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft,
@@ -11,6 +11,7 @@ import {
 import BuscadorLoja from '../../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../../compartilhado/componentes/ModalCadastroObreiro';
 import ModalGestaoVM from '../../../compartilhado/componentes/ModalGestaoVM';
+import PainelMinhaLoja from '../../../compartilhado/componentes/PainelMinhaLoja';
 
 const API_URL = 'http://localhost:8003/api/v1';
 
@@ -60,6 +61,17 @@ export default function PaginaLojas() {
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<'TODAS' | 'COM_VM' | 'PENDENTES'>('TODAS');
 
+  // ALTERAÇÃO (2026-09-18, revisão a pedido do usuário -- a 1ª versão desta
+  // feature só filtrava esta mesma tabela pra 1 linha, reaproveitando os
+  // widgets do módulo inteiro ("Módulo 07", métricas de todas as Lojas da
+  // Região), que não fazem sentido numa visão de UMA Loja só. Agora
+  // "?minha=1" (vindo do item de menu "Minha Loja" em Layout.tsx) troca
+  // TODA a tela por um painel dedicado (PainelMinhaLoja), com cartões
+  // específicos da própria Loja/VM/Suplente -- não é mais um filtro desta
+  // tabela.
+  const [searchParams] = useSearchParams();
+  const emModoPainel = searchParams.get('minha') === '1';
+
   // Modais
   const [gestaoVmModal, setGestaoVmModal] = useState<any>(null);
   const [addObreiroModal, setAddObreiroModal] = useState<any>(null);
@@ -92,11 +104,29 @@ export default function PaginaLojas() {
   const [salvandoTransmissao, setSalvandoTransmissao] = useState(false);
 
   // Form Edição de Loja
+  // ALTERAÇÃO (2026-09-19): campos adicionais a pedido do usuário — endereço
+  // completo, dia/horário de sessão e contato institucional — além dos 4
+  // campos originais (nome/número/rito/cidade). Ver LojaUpdatePayload em
+  // api/v1/integracao/rotas_lojas.py (backend) e claude/roteiro-testes-
+  // manuais.md no Project "Core" para o registro desta mudança.
   const [editLojaForm, setEditLojaForm] = useState({
     nome: '',
     numero: '',
     rito: '',
-    cidade: ''
+    cidade: '',
+    logradouro: '',
+    numero_endereco: '',
+    complemento: '',
+    bairro: '',
+    estado: '',
+    cep: '',
+    dia_sessao: '',
+    periodicidade: '',
+    horario_sessao: '',
+    email: '',
+    telefone: '',
+    site: '',
+    cnpj: ''
   });
   const [salvandoLoja, setSalvandoLoja] = useState(false);
 
@@ -106,7 +136,20 @@ export default function PaginaLojas() {
       nome: loja.nome ? loja.nome.replace(/^Loja\s+/i, '') : '',
       numero: loja.numero || '',
       rito: loja.rito || 'REAA',
-      cidade: loja.cidade || ''
+      cidade: loja.cidade || '',
+      logradouro: loja.logradouro || '',
+      numero_endereco: loja.numero_endereco || '',
+      complemento: loja.complemento || '',
+      bairro: loja.bairro || '',
+      estado: loja.estado || '',
+      cep: loja.cep || '',
+      dia_sessao: loja.dia_sessao || '',
+      periodicidade: loja.periodicidade || '',
+      horario_sessao: loja.horario_sessao || '',
+      email: loja.email || '',
+      telefone: loja.telefone || '',
+      site: loja.site || '',
+      cnpj: loja.cnpj || ''
     });
   };
 
@@ -130,8 +173,50 @@ export default function PaginaLojas() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [userRes, resDashboard, resLojas] = await Promise.all([
-        clienteHttp.get(`${API_URL}/regional/${id}/me`),
+      const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
+      setUserContext(userRes.data);
+
+      // ALTERAÇÃO (2026-09-19): "Minha Loja" (emModoPainel) deixou de
+      // depender de `GET /dashboard` — essa rota exige o perfil "cheio"
+      // (Diretoria/Suplente/VM, via `get_current_regional_user`) e sempre
+      // devolvia TODAS as Lojas da Região, coisa que este modo nunca usava
+      // (só a própria Loja). Isso quebrava com 403 para um Secretário/
+      // Chanceler (Operador Administrativo) — perfil novo que só enxerga a
+      // própria Loja e nunca teria motivo para receber a lista completa de
+      // qualquer forma. Agora este modo usa só `/me` + `/lojas` (que já
+      // filtra para 1 única Loja quando quem pergunta é um Operador
+      // Administrativo) + os 2 endpoints de detalhe/status de VM já usados
+      // pelo caminho completo, só que para 1 id em vez de todos. Ver
+      // claude/roteiro-testes-manuais.md, item B.10, no Project "Core".
+      if (emModoPainel) {
+        const resLojas = await clienteHttp.get(`${API_URL}/regional/${id}/lojas`);
+        const minhaLojaId = userRes.data?.loja_id;
+        const lojaBase = (resLojas.data?.lojas || []).find((l: any) => String(l.id) === String(minhaLojaId));
+        if (!lojaBase) {
+          setConselho({ lojas: [] });
+          setLoading(false);
+          return;
+        }
+        const [detailsRes, vmStatusRes] = await Promise.all([
+          axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, [lojaBase.id]),
+          axios.post(`${API_URL}/integracao/lojas/status_vm`, [lojaBase.id])
+        ]);
+        const det = detailsRes.data.find((d: any) => String(d.id) === String(lojaBase.id));
+        const nomeVmAtivo = vmStatusRes.data[lojaBase.id];
+        setConselho({
+          lojas: [{
+            ...lojaBase,
+            loja_id: String(lojaBase.id),
+            potencia: det?.potencia,
+            veneravel_nome: nomeVmAtivo || null,
+            hasVm: nomeVmAtivo,
+          }]
+        });
+        setLoading(false);
+        return;
+      }
+
+      const [resDashboard, resLojas] = await Promise.all([
         clienteHttp.get(`${API_URL}/regional/${id}/dashboard`),
         // CORREÇÃO (2026-09-14, bug reportado em teste): a designação de
         // Suplente funcionava no backend, mas a tabela nunca mostrava o
@@ -143,7 +228,6 @@ export default function PaginaLojas() {
         clienteHttp.get(`${API_URL}/regional/${id}/lojas`)
       ]);
 
-      setUserContext(userRes.data);
       const data = resDashboard.data;
       const suplentesPorLoja: Record<string, any> = {};
       (resLojas.data?.lojas || []).forEach((l: any) => {
@@ -338,6 +422,12 @@ export default function PaginaLojas() {
   const lojasComVm = conselho?.lojas?.filter((l: any) => !!l.hasVm).length || 0;
   const lojasPendentes = totalLojas - lojasComVm;
 
+  // ALTERAÇÃO (2026-09-18): objeto da própria Loja do VM logado, usado só
+  // pelo painel dedicado "Minha Loja" (emModoPainel) -- ver PainelMinhaLoja.
+  const minhaLoja = userContext.loja_id
+    ? (conselho?.lojas || []).find((l: any) => String(l.loja_id) === String(userContext.loja_id))
+    : null;
+
   // Filtragem
   const lojasFiltradas = (conselho?.lojas || []).filter((l: any) => {
     const matchBusca = 
@@ -373,7 +463,23 @@ export default function PaginaLojas() {
 
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
-      
+
+      {/* ALTERAÇÃO (2026-09-18, revisão a pedido do usuário): "Minha Loja"
+          agora troca a tela inteira por um painel dedicado -- os widgets do
+          módulo inteiro (sub-header "Módulo 07", métricas de todas as
+          Lojas, tabela) só fazem sentido na visão de todas as Lojas. */}
+      {emModoPainel ? (
+        <PainelMinhaLoja
+          loja={minhaLoja}
+          regiaoId={id}
+          userContext={userContext}
+          onAbrirGestaoVM={() => minhaLoja && setGestaoVmModal(minhaLoja)}
+          onAbrirEdicaoLoja={() => minhaLoja && abrirEdicaoLoja(minhaLoja)}
+          onAbrirDesignarSuplente={() => minhaLoja && abrirDesignarSuplente(minhaLoja)}
+          onAbrirTransmissaoEmergencial={() => minhaLoja && abrirTransmissaoEmergencial(minhaLoja)}
+        />
+      ) : (
+      <>
       {/* Sub-Header Contextual */}
       <div className="bg-[#111] border-b border-[#222]">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
@@ -533,7 +639,7 @@ export default function PaginaLojas() {
                       && !temVm;
 
                     return (
-                      <tr key={l.loja_id} className="hover:bg-[#181818] transition-colors group">
+                      <tr key={l.loja_id} className={`hover:bg-[#181818] transition-colors group ${String(l.loja_id) === String(userContext.loja_id) ? 'bg-blue-500/[0.03]' : ''}`}>
                         {/* ALTERAÇÃO (2026-09-14, redesenho pós-teste): coluna
                             unificada em um único texto "Loja {nome}, nº
                             {número}" no lugar de nome + tag separada — o
@@ -550,6 +656,17 @@ export default function PaginaLojas() {
                                 : `Loja ${nomeBase}`;
                             })()}
                           </span>
+                          {/* ALTERAÇÃO (2026-09-18): tag "Sua Loja" para o VM
+                              achar a própria linha rápido mesmo no filtro
+                              "Todas", sem precisar abrir o filtro dedicado. */}
+                          {String(l.loja_id) === String(userContext.loja_id) && (
+                            <span
+                              className="ml-2 shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-blue-500/15 text-blue-300 border border-blue-500/30"
+                              title="Esta é a sua Loja"
+                            >
+                              Sua Loja
+                            </span>
+                          )}
                         </td>
 
                         <td className="p-3.5">
@@ -713,6 +830,8 @@ export default function PaginaLojas() {
         </div>
 
       </div>
+      </>
+      )}
 
       {/* Modal: Vincular Loja ao Conselho */}
       {showAddLojaModal && (
@@ -783,14 +902,18 @@ export default function PaginaLojas() {
       {/* Modal: Edição Cadastral da Loja */}
       {editLojaModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+          {/* ALTERAÇÃO (2026-09-19): max-w-xl (era max-w-lg) e max-h-[85vh]
+              com overflow interno — o formulário ganhou seções de endereço,
+              sessão e contato institucional e não cabe mais numa tela sem
+              rolagem própria do card. */}
+          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/30">
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Editar Cadastro da Loja</h2>
-                <p className="text-xs text-gray-400">Atualize informações oficiais como Rito, Nome, Número e Oriente.</p>
+                <p className="text-xs text-gray-400">Atualize informações oficiais, endereço, dia de sessão e contato.</p>
               </div>
             </div>
 
@@ -851,6 +974,197 @@ export default function PaginaLojas() {
                   <option value="Rito Schroder">Rito Schröder</option>
                   <option value="Rito Escocês Retificado">Rito Escocês Retificado</option>
                 </select>
+              </div>
+
+              {/* ALTERAÇÃO (2026-09-19): seções de Endereço, Dia/Horário de
+                  Sessão e Contato Institucional — a pedido do usuário
+                  ("outros itens poderiam ser incluídos para edição, como
+                  dias de sessão, endereço, entre outros"). Ver
+                  claude/roteiro-testes-manuais.md no Project "Core". */}
+              <div className="pt-2 border-t border-[#222]">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Endereço</p>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Logradouro
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.logradouro}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, logradouro: e.target.value})}
+                      placeholder="Rua, Avenida..."
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Nº
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.numero_endereco}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, numero_endereco: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Complemento
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.complemento}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, complemento: e.target.value})}
+                      placeholder="Sala, andar..."
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Bairro
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.bairro}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, bairro: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      CEP
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.cep}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, cep: e.target.value})}
+                      placeholder="00000-000"
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-1">
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      UF
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={2}
+                      value={editLojaForm.estado}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, estado: e.target.value.toUpperCase()})}
+                      placeholder="SP"
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white uppercase focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#222]">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Dia e Horário de Sessão</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Dia da Semana
+                    </label>
+                    <select
+                      value={editLojaForm.dia_sessao}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, dia_sessao: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    >
+                      <option value="">—</option>
+                      <option value="Domingos">Domingos</option>
+                      <option value="Segundas-feiras">Segundas-feiras</option>
+                      <option value="Terças-feiras">Terças-feiras</option>
+                      <option value="Quartas-feiras">Quartas-feiras</option>
+                      <option value="Quintas-feiras">Quintas-feiras</option>
+                      <option value="Sextas-feiras">Sextas-feiras</option>
+                      <option value="Sábados">Sábados</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Periodicidade
+                    </label>
+                    <select
+                      value={editLojaForm.periodicidade}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, periodicidade: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    >
+                      <option value="">—</option>
+                      <option value="Semanal">Semanal</option>
+                      <option value="Quinzenal">Quinzenal</option>
+                      <option value="Mensal">Mensal</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Horário
+                    </label>
+                    <input
+                      type="time"
+                      value={editLojaForm.horario_sessao}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, horario_sessao: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#222]">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Contato Institucional</p>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      E-mail
+                    </label>
+                    <input
+                      type="email"
+                      value={editLojaForm.email}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, email: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Telefone
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.telefone}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, telefone: e.target.value})}
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      Site
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.site}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, site: e.target.value})}
+                      placeholder="https://..."
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                      CNPJ
+                    </label>
+                    <input
+                      type="text"
+                      value={editLojaForm.cnpj}
+                      onChange={(e) => setEditLojaForm({...editLojaForm, cnpj: e.target.value})}
+                      placeholder="00.000.000/0000-00"
+                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
