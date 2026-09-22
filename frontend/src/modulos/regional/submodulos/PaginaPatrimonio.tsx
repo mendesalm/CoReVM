@@ -1,16 +1,34 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  Landmark, ShieldCheck, Loader2, Plus, Search, ArrowLeft,
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
+import {
+  Landmark, Loader2, Plus, Search, ArrowLeft,
   CheckCircle2, Clock, X, HeartHandshake, Eye,
-  FileCheck, AlertCircle, 
+  FileCheck, AlertCircle,
   ChevronLeft, ChevronRight, Check,
   Armchair, Activity, Radio
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// ALTERAÇÃO (2026-09-21, bug corrigido): esta tela ainda usava `axios` puro
+// + um seletor "Simular Usuário" com header `X-User-Id` -- mecanismo
+// pré-fix de segurança de 2026-09-11, o mesmo padrão já corrigido em
+// PaginaAdmissoes.tsx (B.5) e PaginaVotacoes.tsx (B.8). Sem
+// `Authorization: Bearer` real, o FastAPI rejeita a requisição com 422
+// antes de rodar a lógica da rota. Migrado para `clienteHttp` (token real
+// via AuthContext), removido o seletor de simulação, `userContext` passa a
+// vir só de `GET /me`.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((d: any) => d?.msg || JSON.stringify(d)).join('; ');
+  }
+  return err?.message || mensagemPadrao;
+}
 
 interface ItemPatrimonio {
   id: string;
@@ -116,12 +134,11 @@ export default function PaginaPatrimonio() {
   // Aba selecionada: 'vitrine' | 'cautelas' | 'fila' | 'inventario'
   const [abaAtiva, setAbaAtiva] = useState<'vitrine' | 'cautelas' | 'fila' | 'inventario'>('vitrine');
 
-  // Controle de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+  // Controle de Usuário e RBAC -- vem inteiramente de GET /me (token real)
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: '',
+    role: '',
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -207,12 +224,11 @@ export default function PaginaPatrimonio() {
   const carregarDados = async () => {
     setLoading(true);
     setErro('');
-    const headers = { 'X-User-Id': activeUserId };
 
     try {
       // 1. Estatísticas
       try {
-        const statsRes = await axios.get(`${API_URL}/regional/${id}/patrimonio/estatisticas`, { headers });
+        const statsRes = await clienteHttp.get(`${API_URL}/regional/${id}/patrimonio/estatisticas`);
         if (statsRes.data) setEstatisticas(statsRes.data);
       } catch (errStats) {
         console.warn('Erro ao carregar estatísticas:', errStats);
@@ -220,8 +236,7 @@ export default function PaginaPatrimonio() {
 
       // 2. Itens
       try {
-        const itensRes = await axios.get(`${API_URL}/regional/${id}/patrimonio/itens`, {
-          headers,
+        const itensRes = await clienteHttp.get(`${API_URL}/regional/${id}/patrimonio/itens`, {
           params: {
             categoria: categoriaFiltro,
             tipo_propriedade: propriedadeFiltro,
@@ -232,12 +247,12 @@ export default function PaginaPatrimonio() {
         setItens(Array.isArray(itensRes.data) ? itensRes.data : []);
       } catch (errItens) {
         console.error('Erro ao carregar itens:', errItens);
-        setErro('Não foi possível carregar o inventário de bens.');
+        setErro(extrairMensagemErro(errItens, 'Não foi possível carregar o inventário de bens.'));
       }
 
       // 3. Empréstimos / Cautelas
       try {
-        const empRes = await axios.get(`${API_URL}/regional/${id}/patrimonio/emprestimos`, { headers });
+        const empRes = await clienteHttp.get(`${API_URL}/regional/${id}/patrimonio/emprestimos`);
         setEmprestimos(Array.isArray(empRes.data) ? empRes.data : []);
       } catch (errEmp) {
         console.warn('Erro ao carregar cautelas:', errEmp);
@@ -245,7 +260,7 @@ export default function PaginaPatrimonio() {
 
       // 4. Fila de Espera
       try {
-        const filaRes = await axios.get(`${API_URL}/regional/${id}/patrimonio/fila`, { headers });
+        const filaRes = await clienteHttp.get(`${API_URL}/regional/${id}/patrimonio/fila`);
         setFila(Array.isArray(filaRes.data) ? filaRes.data : []);
       } catch (errFila) {
         console.warn('Erro ao carregar fila:', errFila);
@@ -253,7 +268,7 @@ export default function PaginaPatrimonio() {
 
       // 5. Contexto do Usuário
       try {
-        const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
+        const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
         if (userRes.data) setUserContext(userRes.data);
       } catch (errUser) {
         console.warn('Erro ao carregar contexto de usuário:', errUser);
@@ -267,14 +282,7 @@ export default function PaginaPatrimonio() {
   useEffect(() => {
     carregarDados();
     setPaginaAtual(1);
-  }, [id, activeUserId, categoriaFiltro, propriedadeFiltro, apenasDisponiveis, busca]);
-
-  // Handler de Simulação de Usuário
-  const handleTrocaUsuario = (novoUserId: string) => {
-    setActiveUserId(novoUserId);
-    setSucesso(`Simulando usuário: ${novoUserId}`);
-    setTimeout(() => setSucesso(''), 3000);
-  };
+  }, [id, categoriaFiltro, propriedadeFiltro, apenasDisponiveis, busca]);
 
   // Submissão: Solicitar Empréstimo
   const handleConfirmarEmprestimo = async (e: React.FormEvent) => {
@@ -282,18 +290,16 @@ export default function PaginaPatrimonio() {
     if (!itemParaEmprestimo) return;
 
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      await axios.post(
+      await clienteHttp.post(
         `${API_URL}/regional/${id}/patrimonio/itens/${itemParaEmprestimo.id}/emprestar`,
-        formEmprestimo,
-        { headers }
+        formEmprestimo
       );
       setSucesso(`Termo de Cautela emitido com sucesso para ${itemParaEmprestimo.nome}!`);
       setModalEmprestimoAberto(false);
       carregarDados();
       setTimeout(() => setSucesso(''), 5000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao emitir termo de empréstimo.');
+      alert(extrairMensagemErro(err, 'Erro ao emitir termo de empréstimo.'));
     }
   };
 
@@ -303,11 +309,9 @@ export default function PaginaPatrimonio() {
     if (!cautelaParaDevolucao) return;
 
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      const res = await axios.post(
+      const res = await clienteHttp.post(
         `${API_URL}/regional/${id}/patrimonio/emprestimos/${cautelaParaDevolucao.id}/devolver`,
-        formDevolucao,
-        { headers }
+        formDevolucao
       );
       setModalDevolucaoAberto(false);
       if (res.data.aviso_fila) {
@@ -318,7 +322,7 @@ export default function PaginaPatrimonio() {
       carregarDados();
       setTimeout(() => setSucesso(''), 5000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao registrar devolução.');
+      alert(extrairMensagemErro(err, 'Erro ao registrar devolução.'));
     }
   };
 
@@ -328,18 +332,16 @@ export default function PaginaPatrimonio() {
     if (!itemParaFila) return;
 
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      const res = await axios.post(
+      const res = await clienteHttp.post(
         `${API_URL}/regional/${id}/patrimonio/itens/${itemParaFila.id}/fila`,
-        formFila,
-        { headers }
+        formFila
       );
       setSucesso(res.data.message || 'Demanda inserida na fila de espera com sucesso!');
       setModalFilaAberto(false);
       carregarDados();
       setTimeout(() => setSucesso(''), 5000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao ingressar na fila de espera.');
+      alert(extrairMensagemErro(err, 'Erro ao ingressar na fila de espera.'));
     }
   };
 
@@ -347,14 +349,13 @@ export default function PaginaPatrimonio() {
   const handleConfirmarNovoItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      await axios.post(`${API_URL}/regional/${id}/patrimonio/itens`, formNovoItem, { headers });
+      await clienteHttp.post(`${API_URL}/regional/${id}/patrimonio/itens`, formNovoItem);
       setSucesso('Bem patrimonial cadastrado com sucesso no acervo regional!');
       setModalNovoItemAberto(false);
       carregarDados();
       setTimeout(() => setSucesso(''), 5000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao cadastrar bem patrimonial.');
+      alert(extrairMensagemErro(err, 'Erro ao cadastrar bem patrimonial.'));
     }
   };
 
@@ -362,13 +363,12 @@ export default function PaginaPatrimonio() {
   const handleExcluirItem = async (itemId: string, nome: string) => {
     if (!confirm(`Confirma a baixa/ocultação do bem "${nome}" do patrimônio?`)) return;
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      await axios.delete(`${API_URL}/regional/${id}/patrimonio/itens/${itemId}`, { headers });
+      await clienteHttp.delete(`${API_URL}/regional/${id}/patrimonio/itens/${itemId}`);
       setSucesso('Item patrimonial baixado com sucesso.');
       carregarDados();
       setTimeout(() => setSucesso(''), 4000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao excluir item.');
+      alert(extrairMensagemErro(err, 'Erro ao excluir item.'));
     }
   };
 
@@ -376,13 +376,12 @@ export default function PaginaPatrimonio() {
   const handleCancelarFila = async (filaId: string) => {
     if (!confirm('Deseja retirar esta solicitação da fila de espera?')) return;
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      await axios.delete(`${API_URL}/regional/${id}/patrimonio/fila/${filaId}`, { headers });
+      await clienteHttp.delete(`${API_URL}/regional/${id}/patrimonio/fila/${filaId}`);
       setSucesso('Solicitação removida da fila de espera.');
       carregarDados();
       setTimeout(() => setSucesso(''), 4000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao cancelar fila.');
+      alert(extrairMensagemErro(err, 'Erro ao cancelar fila.'));
     }
   };
 
@@ -434,26 +433,6 @@ export default function PaginaPatrimonio() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Seletor de Simulação RBAC */}
-            <div className="flex items-center gap-2 bg-[#121212] border border-[#262626] px-3 py-1.5 rounded-xl shadow-inner">
-              <ShieldCheck className="w-4 h-4 text-[#facc15]" />
-              <div className="flex flex-col">
-                <span className="text-[10px] text-[#777] uppercase font-bold tracking-wider">Simular Usuário:</span>
-                <select 
-                  value={activeUserId} 
-                  onChange={(e) => handleTrocaUsuario(e.target.value)}
-                  className="bg-transparent text-xs text-[#f5f5f5] font-semibold focus:outline-none cursor-pointer"
-                >
-                  <option value="CIM_12345_PRESIDENTE" className="bg-[#181818] text-white">Mesa Diretora (Presidente)</option>
-                  <option value="CIM_99887_VICE_PRESIDENTE" className="bg-[#181818] text-white">Mesa Diretora (Vice-Pres.)</option>
-                  <option value="VM_42" className="bg-[#181818] text-white">VM - Estrela de Anápolis nº 42</option>
-                  <option value="VM_10" className="bg-[#181818] text-white">VM - União e Trabalho nº 10</option>
-                  <option value="VM_55" className="bg-[#181818] text-white">VM - Firmeza e Lealdade nº 55 (Solidária)</option>
-                  <option value="superadmin" className="bg-[#181818] text-white">SuperAdmin Geral</option>
-                </select>
-              </div>
-            </div>
-
             {/* Botão Novo Cadastro */}
             <button
               onClick={() => {
@@ -1276,21 +1255,17 @@ export default function PaginaPatrimonio() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Data de Retirada</label>
-                  <input
-                    type="date"
-                    required
+                  <CampoData
                     value={formEmprestimo.data_retirada}
-                    onChange={(e) => setFormEmprestimo({...formEmprestimo, data_retirada: e.target.value})}
+                    onChange={(v) => setFormEmprestimo({...formEmprestimo, data_retirada: v})}
                     className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Prazo Previsto de Devolução</label>
-                  <input
-                    type="date"
-                    required
+                  <CampoData
                     value={formEmprestimo.data_prevista_devolucao}
-                    onChange={(e) => setFormEmprestimo({...formEmprestimo, data_prevista_devolucao: e.target.value})}
+                    onChange={(v) => setFormEmprestimo({...formEmprestimo, data_prevista_devolucao: v})}
                     className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
@@ -1362,11 +1337,9 @@ export default function PaginaPatrimonio() {
 
               <div>
                 <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Data Efetiva da Devolução</label>
-                <input
-                  type="date"
-                  required
+                <CampoData
                   value={formDevolucao.data_efetiva_devolucao}
-                  onChange={(e) => setFormDevolucao({...formDevolucao, data_efetiva_devolucao: e.target.value})}
+                  onChange={(v) => setFormDevolucao({...formDevolucao, data_efetiva_devolucao: v})}
                   className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>

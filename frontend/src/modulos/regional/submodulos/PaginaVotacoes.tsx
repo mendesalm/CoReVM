@@ -1,6 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import { 
   Vote, ShieldCheck, Loader2, 
@@ -1196,10 +1197,9 @@ export default function PaginaVotacoes() {
                   <label className="text-xs font-semibold text-gray-300 block mb-1">
                     Data Limite (Opcional)
                   </label>
-                  <input
-                    type="date"
+                  <CampoData
                     value={formVotacao.data_encerramento}
-                    onChange={(e) => setFormVotacao(prev => ({ ...prev, data_encerramento: e.target.value }))}
+                    onChange={(v) => setFormVotacao(prev => ({ ...prev, data_encerramento: v }))}
                     className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>

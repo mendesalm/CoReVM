@@ -5,6 +5,10 @@ Tarefas agendadas do CoReVM.
 - Arquivamento automático de Avisos/Notificações vencidos (pedido do
   usuário, 2026-09-12 — "Avisos e notificações devem ser arquivados
   automaticamente após a data de expiração").
+- Arquivamento automático de Documentos/Convites vencidos (pedido do
+  usuário, 2026-09-22 — "criar um tempo de expiração da publicação de um
+  convite ou documento, para que o sistema arquive automaticamente" --
+  mesmo mecanismo dos Avisos, aplicado a `DocumentoRegional.data_expiracao`).
 - Reconciliação semanal Diretoria×Lojas (2026-09-14 — ver
   `core/reconciliacao_diretoria_lojas.py` e
   `claude/decisao-resiliencia-core-semiautonomo.md` no Project "Core"):
@@ -62,6 +66,42 @@ def arquivar_avisos_vencidos_automaticamente():
         db.close()
 
 
+def arquivar_documentos_vencidos_automaticamente():
+    """
+    Roda uma vez por dia: qualquer Documento/Convite (`documentos_regionais`,
+    qualquer categoria -- ATA/DECRETO/REGULAMENTO/CIRCULAR/CONVITE/MODELO) com
+    `data_expiracao` no passado e ainda não arquivado (`deletado_visualmente`)
+    é arquivado automaticamente, com `arquivado_por="Sistema (expiração
+    automática)"` -- mesmo mecanismo e mesmo log de auditoria de
+    `arquivar_avisos_vencidos_automaticamente`, acima.
+    """
+    from database import get_db_core
+    from models.models import DocumentoRegional
+
+    db = next(get_db_core())
+    try:
+        hoje = date.today()
+        vencidos = db.query(DocumentoRegional).filter(
+            DocumentoRegional.deletado_visualmente == False,
+            DocumentoRegional.data_expiracao.isnot(None),
+            DocumentoRegional.data_expiracao < hoje,
+        ).all()
+
+        for doc in vencidos:
+            doc.deletado_visualmente = True
+            doc.arquivado_em = datetime.utcnow()
+            doc.arquivado_por = "Sistema (expiração automática)"
+
+        if vencidos:
+            db.commit()
+            logger.info(f"Arquivamento automático: {len(vencidos)} documento(s)/convite(s) vencido(s) arquivado(s).")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Erro no arquivamento automático de documentos/convites vencidos: {e}")
+    finally:
+        db.close()
+
+
 def _rodar_reconciliacao_diretoria_lojas():
     """Wrapper fino em torno de `executar_reconciliacao_diretoria_lojas` —
     a lógica de negócio mora em `core/reconciliacao_diretoria_lojas.py`
@@ -95,6 +135,14 @@ def iniciar_agendador() -> BackgroundScheduler:
         replace_existing=True,
     )
     agendador.add_job(
+        arquivar_documentos_vencidos_automaticamente,
+        trigger="cron",
+        hour=0,
+        minute=10,
+        id="arquivar_documentos_vencidos",
+        replace_existing=True,
+    )
+    agendador.add_job(
         _rodar_reconciliacao_diretoria_lojas,
         trigger="cron",
         day_of_week="mon",
@@ -106,6 +154,7 @@ def iniciar_agendador() -> BackgroundScheduler:
     agendador.start()
     logger.info(
         "Agendador de tarefas iniciado (arquivamento automático de avisos vencidos diariamente às 00:05; "
+        "arquivamento automático de documentos/convites vencidos diariamente às 00:10; "
         "reconciliação Diretoria×Lojas semanalmente às segundas 03:00)."
     )
     return agendador

@@ -7,6 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Loader2, ShieldCheck } from 'lucide-react';
+import { CampoData, CampoHora } from '../../compartilhado/componentes/SeletorDataHora';
 
 const API_URL = 'http://localhost:8003/api/v1';
 
@@ -114,6 +115,12 @@ export default function PaginaCalendario() {
   // Filtros do mural
   const [filtroTipo, setFiltroTipo] = useState('TODOS');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
+  // Eventos Cancelados ficam escondidos do calendário por padrão (evitar
+  // poluição visual, pedido do usuário 2026-09-22) -- o próprio filtro de
+  // Status acima já serve para "buscá-los se necessário" (selecionar
+  // "Cancelado" mostra só eles), e este checkbox extra também os mistura de
+  // volta com os demais quando marcado.
+  const [mostrarCancelados, setMostrarCancelados] = useState(false);
 
   const carregarDados = async () => {
     setLoading(true);
@@ -303,7 +310,10 @@ export default function PaginaCalendario() {
   // Eventos no formato do FullCalendar, derivados de `eventos` (nenhum
   // estado local paralelo — a UI reflete sempre o que veio do backend).
   const eventosCalendario = useMemo(() => {
-    return eventos.map((e) => {
+    const eventosVisiveis = (mostrarCancelados || filtroStatus === 'CANCELADO')
+      ? eventos
+      : eventos.filter((e) => e.status !== 'CANCELADO');
+    return eventosVisiveis.map((e) => {
       const cor = COR_POR_TIPO[e.tipo] || COR_PADRAO;
       const inicio = new Date(e.data_inicio);
       const ehDiaInteiro = inicio.getUTCHours() === 0 && inicio.getUTCMinutes() === 0
@@ -330,7 +340,7 @@ export default function PaginaCalendario() {
         extendedProps: { eventoOriginal: e },
       };
     });
-  }, [eventos]);
+  }, [eventos, mostrarCancelados, filtroStatus]);
 
   const renderEventContent = (eventInfo: any) => {
     const evento: EventoAgendaItem = eventInfo.event.extendedProps.eventoOriginal;
@@ -407,6 +417,15 @@ export default function PaginaCalendario() {
               <option key={valor} value={valor}>{rotulo}</option>
             ))}
           </select>
+          <label className="flex items-center gap-1.5 text-xs font-medium text-gray-400 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={mostrarCancelados}
+              onChange={(e) => setMostrarCancelados(e.target.checked)}
+              className="w-3.5 h-3.5 accent-[#facc15] bg-[#141414] border-[#333] rounded"
+            />
+            Mostrar cancelados
+          </label>
         </div>
       </div>
 
@@ -566,11 +585,9 @@ export default function PaginaCalendario() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Data de Início</label>
-                  <input
-                    type="date"
+                  <CampoData
                     value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    required
+                    onChange={(v) => setStartDate(v)}
                     disabled={somenteLeitura}
                     className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                   />
@@ -578,10 +595,9 @@ export default function PaginaCalendario() {
                 {!isAllDay && (
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-1">Hora de Início</label>
-                    <input
-                      type="time"
+                    <CampoHora
                       value={startTime}
-                      onChange={e => setStartTime(e.target.value)}
+                      onChange={(v) => setStartTime(v)}
                       disabled={somenteLeitura}
                       className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                     />
@@ -592,10 +608,9 @@ export default function PaginaCalendario() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Data de Término</label>
-                  <input
-                    type="date"
+                  <CampoData
                     value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
+                    onChange={(v) => setEndDate(v)}
                     disabled={somenteLeitura}
                     className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                   />
@@ -603,10 +618,9 @@ export default function PaginaCalendario() {
                 {!isAllDay && (
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-1">Hora de Término</label>
-                    <input
-                      type="time"
+                    <CampoHora
                       value={endTime}
-                      onChange={e => setEndTime(e.target.value)}
+                      onChange={(v) => setEndTime(v)}
                       disabled={somenteLeitura}
                       className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                     />

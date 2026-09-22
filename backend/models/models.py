@@ -504,6 +504,21 @@ class DocumentoRegional(Base):
     downloads_count = Column(Integer, default=0)
     visibilidade = Column(String(50), default="PUBLICO_CONSELHO") # PUBLICO_CONSELHO, RESTRITO_DIRETORIA
     conteudo_texto = Column(String(10000), nullable=True)
+    # ALTERAÇÃO (2026-09-22, a pedido do usuário -- "criar um tempo de expiração da
+    # publicação de um convite ou documento, para que o sistema arquive
+    # automaticamente"): `data_expiracao` é opcional -- se preenchida, o agendador
+    # (ver `arquivar_documentos_vencidos_automaticamente` em
+    # `core/tarefas_agendadas.py`) arquiva o documento/convite automaticamente
+    # assim que a data passa, reaproveitando `deletado_visualmente` como o mesmo
+    # flag de arquivamento/ocultação já usado pelo endpoint de exclusão manual
+    # (não foi renomeado para "arquivado" como em AvisoRegional para não exigir
+    # migração de dados existentes -- mesmo efeito, nome da coluna mantido).
+    # `arquivado_em`/`arquivado_por` dão o mesmo log de auditoria que
+    # AvisoRegional já tem, preenchidos tanto no arquivamento manual quanto no
+    # automático (com `arquivado_por="Sistema (expiração automática)"`).
+    data_expiracao = Column(Date, nullable=True)
+    arquivado_em = Column(DateTime, nullable=True)
+    arquivado_por = Column(String(255), nullable=True)
     deletado_visualmente = Column(Boolean, default=False)
 
     regiao = relationship("Regiao", back_populates="documentos")

@@ -1,6 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
   Award, ShieldCheck, Loader2, Calendar,
@@ -592,21 +593,17 @@ export default function PaginaDiretoria() {
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1">Início do Mandato</label>
-                  <input 
-                    type="date"
-                    required
+                  <CampoData
                     value={diretoriaForm.inicio_mandato}
-                    onChange={(e) => setDiretoriaForm({...diretoriaForm, inicio_mandato: e.target.value})}
+                    onChange={(v) => setDiretoriaForm({...diretoriaForm, inicio_mandato: v})}
                     className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1">Término do Mandato</label>
-                  <input 
-                    type="date"
-                    required
+                  <CampoData
                     value={diretoriaForm.termino_mandato}
-                    onChange={(e) => setDiretoriaForm({...diretoriaForm, termino_mandato: e.target.value})}
+                    onChange={(v) => setDiretoriaForm({...diretoriaForm, termino_mandato: v})}
                     className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>

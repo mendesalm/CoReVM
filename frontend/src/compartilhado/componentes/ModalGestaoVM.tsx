@@ -7,6 +7,7 @@ import {
   UserCheck, History, Sparkles, ShieldAlert
 } from 'lucide-react';
 import { formatarCPF, formatarTelefone } from '../utils/formatadores';
+import { CampoData } from './SeletorDataHora';
 
 interface ModalGestaoVMProps {
   loja: {
@@ -452,10 +453,9 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                             <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
                               Data de Início do Mandato
                             </label>
-                            <input 
-                              type="date"
+                            <CampoData
                               value={editForm.data_inicio}
-                              onChange={(e) => setEditForm({...editForm, data_inicio: e.target.value})}
+                              onChange={(v) => setEditForm({...editForm, data_inicio: v})}
                               className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                             />
                           </div>
@@ -606,11 +606,9 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                       <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
                         Data de Posse / Início do Mandato *
                       </label>
-                      <input 
-                        type="date"
-                        required
+                      <CampoData
                         value={novaGestaoForm.data_inicio_mandato}
-                        onChange={(e) => setNovaGestaoForm({...novaGestaoForm, data_inicio_mandato: e.target.value})}
+                        onChange={(v) => setNovaGestaoForm({...novaGestaoForm, data_inicio_mandato: v})}
                         className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                       />
                     </div>

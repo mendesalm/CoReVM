@@ -7,6 +7,7 @@ import {
   Sparkles, Megaphone, CheckCheck, Eye
 } from 'lucide-react';
 import { clienteHttp } from '../../compartilhado/contextos/AuthContext';
+import { CampoData } from '../../compartilhado/componentes/SeletorDataHora';
 
 const API_URL = 'http://localhost:8003/api/v1';
 
@@ -922,10 +923,9 @@ export default function PainelConselho() {
                     <label className="block text-xs font-medium text-gray-400 mb-1">
                       Data de Validade (Opcional)
                     </label>
-                    <input
-                      type="date"
+                    <CampoData
                       value={avisoForm.data_validade}
-                      onChange={(e) => setAvisoForm({...avisoForm, data_validade: e.target.value})}
+                      onChange={(v) => setAvisoForm({...avisoForm, data_validade: v})}
                       className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>

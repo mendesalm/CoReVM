@@ -1536,6 +1536,7 @@ class ConsideracaoCreatePayload(BaseModel):
 @router.get("/{regiao_id}/admissoes", summary="Lista prévias de admissão do conselho")
 def listar_previas_admissao(
     regiao_id: str,
+    loja_id: Optional[str] = None,
     user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
@@ -1556,6 +1557,15 @@ def listar_previas_admissao(
     is_operador = isinstance(user, OperadorAdministrativoContext)
     if is_operador:
         query = query.filter(PreviaAdmissao.loja_id == str(user.loja_id))
+
+    # CORREÇÃO (2026-09-21): filtro opcional por Loja — usado pelo painel
+    # "Minha Loja" para não precisar baixar as prévias de admissão do
+    # Conselho inteiro e filtrar no cliente (Bloco B.14 do roteiro de
+    # testes manuais). Aplicado depois da restrição do Operador
+    # Administrativo acima, então nunca amplia o que ele já podia ver —
+    # só reduz ainda mais quando o cliente pede uma Loja específica.
+    if loja_id:
+        query = query.filter(PreviaAdmissao.loja_id == str(loja_id))
 
     previas = query.order_by(PreviaAdmissao.data_postagem.desc()).all()
 
@@ -2868,6 +2878,12 @@ class DocumentoPayload(BaseModel):
     data_documento: Optional[date] = None
     conteudo_texto: Optional[str] = None
     visibilidade: str = "PUBLICO_CONSELHO" # PUBLICO_CONSELHO, RESTRITO_DIRETORIA
+    # Expiração automática (2026-09-22) -- se preenchida, o agendador arquiva
+    # sozinho assim que a data passa (ver `data_expiracao` em DocumentoRegional).
+    # No PUT de edição, é sempre sobrescrita com o que vier aqui (mesmo padrão já
+    # usado por categoria/visibilidade nesta mesma rota) -- mandar null limpa a
+    # expiração.
+    data_expiracao: Optional[date] = None
 
 
 @router.get("/{regiao_id}/documentos/estatisticas", summary="Métricas consolidadas do repositório documental")
@@ -2916,13 +2932,20 @@ def listar_documentos_regionais(
     categoria: Optional[str] = None,
     tipo_origem: Optional[str] = None,
     busca: Optional[str] = None,
+    loja_id: Optional[str] = None,
+    # Mesmo padrão de Avisos/Eventos: por padrão, documentos/convites arquivados
+    # (manualmente ou por expiração automática) ficam escondidos. O filtro de
+    # visibilidade abaixo (PUBLICO_CONSELHO / própria Loja) já restringe o que
+    # cada chamador pode ver, então `incluir_arquivados` não precisa de checagem
+    # extra de papel -- só revela, dentro do que a pessoa já podia ver, os itens
+    # arquivados também.
+    incluir_arquivados: bool = False,
     user = Depends(obter_identidade_regional_ou_operador_administrativo),
     db: Session = Depends(get_db_core)
 ):
-    query = db.query(DocumentoRegional).filter(
-        DocumentoRegional.regiao_id == regiao_id,
-        DocumentoRegional.deletado_visualmente == False
-    )
+    query = db.query(DocumentoRegional).filter(DocumentoRegional.regiao_id == regiao_id)
+    if not incluir_arquivados:
+        query = query.filter(DocumentoRegional.deletado_visualmente == False)
 
     # Controle de Visibilidade
     if not (user.is_diretoria or user.role.upper() == 'SUPERADMIN'):
@@ -2946,6 +2969,15 @@ def listar_documentos_regionais(
             (DocumentoRegional.loja_emissora_nome.ilike(busca_termo)) |
             (DocumentoRegional.autor_nome.ilike(busca_termo))
         )
+
+    # CORREÇÃO (2026-09-21): filtro opcional por Loja emissora — usado pelo
+    # painel "Minha Loja" para não precisar baixar o repositório documental
+    # inteiro do Conselho e filtrar no cliente (achado no Bloco B.14 do
+    # roteiro de testes manuais, investigação de lentidão ao abrir o
+    # painel). Sem esse parâmetro o comportamento é o mesmo de sempre
+    # (lista completa, sujeita ao controle de visibilidade acima).
+    if loja_id:
+        query = query.filter(DocumentoRegional.loja_emissora_id == loja_id)
 
     documentos = query.order_by(DocumentoRegional.data_documento.desc()).all()
 
@@ -2974,6 +3006,10 @@ def listar_documentos_regionais(
             "downloads_count": doc.downloads_count,
             "visibilidade": doc.visibilidade,
             "conteudo_texto": doc.conteudo_texto,
+            "data_expiracao": doc.data_expiracao.isoformat() if doc.data_expiracao else None,
+            "arquivado": doc.deletado_visualmente,
+            "arquivado_em": doc.arquivado_em.isoformat() if doc.arquivado_em else None,
+            "arquivado_por": doc.arquivado_por,
             "pode_gerenciar": pode_gerenciar
         })
 
@@ -3076,7 +3112,8 @@ def publicar_documento_regional(
         tamanho_bytes=tamanho,
         downloads_count=0,
         visibilidade=payload.visibilidade,
-        conteudo_texto=payload.conteudo_texto
+        conteudo_texto=payload.conteudo_texto,
+        data_expiracao=payload.data_expiracao
     )
 
     db.add(novo_doc)
@@ -3104,6 +3141,7 @@ def upload_documento_regional(
     loja_emissora_nome: Optional[str] = Form(None),
     loja_emissora_numero: Optional[str] = Form(None),
     data_documento: Optional[str] = Form(None),
+    data_expiracao: Optional[str] = Form(None),
     visibilidade: str = Form("PUBLICO_CONSELHO"),
     arquivo: UploadFile = File(...),
     user = Depends(obter_identidade_regional_ou_operador_administrativo),
@@ -3122,6 +3160,13 @@ def upload_documento_regional(
             dt_doc = datetime.strptime(data_documento, "%Y-%m-%d").date()
         except Exception:
             dt_doc = date.today()
+
+    dt_expiracao = None
+    if data_expiracao:
+        try:
+            dt_expiracao = datetime.strptime(data_expiracao, "%Y-%m-%d").date()
+        except Exception:
+            dt_expiracao = None
 
     codigo = codigo_documento
     if not codigo:
@@ -3164,7 +3209,8 @@ def upload_documento_regional(
         arquivo_url=caminho_final,
         tamanho_bytes=tamanho,
         downloads_count=0,
-        visibilidade=visibilidade
+        visibilidade=visibilidade,
+        data_expiracao=dt_expiracao
     )
 
     db.add(novo_doc)
@@ -3230,6 +3276,7 @@ def atualizar_documento_regional(
         doc.descricao_ementa = payload.descricao_ementa.strip()
     doc.categoria = payload.categoria.upper()
     doc.visibilidade = payload.visibilidade
+    doc.data_expiracao = payload.data_expiracao
 
     db.commit()
     return {"status": "success", "message": "Documento atualizado com sucesso."}
@@ -3268,8 +3315,48 @@ def excluir_documento_regional(
         return {"status": "success", "tipo_delecao": "FISICA", "message": "Documento removido definitivamente."}
     else:
         doc.deletado_visualmente = True
+        doc.arquivado_em = datetime.utcnow()
+        doc.arquivado_por = f"Ir.'. {user.usuario_id}" if getattr(user, "usuario_id", None) else "Usuário do sistema"
         db.commit()
-        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Documento ocultado visualmente com sucesso."}
+        return {"status": "success", "tipo_delecao": "VISUAL", "message": "Documento arquivado com sucesso."}
+
+
+@router.put("/{regiao_id}/documentos/{documento_id}/reativar", summary="Reativa (desarquiva) um documento ou convite")
+def reativar_documento_regional(
+    regiao_id: str,
+    documento_id: str,
+    user = Depends(obter_identidade_regional_ou_operador_administrativo),
+    db: Session = Depends(get_db_core)
+):
+    # Desfaz o arquivamento de um documento/convite -- seja ele manual (DELETE
+    # sem hard_delete) ou automatico por expiracao (ver
+    # arquivar_documentos_vencidos_automaticamente em core/tarefas_agendadas.py).
+    # Mesma permissao de editar/excluir: Diretoria, SuperAdmin, ou a propria
+    # Loja emissora do documento.
+    #
+    # NOTA: nao limpa data_expiracao -- se a data continuar no passado, o
+    # agendador arquiva de novo na proxima rodada (00:10). Quem reativar um
+    # documento vencido deve tambem atualizar ou remover a expiracao via PUT
+    # normal, se quiser que ele permaneca ativo. Mesmo comportamento ja aceito
+    # para Avisos (PUT /avisos/{id}/reativar).
+    doc = db.query(DocumentoRegional).filter(
+        DocumentoRegional.id == documento_id,
+        DocumentoRegional.regiao_id == regiao_id
+    ).first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+
+    pode_editar = user.is_diretoria or user.role.upper() == 'SUPERADMIN' or (user.loja_id and doc.loja_emissora_id == user.loja_id)
+    if not pode_editar:
+        raise HTTPException(status_code=403, detail="Sem permissão para reativar este documento.")
+
+    doc.deletado_visualmente = False
+    doc.arquivado_em = None
+    doc.arquivado_por = None
+    db.commit()
+
+    return {"status": "success", "message": "Documento reativado com sucesso."}
 
 
 # ==============================================================================

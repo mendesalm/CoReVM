@@ -1,16 +1,36 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  FileText, ShieldCheck, Loader2, Plus, Search, ArrowLeft,
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
+import {
+  FileText, Loader2, Plus, Search, ArrowLeft,
   Download, Eye, X, CheckCircle2, AlertCircle, Calendar,
   Scroll, BookOpen, Mail, Send, Award, Sparkles,
   ChevronLeft, ChevronRight, LayoutGrid, Table as TableIcon,
-  FileCheck, ExternalLink, HardDriveDownload
+  FileCheck, ExternalLink, HardDriveDownload, RotateCcw, Archive
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// CORREÇÃO (2026-09-21): mesmo padrão pré-migração de segurança de
+// 2026-09-11 já corrigido em PaginaAdmissoes.tsx/PaginaVotacoes.tsx/
+// PaginaPatrimonio.tsx/PaginaComunicacao.tsx (ver Blocos B.5/B.8/B.12/B.13
+// do roteiro de testes manuais) — `axios` puro + header `X-User-Id` não
+// autenticado, rejeitado com 422 desde que `obter_usuario_esigma` passou a
+// exigir `Authorization: Bearer` real. `detail` de um 422 do FastAPI é uma
+// LISTA de objetos ({type, loc, msg, input}), não uma string.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((d: any) => (typeof d === 'string' ? d : d?.msg))
+      .filter(Boolean);
+    if (mensagens.length > 0) return mensagens.join('; ');
+  }
+  return mensagemPadrao;
+}
 
 interface DocumentoItem {
   id: string;
@@ -33,6 +53,10 @@ interface DocumentoItem {
   downloads_count: number;
   visibilidade: string;
   conteudo_texto?: string | null;
+  data_expiracao?: string | null;
+  arquivado?: boolean;
+  arquivado_em?: string | null;
+  arquivado_por?: string | null;
   pode_gerenciar: boolean;
 }
 
@@ -72,17 +96,20 @@ export default function PaginaDocumentos() {
   const [categoriaFiltro, setCategoriaFiltro] = useState('TODAS');
   const [origemFiltro, setOrigemFiltro] = useState('TODOS');
   const [busca, setBusca] = useState('');
+  // Expiração automática (2026-09-22, a pedido do usuário): documentos/convites
+  // arquivados (manual ou automaticamente pelo agendador do backend) ficam
+  // escondidos por padrão -- mesmo padrão já usado em Avisos/Eventos.
+  const [mostrarArquivados, setMostrarArquivados] = useState(false);
 
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 6;
 
-  // Controle de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+  // Contexto do Usuário (vem de GET /me, autenticado via clienteHttp)
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: '',
+    role: '',
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -104,9 +131,15 @@ export default function PaginaDocumentos() {
     loja_emissora_nome: '',
     loja_emissora_numero: '',
     data_documento: new Date().toISOString().split('T')[0],
+    data_expiracao: '',
     conteudo_texto: '',
     visibilidade: 'PUBLICO_CONSELHO'
   });
+  // Checkbox "expira automaticamente" -- separado do valor em si para poder
+  // esconder/limpar o campo de data sem perder o texto se a pessoa desmarcar
+  // e remarcar (mesmo padrão já usado no formulário de Eventos/Convites do
+  // painel Minha Loja).
+  const [temExpiracaoGerar, setTemExpiracaoGerar] = useState(false);
 
   // Formulário de Upload de Arquivo
   const [formUpload, setFormUpload] = useState({
@@ -119,20 +152,21 @@ export default function PaginaDocumentos() {
     loja_emissora_nome: '',
     loja_emissora_numero: '',
     data_documento: new Date().toISOString().split('T')[0],
+    data_expiracao: '',
     visibilidade: 'PUBLICO_CONSELHO'
   });
+  const [temExpiracaoUpload, setTemExpiracaoUpload] = useState(false);
   const [arquivoUpload, setArquivoUpload] = useState<File | null>(null);
 
   // Carregamento de Dados
   const carregarDados = async () => {
     setLoading(true);
     setErro('');
-    const headers = { 'X-User-Id': activeUserId };
 
     try {
       // 1. Estatísticas
       try {
-        const statsRes = await axios.get(`${API_URL}/regional/${id}/documentos/estatisticas`, { headers });
+        const statsRes = await clienteHttp.get(`${API_URL}/regional/${id}/documentos/estatisticas`);
         if (statsRes.data) setEstatisticas(statsRes.data);
       } catch (errStats) {
         console.warn('Erro ao carregar estatísticas:', errStats);
@@ -140,23 +174,23 @@ export default function PaginaDocumentos() {
 
       // 2. Documentos
       try {
-        const docsRes = await axios.get(`${API_URL}/regional/${id}/documentos`, {
-          headers,
+        const docsRes = await clienteHttp.get(`${API_URL}/regional/${id}/documentos`, {
           params: {
             categoria: categoriaFiltro,
             tipo_origem: origemFiltro,
-            busca: busca || undefined
+            busca: busca || undefined,
+            incluir_arquivados: mostrarArquivados
           }
         });
         setDocumentos(Array.isArray(docsRes.data) ? docsRes.data : []);
       } catch (errDocs) {
         console.error('Erro ao carregar documentos:', errDocs);
-        setErro('Não foi possível carregar os documentos.');
+        setErro(extrairMensagemErro(errDocs, 'Não foi possível carregar os documentos.'));
       }
 
       // 3. Contexto do Usuário
       try {
-        const userRes = await axios.get(`${API_URL}/regional/${id}/me`, { headers });
+        const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
         if (userRes.data) setUserContext(userRes.data);
       } catch (errUser) {
         console.warn('Erro ao carregar usuário:', errUser);
@@ -170,27 +204,28 @@ export default function PaginaDocumentos() {
   useEffect(() => {
     carregarDados();
     setPaginaAtual(1);
-  }, [id, activeUserId, categoriaFiltro, origemFiltro, busca]);
-
-  // Handler de Troca de Usuário
-  const handleTrocaUsuario = (novoUserId: string) => {
-    setActiveUserId(novoUserId);
-    setSucesso(`Simulando usuário: ${novoUserId}`);
-    setTimeout(() => setSucesso(''), 3000);
-  };
+  }, [id, categoriaFiltro, origemFiltro, busca, mostrarArquivados]);
 
   // Submissão: Geração Automática
   const handleConfirmarGerar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (temExpiracaoGerar && !formGerar.data_expiracao) {
+      alert('Informe a data de expiração ou desmarque a opção "Expira automaticamente".');
+      return;
+    }
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      await axios.post(`${API_URL}/regional/${id}/documentos`, formGerar, { headers });
+      await clienteHttp.post(`${API_URL}/regional/${id}/documentos`, {
+        ...formGerar,
+        data_expiracao: temExpiracaoGerar && formGerar.data_expiracao ? formGerar.data_expiracao : null
+      });
       setSucesso('Documento oficial redigido e PDF gerado com sucesso!');
       setModalPublicarAberto(false);
+      setTemExpiracaoGerar(false);
+      setFormGerar((f) => ({ ...f, data_expiracao: '' }));
       carregarDados();
       setTimeout(() => setSucesso(''), 5000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao publicar documento.');
+      alert(extrairMensagemErro(err, 'Erro ao publicar documento.'));
     }
   };
 
@@ -203,10 +238,6 @@ export default function PaginaDocumentos() {
     }
 
     try {
-      const headers = { 
-        'X-User-Id': activeUserId,
-        'Content-Type': 'multipart/form-data'
-      };
       const data = new FormData();
       data.append('titulo', formUpload.titulo);
       data.append('categoria', formUpload.categoria);
@@ -217,17 +248,22 @@ export default function PaginaDocumentos() {
       if (formUpload.loja_emissora_nome) data.append('loja_emissora_nome', formUpload.loja_emissora_nome);
       if (formUpload.loja_emissora_numero) data.append('loja_emissora_numero', formUpload.loja_emissora_numero);
       if (formUpload.data_documento) data.append('data_documento', formUpload.data_documento);
+      if (temExpiracaoUpload && formUpload.data_expiracao) data.append('data_expiracao', formUpload.data_expiracao);
       data.append('visibilidade', formUpload.visibilidade);
       data.append('arquivo', arquivoUpload);
 
-      await axios.post(`${API_URL}/regional/${id}/documentos/upload`, data, { headers });
+      await clienteHttp.post(`${API_URL}/regional/${id}/documentos/upload`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setSucesso('Arquivo físico anexado e publicado com sucesso!');
       setModalPublicarAberto(false);
       setArquivoUpload(null);
+      setTemExpiracaoUpload(false);
+      setFormUpload((f) => ({ ...f, data_expiracao: '' }));
       carregarDados();
       setTimeout(() => setSucesso(''), 5000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao fazer upload do documento.');
+      alert(extrairMensagemErro(err, 'Erro ao fazer upload do documento.'));
     }
   };
 
@@ -235,13 +271,26 @@ export default function PaginaDocumentos() {
   const handleExcluirDocumento = async (docId: string, titulo: string) => {
     if (!confirm(`Confirma a exclusão/ocultação do documento "${titulo}"?`)) return;
     try {
-      const headers = { 'X-User-Id': activeUserId };
-      await axios.delete(`${API_URL}/regional/${id}/documentos/${docId}`, { headers });
+      await clienteHttp.delete(`${API_URL}/regional/${id}/documentos/${docId}`);
       setSucesso('Documento excluído com sucesso.');
       carregarDados();
       setTimeout(() => setSucesso(''), 4000);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao excluir documento.');
+      alert(extrairMensagemErro(err, 'Erro ao excluir documento.'));
+    }
+  };
+
+  // Reativa um documento/convite arquivado manualmente ou por expiração
+  // automática -- ver PUT /documentos/{id}/reativar (mesmo mecanismo de
+  // PUT /avisos/{id}/reativar).
+  const handleReativarDocumento = async (docId: string, titulo: string) => {
+    try {
+      await clienteHttp.put(`${API_URL}/regional/${id}/documentos/${docId}/reativar`);
+      setSucesso(`Documento "${titulo}" reativado com sucesso.`);
+      carregarDados();
+      setTimeout(() => setSucesso(''), 4000);
+    } catch (err: any) {
+      alert(extrairMensagemErro(err, 'Erro ao reativar documento.'));
     }
   };
 
@@ -299,25 +348,6 @@ export default function PaginaDocumentos() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Seletor de Simulação RBAC */}
-            <div className="flex items-center gap-2 bg-[#121212] border border-[#262626] px-3 py-1.5 rounded-xl shadow-inner">
-              <ShieldCheck className="w-4 h-4 text-[#facc15]" />
-              <div className="flex flex-col">
-                <span className="text-[10px] text-[#777] uppercase font-bold tracking-wider">Simular Usuário:</span>
-                <select 
-                  value={activeUserId} 
-                  onChange={(e) => handleTrocaUsuario(e.target.value)}
-                  className="bg-transparent text-xs text-[#f5f5f5] font-semibold focus:outline-none cursor-pointer"
-                >
-                  <option value="CIM_12345_PRESIDENTE" className="bg-[#181818] text-white">Mesa Diretora (Presidente)</option>
-                  <option value="CIM_99887_VICE_PRESIDENTE" className="bg-[#181818] text-white">Mesa Diretora (Vice-Pres.)</option>
-                  <option value="VM_42" className="bg-[#181818] text-white">VM - Estrela de Anápolis nº 42</option>
-                  <option value="VM_10" className="bg-[#181818] text-white">VM - União e Trabalho nº 10</option>
-                  <option value="superadmin" className="bg-[#181818] text-white">SuperAdmin Geral</option>
-                </select>
-              </div>
-            </div>
-
             {/* Botão Novo Documento */}
             <button
               onClick={() => {
@@ -332,6 +362,7 @@ export default function PaginaDocumentos() {
                   loja_emissora_nome: '',
                   loja_emissora_numero: '',
                   data_documento: new Date().toISOString().split('T')[0],
+                  data_expiracao: '',
                   conteudo_texto: '',
                   visibilidade: 'PUBLICO_CONSELHO'
                 });
@@ -345,8 +376,11 @@ export default function PaginaDocumentos() {
                   loja_emissora_nome: '',
                   loja_emissora_numero: '',
                   data_documento: new Date().toISOString().split('T')[0],
+                  data_expiracao: '',
                   visibilidade: 'PUBLICO_CONSELHO'
                 });
+                setTemExpiracaoGerar(false);
+                setTemExpiracaoUpload(false);
                 setModalPublicarAberto(true);
               }}
               className="flex items-center gap-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
@@ -484,6 +518,16 @@ export default function PaginaDocumentos() {
               <option value="CONSELHO">Mesa Diretora (Conselho)</option>
               <option value="LOJA">Lojas Jurisdicionadas</option>
             </select>
+
+            <label className="flex items-center gap-1.5 text-xs font-medium text-[#999] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={mostrarArquivados}
+                onChange={(e) => setMostrarArquivados(e.target.checked)}
+                className="w-3.5 h-3.5 accent-[#facc15] bg-[#181818] border-[#303030] rounded"
+              />
+              Mostrar arquivados
+            </label>
           </div>
 
           <div className="flex items-center gap-3">
@@ -539,7 +583,7 @@ export default function PaginaDocumentos() {
               return (
                 <div
                   key={doc.id}
-                  className="bg-[#121212] border border-[#242424] hover:border-[#383838] rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 shadow-xl group relative overflow-hidden"
+                  className={`bg-[#121212] border border-[#242424] hover:border-[#383838] rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 shadow-xl group relative overflow-hidden ${doc.arquivado ? 'opacity-60' : ''}`}
                 >
                   <div>
                     {/* Topo: Categoria + Origem + Código */}
@@ -548,9 +592,16 @@ export default function PaginaDocumentos() {
                         <IconeCat className="w-3 h-3" />
                         {catInfo.label}
                       </span>
-                      <span className="text-[10px] font-mono text-[#888] bg-[#181818] px-2 py-0.5 rounded border border-[#2c2c2c]">
-                        {doc.codigo_documento}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {doc.arquivado && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold border border-gray-600 text-gray-400 bg-gray-900/40">
+                            <Archive className="w-3 h-3" /> Arquivado
+                          </span>
+                        )}
+                        <span className="text-[10px] font-mono text-[#888] bg-[#181818] px-2 py-0.5 rounded border border-[#2c2c2c]">
+                          {doc.codigo_documento}
+                        </span>
+                      </div>
                     </div>
 
                     {/* MINIATURA ESTILIZADA DE PRANCHA MAÇÔNICA */}
@@ -609,6 +660,14 @@ export default function PaginaDocumentos() {
                         <span>Signatário:</span>
                         <span className="text-[#aaa] truncate max-w-[180px]">{doc.autor_nome}</span>
                       </div>
+                      {doc.data_expiracao && (
+                        <div className="flex justify-between">
+                          <span>Expira em:</span>
+                          <span className={doc.arquivado ? 'text-[#aaa]' : 'text-amber-400 font-semibold'}>
+                            {new Date(doc.data_expiracao + 'T00:00:00').toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -639,13 +698,23 @@ export default function PaginaDocumentos() {
                       </button>
 
                       {doc.pode_gerenciar && (
-                        <button
-                          onClick={() => handleExcluirDocumento(doc.id, doc.titulo)}
-                          className="p-1.5 bg-[#1a1a1a] hover:bg-red-950/40 text-[#666] hover:text-red-400 border border-[#2e2e2e] rounded-xl transition-all"
-                          title="Excluir / Ocultar"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                        doc.arquivado ? (
+                          <button
+                            onClick={() => handleReativarDocumento(doc.id, doc.titulo)}
+                            className="p-1.5 bg-[#1a1a1a] hover:bg-[#facc15]/20 text-[#666] hover:text-[#facc15] border border-[#2e2e2e] rounded-xl transition-all"
+                            title="Reativar"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleExcluirDocumento(doc.id, doc.titulo)}
+                            className="p-1.5 bg-[#1a1a1a] hover:bg-red-950/40 text-[#666] hover:text-red-400 border border-[#2e2e2e] rounded-xl transition-all"
+                            title="Excluir / Ocultar"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -675,14 +744,26 @@ export default function PaginaDocumentos() {
                     const isLoja = doc.tipo_origem === 'LOJA';
 
                     return (
-                      <tr key={doc.id} className="hover:bg-[#181818]/60 transition-colors">
+                      <tr key={doc.id} className={`hover:bg-[#181818]/60 transition-colors ${doc.arquivado ? 'opacity-60' : ''}`}>
                         <td className="py-3 px-4 font-mono font-bold text-[#facc15]">
                           {doc.codigo_documento}
                         </td>
                         <td className="py-3 px-4">
-                          <strong className="text-white block">{doc.titulo}</strong>
+                          <strong className="text-white block">
+                            {doc.titulo}
+                            {doc.arquivado && (
+                              <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-extrabold border border-gray-600 text-gray-400 bg-gray-900/40 align-middle">
+                                <Archive className="w-2.5 h-2.5" /> Arquivado
+                              </span>
+                            )}
+                          </strong>
                           {doc.descricao_ementa && (
                             <span className="text-[11px] text-[#777] line-clamp-1">{doc.descricao_ementa}</span>
+                          )}
+                          {doc.data_expiracao && (
+                            <span className="text-[11px] text-amber-400 block">
+                              Expira em {new Date(doc.data_expiracao + 'T00:00:00').toLocaleDateString('pt-BR')}
+                            </span>
                           )}
                         </td>
                         <td className="py-3 px-4">
@@ -723,13 +804,23 @@ export default function PaginaDocumentos() {
                               <Download className="w-3.5 h-3.5" />
                             </button>
                             {doc.pode_gerenciar && (
-                              <button
-                                onClick={() => handleExcluirDocumento(doc.id, doc.titulo)}
-                                className="p-1.5 bg-[#1c1c1c] hover:bg-red-950/40 text-[#666] hover:text-red-400 rounded-lg transition-colors"
-                                title="Excluir"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                              doc.arquivado ? (
+                                <button
+                                  onClick={() => handleReativarDocumento(doc.id, doc.titulo)}
+                                  className="p-1.5 bg-[#1c1c1c] hover:bg-[#facc15]/20 text-[#666] hover:text-[#facc15] rounded-lg transition-colors"
+                                  title="Reativar"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleExcluirDocumento(doc.id, doc.titulo)}
+                                  className="p-1.5 bg-[#1c1c1c] hover:bg-red-950/40 text-[#666] hover:text-red-400 rounded-lg transition-colors"
+                                  title="Excluir"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )
                             )}
                           </div>
                         </td>
@@ -787,6 +878,10 @@ export default function PaginaDocumentos() {
                   </h3>
                   <p className="text-[11px] text-[#888]">
                     Data: {documentoVisualizando.data_documento} &bull; Emissor: {documentoVisualizando.autor_nome}
+                    {documentoVisualizando.data_expiracao && (
+                      <> &bull; <span className="text-amber-400">Expira em {new Date(documentoVisualizando.data_expiracao + 'T00:00:00').toLocaleDateString('pt-BR')}</span></>
+                    )}
+                    {documentoVisualizando.arquivado && <> &bull; <span className="text-gray-400">Arquivado</span></>}
                   </p>
                 </div>
               </div>
@@ -949,15 +1044,38 @@ export default function PaginaDocumentos() {
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Data Oficial do Ato</label>
-                    <input
-                      type="date"
-                      required
+                    <CampoData
                       value={formGerar.data_documento}
-                      onChange={(e) => setFormGerar({...formGerar, data_documento: e.target.value})}
+                      onChange={(v) => setFormGerar({...formGerar, data_documento: v})}
                       className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="tem-expiracao-gerar"
+                    checked={temExpiracaoGerar}
+                    onChange={(e) => { setTemExpiracaoGerar(e.target.checked); if (!e.target.checked) setFormGerar({...formGerar, data_expiracao: ''}); }}
+                    className="w-4 h-4 accent-[#facc15] bg-[#181818] border-[#303030] rounded"
+                  />
+                  <label htmlFor="tem-expiracao-gerar" className="text-xs font-medium text-[#ccc] cursor-pointer">
+                    Expira automaticamente numa data (arquivamento automático)
+                  </label>
+                </div>
+                {temExpiracaoGerar && (
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Data de expiração</label>
+                    <CampoData
+                      value={formGerar.data_expiracao}
+                      onChange={(v) => setFormGerar({...formGerar, data_expiracao: v})}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    />
+                    <p className="text-[10px] text-[#777] mt-1">Depois dessa data, o sistema arquiva este documento/convite automaticamente.</p>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Ementa / Resumo</label>
@@ -1056,15 +1174,38 @@ export default function PaginaDocumentos() {
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Data Oficial do Ato</label>
-                    <input
-                      type="date"
-                      required
+                    <CampoData
                       value={formUpload.data_documento}
-                      onChange={(e) => setFormUpload({...formUpload, data_documento: e.target.value})}
+                      onChange={(v) => setFormUpload({...formUpload, data_documento: v})}
                       className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="tem-expiracao-upload"
+                    checked={temExpiracaoUpload}
+                    onChange={(e) => { setTemExpiracaoUpload(e.target.checked); if (!e.target.checked) setFormUpload({...formUpload, data_expiracao: ''}); }}
+                    className="w-4 h-4 accent-[#facc15] bg-[#181818] border-[#303030] rounded"
+                  />
+                  <label htmlFor="tem-expiracao-upload" className="text-xs font-medium text-[#ccc] cursor-pointer">
+                    Expira automaticamente numa data (arquivamento automático)
+                  </label>
+                </div>
+                {temExpiracaoUpload && (
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Data de expiração</label>
+                    <CampoData
+                      value={formUpload.data_expiracao}
+                      onChange={(v) => setFormUpload({...formUpload, data_expiracao: v})}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    />
+                    <p className="text-[10px] text-[#777] mt-1">Depois dessa data, o sistema arquiva este documento/convite automaticamente.</p>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Ementa / Resumo</label>

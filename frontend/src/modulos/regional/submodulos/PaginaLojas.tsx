@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { CampoData, CampoHora } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   Building2, ShieldCheck, Loader2, Award,
@@ -1103,10 +1104,9 @@ export default function PaginaLojas() {
                     <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
                       Horário
                     </label>
-                    <input
-                      type="time"
+                    <CampoHora
                       value={editLojaForm.horario_sessao}
-                      onChange={(e) => setEditLojaForm({...editLojaForm, horario_sessao: e.target.value})}
+                      onChange={(v) => setEditLojaForm({...editLojaForm, horario_sessao: v})}
                       className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
@@ -1341,10 +1341,9 @@ export default function PaginaLojas() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1">Início do Mandato</label>
-                  <input
-                    type="date"
+                  <CampoData
                     value={transmissaoForm.data_inicio_mandato}
-                    onChange={(e) => setTransmissaoForm({ ...transmissaoForm, data_inicio_mandato: e.target.value })}
+                    onChange={(v) => setTransmissaoForm({ ...transmissaoForm, data_inicio_mandato: v })}
                     className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
                   />
                 </div>

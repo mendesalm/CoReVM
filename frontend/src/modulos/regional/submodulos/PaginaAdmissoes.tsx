@@ -1,6 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
   BookOpenCheck, ShieldCheck, Loader2, Award,
@@ -1251,10 +1252,9 @@ export default function PaginaAdmissoes() {
                 <label className="text-xs font-semibold text-gray-300 block mb-1">
                   Data Limite para Considerações (Opcional - padrão: 30 dias)
                 </label>
-                <input
-                  type="date"
+                <CampoData
                   value={formPrevia.data_limite}
-                  onChange={(e) => setFormPrevia(prev => ({ ...prev, data_limite: e.target.value }))}
+                  onChange={(v) => setFormPrevia(prev => ({ ...prev, data_limite: v }))}
                   className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>

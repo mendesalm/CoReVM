@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { formatarCPF, formatarTelefone } from '../utils/formatadores';
 import { Loader2, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
+import { CampoData } from './SeletorDataHora';
 
 interface Props {
   cargoPadrao?: string;
@@ -241,7 +242,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Data de Início do Mandato</label>
-                <input type="date" value={formData.data_inicio_mandato} onChange={e => setFormData({...formData, data_inicio_mandato: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white" />
+                <CampoData value={formData.data_inicio_mandato} onChange={(v) => setFormData({...formData, data_inicio_mandato: v})} />
               </div>
             </div>
           </div>
