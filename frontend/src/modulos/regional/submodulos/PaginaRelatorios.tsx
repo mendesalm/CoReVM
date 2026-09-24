@@ -1,8 +1,8 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
-import { 
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import {
   BarChart3, Users, Landmark, Vote, Download, FileText,
   ShieldCheck, CheckCircle2, Clock, AlertTriangle, ArrowLeft,
   Search, Award, Layers,
@@ -10,6 +10,26 @@ import {
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// CORREÇÃO (2026-09-21): mesmo padrão pré-migração de segurança de
+// 2026-09-11 já corrigido em PaginaAdmissoes.tsx/PaginaVotacoes.tsx/
+// PaginaPatrimonio.tsx/PaginaComunicacao.tsx/PaginaDocumentos.tsx (ver
+// Blocos B.5/B.8/B.12/B.13/B.15 do roteiro de testes manuais) — `axios`
+// puro + header `X-User-ID` não autenticado, rejeitado com 422 desde que
+// `obter_usuario_esigma` passou a exigir `Authorization: Bearer` real.
+// `detail` de um 422 do FastAPI é uma LISTA de objetos
+// ({type, loc, msg, input}), não uma string.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((d: any) => (typeof d === 'string' ? d : d?.msg))
+      .filter(Boolean);
+    if (mensagens.length > 0) return mensagens.join('; ');
+  }
+  return mensagemPadrao;
+}
 
 interface KpisConsolidado {
   total_lojas: number;
@@ -127,12 +147,11 @@ export const PaginaRelatorios: React.FC = () => {
   // Estado das Abas: 'visao-geral' | 'integrantes' | 'patrimonio' | 'quorum'
   const [abaAtiva, setAbaAtiva] = useState<'visao-geral' | 'integrantes' | 'patrimonio' | 'quorum'>('visao-geral');
 
-  // Simulação de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+  // Contexto do Usuário (vem de GET /me, autenticado via clienteHttp)
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: '',
+    role: '',
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -165,21 +184,14 @@ export const PaginaRelatorios: React.FC = () => {
   useEffect(() => {
     const fetchContext = async () => {
       try {
-        const res = await axios.get(`${API_URL}/regional/${regiaoId}/me`, {
-          headers: { 'X-User-ID': activeUserId }
-        });
+        const res = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/me`);
         setUserContext(res.data);
-      } catch {
-        setUserContext({
-          usuario_id: activeUserId,
-          role: activeUserId.includes('PRESIDENTE') ? 'PRESIDENTE' : 'VENERAVEL',
-          is_diretoria: activeUserId.includes('PRESIDENTE') || activeUserId === 'superadmin',
-          loja_id: activeUserId.startsWith('VM_') ? activeUserId.replace('VM_', '') : null
-        });
+      } catch (err) {
+        console.warn('Erro ao carregar contexto de usuário:', err);
       }
     };
     if (regiaoId) fetchContext();
-  }, [regiaoId, activeUserId]);
+  }, [regiaoId]);
 
   // Carregar Dados Conforme Aba Ativa ou Inicialmente
   const carregarDados = async () => {
@@ -187,10 +199,8 @@ export const PaginaRelatorios: React.FC = () => {
     setLoading(true);
     setErro('');
     try {
-      const headers = { 'X-User-ID': activeUserId };
-
       // 1. Relatório Consolidado
-      const resConsol = await axios.get(`${API_URL}/regional/${regiaoId}/relatorios/consolidado`, { headers });
+      const resConsol = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/relatorios/consolidado`);
       setKpis(resConsol.data.kpis);
       setDistribuicaoRitos(resConsol.data.distribuicao_ritos || []);
       setRankingLojas(resConsol.data.ranking_lojas || []);
@@ -199,19 +209,19 @@ export const PaginaRelatorios: React.FC = () => {
       }
 
       // 2. Relatório de Integrantes
-      const resInt = await axios.get(`${API_URL}/regional/${regiaoId}/relatorios/integrantes`, { headers });
+      const resInt = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/relatorios/integrantes`);
       setMesaDiretora(resInt.data.mesa_diretora || []);
       setLojasColegiado(resInt.data.lojas || []);
 
       // 3. Relatório de Patrimônio
-      const resPat = await axios.get(`${API_URL}/regional/${regiaoId}/relatorios/patrimonio`, { headers });
+      const resPat = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/relatorios/patrimonio`);
       setResumoPatrimonio(resPat.data.resumo || null);
       setItensPatrimonio(resPat.data.itens || []);
       setEmprestimosPatrimonio(resPat.data.emprestimos || []);
 
     } catch (err: any) {
       console.error("Erro ao carregar dados dos relatórios:", err);
-      setErro(err.response?.data?.detail || "Erro ao conectar com a central de relatórios de gestão.");
+      setErro(extrairMensagemErro(err, "Erro ao conectar com a central de relatórios de gestão."));
     } finally {
       setLoading(false);
     }
@@ -219,7 +229,7 @@ export const PaginaRelatorios: React.FC = () => {
 
   useEffect(() => {
     carregarDados();
-  }, [regiaoId, activeUserId]);
+  }, [regiaoId]);
 
   // Exportação de PDF
   const handleExportarPdf = async (tipo: 'executivo' | 'integrantes' | 'patrimonio') => {
@@ -227,8 +237,7 @@ export const PaginaRelatorios: React.FC = () => {
     setBaixandoPdf(tipo);
     setErro('');
     try {
-      const res = await axios.get(`${API_URL}/regional/${regiaoId}/relatorios/exportar-pdf?tipo=${tipo}`, {
-        headers: { 'X-User-ID': activeUserId },
+      const res = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/relatorios/exportar-pdf?tipo=${tipo}`, {
         responseType: 'blob'
       });
 
@@ -308,25 +317,14 @@ export const PaginaRelatorios: React.FC = () => {
           </div>
         </div>
 
-        {/* Simulador de Usuário (RBAC) */}
+        {/* Perfil do usuário autenticado */}
         <div className="flex items-center space-x-3 w-full lg:w-auto justify-end">
-          <div className="text-right hidden sm:block">
-            <div className="text-xs text-gray-400">Simular Perfil:</div>
+          <div className="text-right">
+            <div className="text-xs text-gray-400">Perfil:</div>
             <div className="text-xs font-semibold text-macaonico-dourado">
               {userContext.role} {userContext.loja_id ? `(Loja ${userContext.loja_id})` : ''}
             </div>
           </div>
-          <select 
-            value={activeUserId}
-            onChange={(e) => setActiveUserId(e.target.value)}
-            className="bg-[#080808] border border-[#333] text-xs text-gray-200 rounded px-3 py-2 focus:border-macaonico-dourado focus:outline-none"
-          >
-            <option value="CIM_12345_PRESIDENTE">Ir.'. Presidente do Conselho (Diretoria)</option>
-            <option value="superadmin">SuperAdmin Estadual (Acesso Global)</option>
-            <option value="VM_2">VM Roosevelt nº 1 (Membro do Colegiado)</option>
-            <option value="VM_31">VM Independência nº 40 (Membro do Colegiado)</option>
-            <option value="VM_60">VM São João da Escócia nº 78 (Membro do Colegiado)</option>
-          </select>
         </div>
       </div>
 

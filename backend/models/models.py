@@ -31,6 +31,10 @@ class Regiao(Base):
     documentos = relationship("DocumentoRegional", back_populates="regiao")
     topicos_comunicacao = relationship("TopicoComunicacao", back_populates="regiao")
     historico_lideranca_lojas = relationship("HistoricoLiderancaLoja", back_populates="regiao")
+    auditorias = relationship("RegistroAuditoriaRegional", back_populates="regiao")
+
+
+
 
 class DiretoriaConselho(Base):
     """
@@ -613,6 +617,29 @@ class TemplateRelatorio(Base):
     atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     ativo = Column(Boolean, default=True)
     criado_por = Column(String(36), nullable=True)  # usuario_id do superadmin
+
+
+class RegistroAuditoriaRegional(Base):
+    """
+    Trilha de auditoria e governança de ações críticas no Conselho Regional.
+    Registra com precisão quem realizou a ação, data/hora, entidade afetada e payload de modificação.
+    """
+    __tablename__ = "registros_auditoria_regional"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    regiao_id = Column(String(36), ForeignKey("regioes.id"), nullable=False, index=True)
+    usuario_id = Column(String(255), nullable=False, index=True)
+    usuario_nome = Column(String(255), nullable=True)
+    usuario_cargo = Column(String(100), nullable=True)
+    acao = Column(String(100), nullable=False, index=True)
+    entidade = Column(String(100), nullable=False)
+    entidade_id = Column(String(100), nullable=True)
+    detalhes = Column(String(5000), nullable=True)
+    ip_origem = Column(String(50), nullable=True)
+    criado_em = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    regiao = relationship("Regiao", back_populates="auditorias")
+
 
 
 

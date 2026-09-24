@@ -1,8 +1,8 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
-import { 
+import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import {
   MessageSquare, Building, ShieldCheck, ArrowLeft,
   Search, Plus, Send, Paperclip, FileText, Download,
   CheckCircle2, AlertTriangle, Radio,
@@ -11,6 +11,23 @@ import {
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:8003/api/v1';
+
+// ALTERAÇÃO (2026-09-21, bug corrigido): esta tela ainda usava `axios` puro
+// + um seletor "Simular Perfil" com header `X-User-ID` -- mecanismo
+// pré-fix de segurança de 2026-09-11, o mesmo padrão já corrigido em
+// PaginaAdmissoes.tsx (B.5), PaginaVotacoes.tsx (B.8) e PaginaPatrimonio.tsx
+// (B.12). Sem `Authorization: Bearer` real, o FastAPI rejeita a requisição
+// com 422 antes de rodar a lógica da rota. Migrado para `clienteHttp`
+// (token real via AuthContext), removido o seletor de simulação,
+// `userContext` passa a vir só de `GET /me`.
+function extrairMensagemErro(err: any, mensagemPadrao: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((d: any) => d?.msg || JSON.stringify(d)).join('; ');
+  }
+  return err?.message || mensagemPadrao;
+}
 
 interface TopicoItem {
   id: string;
@@ -66,12 +83,11 @@ interface LojaInfo {
 export const PaginaComunicacao: React.FC = () => {
   const { id: regiaoId } = useParams<{ id: string }>();
 
-  // Controle de Usuário e RBAC
-  const [activeUserId, setActiveUserId] = useState('CIM_12345_PRESIDENTE');
+  // Controle de Usuário e RBAC -- vem inteiramente de GET /me (token real)
   const [userContext, setUserContext] = useState<any>({
-    usuario_id: activeUserId,
-    role: 'PRESIDENTE',
-    is_diretoria: true,
+    usuario_id: '',
+    role: '',
+    is_diretoria: false,
     loja_id: null
   });
 
@@ -126,37 +142,28 @@ export const PaginaComunicacao: React.FC = () => {
   useEffect(() => {
     const fetchContext = async () => {
       try {
-        const res = await axios.get(`${API_URL}/regional/${regiaoId}/me`, {
-          headers: { 'X-User-ID': activeUserId }
-        });
+        const res = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/me`);
         setUserContext(res.data);
-      } catch {
-        setUserContext({
-          usuario_id: activeUserId,
-          role: activeUserId.includes('PRESIDENTE') ? 'PRESIDENTE' : 'VENERAVEL',
-          is_diretoria: activeUserId.includes('PRESIDENTE') || activeUserId === 'superadmin',
-          loja_id: activeUserId.startsWith('VM_') ? activeUserId.replace('VM_', '') : null
-        });
+      } catch (err) {
+        console.error("Erro ao carregar contexto do usuário:", err);
       }
     };
     if (regiaoId) fetchContext();
-  }, [regiaoId, activeUserId]);
+  }, [regiaoId]);
 
   // 2. Carregar Lojas do Conselho
   useEffect(() => {
     const fetchLojas = async () => {
       if (!regiaoId) return;
       try {
-        const res = await axios.get(`${API_URL}/regional/${regiaoId}/lojas`, {
-          headers: { 'X-User-ID': activeUserId }
-        });
+        const res = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/lojas`);
         setLojasDisponiveis(res.data.lojas || []);
       } catch (err) {
         console.error("Erro ao carregar lojas:", err);
       }
     };
     fetchLojas();
-  }, [regiaoId, activeUserId]);
+  }, [regiaoId]);
 
   // 3. Carregar Estatísticas e Tópicos
   const carregarTopicos = async (manterSelecionadoId?: string) => {
@@ -164,11 +171,9 @@ export const PaginaComunicacao: React.FC = () => {
     setLoadingTopicos(true);
     setErro('');
     try {
-      const headers = { 'X-User-ID': activeUserId };
-
       const [resEstat, resTop] = await Promise.all([
-        axios.get(`${API_URL}/regional/${regiaoId}/comunicacao/estatisticas`, { headers }),
-        axios.get(`${API_URL}/regional/${regiaoId}/comunicacao/topicos`, { headers })
+        clienteHttp.get(`${API_URL}/regional/${regiaoId}/comunicacao/estatisticas`),
+        clienteHttp.get(`${API_URL}/regional/${regiaoId}/comunicacao/topicos`)
       ]);
 
       setEstatisticas(resEstat.data);
@@ -189,7 +194,7 @@ export const PaginaComunicacao: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Erro ao carregar tópicos:", err);
-      setErro(err.response?.data?.detail || "Erro ao conectar com o canal de comunicação.");
+      setErro(extrairMensagemErro(err, "Erro ao conectar com o canal de comunicação."));
     } finally {
       setLoadingTopicos(false);
     }
@@ -197,20 +202,18 @@ export const PaginaComunicacao: React.FC = () => {
 
   useEffect(() => {
     carregarTopicos();
-  }, [regiaoId, activeUserId]);
+  }, [regiaoId]);
 
   // 4. Carregar Mensagens do Tópico Selecionado
   const carregarMensagens = async (topicoId: string) => {
     if (!regiaoId || !topicoId) return;
     setLoadingChat(true);
     try {
-      const res = await axios.get(`${API_URL}/regional/${regiaoId}/comunicacao/topicos/${topicoId}`, {
-        headers: { 'X-User-ID': activeUserId }
-      });
+      const res = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/comunicacao/topicos/${topicoId}`);
       setMensagens(res.data.mensagens || []);
     } catch (err: any) {
       console.error("Erro ao carregar mensagens do tópico:", err);
-      setErro(err.response?.data?.detail || "Não foi possível carregar a correspondência.");
+      setErro(extrairMensagemErro(err, "Não foi possível carregar a correspondência."));
     } finally {
       setLoadingChat(false);
     }
@@ -232,23 +235,20 @@ export const PaginaComunicacao: React.FC = () => {
     setEnviandoMensagem(true);
     setErro('');
     try {
-      const headers = { 'X-User-ID': activeUserId };
-
       if (arquivoAnexo) {
         const formData = new FormData();
         formData.append('conteudo', novoTexto.trim());
         formData.append('arquivo', arquivoAnexo);
 
-        await axios.post(
+        await clienteHttp.post(
           `${API_URL}/regional/${regiaoId}/comunicacao/topicos/${topicoSelecionado.id}/upload`,
           formData,
-          { headers: { ...headers, 'Content-Type': 'multipart/form-data' } }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
       } else {
-        await axios.post(
+        await clienteHttp.post(
           `${API_URL}/regional/${regiaoId}/comunicacao/topicos/${topicoSelecionado.id}/mensagens`,
-          { conteudo: novoTexto.trim() },
-          { headers }
+          { conteudo: novoTexto.trim() }
         );
       }
 
@@ -258,7 +258,7 @@ export const PaginaComunicacao: React.FC = () => {
       await carregarTopicos(topicoSelecionado.id);
     } catch (err: any) {
       console.error("Erro ao enviar mensagem:", err);
-      setErro(err.response?.data?.detail || "Falha ao enviar resposta oficial.");
+      setErro(extrairMensagemErro(err, "Falha ao enviar resposta oficial."));
     } finally {
       setEnviandoMensagem(false);
     }
@@ -282,8 +282,6 @@ export const PaginaComunicacao: React.FC = () => {
     setLoadingTopicos(true);
     setErro('');
     try {
-      const headers = { 'X-User-ID': activeUserId };
-
       // Identificar loja de destino selecionada
       const lojaDest = lojasDisponiveis.find(l => l.id === formNovo.loja_destino_id);
 
@@ -300,7 +298,7 @@ export const PaginaComunicacao: React.FC = () => {
         arquivo_nome: formNovo.arquivo_nome || null
       };
 
-      const res = await axios.post(`${API_URL}/regional/${regiaoId}/comunicacao/topicos`, payload, { headers });
+      const res = await clienteHttp.post(`${API_URL}/regional/${regiaoId}/comunicacao/topicos`, payload);
       setSucesso("Prancha oficial aberta e protocolada com sucesso!");
       setModalNovoAberto(false);
       setFormNovo({
@@ -318,7 +316,7 @@ export const PaginaComunicacao: React.FC = () => {
       setTimeout(() => setSucesso(''), 5000);
     } catch (err: any) {
       console.error("Erro ao criar tópico:", err);
-      setErro(err.response?.data?.detail || "Falha ao emitir nova prancha.");
+      setErro(extrairMensagemErro(err, "Falha ao emitir nova prancha."));
     } finally {
       setLoadingTopicos(false);
     }
@@ -328,16 +326,15 @@ export const PaginaComunicacao: React.FC = () => {
   const handleAtualizarStatus = async (novoStatus: string) => {
     if (!regiaoId || !topicoSelecionado) return;
     try {
-      await axios.put(
+      await clienteHttp.put(
         `${API_URL}/regional/${regiaoId}/comunicacao/topicos/${topicoSelecionado.id}/status`,
-        { status: novoStatus },
-        { headers: { 'X-User-ID': activeUserId } }
+        { status: novoStatus }
       );
       setSucesso(`Status da correspondência alterado para ${novoStatus}.`);
       await carregarTopicos(topicoSelecionado.id);
       setTimeout(() => setSucesso(''), 4000);
     } catch (err: any) {
-      setErro(err.response?.data?.detail || "Falha ao atualizar status.");
+      setErro(extrairMensagemErro(err, "Falha ao atualizar status."));
     }
   };
 
@@ -346,12 +343,9 @@ export const PaginaComunicacao: React.FC = () => {
     if (!regiaoId) return;
     setBaixandoPdfId(mensagemId);
     try {
-      const res = await axios.get(
+      const res = await clienteHttp.get(
         `${API_URL}/regional/${regiaoId}/comunicacao/mensagens/${mensagemId}/pdf`,
-        {
-          headers: { 'X-User-ID': activeUserId },
-          responseType: 'blob'
-        }
+        { responseType: 'blob' }
       );
 
       const blob = new Blob([res.data], { type: 'application/pdf' });
@@ -414,25 +408,14 @@ export const PaginaComunicacao: React.FC = () => {
           </div>
         </div>
 
-        {/* Simulador de Usuário (RBAC) */}
+        {/* Perfil do usuário autenticado */}
         <div className="flex items-center space-x-3 w-full lg:w-auto justify-end">
-          <div className="text-right hidden sm:block">
-            <div className="text-xs text-gray-400">Simular Perfil:</div>
+          <div className="text-right">
+            <div className="text-xs text-gray-400">Perfil:</div>
             <div className="text-xs font-semibold text-macaonico-dourado">
               {userContext.role} {userContext.loja_id ? `(Loja ${userContext.loja_id})` : ''}
             </div>
           </div>
-          <select 
-            value={activeUserId}
-            onChange={(e) => setActiveUserId(e.target.value)}
-            className="bg-[#080808] border border-[#333] text-xs text-gray-200 rounded px-3 py-2 focus:border-macaonico-dourado focus:outline-none"
-          >
-            <option value="CIM_12345_PRESIDENTE">Ir.'. Presidente do Conselho (Diretoria)</option>
-            <option value="superadmin">SuperAdmin Estadual (Acesso Global)</option>
-            <option value="VM_2">VM Roosevelt nº 1 (Oficina Federada)</option>
-            <option value="VM_31">VM Independência nº 40 (Oficina Federada)</option>
-            <option value="VM_60">VM São João da Escócia nº 78 (Oficina Federada)</option>
-          </select>
         </div>
       </div>
 

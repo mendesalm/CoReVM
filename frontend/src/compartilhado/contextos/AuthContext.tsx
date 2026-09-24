@@ -22,12 +22,53 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const clienteHttp = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1',
 });
 
-// Interceptor para injetar o token
+/**
+ * Valida a integridade e expiração de um JWT emitido pelo e-Sigma.
+ */
+function isTokenValido(token?: string | null): boolean {
+  if (!token) return false;
+  try {
+    const payload = decodificarPayloadJwt(token);
+    if (!payload || (!payload.sub && !payload.user_id)) {
+      return false;
+    }
+    if (payload.exp && typeof payload.exp === 'number') {
+      const agoraSegundos = Math.floor(Date.now() / 1000);
+      if (payload.exp <= agoraSegundos) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Recupera o token de sessão ativo do ecossistema, priorizando o token do CoReVM,
+ * com fallback para Lojas e e-Sigma (SSO local).
+ */
+export function obterTokenSessaoValido(): string | null {
+  const chaves = ['@corevm:token', '@lojas:token', '@esigma:token'];
+  for (const chave of chaves) {
+    const t = localStorage.getItem(chave);
+    if (t) {
+      if (isTokenValido(t)) {
+        return t;
+      } else {
+        localStorage.removeItem(chave);
+      }
+    }
+  }
+  return null;
+}
+
+// Interceptor para injetar o token ativo
 clienteHttp.interceptors.request.use((config) => {
-  const token = localStorage.getItem('@corevm:token');
+  const token = obterTokenSessaoValido();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -35,12 +76,8 @@ clienteHttp.interceptors.request.use((config) => {
 });
 
 /**
- * Decodifica (sem verificar assinatura — isso é responsabilidade do e-Sigma,
- * que já assinou o token no login) o payload de um JWT real emitido pelo
- * e-Sigma, só para restaurar os dados de exibição do usuário ao recarregar
- * a página. Duplicada de PaginaLogin.tsx por serem módulos pequenos e sem
- * um util compartilhado ainda — se surgir um terceiro uso, mover para
- * compartilhado/utils.
+ * Decodifica o payload de um JWT real emitido pelo e-Sigma para restaurar
+ * os dados visuais do usuário.
  */
 function decodificarPayloadJwt(token: string): any {
   try {
@@ -64,16 +101,28 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('@corevm:token');
+      // 1. SSO local (localStorage)
+      let storedToken = obterTokenSessaoValido();
+
+      // 2. SSO Multi-Domínio: se não houver localmente, consulta o e-Sigma via cookie HttpOnly
+      if (!storedToken) {
+        try {
+          const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+          const resp = await axios.get(`${esigmaApiUrl}/auth/sso/session`, { withCredentials: true });
+          if (resp.data?.access_token && isTokenValido(resp.data.access_token)) {
+            const tokenSso = String(resp.data.access_token);
+            storedToken = tokenSso;
+            localStorage.setItem('@corevm:token', tokenSso);
+          }
+        } catch {
+          // Sessão não ativa no e-Sigma
+        }
+      }
+
       if (storedToken) {
         try {
-          // ALTERAÇÃO (2026-09-11): antes esta função fabricava um usuário
-          // mockado ("Usuário Logado", role decidido por uma string mágica
-          // dentro do próprio token) — resquício de quando o login inteiro
-          // era simulado (PaginaLogin.tsx). Agora que o login guarda um JWT
-          // real emitido pelo e-Sigma, decodificamos o payload de verdade
-          // para restaurar a sessão ao recarregar a página.
           setToken(storedToken);
+          localStorage.setItem('@corevm:token', storedToken);
           const payload = decodificarPayloadJwt(storedToken);
           setUsuario({
             id: payload.user_id || '',
@@ -97,10 +146,20 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setUsuario(usuarioData);
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem('@corevm:token');
+    localStorage.removeItem('@lojas:token');
+    localStorage.removeItem('@esigma:token');
     setToken(null);
     setUsuario(null);
+
+    // Encerra sessão global no e-Sigma
+    try {
+      const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+      await axios.post(`${esigmaApiUrl}/auth/logout`, {}, { withCredentials: true });
+    } catch {
+      // Ignora erro de rede durante logout
+    }
   };
 
   return (
@@ -111,3 +170,4 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 };
 
 export const useAuth = () => useContext(AuthContext);
+

@@ -28,6 +28,7 @@ def test_loja_sanitization():
         "titulo_loja": "ARLS",
         "rito": "REAA",
         "obediencia_id": 1,
+        "potencia_id": 1,
         "cidade": "são luís de montes belos",
         "estado": "go "
     }

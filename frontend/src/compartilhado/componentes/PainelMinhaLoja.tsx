@@ -1,6 +1,5 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import { useEffect, useState, type ReactNode } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { clienteHttp } from '../contextos/AuthContext';
 import { CampoData, CampoHora } from './SeletorDataHora';
@@ -138,7 +137,7 @@ export default function PainelMinhaLoja({
       return;
     }
     setCarregandoVm(true);
-    axios.get(`${API_URL}/integracao/lojas/${loja.loja_id}/vm`)
+    clienteHttp.get(`${API_URL}/integracao/lojas/${loja.loja_id}/vm`)
       .then((res) => setVmDetalhe(res.data?.tem_vm ? res.data : null))
       .catch(() => setVmDetalhe(null))
       .finally(() => setCarregandoVm(false));

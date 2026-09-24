@@ -42,15 +42,19 @@ PADROES_PROIBIDOS = [
 ALLOWLIST = {
     "database.py",  # define as conexões em si — é o único lugar "autorizado" a existir
     "core/dependencies.py",  # RBAC ainda resolve VM/Suplente via lojas_db (pendente migrar p/ API do Lojas)
-    "api/v1/regional/rotas.py",  # várias rotas agregam dados de Lojas direto do banco
-    "api/v1/integracao/rotas_lojas.py",  # camada de integração com lojas_db/lista_de_lojas_db
+    "core/reconciliacao_diretoria_lojas.py",  # reconciliação pontual em background
+
     "delete_test_data.py",
     "delete_test_obreiros.py",
     "fix_obediences.py",
     "inspect_db.py",
     "inspect_lista_lojas.py",
+    "inspecionar_enum_rito_lojas_db.py",
+    "verificar_cargos.py",
+    "verificar_migracao_lojas_db.py",
     "seed_lojas.py",
     "investigar_usuarios_teste.py",
+    "tests/conftest.py",
 }
 
 
