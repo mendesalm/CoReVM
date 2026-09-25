@@ -1,23 +1,13 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import axios from 'axios';
-import { UserCircle2, Lock } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 import { GoogleLogin } from '@react-oauth/google';
 
-// ALTERAÇÃO (2026-09-11): login real contra o e-Sigma (IdP central do
-// ecossistema — ver seção 9 do documento de contexto de implementação).
-// Antes, esta tela era 100% mock: nenhuma chamada de rede acontecia, e um
-// token fabricado (ex.: "token_presidente_fake") era guardado direto no
-// localStorage. Isso nunca foi detectado como problema porque a tela do
-// CoReVM que de fato lia esse token (PaginaLojas.tsx) também nunca usava o
-// token — ela mandava um header X-User-Id simulado à parte. Depois que
-// PaginaLojas.tsx foi corrigida para exigir Authorization real (auditoria de
-// 2026-09-11), esse acidente parou de "funcionar", e ficou claro que não
-// havia nenhum caminho de login de verdade no CoReVM.
 const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8001/api/v1';
 const API_URL = 'http://localhost:8003/api/v1';
 
@@ -27,14 +17,6 @@ interface RegiaoVinculada {
   papel: string;
 }
 
-/**
- * Decodifica (sem verificar assinatura — isso já foi feito pelo e-Sigma)
- * o payload de um JWT só para preencher os dados de exibição do usuário no
- * AuthContext local. A fonte de verdade da identidade continua sendo o
- * e-Sigma: qualquer chamada de API sensível revalida o token no backend via
- * GET /auth/validate (core/auth_esigma.py do CoReVM), nunca confia só no que
- * está decodificado aqui no cliente.
- */
 function decodificarPayloadJwt(token: string): any {
   try {
     const payloadBase64 = token.split('.')[1];
@@ -50,13 +32,6 @@ function decodificarPayloadJwt(token: string): any {
   }
 }
 
-/**
- * Depois de autenticar contra o e-Sigma, o CoReVM ainda precisa descobrir a
- * quais Conselhos Regionais (conceito que só existe no CoReVM, o e-Sigma não
- * sabe o que é uma "Região") essa identidade tem vínculo, para decidir para
- * onde navegar. Consulta a rota nova GET /regional/minhas-regioes (criada
- * junto com este login real).
- */
 async function buscarMinhasRegioes(): Promise<RegiaoVinculada[]> {
   const resposta = await clienteHttp.get(`${API_URL}/regional/minhas-regioes`);
   return resposta.data || [];
@@ -70,16 +45,14 @@ function navegarAposLogin(regioes: RegiaoVinculada[], role: string | undefined, 
   if (regioes.length === 0) {
     throw new Error('Login realizado, mas este usuário não possui vínculo com nenhum Conselho Regional cadastrado no CoReVM.');
   }
-  // LIMITAÇÃO CONHECIDA: se a pessoa tem vínculo com mais de uma Região
-  // (ex.: VM de Loja que participa de dois Conselhos), navegamos para a
-  // primeira encontrada. Ainda não existe uma tela de seleção de Região —
-  // registrar como próximo passo se isso for um caso real no ecossistema.
   navigate(`/regiao/${regioes[0].regiao_id}`, { replace: true });
 }
 
 export default function PaginaLogin() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [lembrarMe, setLembrarMe] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
 
@@ -127,10 +100,6 @@ export default function PaginaLogin() {
     setCarregando(true);
 
     try {
-      // Login real: POST /auth/login no e-Sigma (IdP central). Retorna um
-      // JWT genuíno assinado com a JWT_SECRET_KEY do e-Sigma — o mesmo token
-      // que o backend do CoReVM valida via GET /auth/validate a cada
-      // requisição protegida (core/auth_esigma.py).
       const resposta = await axios.post(`${ESIGMA_API_URL}/auth/login`, {
         username: email,
         password: senha,
@@ -146,11 +115,6 @@ export default function PaginaLogin() {
         roles: payload.role ? [payload.role] : [],
       });
 
-      // ALTERAÇÃO (2026-09-16): `deve_trocar_senha` vem `true` quando esta
-      // Pessoa nasceu de uma Solicitação de Cadastro aprovada e ainda está
-      // usando a senha provisória enviada por e-mail (ver
-      // PaginaTrocarSenhaObrigatoria.tsx) — nunca pula direto para o
-      // painel normal nesse caso.
       if (deve_trocar_senha) {
         navigate('/trocar-senha-obrigatoria', { replace: true });
         return;
@@ -166,170 +130,159 @@ export default function PaginaLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden z-0">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#050508] z-0">
+      {/* Background Animado de Partículas idêntico ao e-Sigma */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <HeroBackground />
+      </div>
 
-      {/* Background Animado */}
-      <HeroBackground />
+      <div className="w-full max-w-md relative z-10 my-auto py-6">
+        {/* Cartão de Login - Glassmorphism Soberano Deep Blue Glass */}
+        <div className="card-deep-blue-glass p-8 sm:p-10 flex flex-col items-center">
 
-      <div className="w-full max-w-md relative z-10">
-
-        {/* Cartão de Login - Glassmorphism */}
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
-
-          {/* Logo e Título */}
-          <div className="flex flex-col items-center text-center mb-8">
-            <div id="hero-logo" className="mb-4">
-              <LogoAnimadaCore width={110} height={110} animated={true} />
+          {/* Logo e Título Padronizados como Clone Visual do e-Sigma */}
+          <div className="flex flex-col items-center text-center mb-6">
+            <div id="hero-logo" className="mb-2 flex justify-center">
+              <LogoAnimadaCore width={100} height={90} animated={true} />
             </div>
 
-            <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-200 tracking-wider font-sans drop-shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-              E-Sigma: CoRe
+            <h1 className="text-3xl font-bold tracking-wider font-sans text-transparent bg-clip-text bg-gradient-to-r from-[#FDE68A] via-[#DDB96B] to-[#B8862D] drop-shadow-[0_0_10px_rgba(221,185,107,0.35)]">
+              Acesso Restrito
             </h1>
-            <p className="text-sm text-gray-400 mt-2 font-sans">
-              Conselho Regional de Veneráveis Mestres
+            <p className="text-sm text-slate-400 mt-1 font-sans">
+              Insira suas credenciais para continuar
             </p>
           </div>
 
           {/* Alerta de Erro */}
           {erro && (
-            <div className="mb-6 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 text-center">
+            <div className="w-full mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 text-center">
               {erro}
             </div>
           )}
 
-          {/* Formulário */}
-          <form onSubmit={handleLogin} className="space-y-4">
+          {/* Formulário Principal */}
+          <form onSubmit={handleLogin} className="w-full space-y-4">
             <div>
-              <div className="relative group">
-                <input
-                  type="text"
-                  id="identificador"
-                  autoComplete="username"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder=" "
-                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
-                />
-                <label
-                  htmlFor="identificador"
-                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
-                >
-                  E-mail, CIM ou CPF
-                </label>
-                <UserCircle2 className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
-              </div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                E-mail, CIM ou CPF
+              </label>
+              <input
+                type="text"
+                id="identificador"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Insira seu identificador"
+                className="w-full bg-[#0a1428]/60 border border-white/15 focus:border-[#DDB96B] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all shadow-inner focus:ring-1 focus:ring-[#DDB96B]/50"
+              />
             </div>
 
             <div>
-              <div className="relative group">
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                Senha
+              </label>
+              <div className="relative">
                 <input
-                  type="password"
+                  type={mostrarSenha ? 'text' : 'password'}
                   id="senha"
                   required
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  placeholder=" "
-                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  placeholder="Insira sua senha"
+                  className="w-full bg-[#0a1428]/60 border border-white/15 focus:border-[#DDB96B] rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-slate-500 outline-none transition-all shadow-inner focus:ring-1 focus:ring-[#DDB96B]/50"
                 />
-                <label
-                  htmlFor="senha"
-                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                  aria-label="Alternar visibilidade da senha"
                 >
-                  Senha
-                </label>
-                <Lock className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
+                  {mostrarSenha ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                </button>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={carregando}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3.5 px-4 rounded-xl text-sm shadow-[0_4px_14px_rgba(234,179,8,0.2)] hover:shadow-[0_6px_20px_rgba(234,179,8,0.4)] transition-all cursor-pointer disabled:opacity-50 mt-4"
-            >
-              {carregando ? (
-                <span>Autenticando...</span>
-              ) : (
-                <span>Acessar Painel</span>
-              )}
-            </button>
-
-            {/* Recuperacao de senha (2026-09-16), a pedido explicito
-                do usuario -- para quem JA TEM cadastro e esqueceu a
-                senha (POST /auth/esqueci-senha no e-Sigma). */}
-            <div className="text-center">
+            {/* Linha Lembrar-me e Esqueci a Senha */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-400 hover:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={lembrarMe}
+                  onChange={(e) => setLembrarMe(e.target.checked)}
+                  className="rounded border-slate-700 text-[#DDB96B] focus:ring-[#DDB96B] bg-[#0a1428]"
+                />
+                <span>Lembrar-me</span>
+              </label>
               <button
                 type="button"
                 onClick={() => navigate('/esqueci-senha')}
-                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+                className="text-xs text-[#DDB96B] hover:underline"
               >
-                Esqueci minha senha
+                Esqueci a senha
               </button>
             </div>
 
-            {/* Magic link (2026-09-17) -- primeiro dos metodos de login
-                moderno decididos em claude/decisao-modernizacao-login.md
-                (magic link, OTP, passkeys). Login sem senha: envia um
-                link de uso unico para o e-mail JA CADASTRADO. */}
-            <div className="text-center mt-2">
-              <button
-                type="button"
-                onClick={() => navigate('/entrar-com-link')}
-                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
-              >
-                Entrar sem senha (link por e-mail)
-              </button>
+            {/* Botão de Submissão no estilo Pill Oficial */}
+            <button
+              type="submit"
+              disabled={carregando}
+              className="btn-masonic-pill btn-pill-blue w-full py-3.5 px-4 text-base font-semibold mt-4 cursor-pointer disabled:opacity-50"
+            >
+              {carregando ? 'Autenticando...' : 'Entrar'}
+            </button>
+
+            {/* Divisor "ou" */}
+            <div className="flex items-center my-5 w-full">
+              <div className="flex-1 h-px bg-white/10"></div>
+              <span className="px-3 text-xs text-slate-400">ou</span>
+              <div className="flex-1 h-px bg-white/10"></div>
             </div>
 
-            {/* Passkey (2026-09-18) -- terceiro e ultimo metodo de login
-                moderno da lista (magic link -> OTP -> passkeys). So
-                aparece util para quem ja cadastrou uma passkey antes
-                (PaginaGerenciarPasskeys.tsx, /minhas-passkeys) -- quem
-                nunca cadastrou simplesmente ve a tela seguinte dizer que
-                nao ha passkey disponivel e volta para ca. */}
-            <div className="text-center mt-2">
-              <button
-                type="button"
-                onClick={() => navigate('/entrar-com-passkey')}
-                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
-              >
-                Entrar com passkey
-              </button>
+            {/* Google Login */}
+            <div className="flex justify-center mb-4 w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setErro('Ocorreu um erro ao tentar fazer login com o Google')}
+                theme="filled_black"
+                text="continue_with"
+                width="100%"
+              />
+            </div>
+
+            {/* Links Auxiliares no Rodapé */}
+            <div className="text-center pt-2 space-y-2">
+              <p className="text-xs text-slate-400">
+                Não tem uma conta?{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/solicitar-cadastro')}
+                  className="text-[#DDB96B] font-semibold hover:underline"
+                >
+                  Solicitar cadastro
+                </button>
+              </p>
+
+              <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 pt-1">
+                <button
+                  type="button"
+                  onClick={() => navigate('/entrar-com-link')}
+                  className="hover:text-[#DDB96B] hover:underline transition-colors"
+                >
+                  Entrar sem senha (link)
+                </button>
+                <span>•</span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/entrar-com-passkey')}
+                  className="hover:text-[#DDB96B] hover:underline transition-colors"
+                >
+                  Entrar com passkey
+                </button>
+              </div>
             </div>
           </form>
-
-          {/* Solicitação de Cadastro / Via 2 (2026-09-16): substitui o
-              link de "Ativação de Cadastro" removido no mesmo dia (aquele
-              fluxo permitia auto-aprovação sem validação humana — ver
-              claude/decisao-controle-acesso-cadastro.md, seções 2 e 12).
-              Este link leva ao formulário público que cai numa fila de
-              aprovação (SuperAdmin ou VM/Suplente da própria Loja); só na
-              aprovação uma senha provisória é enviada por e-mail. */}
-          <div className="text-center mt-4">
-            <button
-              type="button"
-              onClick={() => navigate('/solicitar-cadastro')}
-              className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
-            >
-              Ainda não tem cadastro? Solicite seu acesso aqui
-            </button>
-          </div>
-
-          <div className="flex items-center my-6">
-            <div className="flex-1 h-px bg-white/10"></div>
-            <span className="px-4 text-xs text-slate-500">ou</span>
-            <div className="flex-1 h-px bg-white/10"></div>
-          </div>
-
-          <div className="flex justify-center mb-6">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setErro('Ocorreu um erro ao tentar fazer login com o Google')}
-              theme="filled_black"
-              text="continue_with"
-              width="380"
-            />
-          </div>
 
         </div>
       </div>
