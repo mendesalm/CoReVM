@@ -23,7 +23,14 @@ jobs:
             pip install -r backend/requirements.txt
             sudo systemctl restart corevm
             
-            # (Futuro) Atualiza Frontend
-            # cd frontend
-            # npm install
-            # npm run build
+            # Atualiza e compila Frontend
+            cd frontend
+            npm install
+            npm run build
+            
+            # Se /var/www/core existir separadamente, atualiza e compila tambem
+            if [ -d "/var/www/core/frontend" ]; then
+              cd /var/www/core
+              git pull origin main || true
+              cd frontend && npm install && npm run build || true
+            fi
