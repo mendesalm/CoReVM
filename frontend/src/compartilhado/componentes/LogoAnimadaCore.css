@@ -1,19 +1,19 @@
 .core-logo-wrapper {
-  /* Variáveis de Material (Padrão: Ouro Maçónico) */
-  --m-light: #fef08a;
-  --m-mid: #eab308;
-  --m-dark: #854d0e;
-  --m-deep: #422006;
-  --m-accent: #facc15;
+  /* Variáveis de Material (Padrão: Ouro Maçônico) */
+  --m-light: #FDE68A;
+  --m-mid: #DDB96B;
+  --m-dark: #B8862D;
+  --m-deep: #785012;
+  --m-accent: #DDB96B;
 }
 
 /* Tema: Ouro Maçónico */
 .core-logo-wrapper[data-theme="ouro"] {
-  --m-light: #fef08a;
-  --m-mid: #eab308;
-  --m-dark: #854d0e;
-  --m-deep: #422006;
-  --m-accent: #facc15;
+  --m-light: #FDE68A;
+  --m-mid: #DDB96B;
+  --m-dark: #B8862D;
+  --m-deep: #785012;
+  --m-accent: #DDB96B;
 }
 
 /* Tema: Prata Metálico */
