@@ -1,25 +1,137 @@
 @import "tailwindcss";
 
 :root {
-  --m-light: #fef08a;
-  --m-mid: #eab308;
-  --m-dark: #854d0e;
-  --m-deep: #422006;
-  --m-accent: #facc15;
+  --m-light: #FDE68A;
+  --m-mid: #DDB96B;
+  --m-dark: #B8862D;
+  --m-deep: #785012;
+  --m-accent: #DDB96B;
+  --bg-abyssal: #050508;
+  --bg-deep-blue: #0b172e;
+  --bg-deep-blue-glass: rgba(13, 27, 53, 0.72);
+  --gold-border: rgba(221, 185, 107, 0.25);
+  --gold-border-bright: rgba(253, 230, 138, 0.45);
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #080808;
+  background-color: #050508;
   color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* ---- Tema escuro do react-datepicker (usado por CampoData/CampoHora, compartilhado/componentes/SeletorDataHora.tsx) ---- */
+/* ========================================================
+   DESIGN SYSTEM SOBERANO: GLASSMORPHISM, DEEP BLUE & OURO
+   ======================================================== */
+
+/* Card Deep Blue Glassmorphism */
+.card-deep-blue-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(14, 28, 54, 0.75) 0%,
+    rgba(7, 15, 30, 0.88) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--gold-border) !important;
+  border-top: 1px solid var(--gold-border-bright) !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    0 16px 40px -10px rgba(0, 0, 0, 0.85),
+    0 0 25px -5px rgba(14, 28, 54, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Botões Formato Pill com Aro Chanfrado Dourado Metálico */
+.btn-masonic-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 28px;
+  border-radius: 9999px !important;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  text-decoration: none;
+  border: 2px solid transparent !important;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+}
+
+/* 1. Variante Deep Blue (Primário / CTA Principal) */
+.btn-pill-blue {
+  background-image: 
+    linear-gradient(180deg, #163663 0%, #091a33 100%),
+    linear-gradient(180deg, #FDE68A 0%, #DDB96B 50%, #785012 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    0 8px 20px -4px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(221, 185, 107, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+}
+.btn-pill-blue:hover {
+  transform: translateY(-1.5px);
+  background-image: 
+    linear-gradient(180deg, #1e457d 0%, #0d2345 100%),
+    linear-gradient(180deg, #FFF3C4 0%, #FDE68A 50%, #936214 100%) !important;
+  box-shadow: 
+    0 12px 24px -4px rgba(0, 0, 0, 0.9),
+    0 0 25px rgba(221, 185, 107, 0.45) !important;
+}
+
+/* 2. Variante Obsidiana / Fumê (Secundário / Ações de Painel) */
+.btn-pill-dark {
+  background-image: 
+    linear-gradient(180deg, #222936 0%, #10141c 100%),
+    linear-gradient(180deg, #FDE68A 0%, #DDB96B 50%, #785012 100%) !important;
+  color: #FDE68A !important;
+  box-shadow: 
+    0 8px 20px -4px rgba(0, 0, 0, 0.8),
+    0 0 12px rgba(221, 185, 107, 0.2) !important;
+}
+.btn-pill-dark:hover {
+  transform: translateY(-1.5px);
+  color: #FFFFFF !important;
+  background-image: 
+    linear-gradient(180deg, #2c3545 0%, #151a24 100%),
+    linear-gradient(180deg, #FFF3C4 0%, #FDE68A 50%, #936214 100%) !important;
+  box-shadow: 
+    0 12px 24px -4px rgba(0, 0, 0, 0.9),
+    0 0 20px rgba(221, 185, 107, 0.35) !important;
+}
+
+/* 3. Variante Pérola / Platina (Destaque Solene / Master) */
+.btn-pill-pearl {
+  background-image: 
+    linear-gradient(180deg, #FFFFFF 0%, #D4D8DF 100%),
+    linear-gradient(180deg, #FDE68A 0%, #DDB96B 50%, #785012 100%) !important;
+  color: #0A1120 !important;
+  font-weight: 700 !important;
+  box-shadow: 
+    0 8px 20px -4px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(253, 230, 138, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+.btn-pill-pearl:hover {
+  transform: translateY(-1.5px);
+  background-image: 
+    linear-gradient(180deg, #FFFFFF 0%, #E2E6EC 100%),
+    linear-gradient(180deg, #FFF3C4 0%, #FDE68A 50%, #936214 100%) !important;
+  box-shadow: 
+    0 12px 24px -4px rgba(0, 0, 0, 0.9),
+    0 0 30px rgba(253, 230, 138, 0.6) !important;
+}
+
+/* ---- Tema escuro do react-datepicker ---- */
 .core-vm-datepicker.react-datepicker {
-  background-color: #0d0d0d;
-  border: 1px solid #333;
+  background-color: #0b172e;
+  border: 1px solid var(--gold-border);
   border-radius: 0.75rem;
   font-family: inherit;
   color: #fff;

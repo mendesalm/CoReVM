@@ -245,10 +245,10 @@ export default function Layout() {
     : itensMenuCompleto;
 
   return (
-    <div className="flex flex-col h-screen bg-[#080808] text-gray-200 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen bg-[#050508] text-gray-200 overflow-hidden font-sans">
       
-      {/* HEADER FULL-WIDTH (Ocupa toda a largura da tela) */}
-      <header className="w-full h-16 bg-[#0e0e0e] border-b border-[#222] px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 shadow-lg select-none">
+      {/* HEADER FULL-WIDTH (Deep Blue Glass) */}
+      <header className="w-full h-16 bg-[#070e1c]/95 backdrop-blur-md border-b border-[rgba(221,185,107,0.2)] px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 shadow-lg select-none">
         
         {/* Esquerda: Botão Toggle Sidebar (Sandwich) + Ícone CoRe + Nome do Conselho */}
         <div className="flex items-center gap-3.5 min-w-0">
@@ -257,8 +257,8 @@ export default function Layout() {
             onClick={() => setSidebarPinned(!sidebarPinned)}
             className={`p-2 rounded-xl transition-all cursor-pointer border shrink-0 ${
               sidebarPinned 
-                ? 'text-[#facc15] bg-[#1a1a1a] border-[#333]' 
-                : 'text-gray-400 hover:text-[#facc15] hover:bg-[#1a1a1a] border-transparent hover:border-[#333]'
+                ? 'text-[#FDE68A] bg-[#0e1c36] border-[rgba(221,185,107,0.4)]' 
+                : 'text-gray-400 hover:text-[#FDE68A] hover:bg-[#0e1c36] border-transparent hover:border-[rgba(221,185,107,0.3)]'
             }`}
             title={sidebarPinned ? "Desafixar menu lateral" : "Fixar / expandir menu lateral"}
           >
@@ -318,21 +318,21 @@ export default function Layout() {
         <aside 
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`transition-all duration-300 ease-in-out bg-[#0f0f0f] border-r border-[#222] flex flex-col justify-between shrink-0 select-none z-20 ${
+          className={`transition-all duration-300 ease-in-out bg-[#070e1c]/95 backdrop-blur-md border-r border-[rgba(221,185,107,0.2)] flex flex-col justify-between shrink-0 select-none z-20 ${
             isExpanded ? 'w-72 shadow-2xl' : 'w-20'
           }`}
         >
           {/* Navegação dos 10 Módulos */}
           <div 
             onScroll={handleMouseLeaveItem}
-            className="flex-1 overflow-y-auto py-3 px-2 space-y-1.5 scrollbar-thin scrollbar-thumb-[#222]"
+            className="flex-1 overflow-y-auto py-3 px-2 space-y-1.5 scrollbar-thin scrollbar-thumb-[#162744]"
           >
             
             {/* Header interno do menu com botão recolher/expandir */}
-            <div className="flex items-center justify-between px-2 pb-2 mb-1 border-b border-[#1c1c1c]">
+            <div className="flex items-center justify-between px-2 pb-2 mb-1 border-b border-[rgba(221,185,107,0.15)]">
               {isExpanded ? (
                 <>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#facc15]">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#FDE68A]">
                     Módulos do Conselho
                   </span>
                   <button
@@ -341,7 +341,7 @@ export default function Layout() {
                       setSidebarPinned(false);
                       setIsHovered(false);
                     }}
-                    className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-[#222] transition-colors"
+                    className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-[#0e1c36] transition-colors"
                     title="Recolher para modo ícones"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -351,7 +351,7 @@ export default function Layout() {
                 <button
                   type="button"
                   onClick={() => setSidebarPinned(true)}
-                  className="w-full flex justify-center py-1 text-gray-500 hover:text-[#facc15] transition-colors"
+                  className="w-full flex justify-center py-1 text-gray-400 hover:text-[#FDE68A] transition-colors"
                   title="Fixar Menu Expandido"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -391,12 +391,12 @@ export default function Layout() {
                   onMouseLeave={handleMouseLeaveItem}
                   className={`group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all ${
                     isActive 
-                      ? 'bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/30 shadow-sm font-semibold' 
-                      : 'text-gray-400 hover:text-white hover:bg-[#181818] border border-transparent'
+                      ? 'bg-[rgba(221,185,107,0.14)] text-[#FDE68A] border border-[rgba(221,185,107,0.35)] shadow-sm font-semibold' 
+                      : 'text-gray-300 hover:text-white hover:bg-[rgba(14,28,54,0.6)] border border-transparent'
                   } ${!isExpanded ? 'justify-center' : ''}`}
                 >
                   {/* Ícone */}
-                  <div className={`shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#facc15]' : 'text-gray-400 group-hover:text-white'}`}>
+                  <div className={`shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#FDE68A]' : 'text-gray-400 group-hover:text-white'}`}>
                     <Icone className="w-5 h-5" />
                   </div>
 
@@ -413,7 +413,7 @@ export default function Layout() {
             })}
 
             {/* Divisor */}
-            <div className="pt-2 pb-1 border-t border-[#1c1c1c] my-1"></div>
+            <div className="pt-2 pb-1 border-t border-[rgba(221,185,107,0.15)] my-1"></div>
 
             {/* Item Especial: Reportar Bug no Sistema */}
             <button
@@ -421,7 +421,7 @@ export default function Layout() {
               onClick={() => setShowBugModal(true)}
               onMouseEnter={(e) => handleMouseEnterItem({ id: 'bug', titulo: 'Reportar Bug / Falha', descricao: 'Canal direto com o SuperAdmin e equipe técnica' }, e)}
               onMouseLeave={handleMouseLeaveItem}
-              className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-red-400/90 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 cursor-pointer ${
+              className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-amber-400/90 hover:text-amber-300 hover:bg-[rgba(14,28,54,0.6)] border border-transparent hover:border-[rgba(221,185,107,0.3)] cursor-pointer ${
                 !isExpanded ? 'justify-center' : ''
               }`}
             >
@@ -436,16 +436,16 @@ export default function Layout() {
           </div>
 
           {/* RODAPÉ DO MENU PRINCIPAL: ADDEX SOLUTIONS */}
-          <div className="p-3 border-t border-[#1c1c1c] bg-[#0c0c0c]/80 text-center select-none">
+          <div className="p-3 border-t border-[rgba(221,185,107,0.15)] bg-[#070e1c]/80 text-center select-none">
             {isExpanded ? (
               <div className="space-y-0.5 animate-in fade-in duration-300">
                 <p className="text-[10px] font-bold text-gray-300 tracking-wide">
-                  Desenvolvido por <span className="text-[#facc15]">Addex Solutions</span>
+                  Desenvolvido por <span className="text-[#FDE68A]">Addex Solutions</span>
                 </p>
-                <p className="text-[9px] text-gray-500">Copyright 2026</p>
+                <p className="text-[9px] text-gray-400">Copyright 2026</p>
                 <a 
                   href="mailto:andreluiz@addex.dev" 
-                  className="text-[9px] text-[#facc15]/80 hover:text-[#facc15] hover:underline block truncate font-mono pt-0.5"
+                  className="text-[9px] text-[#DDB96B] hover:text-[#FDE68A] hover:underline block truncate font-mono pt-0.5"
                 >
                   Contato: andreluiz@addex.dev
                 </a>
@@ -455,16 +455,16 @@ export default function Layout() {
                 className="flex flex-col items-center justify-center text-center cursor-help py-1" 
                 title="Desenvolvido por Addex Solutions - Copyright 2026 Contato: andreluiz@addex.dev"
               >
-                <span className="text-[9px] font-black tracking-wider text-[#facc15]">ADDEX</span>
-                <span className="text-[8px] text-gray-500 font-mono">2026</span>
+                <span className="text-[9px] font-black tracking-wider text-[#FDE68A]">ADDEX</span>
+                <span className="text-[8px] text-gray-400 font-mono">2026</span>
               </div>
             )}
           </div>
 
         </aside>
 
-        {/* ÁREA CENTRAL DE CONTEÚDO */}
-        <main className="flex-1 flex flex-col h-full overflow-y-auto bg-[#080808]">
+        {/* ÁREA CENTRAL DE CONTEÚDO (Fundo Preto Abissal) */}
+        <main className="flex-1 flex flex-col h-full overflow-y-auto bg-[#050508]">
           <Outlet />
         </main>
 
