@@ -1,7 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthContext';
 import { CampoData, CampoHora } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
@@ -13,8 +13,6 @@ import BuscadorLoja from '../../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../../compartilhado/componentes/ModalCadastroObreiro';
 import ModalGestaoVM from '../../../compartilhado/componentes/ModalGestaoVM';
 import PainelMinhaLoja from '../../../compartilhado/componentes/PainelMinhaLoja';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // ALTERAÇÃO (2026-09-11, correção de bug): o `detail` de um erro 422 do
 // FastAPI (falha de validação, ex.: header Authorization ausente) vem como

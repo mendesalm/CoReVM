@@ -7,3 +7,6 @@ python-dotenv
 requests
 loguru
 apscheduler
+jinja2
+reportlab
+python-multipart

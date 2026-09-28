@@ -22,7 +22,7 @@ interface ModalGestaoVMProps {
   onClose: () => void;
 }
 
-const API_URL = 'http://localhost:8003/api/v1';
+import { API_URL } from '../servicos/configuracaoApi';
 
 export default function ModalGestaoVM({ loja, onSuccess, onClose }: ModalGestaoVMProps) {
   const [activeTab, setActiveTab] = useState<'visualizar' | 'substituir' | 'historico'>('visualizar');

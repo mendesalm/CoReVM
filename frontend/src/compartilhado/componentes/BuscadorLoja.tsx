@@ -3,8 +3,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { Search, Plus, Check } from 'lucide-react';
 import ModalCadastroLoja from './ModalCadastroLoja';
-
-const API_URL = 'http://localhost:8003/api/v1';
+import { API_URL } from '../servicos/configuracaoApi';
 
 interface Props {
   onSelect: (loja: { id: number, nome: string, numero: string }) => void;

@@ -3,17 +3,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { startRegistration } from '@simplewebauthn/browser';
 import { Fingerprint, Plus, Trash2, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../../compartilhado/contextos/AuthContext';
-
-// Tela de autogestão de passkeys (2026-09-18) -- ver
-// claude/decisao-modernizacao-login.md, seção 4, no Project "Core".
-// Diferente da Solicitação de Cadastro (que é uma fila para um
-// SuperAdmin/VM aprovar o pedido de OUTRA pessoa), esta tela é sempre
-// sobre a PRÓPRIA conta de quem está logado -- cadastrar/remover suas
-// próprias passkeys. Por isso as rotas (`/auth/passkey/minhas`, `/auth/
-// passkey/registro/*`, `DELETE /auth/passkey/{id}`) exigem só estar
-// autenticado, sem checagem de papel administrativo.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+import { useAuth, ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 
 interface Passkey {
   id: string;

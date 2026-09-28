@@ -5,16 +5,7 @@ import { KeyRound, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
-import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
-
-// Criada em 2026-09-16 junto com a Solicitação de Cadastro (Via 2). Quando
-// uma Pessoa nasce de uma solicitação aprovada, ela recebe por e-mail uma
-// senha PROVISÓRIA gerada pelo sistema (nunca escolhida por ela) — o login
-// com essa senha retorna `deve_trocar_senha: true` (ver PaginaLogin.tsx),
-// e esta tela é o único lugar por onde esse usuário pode passar antes de
-// acessar qualquer outra parte do CoReVM.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
-const API_URL = 'http://localhost:8003/api/v1';
+import { useAuth, clienteHttp, ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 
 interface RegiaoVinculada {
   regiao_id: string;
@@ -23,7 +14,7 @@ interface RegiaoVinculada {
 }
 
 async function buscarMinhasRegioes(): Promise<RegiaoVinculada[]> {
-  const resposta = await clienteHttp.get(`${API_URL}/regional/minhas-regioes`);
+  const resposta = await clienteHttp.get('/regional/minhas-regioes');
   return resposta.data || [];
 }
 

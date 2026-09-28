@@ -1,7 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthContext';
 import {
   MessageSquare, Building, ShieldCheck, ArrowLeft,
   Search, Plus, Send, Paperclip, FileText, Download,
@@ -9,8 +9,6 @@ import {
   Lock, CheckCheck, Loader2, HeartHandshake,
   Inbox
 } from 'lucide-react';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // ALTERAÇÃO (2026-09-21, bug corrigido): esta tela ainda usava `axios` puro
 // + um seletor "Simular Perfil" com header `X-User-ID` -- mecanismo

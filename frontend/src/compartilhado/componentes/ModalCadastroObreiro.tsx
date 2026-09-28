@@ -3,6 +3,7 @@ import axios from 'axios';
 import { formatarCPF, formatarTelefone } from '../utils/formatadores';
 import { Loader2, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
 import { CampoData } from './SeletorDataHora';
+import { API_URL } from '../servicos/configuracaoApi';
 
 interface Props {
   cargoPadrao?: string;
@@ -10,8 +11,6 @@ interface Props {
   onSuccess: (cim: string) => void;
   onCancel: () => void;
 }
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 const cargosComuns = [
   "Mestre",

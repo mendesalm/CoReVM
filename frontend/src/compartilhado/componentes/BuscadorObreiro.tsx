@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Search, Plus, CheckCircle2, Loader2 } from 'lucide-react';
 import ModalCadastroObreiro from './ModalCadastroObreiro';
-
-const API_URL = 'http://localhost:8003/api/v1';
+import { API_URL } from '../servicos/configuracaoApi';
 
 interface Props {
   cargo: string;

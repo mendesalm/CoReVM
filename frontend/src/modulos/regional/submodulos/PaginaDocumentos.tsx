@@ -1,7 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthContext';
 import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import {
   FileText, Loader2, Plus, Search, ArrowLeft,
@@ -10,8 +10,6 @@ import {
   ChevronLeft, ChevronRight, LayoutGrid, Table as TableIcon,
   FileCheck, ExternalLink, HardDriveDownload, RotateCcw, Archive
 } from 'lucide-react';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // CORREÇÃO (2026-09-21): mesmo padrão pré-migração de segurança de
 // 2026-09-11 já corrigido em PaginaAdmissoes.tsx/PaginaVotacoes.tsx/

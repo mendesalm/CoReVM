@@ -2,6 +2,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+import { obterUrlCorevmApi, obterUrlEsigmaApi, API_URL, ESIGMA_API_URL } from '../servicos/configuracaoApi';
+export { API_URL, ESIGMA_API_URL };
+
 // Interfaces
 interface Usuario {
   id: string;
@@ -22,7 +25,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const clienteHttp = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1',
+  baseURL: obterUrlCorevmApi(),
 });
 
 /**
@@ -107,7 +110,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       // 2. SSO Multi-Domínio: se não houver localmente, consulta o e-Sigma via cookie HttpOnly
       if (!storedToken) {
         try {
-          const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+          const esigmaApiUrl = obterUrlEsigmaApi();
           const resp = await axios.get(`${esigmaApiUrl}/auth/sso/session`, { withCredentials: true });
           if (resp.data?.access_token && isTokenValido(resp.data.access_token)) {
             const tokenSso = String(resp.data.access_token);
@@ -155,7 +158,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
     // Encerra sessão global no e-Sigma
     try {
-      const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+      const esigmaApiUrl = obterUrlEsigmaApi();
       await axios.post(`${esigmaApiUrl}/auth/logout`, {}, { withCredentials: true });
     } catch {
       // Ignora erro de rede durante logout

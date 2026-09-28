@@ -1,13 +1,11 @@
-// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../servicos/configuracaoApi';
 
 interface Props {
   onSuccess: (loja: any) => void;
   onCancel: () => void;
 }
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
   const [formData, setFormData] = useState({

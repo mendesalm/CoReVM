@@ -1,14 +1,11 @@
-// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthContext';
 import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
   Award, ShieldCheck, Loader2, Calendar,
   Edit3, ArrowLeft, CheckCircle2, UserCheck, Shield, AlertTriangle, Zap
 } from 'lucide-react';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // CORREÇÃO (2026-09-14, bug reportado em teste): esta página nunca tinha
 // sido migrada para o login real contra o e-Sigma (fix de segurança de

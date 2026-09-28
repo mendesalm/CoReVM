@@ -13,7 +13,7 @@ import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 // e-Sigma, que sempre devolve a mesma resposta genérica (anti-
 // enumeração) — o link em si só é enviado para o e-mail JÁ CADASTRADO na
 // Pessoa, nunca para um e-mail digitado nesta tela.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+import { ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 
 export default function PaginaEntrarComLink() {
   const [identificador, setIdentificador] = useState('');

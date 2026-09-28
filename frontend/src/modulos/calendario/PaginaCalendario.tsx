@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { clienteHttp } from '../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../compartilhado/contextos/AuthContext';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -8,8 +8,6 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { CampoData, CampoHora } from '../../compartilhado/componentes/SeletorDataHora';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // CORREÇÃO (2026-09-19): esta tela era 100% mock — nunca chamava
 // GET /agenda/eventos (o calendário sempre começava vazio) e criar/editar/

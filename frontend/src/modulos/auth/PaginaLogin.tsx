@@ -3,13 +3,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
+import { useAuth, clienteHttp, ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 import { GoogleLogin } from '@react-oauth/google';
-
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8001/api/v1';
-const API_URL = 'http://localhost:8003/api/v1';
 
 interface RegiaoVinculada {
   regiao_id: string;
@@ -33,7 +30,7 @@ function decodificarPayloadJwt(token: string): any {
 }
 
 async function buscarMinhasRegioes(): Promise<RegiaoVinculada[]> {
-  const resposta = await clienteHttp.get(`${API_URL}/regional/minhas-regioes`);
+  const resposta = await clienteHttp.get('/regional/minhas-regioes');
   return resposta.data || [];
 }
 
@@ -247,7 +244,7 @@ export default function PaginaLogin() {
                 onError={() => setErro('Ocorreu um erro ao tentar fazer login com o Google')}
                 theme="filled_black"
                 text="continue_with"
-                width="100%"
+                width="380"
               />
             </div>
 

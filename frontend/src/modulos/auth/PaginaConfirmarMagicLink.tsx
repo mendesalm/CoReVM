@@ -3,17 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Loader2, XCircle } from 'lucide-react';
-import { useAuth } from '../../compartilhado/contextos/AuthContext';
+import { useAuth, API_URL, ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
-
-// Criada em 2026-09-17 junto com PaginaEntrarComLink.tsx — é a rota que o
-// link enviado por e-mail aponta (?token=...). Troca o token de uso único
-// por uma sessão real chamando POST /auth/magic-link/confirmar no
-// e-Sigma, e segue exatamente o mesmo pós-login de PaginaLogin.tsx
-// (checar deve_trocar_senha, buscar Regiões vinculadas, navegar).
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
-const API_URL = 'http://localhost:8003/api/v1';
 
 interface RegiaoVinculada {
   regiao_id: string;

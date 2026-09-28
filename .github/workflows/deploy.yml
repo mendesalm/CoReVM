@@ -15,22 +15,27 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /var/www/corevm
-            git pull origin main
-            
-            # Atualiza Backend
-            source venv/bin/activate
-            pip install -r backend/requirements.txt
-            sudo systemctl restart corevm
-            
-            # Atualiza e compila Frontend
-            cd frontend
-            npm install
-            npm run build
+            if [ -d "/var/www/corevm" ]; then
+              cd /var/www/corevm
+              git pull origin main
+              source venv/bin/activate
+              pip install -r backend/requirements.txt
+              python backend/init_db.py || true
+              sudo systemctl restart corevm || true
+              cd frontend
+              npm install
+              npm run build
+            fi
             
             # Se /var/www/core existir separadamente, atualiza e compila tambem
-            if [ -d "/var/www/core/frontend" ]; then
+            if [ -d "/var/www/core" ]; then
               cd /var/www/core
               git pull origin main || true
-              cd frontend && npm install && npm run build || true
+              source venv/bin/activate || true
+              pip install -r backend/requirements.txt || true
+              python backend/init_db.py || true
+              sudo systemctl restart core || true
+              if [ -d "/var/www/core/frontend" ]; then
+                cd frontend && npm install && npm run build || true
+              fi
             fi

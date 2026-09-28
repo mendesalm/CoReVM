@@ -6,9 +6,7 @@ import axios from 'axios';
 import BuscadorObreiro from '../../compartilhado/componentes/BuscadorObreiro';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../compartilhado/componentes/ModalCadastroObreiro';
-
-// URL base do backend FastAPI do CoReVM
-const API_URL = 'http://localhost:8003/api/v1';
+import { API_URL } from '../../compartilhado/contextos/AuthContext';
 
 export default function PainelSuperAdmin() {
   const navigate = useNavigate();

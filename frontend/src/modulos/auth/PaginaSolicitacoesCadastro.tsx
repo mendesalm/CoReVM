@@ -6,27 +6,7 @@ import {
   UserPlus, Loader2, CheckCircle2, XCircle, ArrowLeft,
   RefreshCw, AlertTriangle, Mail, Phone, Hash, Building2, UserCog,
 } from 'lucide-react';
-import { useAuth } from '../../compartilhado/contextos/AuthContext';
-
-// Criada em 2026-09-17 para fechar a lacuna documentada em
-// claude/estado-modulos-corevm.md ("Tela de aprovação no frontend do
-// CoReVM para a Solicitação de Cadastro (hoje só API/Swagger)"). Consome
-// diretamente as rotas AUTENTICADAS do e-Sigma (não do CoReVM) —
-// GET/POST /solicitacoes-cadastro/... — usando o mesmo token real do
-// login (ver PaginaTrocarSenhaObrigatoria.tsx para o mesmo padrão de
-// chamada direta com axios + Authorization: Bearer, já que o
-// `clienteHttp` compartilhado aponta para o backend do CoReVM, não o do
-// e-Sigma).
-//
-// Quem pode ver/aprovar/rejeitar é decidido pelo PRÓPRIO backend do
-// e-Sigma (servicos.py::exigir_aprovador_elegivel): SuperAdmin/webmaster
-// veem e decidem qualquer solicitação; qualquer outro token só vê (e só
-// pode decidir) as solicitações da(s) Loja(s) onde tem vínculo ATIVO como
-// VM/Suplente (tabela MembroOrganizacao do e-Sigma — não é o mesmo dado
-// de VM/Suplente do módulo Lojas/CoReVM, é uma checagem própria e
-// separada). Por isso esta tela não restringe nada no cliente: quem não é
-// elegível para nenhuma solicitação simplesmente vê a lista vazia.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+import { useAuth, ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 
 const GRAUS_MACONICOS: Record<number, string> = { 1: 'Aprendiz', 2: 'Companheiro', 3: 'Mestre' };
 

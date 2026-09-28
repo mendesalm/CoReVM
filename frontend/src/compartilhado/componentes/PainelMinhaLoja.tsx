@@ -1,7 +1,6 @@
-// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { clienteHttp } from '../contextos/AuthContext';
+import { clienteHttp, API_URL } from '../contextos/AuthContext';
 import { CampoData, CampoHora } from './SeletorDataHora';
 import {
   Building2, Award, Users, AlertTriangle, CheckCircle2, Edit3,
@@ -9,8 +8,6 @@ import {
   Calendar, FileText, BookOpenCheck, ChevronRight, X, Plus,
   MapPin, Globe, Hash, CalendarClock, Send, Upload, CheckSquare, Trash2, Copy, RotateCcw
 } from 'lucide-react';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // ALTERAÇÃO (2026-09-18, a pedido do usuário -- depois de ver a primeira
 // versão do atalho "Minha Loja", que só filtrava a tabela genérica de

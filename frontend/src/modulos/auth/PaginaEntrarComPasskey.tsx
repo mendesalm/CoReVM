@@ -4,19 +4,9 @@ import axios from 'axios';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { useNavigate } from 'react-router-dom';
 import { Fingerprint, UserCircle2 } from 'lucide-react';
-import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
+import { useAuth, clienteHttp, API_URL, ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
-
-// Criada em 2026-09-18, terceiro e último dos métodos de login moderno
-// decididos em claude/decisao-modernizacao-login.md (magic link → OTP →
-// passkeys). Diferente do magic link (que precisa de uma volta pelo
-// e-mail), o login com passkey acontece nesta MESMA tela, do começo ao
-// fim: pede o identificador, chama /auth/passkey/login/iniciar para
-// pegar o desafio, dispara o prompt nativo do navegador
-// (startAuthentication) e conclui em /auth/passkey/login/concluir.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
-const API_URL = 'http://localhost:8003/api/v1';
 
 interface RegiaoVinculada {
   regiao_id: string;

@@ -6,10 +6,8 @@ import {
   Bell, Pin, Archive, ArchiveRestore, Plus, AlertTriangle, AlertOctagon,
   Sparkles, Megaphone, CheckCheck, Eye
 } from 'lucide-react';
-import { clienteHttp } from '../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../compartilhado/contextos/AuthContext';
 import { CampoData } from '../../compartilhado/componentes/SeletorDataHora';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // CORREÇÃO (2026-09-12): normaliza o `detail` de erro do FastAPI, que pode
 // vir como string simples ou como lista de objetos de validação do Pydantic

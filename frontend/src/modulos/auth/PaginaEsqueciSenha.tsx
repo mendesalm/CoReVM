@@ -15,7 +15,7 @@ import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 // (nunca para um e-mail digitado aqui). A resposta da API é sempre
 // genérica (anti-enumeração), então esta tela mostra sempre a mesma
 // mensagem de sucesso, sem revelar se o identificador existe ou não.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+import { ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 
 export default function PaginaEsqueciSenha() {
   const [identificador, setIdentificador] = useState('');

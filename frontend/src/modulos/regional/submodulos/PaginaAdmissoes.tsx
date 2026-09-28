@@ -1,6 +1,5 @@
-// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import { clienteHttp } from '../../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthContext';
 import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
@@ -10,8 +9,6 @@ import {
   Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw,
   SlidersHorizontal, ChevronLeft, ChevronRight
 } from 'lucide-react';
-
-const API_URL = 'http://localhost:8003/api/v1';
 
 // CORREÇÃO (2026-09-18): esta página ainda usava axios puro + um seletor
 // "Simular Acesso" que enviava um header `X-User-Id` não autenticado —

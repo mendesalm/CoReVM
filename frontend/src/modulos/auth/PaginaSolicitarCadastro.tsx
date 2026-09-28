@@ -24,7 +24,7 @@ import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
 // — ver `autoComplete="off"` abaixo) — é um filtro anti-curioso
 // intencional (decisao-controle-acesso-cadastro.md, seção 2.3): quem é da
 // Potência sabe o nome de cor, quem não é tende a errar.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+import { ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 
 const GRAUS_MACONICOS = [
   { valor: 1, rotulo: 'Aprendiz' },

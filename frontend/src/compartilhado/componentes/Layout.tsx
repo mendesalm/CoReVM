@@ -6,7 +6,6 @@ import {
   FileText, Building2, Award, BarChart3, MessageSquare,
   Bug, Menu, ChevronLeft, ChevronRight, LogOut, UserPlus, Fingerprint, Home
 } from 'lucide-react';
-import axios from 'axios';
 import { useAuth, clienteHttp } from '../contextos/AuthContext';
 import LogoAnimadaCore from './LogoAnimadaCore';
 import ModalReportarBug from './ModalReportarBug';
@@ -72,7 +71,7 @@ export default function Layout() {
   useEffect(() => {
     const fetchRegiao = async () => {
       try {
-        const res = await axios.get(`http://localhost:8003/api/v1/regioes/${id}`);
+        const res = await clienteHttp.get(`/regioes/${id}`);
         setRegiaoNome(res.data.nome);
       } catch (err) {
         setRegiaoNome('Conselho Regional de Veneráveis Mestres de Anápolis e Região');
@@ -100,7 +99,7 @@ export default function Layout() {
   useEffect(() => {
     const fetchMeuContexto = async () => {
       try {
-        const res = await clienteHttp.get(`http://localhost:8003/api/v1/regional/${id}/me`);
+        const res = await clienteHttp.get(`/regional/${id}/me`);
         setMinhaLojaId(res.data?.loja_id || null);
         setMeuRole(res.data?.role || null);
       } catch (err) {
