@@ -118,7 +118,7 @@ def listar_lojas_conselho(
         info = lojas_por_id.get(str(a.loja_id)) or {}
         suplente = suplentes_map.get(a.loja_id)
         
-        nome_loja = info.get("nome_loja") or info.get("nome") or f"Loja {a.loja_id}"
+        nome_loja = info.get("nome_loja") or info.get("nome") or f"Loja #{a.loja_id}"
         numero_loja = str(info.get("numero_loja") or "")
         
         resultado.append({

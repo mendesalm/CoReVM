@@ -132,6 +132,28 @@ export default function PaginaLojas() {
   });
   const [salvandoLoja, setSalvandoLoja] = useState(false);
 
+  // Formatação estrita e padronizada de exibição da Loja: 'Loja ' + {nome_loja} + ', nº ' + {numero_loja}
+  const formatarTituloLoja = (loja: any) => {
+    if (!loja) return 'Loja';
+    const nomeBruto = (loja.nome_loja || loja.nome || '').replace(/^Loja\s+/i, '').trim();
+    const numLoja = loja.numero_loja || loja.numero || '';
+    const ehApenasId = !nomeBruto || /^\d+$/.test(nomeBruto) || nomeBruto.startsWith('#');
+
+    if (numLoja && numLoja !== 'S/N' && String(numLoja).trim() !== '') {
+      if (ehApenasId) {
+        return `Loja nº ${numLoja}`;
+      }
+      return `Loja ${nomeBruto}, nº ${numLoja}`;
+    }
+
+    if (ehApenasId) {
+      const idFallback = loja.loja_id || loja.id || nomeBruto;
+      return `Loja #${idFallback}`;
+    }
+
+    return `Loja ${nomeBruto}`;
+  };
+
   const abrirEdicaoLoja = (loja: any) => {
     setEditLojaModal(loja);
     setEditLojaForm({
@@ -701,9 +723,7 @@ export default function PaginaLojas() {
 
 
                 // Composição Estrita: 'Loja ' + {nome_loja} + ', nº ' + {numero_loja}
-                const nomeLojaLimpo = (l.nome_loja || l.nome || '').replace(/^Loja\s+/i, '').trim();
-                const numLoja = l.numero_loja || l.numero;
-                const tituloCard = numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
+                const tituloCard = formatarTituloLoja(l);
 
                 return (
                   <div
@@ -807,11 +827,7 @@ export default function PaginaLojas() {
                         {/* Coluna unificada com padrão estrito: 'Loja {nome_loja}, nº {numero_loja}' */}
                         <td className="p-3.5 pl-5">
                           <span className="font-bold text-white group-hover:text-[#facc15] transition-colors">
-                            {(() => {
-                              const nomeLojaLimpo = (l.nome_loja || l.nome || '').replace(/^Loja\s+/i, '').trim();
-                              const numLoja = l.numero_loja || l.numero;
-                              return numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
-                            })()}
+                            {formatarTituloLoja(l)}
                           </span>
                           {ehMinhaLoja && (
                             <span
@@ -1361,7 +1377,7 @@ export default function PaginaLojas() {
                 <div>
                   <h2 className="text-lg font-bold text-white">Designar Suplente do Conselho</h2>
                   <p className="text-xs text-gray-400">
-                    {designarSuplenteModal.nome || `Loja ${designarSuplenteModal.loja_id}`} — escolha qualquer um dos 6 oficiais eletivos da loja (o Venerável Mestre não pode ser Suplente de si mesmo).
+                    {formatarTituloLoja(designarSuplenteModal)} — escolha qualquer um dos 6 oficiais eletivos da loja (o Venerável Mestre não pode ser Suplente de si mesmo).
                   </p>
                 </div>
               </div>
@@ -1466,7 +1482,7 @@ export default function PaginaLojas() {
                 <div>
                   <h2 className="text-lg font-bold text-white">Transmissão de Cargo Emergencial</h2>
                   <p className="text-xs text-gray-400">
-                    {transmissaoModal.nome || `Loja ${transmissaoModal.loja_id}`} — indique o novo Venerável Mestre. Esta Loja está sem VM em exercício no sistema.
+                    {formatarTituloLoja(transmissaoModal)} — indique o novo Venerável Mestre. Esta Loja está sem VM em exercício no sistema.
                   </p>
                 </div>
               </div>
@@ -1594,11 +1610,7 @@ export default function PaginaLojas() {
                   )}
                 </div>
                 <h2 className="text-xl font-black text-white tracking-tight">
-                  {(() => {
-                    const nomeLojaLimpo = (lojaDetalhesModal.nome_loja || lojaDetalhesModal.nome || '').replace(/^Loja\s+/i, '').trim();
-                    const numLoja = lojaDetalhesModal.numero_loja || lojaDetalhesModal.numero;
-                    return numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
-                  })()}
+                  {formatarTituloLoja(lojaDetalhesModal)}
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {lojaDetalhesModal.cidade || 'Oriente Não Informado'} {lojaDetalhesModal.estado ? `— ${lojaDetalhesModal.estado}` : ''}
@@ -1791,11 +1803,7 @@ export default function PaginaLojas() {
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Opções de Configuração</span>
                 <h3 className="font-bold text-white text-base truncate">
-                  {(() => {
-                    const nomeLojaLimpo = (lojaAcoesModal.nome_loja || lojaAcoesModal.nome || '').replace(/^Loja\s+/i, '').trim();
-                    const numLoja = lojaAcoesModal.numero_loja || lojaAcoesModal.numero;
-                    return numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
-                  })()}
+                  {formatarTituloLoja(lojaAcoesModal)}
                 </h3>
               </div>
               <button

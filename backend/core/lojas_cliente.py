@@ -96,8 +96,51 @@ class LojasApiClient:
                     cls._tratar_erro(res, "buscar lojas múltiplas")
                 return res.json()
         except httpx.RequestError as e:
-            logger.warning(f"Falha de comunicação com módulo Lojas (busca/multiplas): {e}")
-            return []
+            logger.warning(f"Falha de comunicação com módulo Lojas via HTTP (busca/multiplas): {e}. Ativando resiliência direta ao banco lojas_db...")
+            try:
+                from database import engine_lojas
+                from sqlalchemy import text
+                
+                ids_int = [int(x) for x in ids if str(x).isdigit()]
+                codigos_str = [str(x) for x in ids if not str(x).isdigit() and str(x)]
+                
+                clausulas = []
+                params = {}
+                if ids_int:
+                    clausulas.append("l.id IN :ids_int")
+                    params["ids_int"] = tuple(ids_int)
+                if codigos_str:
+                    clausulas.append("l.codigo_loja IN :codigos_str")
+                    params["codigos_str"] = tuple(codigos_str)
+                    
+                if not clausulas:
+                    return []
+                    
+                sql = f"""
+                    SELECT 
+                        l.id, l.codigo_loja, l.nome_loja, l.numero_loja, l.cidade, l.estado, 
+                        l.rito, COALESCE(o.sigla, o.nome, '') as potencia, l.logradouro, l.numero as numero_endereco,
+                        l.bairro, l.cep, l.email, l.telefone, l.site, l.cnpj,
+                        l.dia_sessao, l.periodicidade, l.horario_sessao
+                    FROM lojas l
+                    LEFT JOIN obediencias o ON l.potencia_id = o.id
+                    WHERE {" OR ".join(clausulas)}
+                """
+                with engine_lojas.connect() as conn:
+                    rows = conn.execute(text(sql), params).mappings().fetchall()
+                    res = []
+                    for r in rows:
+                        d = dict(r)
+                        d["nome"] = d.get("nome_loja")
+                        d["numero"] = str(d.get("numero_loja") or "")
+                        d["numero_loja"] = str(d.get("numero_loja") or "")
+                        d["horario_sessao"] = str(d["horario_sessao"]) if d.get("horario_sessao") else None
+                        res.append(d)
+                    logger.info(f"Fallback de resiliência obteve {len(res)} lojas diretamente de lojas_db.")
+                    return res
+            except Exception as ex_db:
+                logger.error(f"Erro no fallback direto de lojas_db: {ex_db}")
+                return []
 
     @classmethod
     def verificar_status_vm(cls, ids: List[Union[int, str]], token: Optional[str] = None) -> Dict[str, Optional[str]]:
@@ -117,8 +160,28 @@ class LojasApiClient:
                 # Converte chaves inteiras ou string para formato compatível
                 return {str(k): v for k, v in dados.items()}
         except httpx.RequestError as e:
-            logger.warning(f"Falha de comunicação com módulo Lojas (status_vm): {e}")
-            return {}
+            logger.warning(f"Falha de comunicação com módulo Lojas via HTTP (status_vm): {e}. Ativando resiliência direta ao banco lojas_db...")
+            try:
+                from database import engine_lojas
+                from sqlalchemy import text
+                from datetime import date
+                ids_int = [int(x) for x in ids if str(x).isdigit()]
+                if not ids_int:
+                    return {}
+                sql = """
+                    SELECT m.loja_id, o.nome_completo
+                    FROM mandatos m
+                    JOIN obreiros o ON m.obreiro_id = o.id
+                    WHERE m.loja_id IN :ids_int
+                      AND m.cargo_id = 1
+                      AND (m.data_fim IS NULL OR m.data_fim >= :hoje)
+                """
+                with engine_lojas.connect() as conn:
+                    rows = conn.execute(text(sql), {"ids_int": tuple(ids_int), "hoje": date.today()}).fetchall()
+                    return {str(r[0]): r[1] for r in rows}
+            except Exception as ex_db:
+                logger.error(f"Erro no fallback de status VM lojas_db: {ex_db}")
+                return {}
 
     @classmethod
     def cadastrar_loja(cls, loja_in: dict, token: Optional[str] = None) -> dict:

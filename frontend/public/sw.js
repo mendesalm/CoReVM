@@ -1,5 +1,5 @@
 // Service Worker PWA para CoReVM
-const CACHE_NAME = 'corevm-pwa-cache-v2';
+const CACHE_NAME = 'corevm-pwa-cache-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
