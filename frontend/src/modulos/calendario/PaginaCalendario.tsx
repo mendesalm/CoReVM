@@ -6,8 +6,9 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2, ShieldCheck, Calendar, List, Plus, Clock, Building2, CalendarPlus, Download, ChevronRight } from 'lucide-react';
 import { CampoData, CampoHora } from '../../compartilhado/componentes/SeletorDataHora';
+import { gerarLinkGoogleCalendar, baixarArquivoIcs } from '../../compartilhado/utilitarios/calendarioExport';
 
 // CORREÇÃO (2026-09-19): esta tela era 100% mock — nunca chamava
 // GET /agenda/eventos (o calendário sempre começava vazio) e criar/editar/
@@ -113,12 +114,23 @@ export default function PaginaCalendario() {
   // Filtros do mural
   const [filtroTipo, setFiltroTipo] = useState('TODOS');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
-  // Eventos Cancelados ficam escondidos do calendário por padrão (evitar
-  // poluição visual, pedido do usuário 2026-09-22) -- o próprio filtro de
-  // Status acima já serve para "buscá-los se necessário" (selecionar
-  // "Cancelado" mostra só eles), e este checkbox extra também os mistura de
-  // volta com os demais quando marcado.
   const [mostrarCancelados, setMostrarCancelados] = useState(false);
+
+  // Modo de visualização responsivo: 'lista' (feed ergonômico mobile) ou 'calendario' (grid mensal)
+  const [modoVisualizacao, setModoVisualizacao] = useState<'lista' | 'calendario'>(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 768 ? 'lista' : 'calendario';
+  });
+  const [isMobile, setIsMobile] = useState(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const carregarDados = async () => {
     setLoading(true);
@@ -220,8 +232,7 @@ export default function PaginaCalendario() {
     setShowModal(true);
   };
 
-  const handleEventClick = (arg: any) => {
-    const evento: EventoAgendaItem = arg.event.extendedProps.eventoOriginal;
+  const abrirDetalheDoEvento = (evento: EventoAgendaItem) => {
     setEventoSelecionado(evento);
     setEventId(evento.id);
     setTitulo(evento.titulo);
@@ -247,6 +258,11 @@ export default function PaginaCalendario() {
 
     setIsEditing(true);
     setShowModal(true);
+  };
+
+  const handleEventClick = (arg: any) => {
+    const evento: EventoAgendaItem = arg.event.extendedProps.eventoOriginal;
+    abrirDetalheDoEvento(evento);
   };
 
   const handleSalvarEvento = async () => {
@@ -340,6 +356,17 @@ export default function PaginaCalendario() {
     });
   }, [eventos, mostrarCancelados, filtroStatus]);
 
+  // Lista ordenada cronologicamente para a visualização em Feed / Lista Mobile
+  const eventosOrdenados = useMemo(() => {
+    const eventosVisiveis = (mostrarCancelados || filtroStatus === 'CANCELADO')
+      ? [...eventos]
+      : eventos.filter((e) => e.status !== 'CANCELADO');
+
+    return eventosVisiveis.sort((a, b) => {
+      return new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime();
+    });
+  }, [eventos, mostrarCancelados, filtroStatus]);
+
   const renderEventContent = (eventInfo: any) => {
     const evento: EventoAgendaItem = eventInfo.event.extendedProps.eventoOriginal;
     return (
@@ -387,18 +414,81 @@ export default function PaginaCalendario() {
   }
 
   return (
-    <div className="p-8 h-full flex flex-col">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="p-4 sm:p-8 h-full flex flex-col relative pb-24 sm:pb-8">
+      {/* Cabeçalho com Título, Alternador de Visão e Filtros */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#facc15]">Calendário Regional</h1>
-          <p className="text-gray-400 mt-2">Clique num dia para criar, ou clique em um evento existente para ver os detalhes.</p>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#facc15]">Calendário Regional</h1>
+            
+            {/* Alternador de Visão no topo para Mobile */}
+            <div className="flex md:hidden bg-[#161616] p-1 rounded-xl border border-[#333]">
+              <button
+                type="button"
+                onClick={() => setModoVisualizacao('lista')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  modoVisualizacao === 'lista'
+                    ? 'bg-[#facc15] text-black shadow-md'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                Lista
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoVisualizacao('calendario')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  modoVisualizacao === 'calendario'
+                    ? 'bg-[#facc15] text-black shadow-md'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Mês
+              </button>
+            </div>
+          </div>
+          <p className="text-gray-400 text-xs sm:text-sm mt-1">
+            {modoVisualizacao === 'lista'
+              ? 'Próximos eventos e sessões ordenados cronologicamente.'
+              : 'Clique num dia para criar, ou num evento para ver detalhes.'}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* Alternador Desktop */}
+          <div className="hidden md:flex bg-[#161616] p-1 rounded-xl border border-[#333] mr-2">
+            <button
+              type="button"
+              onClick={() => setModoVisualizacao('lista')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                modoVisualizacao === 'lista'
+                  ? 'bg-[#facc15] text-black shadow-md'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              Lista
+            </button>
+            <button
+              type="button"
+              onClick={() => setModoVisualizacao('calendario')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                modoVisualizacao === 'calendario'
+                  ? 'bg-[#facc15] text-black shadow-md'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Calendário
+            </button>
+          </div>
+
           <select
             value={filtroTipo}
             onChange={(e) => setFiltroTipo(e.target.value)}
-            className="bg-[#141414] text-gray-200 border border-[#333] rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer"
+            className="bg-[#141414] text-gray-200 border border-[#333] rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer text-xs"
           >
             <option value="TODOS">Todos os tipos</option>
             {tiposEvento.map((t) => (
@@ -408,7 +498,7 @@ export default function PaginaCalendario() {
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
-            className="bg-[#141414] text-gray-200 border border-[#333] rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer"
+            className="bg-[#141414] text-gray-200 border border-[#333] rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer text-xs"
           >
             <option value="TODOS">Todos os status</option>
             {Object.entries(STATUS_ROTULOS).map(([valor, rotulo]) => (
@@ -422,8 +512,27 @@ export default function PaginaCalendario() {
               onChange={(e) => setMostrarCancelados(e.target.checked)}
               className="w-3.5 h-3.5 accent-[#facc15] bg-[#141414] border-[#333] rounded"
             />
-            Mostrar cancelados
+            Cancelados
           </label>
+
+          {/* Botão Novo Evento no Desktop */}
+          {tiposPermitidos.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                const hoje = new Date().toISOString().slice(0, 10);
+                setStartDate(hoje);
+                setEndDate(hoje);
+                setIsEditing(false);
+                setShowModal(true);
+              }}
+              className="hidden md:flex items-center gap-1.5 ml-2 px-3 py-1.5 bg-[#facc15] hover:bg-[#eab308] text-black font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Evento
+            </button>
+          )}
         </div>
       </div>
 
@@ -437,47 +546,153 @@ export default function PaginaCalendario() {
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-gray-400">
         {tiposEvento.map((t) => (
           <div key={t.tipo} className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COR_POR_TIPO[t.tipo] || COR_PADRAO }} />
-            {t.rotulo}
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COR_POR_TIPO[t.tipo] || COR_PADRAO }} />
+            <span>{t.rotulo}</span>
           </div>
         ))}
       </div>
 
-      <div className="bg-[#111111] border border-[#333] rounded-xl p-6 flex-1 text-gray-300">
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          events={eventosCalendario}
-          dateClick={handleDateClick}
-          eventClick={handleEventClick}
-          eventContent={renderEventContent}
-          // CORREÇÃO (2026-09-19): sem isso, o FullCalendar renderiza eventos
-          // com horário definido (não "dia inteiro") na visão de mês como um
-          // simples ponto colorido ("list-item"), sem preencher o bloco com
-          // `backgroundColor`/`borderColor` do evento — só o ponto pega a cor
-          // certa, o card (com texto branco por `renderEventContent`) fica
-          // sem fundo, dando a impressão de que a cor definida por tipo não
-          // está sendo aplicada. Forçar "block" garante que TODO evento,
-          // com ou sem horário, sempre renderize como o card colorido cheio,
-          // em todas as visões (mês/semana/dia).
-          eventDisplay="block"
-          editable={false}
-          droppable={false}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      {/* Renderização condicional: Visão Lista (Feed Mobile) vs Visão Calendário Mensal */}
+      {modoVisualizacao === 'lista' ? (
+        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+          {eventosOrdenados.length === 0 ? (
+            <div className="bg-[#111] border border-[#2b2b2b] rounded-2xl p-8 text-center text-gray-400 my-6">
+              <Calendar className="w-12 h-12 mx-auto text-gray-600 mb-3" />
+              <p className="font-semibold text-white">Nenhum evento encontrado</p>
+              <p className="text-xs text-gray-500 mt-1">Ajuste os filtros ou crie um novo compromisso na agenda.</p>
+            </div>
+          ) : (
+            eventosOrdenados.map((evento) => {
+              const dataObj = new Date(evento.data_inicio);
+              const diaNum = dataObj.toLocaleDateString('pt-BR', { day: '2-digit' });
+              const mesCurto = dataObj.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
+              const diaSemana = dataObj.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
+              const cor = COR_POR_TIPO[evento.tipo] || COR_PADRAO;
+              const ehDiaInteiro = dataObj.getUTCHours() === 0 && dataObj.getUTCMinutes() === 0;
+              const horarioStr = ehDiaInteiro ? 'Dia Inteiro' : dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+              return (
+                <div
+                  key={evento.id}
+                  onClick={() => abrirDetalheDoEvento(evento)}
+                  className={`bg-[#141414] hover:bg-[#1a1a1a] active:bg-[#202020] border border-[#282828] hover:border-[#444] rounded-2xl p-4 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-md ${
+                    evento.status === 'CANCELADO' ? 'opacity-40 line-through' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    {/* Badge de Data */}
+                    <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-[#090909] border border-[#2e2e2e] flex-shrink-0 text-center">
+                      <span className="text-[10px] font-bold text-gray-400 leading-tight">{mesCurto}</span>
+                      <span className="text-xl font-extrabold text-[#facc15] leading-none my-0.5">{diaNum}</span>
+                      <span className="text-[9px] font-medium text-gray-500 leading-tight">{diaSemana}</span>
+                    </div>
+
+                    {/* Informações do Evento */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-bold text-black uppercase tracking-wider"
+                          style={{ backgroundColor: cor }}
+                        >
+                          {tiposEvento.find(t => t.tipo === evento.tipo)?.rotulo || evento.tipo}
+                        </span>
+                        {evento.subtipo && (
+                          <span className="text-[10px] font-medium text-amber-300/80 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                            {SUBTIPO_ROTULOS[evento.subtipo] || evento.subtipo}
+                          </span>
+                        )}
+                        {evento.status === 'REALIZADO' && (
+                          <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            Realizado
+                          </span>
+                        )}
+                        {evento.status === 'CANCELADO' && (
+                          <span className="text-[10px] font-semibold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">
+                            Cancelado
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="font-bold text-white text-sm sm:text-base leading-snug truncate">
+                        {evento.titulo}
+                      </h3>
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-400">
+                        <span className="flex items-center gap-1 text-gray-300 font-medium">
+                          <Clock className="w-3.5 h-3.5 text-gray-500" />
+                          {horarioStr}
+                        </span>
+                        <span className="flex items-center gap-1 truncate text-gray-400">
+                          <Building2 className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                          <span className="truncate">
+                            {evento.loja_organizadora_nome
+                              ? `Loja ${evento.loja_organizadora_numero || ''} — ${evento.loja_organizadora_nome.replace('[TESTE-CORE] ', '')}`
+                              : 'Conselho Regional'}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <ChevronRight className="w-5 h-5 text-gray-500" />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <div className="bg-[#111111] border border-[#333] rounded-xl p-3 sm:p-6 flex-1 text-gray-300 min-h-[450px]">
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            events={eventosCalendario}
+            dateClick={handleDateClick}
+            eventClick={handleEventClick}
+            eventContent={renderEventContent}
+            eventDisplay="block"
+            editable={false}
+            droppable={false}
+            headerToolbar={isMobile ? {
+              left: 'prev,next',
+              center: 'title',
+              right: 'today'
+            } : {
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }}
+            height="100%"
+            locale={ptBrLocale}
+            buttonText={{
+              today: 'Hoje',
+              month: 'Mês',
+              week: 'Semana',
+              day: 'Dia',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Floating Action Button (FAB) Mobile para Criar Evento */}
+      {tiposPermitidos.length > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            resetForm();
+            const hoje = new Date().toISOString().slice(0, 10);
+            setStartDate(hoje);
+            setEndDate(hoje);
+            setIsEditing(false);
+            setShowModal(true);
           }}
-          height="100%"
-          locale={ptBrLocale}
-          buttonText={{
-            today: 'Hoje',
-            month: 'Mês',
-            week: 'Semana',
-            day: 'Dia',
-          }}
-        />
-      </div>
+          aria-label="Novo Evento"
+          className="md:hidden fixed bottom-20 right-5 z-40 w-14 h-14 rounded-full bg-[#facc15] hover:bg-[#eab308] active:scale-95 text-black shadow-2xl flex items-center justify-center transition-all border-2 border-amber-300/40"
+        >
+          <Plus className="w-7 h-7" />
+        </button>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
@@ -653,6 +868,55 @@ export default function PaginaCalendario() {
                   <label htmlFor="gerar-aviso" className="text-sm font-medium text-gray-300 cursor-pointer">
                     Publicar também um Aviso de lembrete no Mural
                   </label>
+                </div>
+              )}
+
+              {/* Ações de Sincronização com Calendário do Usuário (Google e Apple Calendar) */}
+              {isEditing && eventoSelecionado && (
+                <div className="bg-[#181818] border border-[#2d2d2d] rounded-xl p-3 my-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <CalendarPlus className="w-4 h-4 text-[#facc15]" />
+                    <span className="text-xs font-semibold text-gray-200">Sincronizar no seu celular:</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={gerarLinkGoogleCalendar({
+                        titulo: eventoSelecionado.titulo,
+                        descricao: eventoSelecionado.descricao || '',
+                        local: eventoSelecionado.loja_organizadora_nome
+                          ? `Loja ${eventoSelecionado.loja_organizadora_numero || ''} — ${eventoSelecionado.loja_organizadora_nome}`
+                          : 'Conselho Regional',
+                        dataInicio: eventoSelecionado.data_inicio,
+                        dataFim: eventoSelecionado.data_fim,
+                        diaInteiro: isAllDay,
+                      })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#252525] hover:bg-[#333] border border-[#444] rounded-lg text-[11px] font-medium text-gray-200 hover:text-white transition-colors"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                      Google Agenda
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        baixarArquivoIcs({
+                          titulo: eventoSelecionado.titulo,
+                          descricao: eventoSelecionado.descricao || '',
+                          local: eventoSelecionado.loja_organizadora_nome
+                            ? `Loja ${eventoSelecionado.loja_organizadora_numero || ''} — ${eventoSelecionado.loja_organizadora_nome}`
+                            : 'Conselho Regional',
+                          dataInicio: eventoSelecionado.data_inicio,
+                          dataFim: eventoSelecionado.data_fim,
+                          diaInteiro: isAllDay,
+                        });
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#252525] hover:bg-[#333] border border-[#444] rounded-lg text-[11px] font-medium text-gray-200 hover:text-white transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-400" />
+                      Apple / iCal
+                    </button>
+                  </div>
                 </div>
               )}
 
