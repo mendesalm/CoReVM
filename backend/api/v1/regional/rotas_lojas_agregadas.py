@@ -96,6 +96,7 @@ def listar_lojas_conselho(
 
     ids = [int(a.loja_id) if a.loja_id.isdigit() else str(a.loja_id) for a in agregadas]
     lojas_por_id = {}
+    vm_status_map = {}
     if ids:
         try:
             lojas_api_list = LojasApiClient.buscar_lojas_multiplas(ids)
@@ -107,6 +108,11 @@ def listar_lojas_conselho(
         except Exception as e:
             logger.warning(f"Não foi possível obter dados enriquecidos de lojas via API: {e}")
 
+        try:
+            vm_status_map = LojasApiClient.verificar_status_vm(ids)
+        except Exception as e:
+            logger.warning(f"Não foi possível obter status de VM via API: {e}")
+
     suplentes_map = {
         s.loja_id: s for s in db_core.query(SuplenteConselho).filter(
             SuplenteConselho.loja_id.in_([a.loja_id for a in agregadas])
@@ -117,6 +123,7 @@ def listar_lojas_conselho(
     for a in agregadas:
         info = lojas_por_id.get(str(a.loja_id)) or {}
         suplente = suplentes_map.get(a.loja_id)
+        nome_vm = vm_status_map.get(str(a.loja_id)) or info.get("veneravel_nome")
         
         nome_loja = info.get("nome_loja") or info.get("nome") or f"Loja #{a.loja_id}"
         numero_loja = str(info.get("numero_loja") or "")
@@ -146,6 +153,8 @@ def listar_lojas_conselho(
             "telefone": info.get("telefone"),
             "site": info.get("site"),
             "cnpj": info.get("cnpj"),
+            "veneravel_nome": nome_vm,
+            "hasVm": bool(nome_vm),
             "suplente_usuario_id": suplente.usuario_id if suplente else None,
             "suplente_nome": suplente.nome_suplente if suplente else None,
             "suplente_email": suplente.email_suplente if suplente else None,

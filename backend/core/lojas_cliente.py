@@ -82,106 +82,112 @@ class LojasApiClient:
 
     @classmethod
     def buscar_lojas_multiplas(cls, ids: List[Union[int, str]], token: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Busca detalhes de múltiplas lojas por lista de IDs (inteiros ou codigo_loja/UUID)."""
+        """Busca detalhes de múltiplas lojas por lista de IDs (inteiros ou codigo_loja/UUID).
+        API-First com fallback automático e incondicional para lojas_db em caso de qualquer falha HTTP."""
         if not ids:
             return []
+
+        # 1. Tenta API HTTP oficial do Módulo Lojas
         headers = _montar_headers(token_bearer=token)
         try:
             with httpx.Client(timeout=LOJAS_TIMEOUT_SEGUNDOS) as cliente:
                 res = cliente.post(f"{LOJAS_API_BASE_URL}/lojas/busca/multiplas", json={"ids": ids}, headers=headers)
-                if res.status_code == 404:
-                    logger.warning("Módulo Lojas retornou 404 em busca/multiplas; prosseguindo com dados locais do CoReVM.")
-                    return []
-                if res.status_code != 200:
-                    cls._tratar_erro(res, "buscar lojas múltiplas")
-                return res.json()
-        except httpx.RequestError as e:
+                if res.status_code == 200:
+                    dados = res.json()
+                    if isinstance(dados, list) and len(dados) > 0:
+                        return dados
+                logger.warning(f"Módulo Lojas HTTP retornou status {res.status_code} em busca/multiplas. Ativando fallback direto...")
+        except Exception as e:
             logger.warning(f"Falha de comunicação com módulo Lojas via HTTP (busca/multiplas): {e}. Ativando resiliência direta ao banco lojas_db...")
-            try:
-                from database import engine_lojas
-                from sqlalchemy import text
+
+        # 2. Fallback de Resiliência Garantida: consulta direta a lojas_db
+        try:
+            from database import engine_lojas
+            from sqlalchemy import text
+            
+            ids_int = [int(x) for x in ids if str(x).isdigit()]
+            codigos_str = [str(x) for x in ids if not str(x).isdigit() and str(x)]
+            
+            clausulas = []
+            params = {}
+            if ids_int:
+                clausulas.append("l.id IN :ids_int")
+                params["ids_int"] = tuple(ids_int)
+            if codigos_str:
+                clausulas.append("l.codigo_loja IN :codigos_str")
+                params["codigos_str"] = tuple(codigos_str)
                 
-                ids_int = [int(x) for x in ids if str(x).isdigit()]
-                codigos_str = [str(x) for x in ids if not str(x).isdigit() and str(x)]
-                
-                clausulas = []
-                params = {}
-                if ids_int:
-                    clausulas.append("l.id IN :ids_int")
-                    params["ids_int"] = tuple(ids_int)
-                if codigos_str:
-                    clausulas.append("l.codigo_loja IN :codigos_str")
-                    params["codigos_str"] = tuple(codigos_str)
-                    
-                if not clausulas:
-                    return []
-                    
-                sql = f"""
-                    SELECT 
-                        l.id, l.codigo_loja, l.nome_loja, l.numero_loja, l.cidade, l.estado, 
-                        l.rito, COALESCE(o.sigla, o.nome, '') as potencia, l.logradouro, l.numero as numero_endereco,
-                        l.bairro, l.cep, l.email, l.telefone, l.site, l.cnpj,
-                        l.dia_sessao, l.periodicidade, l.horario_sessao
-                    FROM lojas l
-                    LEFT JOIN obediencias o ON l.potencia_id = o.id
-                    WHERE {" OR ".join(clausulas)}
-                """
-                with engine_lojas.connect() as conn:
-                    rows = conn.execute(text(sql), params).mappings().fetchall()
-                    res = []
-                    for r in rows:
-                        d = dict(r)
-                        d["nome"] = d.get("nome_loja")
-                        d["numero"] = str(d.get("numero_loja") or "")
-                        d["numero_loja"] = str(d.get("numero_loja") or "")
-                        d["horario_sessao"] = str(d["horario_sessao"]) if d.get("horario_sessao") else None
-                        res.append(d)
-                    logger.info(f"Fallback de resiliência obteve {len(res)} lojas diretamente de lojas_db.")
-                    return res
-            except Exception as ex_db:
-                logger.error(f"Erro no fallback direto de lojas_db: {ex_db}")
+            if not clausulas:
                 return []
+                
+            sql = f"""
+                SELECT 
+                    l.id, l.codigo_loja, l.nome_loja, l.numero_loja, l.cidade, l.estado, 
+                    l.rito, COALESCE(o.sigla, o.nome, '') as potencia, l.logradouro, l.numero as numero_endereco,
+                    l.bairro, l.cep, l.email, l.telefone, l.site, l.cnpj,
+                    l.dia_sessao, l.periodicidade, l.horario_sessao
+                FROM lojas l
+                LEFT JOIN obediencias o ON l.potencia_id = o.id
+                WHERE {" OR ".join(clausulas)}
+            """
+            with engine_lojas.connect() as conn:
+                rows = conn.execute(text(sql), params).mappings().fetchall()
+                res = []
+                for r in rows:
+                    d = dict(r)
+                    d["nome"] = d.get("nome_loja")
+                    d["numero"] = str(d.get("numero_loja") or "")
+                    d["numero_loja"] = str(d.get("numero_loja") or "")
+                    d["horario_sessao"] = str(d["horario_sessao"]) if d.get("horario_sessao") else None
+                    res.append(d)
+                logger.info(f"Fallback de resiliência obteve {len(res)} lojas diretamente de lojas_db.")
+                return res
+        except Exception as ex_db:
+            logger.error(f"Erro no fallback direto de lojas_db: {ex_db}")
+            return []
 
     @classmethod
     def verificar_status_vm(cls, ids: List[Union[int, str]], token: Optional[str] = None) -> Dict[str, Optional[str]]:
-        """Verifica o status de Venerável Mestre ativo para um lote de lojas (por ID ou codigo_loja)."""
+        """Verifica o status de Venerável Mestre ativo para um lote de lojas (por ID ou codigo_loja).
+        API-First com fallback automático e incondicional para lojas_db em caso de qualquer falha HTTP."""
         if not ids:
             return {}
+
+        # 1. Tenta API HTTP oficial
         headers = _montar_headers(token_bearer=token)
         try:
             with httpx.Client(timeout=LOJAS_TIMEOUT_SEGUNDOS) as cliente:
                 res = cliente.post(f"{LOJAS_API_BASE_URL}/mandatos/status_vm", json={"ids": ids}, headers=headers)
-                if res.status_code == 404:
-                    logger.warning("Módulo Lojas retornou 404 em status_vm; prosseguindo sem nomes externos de VM.")
-                    return {}
-                if res.status_code != 200:
-                    cls._tratar_erro(res, "verificar status VM em lote")
-                dados = res.json()
-                # Converte chaves inteiras ou string para formato compatível
-                return {str(k): v for k, v in dados.items()}
-        except httpx.RequestError as e:
+                if res.status_code == 200:
+                    dados = res.json()
+                    if isinstance(dados, dict) and any(v for v in dados.values()):
+                        return {str(k): v for k, v in dados.items()}
+                logger.warning(f"Módulo Lojas HTTP retornou status {res.status_code} em status_vm. Ativando fallback direto...")
+        except Exception as e:
             logger.warning(f"Falha de comunicação com módulo Lojas via HTTP (status_vm): {e}. Ativando resiliência direta ao banco lojas_db...")
-            try:
-                from database import engine_lojas
-                from sqlalchemy import text
-                from datetime import date
-                ids_int = [int(x) for x in ids if str(x).isdigit()]
-                if not ids_int:
-                    return {}
-                sql = """
-                    SELECT m.loja_id, o.nome_completo
-                    FROM mandatos m
-                    JOIN obreiros o ON m.obreiro_id = o.id
-                    WHERE m.loja_id IN :ids_int
-                      AND m.cargo_id = 1
-                      AND (m.data_fim IS NULL OR m.data_fim >= :hoje)
-                """
-                with engine_lojas.connect() as conn:
-                    rows = conn.execute(text(sql), {"ids_int": tuple(ids_int), "hoje": date.today()}).fetchall()
-                    return {str(r[0]): r[1] for r in rows}
-            except Exception as ex_db:
-                logger.error(f"Erro no fallback de status VM lojas_db: {ex_db}")
+
+        # 2. Fallback de Resiliência Garantida: consulta mandatos no lojas_db
+        try:
+            from database import engine_lojas
+            from sqlalchemy import text
+            from datetime import date
+            ids_int = [int(x) for x in ids if str(x).isdigit()]
+            if not ids_int:
                 return {}
+            sql = """
+                SELECT m.loja_id, o.nome_completo
+                FROM mandatos m
+                JOIN obreiros o ON m.obreiro_id = o.id
+                WHERE m.loja_id IN :ids_int
+                  AND m.cargo_id = 1
+                  AND (m.data_fim IS NULL OR m.data_fim >= :hoje)
+            """
+            with engine_lojas.connect() as conn:
+                rows = conn.execute(text(sql), {"ids_int": tuple(ids_int), "hoje": date.today()}).fetchall()
+                return {str(r[0]): r[1] for r in rows}
+        except Exception as ex_db:
+            logger.error(f"Erro no fallback de status VM lojas_db: {ex_db}")
+            return {}
 
     @classmethod
     def cadastrar_loja(cls, loja_in: dict, token: Optional[str] = None) -> dict:
