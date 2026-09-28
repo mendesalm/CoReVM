@@ -1,52 +1,71 @@
-# handoff.md — CoReVM
+# Documento de Handoff - Ecossistema Sigma / Lojas / CoReVM / Harmonia (28/09/2026)
 
-## 1. Contexto Atual (Sessão 2026-09-24)
-Nesta sessão foi realizada uma grande evolução arquitetural e funcional no ecossistema CoReVM:
-- **Proposta 3 (SSO & Autenticação Multi-Domínio)**:
-  - Integração do frontend com `/api/v1/auth/sso/session` via `withCredentials: true` e cookie HttpOnly `sigma_sso_token`.
-  - Remoção de instâncias isoladas de `axios` puro, assegurando 100% de uso de `clienteHttp`.
-- **Proposta 4 (Decomposição do Monólito & Eliminação de Dívida Técnica)**:
-  - O antigo monólito `api/v1/regional/rotas.py` (5.033 linhas) foi decomposto em 5 submódulos modulares em `api/v1/regional/`:
-    1. `rotas_governanca.py`: Dashboard, `/me`, `/minhas-regioes`, seletor de VM, atualização e emergência da Diretoria, discrepâncias e reconciliação.
-    2. `rotas_lojas_agregadas.py`: Lojas jurisdicionadas, oficiais da loja, suplência, operadores administrativos e transmissão emergencial de cargo.
-    3. `rotas_comunicacao_agenda.py`: Mural de avisos, calendário de eventos da agenda e correspondência interna (pranchas).
-    4. `rotas_patrimonio_documentos.py`: Gestão de patrimônio, termos de cautela/empréstimo, repositório de documentos e relatórios executivos (com exportação PDF).
-    5. `rotas_admissoes_votacoes.py`: Prévias de admissão (iniciação/filiação/regularização), pareceres/considerações e deliberações/votações com apuração de quórum.
-  - Eliminação completa de acessos diretos a `lojas_db`/`lojas_models` em todas essas rotas, migrando 100% para o cliente HTTP `LojasApiClient` (`core/lojas_cliente.py`).
-  - Remoção de `api/v1/regional/rotas.py` da `ALLOWLIST` em `backend/scripts/verificar_fronteiras_api.py`.
-  - Script `verificar_fronteiras_api.py` executando com 0 violações.
-- **Proposta 5 (Tempo Real & Auditoria de Governança)**:
-  - Criado barramento de eventos em tempo real (`core/eventos_tempo_real.py`) com endpoint SSE `GET /api/v1/regional/{regiao_id}/eventos/stream`.
-  - Criada a tabela e modelo `RegistroAuditoriaRegional` (`models/models.py`) e serviço `registrar_auditoria` (`core/auditoria_service.py`), com emissão simultânea no canal SSE.
-  - Instrumentação de ações críticas (troca de diretoria, transmissão emergencial, posse, suplência, operador administrativo, avisos, eventos na agenda).
-  - Rota `GET /api/v1/regional/{regiao_id}/auditoria` para consulta paginada da Mesa Diretora e SuperAdmin.
-- **Testes & Estabilidade**:
-  - `pytest tests/test_rbac_regional.py tests/test_golden_rules.py tests/test_auditoria_sse.py`: 11 aprovados em 0.58s.
-  - Roteador regional carrega 78 rotas ativas.
-  - Frontend compila com `npm run build` sem erros.
+**Data de Atualização:** 28 de Setembro de 2026  
+**Status da Sessão:** 🟢 PWA e Capacitor Android configurados em todos os 4 módulos; Modernização Mobile First completa nos Calendários do CoReVM e Lojas; Correção de sobreposição e Menu Hambúrguer na Landing Page do e-Sigma; Blindagem definitiva de links de módulos contra localhost em ambiente mobile e produção.
 
-## 2. Atualizações da Sessão (2026-09-25)
-- **Design System Soberano (Glassmorphism Deep Blue Glass + Ouro)**:
-  - Fundo Abissal (`#050508`), cards `.card-deep-blue-glass` com backdrop blur e bordas douradas translúcidas.
-  - Botões no formato pill com aro chanfrado metálico em ouro (`.btn-masonic-pill .btn-pill-blue`).
-  - Favicon em ouro maçônico e `favicon.ico` gerado com cache-busting `?v=3`.
-- **Tela de Login Padronizada (`PaginaLogin.tsx`)**:
-  - Clonagem visual fiel da tela de login do `e-sigma.app`.
-  - Integração do canvas `HeroBackground`, card `.card-deep-blue-glass`, `LogoAnimadaCore` oficial animada (100x90).
-  - Título "Acesso Restrito" em gradiente dourado (`#FDE68A` -> `#DDB96B` -> `#B8862D`).
-  - Inputs com alternância de visualização da senha (olhinho), "Lembrar-me", link "Esqueci a senha", botão `.btn-masonic-pill .btn-pill-blue` "Entrar", divisor "ou" e Google Login.
-  - Preservação de 100% da regra de login com e-Sigma IdP, detecção de regiões do Conselho Regional e redirecionamento.
-- **Deploy Automático na VPS**:
-  - Validado via GitHub Actions em `https://core.e-sigma.app` respondendo HTTP 200 com bundle JS/CSS novo ativo.
+---
 
-## 3. Problemas Pendentes / O que fazer na próxima sessão
-1. **Frontend do CoReVM**:
-   - Conectar o hook EventSource ao endpoint `/api/v1/regional/{regiao_id}/eventos/stream` para atualizar o mural de avisos e agenda sem necessidade de reload.
-   - Criar tela/aba no painel da Diretoria para visualização da Trilha de Auditoria (`GET /api/v1/regional/{regiao_id}/auditoria`).
-2. **Propostas Restantes (1 e 2)**:
-   - Proposta 1: Unificação de Cadastros e Ficha Maçônica Única.
-   - Proposta 2: Módulo Financeiro Regional e Prestação de Contas.
+## 🎯 Contexto Consolidado da Sessão (28/09/2026)
 
-## 4. Observações Importantes
-- **Fronteiras de API**: Nenhum arquivo novo pode importar `get_db_lojas` ou `models.lojas_models`. Toda consulta ao Lojas deve passar por `LojasApiClient`.
-- **RBAC**: Qualquer alteração em RBAC deve rodar `pytest tests/test_rbac_regional.py` para preservar a regra inegociável de acúmulo de cargos da Diretoria.
+### 1. Fase 1: PWA Completo em Todos os Módulos
+- **Manifests e Ícones:** Configurados `manifest.json` com `display: standalone`, `theme_color: #070e1c` e ícones padronizados em `e-sigma`, `CoReVM`, `Lojas` e `Harmonia`.
+- **Service Workers Resilientes (`sw.js`):** Implementados Service Workers com estratégias de cache estático seguro (`stale-while-revalidate`), ignorando chamadas de API e autenticação.
+- **Hook de Instalação (`usePwaInstall`):** Captura do evento `beforeinstallprompt` com botões de instalação nos dashboards.
+
+### 2. Fase 2: Plataformas Nativas Capacitor Android
+- **Capacitor 8.5+ Configurado:** Projetos Android nativos criados e sincronizados para os 4 módulos:
+  - `e-sigma`: `com.esigma.hub`
+  - `CoReVM`: `com.esigma.corevm`
+  - `Lojas`: `com.esigma.lojas`
+  - `Harmonia`: `com.esigma.harmonia`
+- **Estilização Nativa Deep Blue:** `styles.xml` configurado com `windowBackground` em `#070E1C` e `statusBarColor` sem piscar tela branca.
+- **Scripts de Build e Sincronização:** Comandos `"cap:sync"` e `"cap:android"` adicionados aos `package.json`.
+
+### 3. Blindagem Definitiva de Links de Módulos (Fim do Bug de Localhost)
+- **Diagnóstico:** Em WebViews do Capacitor Android, `window.location.hostname` é avaliado como `'localhost'`. A lógica anterior acreditava que o usuário estava em desenvolvimento local e tentava abrir `http://localhost:5174` e `http://localhost:5175`.
+- **Solução:** `configuracaoAmbiente.ts` e `DashboardCliente.tsx` do `e-sigma` agora apontam **categoricamente** para os domínios de produção na nuvem (`https://core.e-sigma.app`, `https://lojas.e-sigma.app`, `https://harmonia.e-sigma.app`). O uso de portas locais exige agora a flag explícita `VITE_USAR_SATELITES_LOCAIS=true`.
+- **Cache Invalidação:** Versão do cache do PWA elevada para `v3` (`esigma-pwa-cache-v3`).
+
+### 4. Modernização Mobile First dos Calendários (CoReVM & Lojas)
+- **CoReVM (`PaginaCalendario.tsx`):**
+  - Alternador [ 📋 Lista | 📅 Mês ] no topo. Telas móveis (< 768px) iniciam automaticamente no modo **Lista**.
+  - Cards de eventos com badge de data destacada, tags coloridas por tipo maçônico e targets de toque ergonômicos (> 44px).
+  - Exportação direta para **Google Agenda** e download de arquivo **Apple Calendar / iCal (.ics)**.
+  - Floating Action Button (FAB) móvel dourado no canto inferior direito para criação de eventos.
+- **Lojas (`LodgeSessionsWidget.tsx`, `PaginaInicio.tsx`, `PaginaSessoes.tsx`):
+  - Alternador de visualização [ 📋 Lista | 📅 Mês ] no widget do painel principal.
+  - Cards empilhados touch-native no mobile na `PaginaSessoes.tsx`, eliminando a rolagem horizontal de 700px da tabela.
+  - Botões de exportação Google Agenda e iCal nas sessões e modal de detalhes do dia.
+  - FAB móvel flutuante (`+ Nova Sessão`) no alcance do polegar.
+
+### 5. Correção de Layout Mobile First na Landing Page (`e-sigma.app`)
+- **Fim da Sobreposição no Cabeçalho:** Criado menu hambúrguer com **Gaveta Lateral (*Drawer*) em Glassmorphism**, recolhendo a navegação em telas `< 900px` e eliminando a colisão com o botão de login.
+- **Botão "Entrar" Compacto:** Substituído o botão fixo de 170px por um botão responsivo touch-friendly com ícone de login.
+- **Hero Responsivo:** Padding superior com respiro de segurança (`pt: { xs: '84px', sm: '96px', md: '108px' }`), logo escalável (`130px - 220px`) e viewport dinâmica `100dvh`.
+- **Fim da Trava de Rolagem:** Desativado `scroll-snap: mandatory` em telas móveis (`scrollSnapType: { xs: 'none', md: 'y mandatory' }`) para rolagem contínua suave no celular.
+
+---
+
+## 🏛️ Definição de Arquitetura e Portas do Ecossistema
+- **`e-Sigma` (IdP & SaaS Hub)**: Porta `:8000`, Frontend `:5173`, Banco `esigma`. Domínio: `https://e-sigma.app`.
+- **`Lojas` (ERP das Oficinas)**: Porta `:8001`, Frontend `:5175`, Banco `lojas_db`. Domínio: `https://lojas.e-sigma.app`.
+- **`CoReVM` (Conselho Regional)**: Porta `:8003`, Frontend `:5174`, Banco `core_db`. Domínio: `https://core.e-sigma.app`.
+- **`Harmonia` (Música e Rituais)**: Porta `:8002`, Frontend `:5178`. Domínio: `https://harmonia.e-sigma.app`.
+
+---
+
+## 🚧 Status dos Repositórios no GitHub
+- **`e-sigma`**: Commit `57aac42` (main) enviado ao GitHub.
+- **`CoReVM`**: Commit `ddd8cdb` (main) enviado ao GitHub.
+- **`Lojas`**: Commit `a5dfd2a` (main) enviado ao GitHub.
+- **`Harmonia`**: Working tree limpo, sincronizado.
+
+---
+
+## 📋 Próximos Passos Sugeridos para a Próxima Sessão
+1. **Deploy no Servidor VPS (`srv854308`)**:
+   - Rodar `git pull && npm run build` em `/var/www/esigma/frontend`, `/var/www/corevm/frontend` e `/var/www/lojas/frontend` para refletir as melhorias em produção na VPS.
+2. **Capacitor Mobile (Fase 3 do Plano Mobile First)**:
+   - Gerar APKs de teste via Android Studio (`npx cap open android`).
+   - Adicionar plugins do Capacitor (`@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/haptics`) para feedback tátil nativo nos botões.
+3. **Módulo Lojas**: Prosseguir com o espelhamento estrito do layout visual do sistema legado Sigma no frontend do Lojas.
