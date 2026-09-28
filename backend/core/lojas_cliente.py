@@ -236,6 +236,31 @@ class LojasApiClient:
             from sqlalchemy import text
             from datetime import datetime
 
+            # Mapa de normalização de rito: converte variações do frontend para o valor
+            # canônico armazenado no tipo ENUM do PostgreSQL (RitoEnum.value no módulo Lojas).
+            # Sem isso, strings brutas causam erro no UPDATE do banco.
+            _MAPA_RITO_CANONICO = {
+                "reaa": "REAA",
+                "rito escocês antigo e aceito": "REAA",
+                "rito escocês": "REAA",
+                "rito york": "Rito York",
+                "york": "Rito York",
+                "rito de york": "Rito York",
+                "rito schroder": "Rito Schroder",
+                "rito schröder": "Rito Schroder",
+                "schroder": "Rito Schroder",
+                "schröder": "Rito Schroder",
+                "rito brasileiro": "Rito Brasileiro",
+                "brasileiro": "Rito Brasileiro",
+                "rito moderno": "Rito Moderno",
+                "moderno": "Rito Moderno",
+                "rito adonhiramita": "Rito Adonhiramita",
+                "adonhiramita": "Rito Adonhiramita",
+                "rito escocês retificado": "Rito Escocês Retificado",
+                "escocês retificado": "Rito Escocês Retificado",
+                "rer": "Rito Escocês Retificado",
+            }
+
             campos_set = []
             params: Dict[str, Any] = {"agora": datetime.utcnow()}
             if str(loja_id).isdigit():
@@ -271,8 +296,12 @@ class LojasApiClient:
                 if chave in payload and payload[chave] is not None:
                     param_nome = f"val_{col}"
                     if param_nome not in params:
+                        valor = payload[chave]
+                        # Normaliza rito para valor canônico do ENUM do PostgreSQL
+                        if chave == "rito":
+                            valor = _MAPA_RITO_CANONICO.get(str(valor).strip().lower(), str(valor).strip())
                         campos_set.append(f"{col} = :{param_nome}")
-                        params[param_nome] = payload[chave]
+                        params[param_nome] = valor
 
             if not campos_set:
                 return {"status": "success", "message": "Nenhum campo a atualizar.", "loja_id": loja_id}
@@ -289,6 +318,7 @@ class LojasApiClient:
 
             logger.warning(f"Loja {loja_id} não localizada no fallback de lojas_db.")
             return {"status": "success", "message": "Loja processada.", "loja_id": loja_id}
+
         except Exception as ex_db:
             logger.error(f"Erro no fallback de atualização de loja em lojas_db: {ex_db}")
             raise HTTPException(status_code=500, detail=f"Erro ao salvar dados da loja: {str(ex_db)}")
