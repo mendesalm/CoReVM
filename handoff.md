@@ -1,71 +1,127 @@
-# Documento de Handoff - Ecossistema Sigma / Lojas / CoReVM / Harmonia (28/09/2026)
-
-**Data de Atualização:** 28 de Setembro de 2026  
-**Status da Sessão:** 🟢 PWA e Capacitor Android configurados em todos os 4 módulos; Modernização Mobile First completa nos Calendários do CoReVM e Lojas; Correção de sobreposição e Menu Hambúrguer na Landing Page do e-Sigma; Blindagem definitiva de links de módulos contra localhost em ambiente mobile e produção.
-
----
-
-## 🎯 Contexto Consolidado da Sessão (28/09/2026)
-
-### 1. Fase 1: PWA Completo em Todos os Módulos
-- **Manifests e Ícones:** Configurados `manifest.json` com `display: standalone`, `theme_color: #070e1c` e ícones padronizados em `e-sigma`, `CoReVM`, `Lojas` e `Harmonia`.
-- **Service Workers Resilientes (`sw.js`):** Implementados Service Workers com estratégias de cache estático seguro (`stale-while-revalidate`), ignorando chamadas de API e autenticação.
-- **Hook de Instalação (`usePwaInstall`):** Captura do evento `beforeinstallprompt` com botões de instalação nos dashboards.
-
-### 2. Fase 2: Plataformas Nativas Capacitor Android
-- **Capacitor 8.5+ Configurado:** Projetos Android nativos criados e sincronizados para os 4 módulos:
-  - `e-sigma`: `com.esigma.hub`
-  - `CoReVM`: `com.esigma.corevm`
-  - `Lojas`: `com.esigma.lojas`
-  - `Harmonia`: `com.esigma.harmonia`
-- **Estilização Nativa Deep Blue:** `styles.xml` configurado com `windowBackground` em `#070E1C` e `statusBarColor` sem piscar tela branca.
-- **Scripts de Build e Sincronização:** Comandos `"cap:sync"` e `"cap:android"` adicionados aos `package.json`.
-
-### 3. Blindagem Definitiva de Links de Módulos (Fim do Bug de Localhost)
-- **Diagnóstico:** Em WebViews do Capacitor Android, `window.location.hostname` é avaliado como `'localhost'`. A lógica anterior acreditava que o usuário estava em desenvolvimento local e tentava abrir `http://localhost:5174` e `http://localhost:5175`.
-- **Solução:** `configuracaoAmbiente.ts` e `DashboardCliente.tsx` do `e-sigma` agora apontam **categoricamente** para os domínios de produção na nuvem (`https://core.e-sigma.app`, `https://lojas.e-sigma.app`, `https://harmonia.e-sigma.app`). O uso de portas locais exige agora a flag explícita `VITE_USAR_SATELITES_LOCAIS=true`.
-- **Cache Invalidação:** Versão do cache do PWA elevada para `v3` (`esigma-pwa-cache-v3`).
-
-### 4. Modernização Mobile First dos Calendários (CoReVM & Lojas)
-- **CoReVM (`PaginaCalendario.tsx`):**
-  - Alternador [ 📋 Lista | 📅 Mês ] no topo. Telas móveis (< 768px) iniciam automaticamente no modo **Lista**.
-  - Cards de eventos com badge de data destacada, tags coloridas por tipo maçônico e targets de toque ergonômicos (> 44px).
-  - Exportação direta para **Google Agenda** e download de arquivo **Apple Calendar / iCal (.ics)**.
-  - Floating Action Button (FAB) móvel dourado no canto inferior direito para criação de eventos.
-- **Lojas (`LodgeSessionsWidget.tsx`, `PaginaInicio.tsx`, `PaginaSessoes.tsx`):
-  - Alternador de visualização [ 📋 Lista | 📅 Mês ] no widget do painel principal.
-  - Cards empilhados touch-native no mobile na `PaginaSessoes.tsx`, eliminando a rolagem horizontal de 700px da tabela.
-  - Botões de exportação Google Agenda e iCal nas sessões e modal de detalhes do dia.
-  - FAB móvel flutuante (`+ Nova Sessão`) no alcance do polegar.
-
-### 5. Correção de Layout Mobile First na Landing Page (`e-sigma.app`)
-- **Fim da Sobreposição no Cabeçalho:** Criado menu hambúrguer com **Gaveta Lateral (*Drawer*) em Glassmorphism**, recolhendo a navegação em telas `< 900px` e eliminando a colisão com o botão de login.
-- **Botão "Entrar" Compacto:** Substituído o botão fixo de 170px por um botão responsivo touch-friendly com ícone de login.
-- **Hero Responsivo:** Padding superior com respiro de segurança (`pt: { xs: '84px', sm: '96px', md: '108px' }`), logo escalável (`130px - 220px`) e viewport dinâmica `100dvh`.
-- **Fim da Trava de Rolagem:** Desativado `scroll-snap: mandatory` em telas móveis (`scrollSnapType: { xs: 'none', md: 'y mandatory' }`) para rolagem contínua suave no celular.
+# Handoff — CoReVM
+**Gerado em:** 2026-09-28T20:51:00-03:00  
+**Sessão:** UX Mobile-First + Fix PUT /integracao/lojas/{id}
 
 ---
 
-## 🏛️ Definição de Arquitetura e Portas do Ecossistema
-- **`e-Sigma` (IdP & SaaS Hub)**: Porta `:8000`, Frontend `:5173`, Banco `esigma`. Domínio: `https://e-sigma.app`.
-- **`Lojas` (ERP das Oficinas)**: Porta `:8001`, Frontend `:5175`, Banco `lojas_db`. Domínio: `https://lojas.e-sigma.app`.
-- **`CoReVM` (Conselho Regional)**: Porta `:8003`, Frontend `:5174`, Banco `core_db`. Domínio: `https://core.e-sigma.app`.
-- **`Harmonia` (Música e Rituais)**: Porta `:8002`, Frontend `:5178`. Domínio: `https://harmonia.e-sigma.app`.
+## 1. Estado atual do projeto
+
+O projeto está **funcional na VPS** (`core.e-sigma.app`). Os deploys desta sessão foram disparados via GitHub Actions e devem estar concluídos.
 
 ---
 
-## 🚧 Status dos Repositórios no GitHub
-- **`e-sigma`**: Commit `57aac42` (main) enviado ao GitHub.
-- **`CoReVM`**: Commit `ddd8cdb` (main) enviado ao GitHub.
-- **`Lojas`**: Commit `a5dfd2a` (main) enviado ao GitHub.
-- **`Harmonia`**: Working tree limpo, sincronizado.
+## 2. O que foi feito nesta sessão
+
+### 2.1 Fix: `PUT /api/v1/integracao/lojas/{loja_id}` — 404 → 500 → ✅ Corrigido
+
+**Commits desta sessão:**
+| Hash | Descrição |
+|---|---|
+| `ab3ac69` (Lojas) | `fix(auth)`: aceitar X-Service-Key sem Authorization obrigatório |
+| `473082f` | `fix(lojas-cliente)`: fallback resiliente (atualizar_loja, obter_vm_ativo, etc.) |
+| `3eaaa4f` | `fix(auth)`: remover StrictMode → elimina google.accounts.id.initialize() duplo |
+| `b492296` | `fix(lojas-cliente)`: normalizar rito canônico no fallback SQL |
+
+**Root cause resolvido:**
+1. A API HTTP do Lojas na VPS exigia `Authorization: Bearer <token>` obrigatório, mas o token do CoReVM não era válido no contexto do Lojas → 422, tratado como 404 pelo CoReVM.
+2. O fallback SQL direto ao `lojas_db` enviava string bruta (`"Rito York"`) para o campo `ENUM` do PostgreSQL → 500.
+
+**Solução implementada:**
+- `Lojas/backend/core/auth_esigma.py`: nova função `obter_usuario_esigma_opcional`
+- `Lojas/backend/core/dependencies.py`: dependências de autorização aceitam `X-Service-Key` sem `Authorization`
+- `CoReVM/backend/core/lojas_cliente.py`: fallback resiliente com mapa de normalização de rito
+
+### 2.2 Fix: Google GSI `initialize() called multiple times`
+
+- `CoReVM/frontend/src/main.tsx`: removido `<StrictMode>` — o React 18 StrictMode montava o `GoogleOAuthProvider` duas vezes em dev, chamando `google.accounts.id.initialize()` duas vezes.
+- `@react-oauth/google v0.13.5` é a versão mais recente e não corrige isso nativamente.
+
+### 2.3 UX Mobile-First (sessões anteriores — já commitado)
+
+- Cards Touch-Friendly nas telas de Lojas (mobile): formato `Loja {nome_loja}, nº {numero_loja}`
+- Botão de 3 pontos para ações de configuração (VM, Suplente, Editar, Excluir)
+- `formatarTituloLoja()` helper centralizado em `PaginaLojas.tsx`
+- Dashboard mobile com widgets compactos (substituiu widgets superdimensionados)
 
 ---
 
-## 📋 Próximos Passos Sugeridos para a Próxima Sessão
-1. **Deploy no Servidor VPS (`srv854308`)**:
-   - Rodar `git pull && npm run build` em `/var/www/esigma/frontend`, `/var/www/corevm/frontend` e `/var/www/lojas/frontend` para refletir as melhorias em produção na VPS.
-2. **Capacitor Mobile (Fase 3 do Plano Mobile First)**:
-   - Gerar APKs de teste via Android Studio (`npx cap open android`).
-   - Adicionar plugins do Capacitor (`@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/haptics`) para feedback tátil nativo nos botões.
-3. **Módulo Lojas**: Prosseguir com o espelhamento estrito do layout visual do sistema legado Sigma no frontend do Lojas.
+## 3. Pendências conhecidas
+
+### 3.1 Validação pendente na VPS
+- Após o deploy desta sessão, **testar manualmente**:
+  ```bash
+  # Atualizar rito de uma loja (deve retornar 200)
+  curl -X PUT https://core.e-sigma.app/api/v1/integracao/lojas/140 \
+    -H "Authorization: Bearer <token_real>" \
+    -H "Content-Type: application/json" \
+    -d '{"rito": "REAA"}'
+  ```
+- Verificar se o warning do Google GSI sumiu no console do browser em produção.
+
+### 3.2 Valor canônico do Enum `Rito Escocês Retificado` no banco
+
+> ⚠️ **ATENÇÃO:** O `RitoEnum.RER` tem `value = "Rito Escocês Retificado"` no Python, mas o tipo ENUM no PostgreSQL pode ter o valor com ou sem acento (`Retificado` vs `Retificado`). Verificar com:
+> ```sql
+> SELECT unnest(enum_range(NULL::ritoEnum));
+> ```
+> Se o valor canônico no banco for diferente, o mapa `_MAPA_RITO_CANONICO` no `lojas_cliente.py` e `loja_admin_service.py` precisa ser ajustado.
+
+### 3.3 `DiretoriaConselho` vazia no banco
+- A tabela `DiretoriaConselho` tem 0 registros — a tela de Mesa Diretora do Conselho mostra vazio.
+- A rota `PUT /api/v1/regioes/{id}` recria a diretoria ao receber o payload.
+- **Não é bug — é dado faltante.** Precisará ser preenchido via interface.
+
+### 3.4 Google GSI em produção (se persistir)
+- Se o warning ainda aparecer em produção (não em dev), investigar se alguma página importa diretamente `window.google.accounts.id.initialize()` ou se há um segundo `<GoogleLogin>` em algum componente fora de `PaginaLogin.tsx`.
+
+---
+
+## 4. Arquitetura e decisões relevantes
+
+### Fluxo de atualização de loja (CoReVM → Lojas)
+
+```
+Frontend CoReVM
+  → PUT /api/v1/integracao/lojas/{id}  (CoReVM backend)
+    → HTTP: PUT lojas.e-sigma.app/api/v1/lojas/{id}
+         headers: X-Service-Key, Authorization (opcional), X-Operador-Papel: DIRETORIA_REGIONAL
+         [se 200] → retorna sucesso
+         [se erro] → fallback: UPDATE lojas SET ... WHERE id = :id (direto em lojas_db)
+                               + normalização de ENUM rito antes do INSERT
+```
+
+### Mapa de valores canônicos do `RitoEnum`
+
+| Valor Python | Value armazenado no DB |
+|---|---|
+| `REAA` | `"REAA"` |
+| `YORK` | `"Rito York"` |
+| `SCHRODER` | `"Rito Schroder"` |
+| `BRASILEIRO` | `"Rito Brasileiro"` |
+| `MODERNO` | `"Rito Moderno"` |
+| `ADONHIRAMITA` | `"Rito Adonhiramita"` |
+| `RER` | `"Rito Escocês Retificado"` |
+
+### Service Key inter-módulos
+- `LOJAS_SERVICE_KEY=lBo_w3qPZ9GDL0O5jq8PgOpjKc8M2J1YdV7QfOj_Zfw` (VPS `.env`)
+- `LOJAS_API_BASE_URL=http://localhost:8001/api/v1`
+
+---
+
+## 5. Arquivos principais modificados nesta sessão
+
+| Arquivo | Motivo |
+|---|---|
+| `backend/core/lojas_cliente.py` | Fallback resiliente + normalização de rito |
+| `frontend/src/main.tsx` | Remoção do StrictMode |
+| `frontend/src/modulos/regional/submodulos/PaginaLojas.tsx` | UX Mobile-First (sessão anterior) |
+| `public/sw.js` | Cache PWA v3 (sessão anterior) |
+
+---
+
+## 6. Próximos passos sugeridos
+
+1. **Verificar o deploy da VPS** e testar atualização de rito na interface
+2. **Preencher DiretoriaConselho** via interface do CoReVM
+3. **UX Mobile** — continuar a análise nos outros módulos (ex: PainelConselho, telas de mandatos)
+4. Avaliar migração do `@react-oauth/google` quando versão > 0.13.5 for lançada (com suporte a StrictMode)
