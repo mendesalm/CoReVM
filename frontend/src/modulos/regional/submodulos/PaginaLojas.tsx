@@ -169,119 +169,124 @@ export default function PaginaLojas() {
   // Carregar dados completos
   const fetchData = async () => {
     setLoading(true);
+    setErro('');
     try {
       const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
       setUserContext(userRes.data);
 
-      // ALTERAÇÃO (2026-09-19): "Minha Loja" (emModoPainel) deixou de
-      // depender de `GET /dashboard` — essa rota exige o perfil "cheio"
-      // (Diretoria/Suplente/VM, via `get_current_regional_user`) e sempre
-      // devolvia TODAS as Lojas da Região, coisa que este modo nunca usava
-      // (só a própria Loja). Isso quebrava com 403 para um Secretário/
-      // Chanceler (Operador Administrativo) — perfil novo que só enxerga a
-      // própria Loja e nunca teria motivo para receber a lista completa de
-      // qualquer forma. Agora este modo usa só `/me` + `/lojas` (que já
-      // filtra para 1 única Loja quando quem pergunta é um Operador
-      // Administrativo) + os 2 endpoints de detalhe/status de VM já usados
-      // pelo caminho completo, só que para 1 id em vez de todos. Ver
-      // claude/roteiro-testes-manuais.md, item B.10, no Project "Core".
+      // Busca oficial das Lojas Jurisdicionadas pertencentes a este Conselho no CoReVM
+      const resLojas = await clienteHttp.get(`${API_URL}/regional/${id}/lojas`);
+      const lojasBase = resLojas.data?.lojas || [];
+
+      // MODO PAINEL: "Minha Loja" (?minha=1)
       if (emModoPainel) {
-        const resLojas = await clienteHttp.get(`${API_URL}/regional/${id}/lojas`);
         const minhaLojaId = userRes.data?.loja_id;
-        const lojaBase = (resLojas.data?.lojas || []).find((l: any) => String(l.id) === String(minhaLojaId));
+        const lojaBase = lojasBase.find((l: any) => 
+          String(l.id) === String(minhaLojaId) || String(l.loja_id) === String(minhaLojaId)
+        );
         if (!lojaBase) {
           setConselho({ lojas: [] });
           setLoading(false);
           return;
         }
-        const [detailsRes, vmStatusRes] = await Promise.all([
-          clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, [lojaBase.id]),
-          clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, [lojaBase.id])
-        ]);
-        const det = detailsRes.data.find((d: any) => String(d.id) === String(lojaBase.id));
-        const nomeVmAtivo = vmStatusRes.data[lojaBase.id];
+
+        let nomeVmAtivo = lojaBase.veneravel_nome || null;
+        let potenciaExtra = lojaBase.potencia || null;
+
+        // Enriquecimento opcional protegido contra falhas externas
+        const targetId = parseInt(lojaBase.id || lojaBase.loja_id);
+        if (!isNaN(targetId)) {
+          try {
+            const [detailsRes, vmStatusRes] = await Promise.all([
+              clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, [targetId]).catch(() => null),
+              clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, [targetId]).catch(() => null)
+            ]);
+            if (detailsRes?.data && Array.isArray(detailsRes.data) && detailsRes.data.length > 0) {
+              potenciaExtra = detailsRes.data[0].potencia || potenciaExtra;
+            }
+            if (vmStatusRes?.data && typeof vmStatusRes.data === 'object') {
+              nomeVmAtivo = vmStatusRes.data[targetId] || vmStatusRes.data[String(targetId)] || nomeVmAtivo;
+            }
+          } catch {
+            // Degradação suave: CoReVM mantém exibição mesmo sem o módulo Lojas
+          }
+        }
+
         setConselho({
           lojas: [{
             ...lojaBase,
-            loja_id: String(lojaBase.id),
-            potencia: det?.potencia,
-            veneravel_nome: nomeVmAtivo || null,
-            hasVm: nomeVmAtivo,
+            id: targetId,
+            loja_id: String(targetId),
+            potencia: potenciaExtra,
+            veneravel_nome: nomeVmAtivo,
+            hasVm: Boolean(nomeVmAtivo || lojaBase.hasVm),
           }]
         });
         setLoading(false);
         return;
       }
 
-      const [resDashboard, resLojas] = await Promise.all([
-        clienteHttp.get(`${API_URL}/regional/${id}/dashboard`),
-        // CORREÇÃO (2026-09-14, bug reportado em teste): a designação de
-        // Suplente funcionava no backend, mas a tabela nunca mostrava o
-        // nome — porque esta tela nunca chamava a única rota que retorna
-        // `suplente_nome`/`suplente_usuario_id` (GET /regional/{id}/lojas,
-        // já existente, criada junto com a feature). O `/dashboard` usado
-        // aqui devolve só o vínculo bruto (LojaAgregadaResponse), sem
-        // esses campos.
-        clienteHttp.get(`${API_URL}/regional/${id}/lojas`)
-      ]);
+      // MODO GERAL: Tabela de Lojas Jurisdicionadas do Conselho Regional
+      const idsNumericos = lojasBase
+        .map((l: any) => parseInt(l.id || l.loja_id))
+        .filter((n: number) => !isNaN(n));
 
-      const data = resDashboard.data;
-      const suplentesPorLoja: Record<string, any> = {};
-      (resLojas.data?.lojas || []).forEach((l: any) => {
-        suplentesPorLoja[String(l.id)] = l;
-      });
+      let detailsMap: Record<string, any> = {};
+      let vmStatusMap: Record<string, any> = {};
 
-      if (data.lojas && data.lojas.length > 0) {
-        const ids = data.lojas.map((l: any) => parseInt(l.loja_id)).filter((n: number) => !isNaN(n));
-        if (ids.length > 0) {
+      if (idsNumericos.length > 0) {
+        try {
           const [detailsRes, vmStatusRes] = await Promise.all([
-            clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, ids),
-            clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, ids)
+            clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsNumericos).catch(() => null),
+            clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, idsNumericos).catch(() => null)
           ]);
-          data.lojas = data.lojas.map((l: any) => {
-            const det = detailsRes.data.find((d: any) => String(d.id) === String(l.loja_id));
-            const suplenteInfo = suplentesPorLoja[String(l.loja_id)];
-            // CORREÇÃO (2026-09-14, bug reportado em teste): POST
-            // /integracao/lojas/status_vm já retorna o NOME do Venerável Mestre
-            // ativo (ou null), não um booleano — mas a página nunca preenchia
-            // `veneravel_nome`, então a tag da tabela sempre caía no texto
-            // genérico "VM Cadastrado". Também faltava o campo `id` (numérico)
-            // esperado pelo ModalGestaoVM — sem ele, o modal chamava
-            // GET /integracao/lojas/undefined/vm e sempre mostrava "Nenhum
-            // Venerável Mestre Ativo", mesmo quando a tabela indicava VM
-            // cadastrado.
-            const nomeVmAtivo = vmStatusRes.data[l.loja_id];
-            return {
-              ...l,
-              id: parseInt(l.loja_id),
-              nome: det?.nome,
-              numero: det?.numero,
-              cidade: det?.cidade,
-              potencia: det?.potencia,
-              rito: det?.rito,
-              veneravel_nome: nomeVmAtivo || null,
-              hasVm: nomeVmAtivo,
-              suplente_nome: suplenteInfo?.suplente_nome || null,
-              suplente_usuario_id: suplenteInfo?.suplente_usuario_id || null,
-              // ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial —
-              // true quando o Suplente desta Loja é um "Mestre Instalado
-              // imediato" com o poder de uso único de indicar o próximo VM
-              // ainda não exercido.
-              suplente_pode_indicar_veneravel: !!suplenteInfo?.suplente_pode_indicar_veneravel
-            };
-          });
-          // Ordena por Potência e depois por Número da Loja
-          data.lojas.sort((a: any, b: any) => {
-            const potA = a.potencia || '';
-            const potB = b.potencia || '';
-            if (potA !== potB) return potA.localeCompare(potB);
-            return (parseInt(a.numero) || 0) - (parseInt(b.numero) || 0);
-          });
+
+          if (detailsRes?.data && Array.isArray(detailsRes.data)) {
+            detailsRes.data.forEach((d: any) => {
+              detailsMap[String(d.id)] = d;
+            });
+          }
+          if (vmStatusRes?.data && typeof vmStatusRes.data === 'object') {
+            vmStatusMap = vmStatusRes.data;
+          }
+        } catch {
+          // Degradação suave: se a integração externa falhar, CoReVM exibe os dados locais sem travar a tela
         }
       }
-      setConselho(data);
+
+      const lojasProcessadas = lojasBase.map((l: any) => {
+        const lojaIdStr = String(l.id || l.loja_id);
+        const det = detailsMap[lojaIdStr];
+        const nomeVmAtivo = vmStatusMap[lojaIdStr] || l.veneravel_nome || null;
+
+        return {
+          ...l,
+          id: parseInt(lojaIdStr),
+          loja_id: lojaIdStr,
+          nome: l.nome || det?.nome || `Loja #${lojaIdStr}`,
+          numero: l.numero || det?.numero || 'S/N',
+          cidade: l.cidade || det?.cidade || '',
+          potencia: l.potencia || det?.potencia || '',
+          rito: l.rito || det?.rito || '',
+          veneravel_nome: nomeVmAtivo,
+          hasVm: Boolean(nomeVmAtivo || l.hasVm),
+          suplente_nome: l.suplente_nome || null,
+          suplente_usuario_id: l.suplente_usuario_id || null,
+          suplente_pode_indicar_veneravel: Boolean(l.suplente_pode_indicar_veneravel)
+        };
+      });
+
+      // Ordena por Potência e depois por Número da Loja
+      lojasProcessadas.sort((a: any, b: any) => {
+        const potA = a.potencia || '';
+        const potB = b.potencia || '';
+        if (potA !== potB) return potA.localeCompare(potB);
+        return (parseInt(a.numero) || 0) - (parseInt(b.numero) || 0);
+      });
+
+      setConselho({ lojas: lojasProcessadas });
     } catch (err: any) {
-      setErro(extrairMensagemErro(err, "Erro ao carregar dados das lojas."));
+      setErro(extrairMensagemErro(err, "Erro ao carregar dados das lojas jurisdicionadas."));
     } finally {
       setLoading(false);
     }
@@ -623,7 +628,14 @@ export default function PaginaLojas() {
                   </tr>
                 ) : (
                   lojasFiltradas.map((l: any) => {
-                    const podeEditar = userContext.is_diretoria || userContext.loja_id === l.loja_id;
+                    const ehMinhaLoja = Boolean(
+                      userContext.loja_id && (String(l.loja_id) === String(userContext.loja_id) || String(l.id) === String(userContext.loja_id))
+                    );
+                    const ehMeuSuplente = Boolean(
+                      userContext.usuario_id && l.suplente_usuario_id && String(userContext.usuario_id) === String(l.suplente_usuario_id)
+                    );
+                    const temVinculo = ehMinhaLoja || ehMeuSuplente;
+                    const podeEditar = Boolean(userContext.is_diretoria || temVinculo);
                     const temVm = !!l.hasVm;
                     // ALTERAÇÃO (2026-09-14): transmissão de cargo emergencial
                     // — o Suplente-regente (Mestre Instalado imediato) precisa
@@ -636,14 +648,8 @@ export default function PaginaLojas() {
                       && !temVm;
 
                     return (
-                      <tr key={l.loja_id} className={`hover:bg-[#181818] transition-colors group ${String(l.loja_id) === String(userContext.loja_id) ? 'bg-blue-500/[0.03]' : ''}`}>
-                        {/* ALTERAÇÃO (2026-09-14, redesenho pós-teste): coluna
-                            unificada em um único texto "Loja {nome}, nº
-                            {número}" no lugar de nome + tag separada — o
-                            `nome` vindo do lojas_db às vezes já traz o
-                            prefixo "Loja " (ver mesmo strip em
-                            `abrirEdicaoLoja`), então removemos antes de
-                            remontar para não duplicar. */}
+                      <tr key={l.loja_id} className={`hover:bg-[#181818] transition-colors group ${ehMinhaLoja ? 'bg-blue-500/[0.04]' : ''}`}>
+                        {/* Coluna unificada em um único texto "Loja {nome}, nº {número}" */}
                         <td className="p-3.5 pl-5">
                           <span className="font-bold text-white">
                             {(() => {
@@ -653,15 +659,20 @@ export default function PaginaLojas() {
                                 : `Loja ${nomeBase}`;
                             })()}
                           </span>
-                          {/* ALTERAÇÃO (2026-09-18): tag "Sua Loja" para o VM
-                              achar a própria linha rápido mesmo no filtro
-                              "Todas", sem precisar abrir o filtro dedicado. */}
-                          {String(l.loja_id) === String(userContext.loja_id) && (
+                          {ehMinhaLoja && (
                             <span
                               className="ml-2 shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-blue-500/15 text-blue-300 border border-blue-500/30"
-                              title="Esta é a sua Loja"
+                              title="Esta é a sua Loja de vínculo ativo"
                             >
                               Sua Loja
+                            </span>
+                          )}
+                          {ehMeuSuplente && !ehMinhaLoja && (
+                            <span
+                              className="ml-2 shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                              title="Você é o Suplente do Conselho desta Loja"
+                            >
+                              Seu Assento
                             </span>
                           )}
                         </td>

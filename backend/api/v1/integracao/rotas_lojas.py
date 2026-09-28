@@ -5,8 +5,8 @@ Consome a API oficial do módulo Lojas via `LojasApiClient`, sem conexão direta
 ou queries ao banco `lojas_db`, garantindo a separação e isolamento de domínios.
 """
 from datetime import date
-from typing import Optional, List
-from fastapi import APIRouter, Header, HTTPException, Query
+from typing import Optional, List, Any
+from fastapi import APIRouter, Header, HTTPException, Query, Body
 from pydantic import BaseModel
 from loguru import logger
 
@@ -36,11 +36,12 @@ def buscar_lojas_global(
     description="Retorna os detalhes de várias lojas consumindo a API oficial do módulo Lojas.",
 )
 def buscar_lojas_multiplas(
-    ids: list[int],
+    ids: Any = Body(...),
     authorization: Optional[str] = Header(None),
 ):
     """Consulta lote de lojas via API do módulo Lojas."""
-    return LojasApiClient.buscar_lojas_multiplas(ids=ids, token=authorization)
+    lista_ids = ids if isinstance(ids, list) else (ids.get("ids", []) if isinstance(ids, dict) else [])
+    return LojasApiClient.buscar_lojas_multiplas(ids=lista_ids, token=authorization)
 
 
 @router.post(
@@ -49,11 +50,12 @@ def buscar_lojas_multiplas(
     description="Retorna os nomes dos VMs cadastrados nas lojas solicitadas via API.",
 )
 def verificar_status_vm(
-    ids: list[int],
+    ids: Any = Body(...),
     authorization: Optional[str] = Header(None),
 ):
     """Verifica status de VM em lote via API do módulo Lojas."""
-    return LojasApiClient.verificar_status_vm(ids=ids, token=authorization)
+    lista_ids = ids if isinstance(ids, list) else (ids.get("ids", []) if isinstance(ids, dict) else [])
+    return LojasApiClient.verificar_status_vm(ids=lista_ids, token=authorization)
 
 
 @router.post(

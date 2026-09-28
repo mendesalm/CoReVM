@@ -90,15 +90,15 @@ class LojasApiClient:
         try:
             with httpx.Client(timeout=LOJAS_TIMEOUT_SEGUNDOS) as cliente:
                 res = cliente.post(f"{LOJAS_API_BASE_URL}/lojas/busca/multiplas", json={"ids": ids}, headers=headers)
+                if res.status_code == 404:
+                    logger.warning("Módulo Lojas retornou 404 em busca/multiplas; prosseguindo com dados locais do CoReVM.")
+                    return []
                 if res.status_code != 200:
                     cls._tratar_erro(res, "buscar lojas múltiplas")
                 return res.json()
         except httpx.RequestError as e:
-            logger.error(f"Falha de comunicação com módulo Lojas: {e}")
-            raise HTTPException(
-                status_code=503,
-                detail="Módulo Lojas indisponível para consulta em lote.",
-            )
+            logger.warning(f"Falha de comunicação com módulo Lojas (busca/multiplas): {e}")
+            return []
 
     @classmethod
     def verificar_status_vm(cls, ids: List[int], token: Optional[str] = None) -> Dict[str, Optional[str]]:
@@ -109,13 +109,16 @@ class LojasApiClient:
         try:
             with httpx.Client(timeout=LOJAS_TIMEOUT_SEGUNDOS) as cliente:
                 res = cliente.post(f"{LOJAS_API_BASE_URL}/mandatos/status_vm", json={"ids": ids}, headers=headers)
+                if res.status_code == 404:
+                    logger.warning("Módulo Lojas retornou 404 em status_vm; prosseguindo sem nomes externos de VM.")
+                    return {}
                 if res.status_code != 200:
                     cls._tratar_erro(res, "verificar status VM em lote")
                 dados = res.json()
                 # Converte chaves inteiras ou string para formato compatível
                 return {str(k): v for k, v in dados.items()}
         except httpx.RequestError as e:
-            logger.error(f"Falha de comunicação com módulo Lojas (status_vm): {e}")
+            logger.warning(f"Falha de comunicação com módulo Lojas (status_vm): {e}")
             return {}
 
     @classmethod
