@@ -80,6 +80,7 @@ class DiretoriaMembroResponse(BaseModel):
     # models.py::DiretoriaConselho.loja_id.
     loja_id: Optional[str] = None
     loja_numero: Optional[str] = None
+    loja_nome: Optional[str] = None
     vinculo_desatualizado: bool = False
     loja_sem_vm: bool = False
     sugestao_novo_veneravel: Optional["VeneravelElegivelResponse"] = None

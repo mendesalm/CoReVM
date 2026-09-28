@@ -227,9 +227,14 @@ export default function PaginaLojas() {
       }
 
       // MODO GERAL: Tabela de Lojas Jurisdicionadas do Conselho Regional
-      const idsNumericos = lojasBase
-        .map((l: any) => parseInt(l.id || l.loja_id))
-        .filter((n: number) => !isNaN(n));
+      const idsNumericos = Array.from(new Set(
+        lojasBase
+          .flatMap((l: any) => [
+            parseInt(l.id || l.loja_id),
+            parseInt(l.numero || l.numero_loja)
+          ])
+          .filter((n: number) => !isNaN(n))
+      ));
 
       let detailsMap: Record<string, any> = {};
       let vmStatusMap: Record<string, any> = {};
@@ -243,7 +248,9 @@ export default function PaginaLojas() {
 
           if (detailsRes?.data && Array.isArray(detailsRes.data)) {
             detailsRes.data.forEach((d: any) => {
-              detailsMap[String(d.id)] = d;
+              if (d.id != null) detailsMap[String(d.id)] = d;
+              if (d.numero) detailsMap[String(d.numero)] = d;
+              if (d.numero_loja) detailsMap[String(d.numero_loja)] = d;
             });
           }
           if (vmStatusRes?.data && typeof vmStatusRes.data === 'object') {
@@ -256,18 +263,30 @@ export default function PaginaLojas() {
 
       const lojasProcessadas = lojasBase.map((l: any) => {
         const lojaIdStr = String(l.id || l.loja_id);
-        const det = detailsMap[lojaIdStr];
-        const nomeVmAtivo = vmStatusMap[lojaIdStr] || l.veneravel_nome || null;
+        const numeroStr = String(l.numero || l.numero_loja || '');
+        const det = detailsMap[lojaIdStr] || (numeroStr ? detailsMap[numeroStr] : null);
+        const nomeVmAtivo = vmStatusMap[lojaIdStr] 
+          || (det && vmStatusMap[String(det.id)]) 
+          || (numeroStr ? vmStatusMap[numeroStr] : null) 
+          || l.veneravel_nome 
+          || null;
+
+        let nomeBase = det?.nome || det?.nome_loja || l.nome;
+        if (!nomeBase || nomeBase === `Loja ${lojaIdStr}` || nomeBase === `Loja #${lojaIdStr}`) {
+          nomeBase = det?.nome || det?.nome_loja || `Loja #${lojaIdStr}`;
+        }
+        const numeroFinal = det?.numero || det?.numero_loja || l.numero || l.numero_loja || 'S/N';
 
         return {
           ...l,
           id: parseInt(lojaIdStr),
           loja_id: lojaIdStr,
-          nome: l.nome || det?.nome || `Loja #${lojaIdStr}`,
-          numero: l.numero || det?.numero || 'S/N',
-          cidade: l.cidade || det?.cidade || '',
-          potencia: l.potencia || det?.potencia || '',
-          rito: l.rito || det?.rito || '',
+          nome: nomeBase,
+          numero: String(numeroFinal),
+          numero_loja: String(numeroFinal),
+          cidade: det?.cidade || l.cidade || '',
+          potencia: det?.potencia || l.potencia || '',
+          rito: det?.rito || l.rito || '',
           veneravel_nome: nomeVmAtivo,
           hasVm: Boolean(nomeVmAtivo || l.hasVm),
           suplente_nome: l.suplente_nome || null,
@@ -653,10 +672,13 @@ export default function PaginaLojas() {
                         <td className="p-3.5 pl-5">
                           <span className="font-bold text-white">
                             {(() => {
-                              const nomeBase = (l.nome || `#${l.loja_id}`).replace(/^Loja\s+/i, '');
-                              return l.numero
-                                ? `Loja ${nomeBase}, nº ${l.numero}`
-                                : `Loja ${nomeBase}`;
+                              const nomeLimpo = (l.nome || '').replace(/^Loja\s+/i, '').trim();
+                              const ehGenerico = !nomeLimpo || nomeLimpo === String(l.id) || nomeLimpo === String(l.numero) || nomeLimpo === `#${l.loja_id}`;
+                              const temNum = l.numero && l.numero !== 'S/N';
+                              if (ehGenerico) {
+                                return `Loja nº ${temNum ? l.numero : l.id}`;
+                              }
+                              return temNum ? `Loja ${nomeLimpo}, nº ${l.numero}` : `Loja ${nomeLimpo}`;
                             })()}
                           </span>
                           {ehMinhaLoja && (

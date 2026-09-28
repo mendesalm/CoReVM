@@ -199,7 +199,12 @@ def obter_diretoria_regional(
         try:
             lojas_list = LojasApiClient.buscar_lojas_multiplas(lojas_ids_int)
             for l in lojas_list:
-                lojas_info[str(l.get("id"))] = l
+                if l.get("id") is not None:
+                    lojas_info[str(l.get("id"))] = l
+                if l.get("numero_loja"):
+                    lojas_info[str(l.get("numero_loja"))] = l
+                if l.get("numero"):
+                    lojas_info[str(l.get("numero"))] = l
         except Exception as e:
             logger.warning(f"Erro ao buscar detalhes de lojas para diretoria: {e}")
 
@@ -210,12 +215,11 @@ def obter_diretoria_regional(
         vinculo_desatualizado = False
         loja_sem_vm = False
         sugestao = None
-        loja_numero = None
+        info_loja = lojas_info.get(str(d.loja_id), {}) if d.loja_id else {}
+        loja_numero = info_loja.get("numero_loja") or info_loja.get("numero") or (d.loja_id if d.loja_id and str(d.loja_id).isdigit() else None)
+        loja_nome = info_loja.get("nome") or info_loja.get("nome_loja")
 
         if d.loja_id and str(d.loja_id).isdigit():
-            info_loja = lojas_info.get(d.loja_id, {})
-            loja_numero = info_loja.get("numero_loja")
-
             try:
                 vm_atual = LojasApiClient.obter_vm_ativo(int(d.loja_id))
                 if vm_atual and vm_atual.get("tem_vm"):
@@ -224,8 +228,8 @@ def obter_diretoria_regional(
                         sugestao = VeneravelElegivelResponse(
                             usuario_id=vm_atual.get("cim") or "",
                             nome_completo=vm_atual.get("nome_completo") or "",
-                            loja_id=d.loja_id,
-                            loja_nome=info_loja.get("nome_loja"),
+                            loja_id=str(info_loja.get("id") or d.loja_id),
+                            loja_nome=loja_nome,
                             loja_numero=str(loja_numero) if loja_numero is not None else None,
                         )
                 elif vm_atual and vm_atual.get("tem_vm") is False and info_loja:
@@ -250,6 +254,7 @@ def obter_diretoria_regional(
             telefone=telefone,
             loja_id=d.loja_id,
             loja_numero=str(loja_numero) if loja_numero is not None else None,
+            loja_nome=loja_nome,
             vinculo_desatualizado=vinculo_desatualizado,
             loja_sem_vm=loja_sem_vm,
             sugestao_novo_veneravel=sugestao,

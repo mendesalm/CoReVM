@@ -154,6 +154,22 @@ export default function PaginaDiretoria() {
   const vicePresidente = diretoria.find(d => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
   const secretario = diretoria.find(d => d.cargo.toLowerCase() === 'secretario');
 
+function formatarLojaMembro(membro: any): string {
+  if (!membro) return 'Não vinculada';
+  const nomeLimpo = (membro.loja_nome || '').replace(/^Loja\s+/i, '').trim();
+  const num = membro.loja_numero || (membro.loja_id && String(membro.loja_id).length > 2 ? membro.loja_id : null);
+  if (nomeLimpo && num) {
+    return `${nomeLimpo}, nº ${num}`;
+  }
+  if (nomeLimpo) {
+    return nomeLimpo;
+  }
+  if (num) {
+    return `Loja nº ${num}`;
+  }
+  return membro.loja_id ? `Loja #${membro.loja_id}` : 'Não vinculada';
+}
+
   // Aviso de assento órfão exibido no card do respectivo cargo — cobre os
   // dois casos: a Loja já tem um novo VM (sugestão pronta, um clique
   // resolve) ou a Loja ficou sem VM (é preciso escolher manualmente
@@ -162,19 +178,20 @@ export default function PaginaDiretoria() {
   const renderAvisoOrfao = (membro: any, cargoValor: string) => {
     if (!membro || (!membro.vinculo_desatualizado && !membro.loja_sem_vm)) return null;
     const aberto = emergenciaCargoAberto === cargoValor;
+    const rotuloLoja = formatarLojaMembro(membro);
     return (
       <div className="mt-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[11px] space-y-2">
         <div className="flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {membro.vinculo_desatualizado && membro.sugestao_novo_veneravel ? (
             <span>
-              A Loja {membro.loja_numero ? `nº ${membro.loja_numero}` : ''} já possui novo Venerável Mestre
+              A Loja {rotuloLoja} já possui novo Venerável Mestre
               (<strong>{membro.sugestao_novo_veneravel.nome_completo || membro.sugestao_novo_veneravel.usuario_id}</strong>),
               mas a Diretoria ainda não foi atualizada.
             </span>
           ) : (
             <span>
-              A Loja {membro.loja_numero ? `nº ${membro.loja_numero}` : ''} que este titular representava está
+              A Loja {rotuloLoja} que este titular representava está
               sem Venerável Mestre empossado. Escolha emergencialmente outro Venerável elegível para não deixar
               este assento sem representação.
             </span>
@@ -208,11 +225,17 @@ export default function PaginaDiretoria() {
               className="w-full bg-[#080808] border border-orange-500/40 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-orange-400"
             >
               <option value="">Selecione um Venerável Mestre elegível...</option>
-              {veneraveisElegiveis.map((v) => (
-                <option key={v.usuario_id} value={v.usuario_id}>
-                  {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
-                </option>
-              ))}
+              {veneraveisElegiveis.map((v) => {
+                const nomeLoja = (v.loja_nome || '').replace(/^Loja\s+/i, '').trim();
+                const rotLoja = nomeLoja 
+                  ? `${nomeLoja}, nº ${v.loja_numero || v.loja_id}` 
+                  : `Loja nº ${v.loja_numero || v.loja_id}`;
+                return (
+                  <option key={v.usuario_id} value={v.usuario_id}>
+                    {v.nome_completo || v.usuario_id} — {rotLoja}
+                  </option>
+                );
+              })}
             </select>
             <div className="flex gap-2 justify-end">
               <button
@@ -349,6 +372,12 @@ export default function PaginaDiretoria() {
 
               <div className="pt-4 border-t border-[#222] space-y-2 text-xs">
                 <div className="flex items-center justify-between text-gray-400">
+                  <span>Loja de Vínculo:</span>
+                  <span className="text-gray-200 truncate max-w-[170px] font-medium" title={formatarLojaMembro(presidente)}>
+                    {formatarLojaMembro(presidente)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-gray-400">
                   <span>Contato Oficial:</span>
                   <span className="text-gray-200 truncate max-w-[160px] font-medium" title={presidente?.email}>
                     {presidente?.email || 'contato@corevm.org'}
@@ -402,6 +431,12 @@ export default function PaginaDiretoria() {
 
               <div className="pt-4 border-t border-[#222] space-y-2 text-xs">
                 <div className="flex items-center justify-between text-gray-400">
+                  <span>Loja de Vínculo:</span>
+                  <span className="text-gray-200 truncate max-w-[170px] font-medium" title={formatarLojaMembro(vicePresidente)}>
+                    {formatarLojaMembro(vicePresidente)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-gray-400">
                   <span>Contato Oficial:</span>
                   <span className="text-gray-200 truncate max-w-[160px] font-medium" title={vicePresidente?.email}>
                     {vicePresidente?.email || 'contato@corevm.org'}
@@ -454,6 +489,12 @@ export default function PaginaDiretoria() {
               </div>
 
               <div className="pt-4 border-t border-[#222] space-y-2 text-xs">
+                <div className="flex items-center justify-between text-gray-400">
+                  <span>Loja de Vínculo:</span>
+                  <span className="text-gray-200 truncate max-w-[170px] font-medium" title={formatarLojaMembro(secretario)}>
+                    {formatarLojaMembro(secretario)}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Contato Oficial:</span>
                   <span className="text-gray-200 truncate max-w-[160px] font-medium" title={secretario?.email}>
@@ -548,11 +589,17 @@ export default function PaginaDiretoria() {
                       {presidente?.nome_completo || diretoriaForm.presidente_id} (Titular Atual)
                     </option>
                   )}
-                  {veneraveisElegiveis.map((v) => (
-                    <option key={v.usuario_id} value={v.usuario_id}>
-                      {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
-                    </option>
-                  ))}
+                  {veneraveisElegiveis.map((v) => {
+                    const nomeLoja = (v.loja_nome || '').replace(/^Loja\s+/i, '').trim();
+                    const rotLoja = nomeLoja 
+                      ? `${nomeLoja}, nº ${v.loja_numero || v.loja_id}` 
+                      : `Loja nº ${v.loja_numero || v.loja_id}`;
+                    return (
+                      <option key={v.usuario_id} value={v.usuario_id}>
+                        {v.nome_completo || v.usuario_id} — {rotLoja}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -571,11 +618,17 @@ export default function PaginaDiretoria() {
                       {vicePresidente?.nome_completo || diretoriaForm.vice_presidente_id} (Titular Atual)
                     </option>
                   )}
-                  {veneraveisElegiveis.map((v) => (
-                    <option key={v.usuario_id} value={v.usuario_id}>
-                      {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
-                    </option>
-                  ))}
+                  {veneraveisElegiveis.map((v) => {
+                    const nomeLoja = (v.loja_nome || '').replace(/^Loja\s+/i, '').trim();
+                    const rotLoja = nomeLoja 
+                      ? `${nomeLoja}, nº ${v.loja_numero || v.loja_id}` 
+                      : `Loja nº ${v.loja_numero || v.loja_id}`;
+                    return (
+                      <option key={v.usuario_id} value={v.usuario_id}>
+                        {v.nome_completo || v.usuario_id} — {rotLoja}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -594,11 +647,17 @@ export default function PaginaDiretoria() {
                       {secretario?.nome_completo || diretoriaForm.secretario_id} (Titular Atual)
                     </option>
                   )}
-                  {veneraveisElegiveis.map((v) => (
-                    <option key={v.usuario_id} value={v.usuario_id}>
-                      {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
-                    </option>
-                  ))}
+                  {veneraveisElegiveis.map((v) => {
+                    const nomeLoja = (v.loja_nome || '').replace(/^Loja\s+/i, '').trim();
+                    const rotLoja = nomeLoja 
+                      ? `${nomeLoja}, nº ${v.loja_numero || v.loja_id}` 
+                      : `Loja nº ${v.loja_numero || v.loja_id}`;
+                    return (
+                      <option key={v.usuario_id} value={v.usuario_id}>
+                        {v.nome_completo || v.usuario_id} — {rotLoja}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
