@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CoReVM</string>
+    <string name="title_activity_main">CoReVM</string>
+    <string name="package_name">com.esigma.corevm</string>
+    <string name="custom_url_scheme">com.esigma.corevm</string>
+</resources>
