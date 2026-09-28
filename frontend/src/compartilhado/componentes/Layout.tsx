@@ -356,8 +356,8 @@ export default function Layout() {
             <div className="flex items-center justify-between px-2 pb-2 mb-1 border-b border-[rgba(221,185,107,0.15)]">
               {isExpanded ? (
                 <>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#FDE68A]">
-                    Módulos do Conselho
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#FDE68A] truncate max-w-[180px]" title={regiaoNome || "Conselho Regional"}>
+                    {regiaoNome || "Conselho Regional"}
                   </span>
                   <button
                     type="button"
@@ -504,7 +504,9 @@ export default function Layout() {
           <div className="flex items-center justify-between p-4 border-b border-[rgba(221,185,107,0.2)]">
             <div className="flex items-center gap-2.5">
               <LogoAnimadaCore theme="ouro" width={28} height={25} animated={false} />
-              <span className="text-xs font-bold text-[#FDE68A] uppercase tracking-wider">Módulos CoReVM</span>
+              <span className="text-xs font-bold text-[#FDE68A] uppercase tracking-wider truncate max-w-[170px]" title={regiaoNome || "Conselho Regional"}>
+                {regiaoNome || "Conselho Regional"}
+              </span>
             </div>
             <button 
               type="button" 

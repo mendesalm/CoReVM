@@ -5,7 +5,8 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   Building2, ShieldCheck, Loader2, Award,
   Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft,
-  Users, UserCog, X, Zap
+  Users, UserCog, X, Zap, MoreVertical, MapPin, Clock, Phone, Mail,
+  Globe, Info
 } from 'lucide-react';
 import BuscadorLoja from '../../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../../compartilhado/componentes/ModalCadastroObreiro';
@@ -76,6 +77,10 @@ export default function PaginaLojas() {
   const [showAddLojaModal, setShowAddLojaModal] = useState(false);
   const [editLojaModal, setEditLojaModal] = useState<any>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Modais para a nova experiência Mobile First e visualização limpa
+  const [lojaDetalhesModal, setLojaDetalhesModal] = useState<any>(null);
+  const [lojaAcoesModal, setLojaAcoesModal] = useState<any>(null);
 
   // ALTERAÇÃO (2026-09-12): "Designação Livre de Suplente" — o VM da própria
   // Loja (ou a Diretoria do Conselho, para qualquer Loja) escolhe livremente
@@ -285,8 +290,21 @@ export default function PaginaLojas() {
           numero: String(numeroFinal),
           numero_loja: String(numeroFinal),
           cidade: det?.cidade || l.cidade || '',
+          estado: det?.estado || l.estado || '',
           potencia: det?.potencia || l.potencia || '',
           rito: det?.rito || l.rito || '',
+          logradouro: det?.logradouro || l.logradouro || '',
+          numero_endereco: det?.numero_endereco || l.numero_endereco || '',
+          complemento: det?.complemento || l.complemento || '',
+          bairro: det?.bairro || l.bairro || '',
+          cep: det?.cep || l.cep || '',
+          dia_sessao: det?.dia_sessao || l.dia_sessao || '',
+          periodicidade: det?.periodicidade || l.periodicidade || '',
+          horario_sessao: det?.horario_sessao || l.horario_sessao || '',
+          email: det?.email || l.email || '',
+          telefone: det?.telefone || l.telefone || '',
+          site: det?.site || l.site || '',
+          cnpj: det?.cnpj || l.cnpj || '',
           veneravel_nome: nomeVmAtivo,
           hasVm: Boolean(nomeVmAtivo || l.hasVm),
           suplente_nome: l.suplente_nome || null,
@@ -533,8 +551,53 @@ export default function PaginaLojas() {
 
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         
-        {/* Painel de Métricas Rápidas */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Painel de Métricas Rápidas — Versão Mobile (Micro-KPIs em linha única compacta) */}
+        <div className="grid grid-cols-3 gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => setFiltroStatus('TODAS')}
+            className={`p-2.5 rounded-xl border text-left transition-all ${
+              filtroStatus === 'TODAS'
+                ? 'bg-[#facc15]/10 border-[#facc15] ring-1 ring-[#facc15]/30'
+                : 'bg-[#141414] border-[#262626] text-gray-400'
+            }`}
+          >
+            <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider truncate">Lojas</span>
+            <div className="text-lg font-black text-white">{totalLojas}</div>
+            <span className="text-[9px] text-gray-500 block truncate">Total no Conselho</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFiltroStatus(filtroStatus === 'COM_VM' ? 'TODAS' : 'COM_VM')}
+            className={`p-2.5 rounded-xl border text-left transition-all ${
+              filtroStatus === 'COM_VM'
+                ? 'bg-green-500/15 border-green-500 ring-1 ring-green-500/30'
+                : 'bg-[#141414] border-[#262626] text-gray-400'
+            }`}
+          >
+            <span className="text-[10px] uppercase font-bold text-green-400 block tracking-wider truncate">Com VM</span>
+            <div className="text-lg font-black text-green-400">{lojasComVm}</div>
+            <span className="text-[9px] text-green-500/70 block truncate">Empossados</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFiltroStatus(filtroStatus === 'PENDENTES' ? 'TODAS' : 'PENDENTES')}
+            className={`p-2.5 rounded-xl border text-left transition-all ${
+              filtroStatus === 'PENDENTES'
+                ? 'bg-amber-500/15 border-amber-500 ring-1 ring-amber-500/30'
+                : 'bg-[#141414] border-[#262626] text-gray-400'
+            }`}
+          >
+            <span className="text-[10px] uppercase font-bold text-amber-400 block tracking-wider truncate">Pendentes</span>
+            <div className="text-lg font-black text-amber-400">{lojasPendentes}</div>
+            <span className="text-[9px] text-amber-500/70 block truncate">A regularizar</span>
+          </button>
+        </div>
+
+        {/* Painel de Métricas Rápidas — Versão Desktop (Cards amplos) */}
+        <div className="hidden md:grid md:grid-cols-3 gap-4">
           <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-gray-400 block mb-1">Lojas Jurisdicionadas</span>
@@ -624,8 +687,123 @@ export default function PaginaLojas() {
             )}
           </div>
 
-          {/* Tabela de Lojas */}
-          <div className="overflow-x-auto">
+          {/* Visualização Mobile: Cards Touch-Friendly Limpos (md:hidden) */}
+          <div className="md:hidden divide-y divide-[#202020]">
+            {lojasFiltradas.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 text-xs px-4">
+                Nenhuma loja encontrada para o filtro informado.
+              </div>
+            ) : (
+              lojasFiltradas.map((l: any) => {
+                const ehMinhaLoja = Boolean(
+                  userContext.loja_id && (String(l.loja_id) === String(userContext.loja_id) || String(l.id) === String(userContext.loja_id))
+                );
+                const ehMeuSuplente = Boolean(
+                  userContext.usuario_id && l.suplente_usuario_id && String(userContext.usuario_id) === String(l.suplente_usuario_id)
+                );
+                const temVm = !!l.hasVm;
+
+                const nomeLimpo = (l.nome || '').replace(/^Loja\s+/i, '').trim();
+                const ehGenerico = !nomeLimpo || nomeLimpo === String(l.id) || nomeLimpo === String(l.numero) || nomeLimpo === `#${l.loja_id}`;
+                const temNum = l.numero && l.numero !== 'S/N';
+                const tituloExibicao = ehGenerico
+                  ? `Loja nº ${temNum ? l.numero : l.id}`
+                  : (temNum ? `Loja ${nomeLimpo}, nº ${l.numero}` : `Loja ${nomeLimpo}`);
+
+                return (
+                  <div
+                    key={l.loja_id}
+                    onClick={() => setLojaDetalhesModal(l)}
+                    className={`p-4 transition-all active:bg-[#1c1c1c] hover:bg-[#181818] cursor-pointer flex flex-col gap-2.5 ${
+                      ehMinhaLoja ? 'bg-blue-500/[0.04] border-l-2 border-l-blue-500' : ''
+                    }`}
+                  >
+                    {/* Linha 1: Título 'Loja {nome}, nº {numero}', Badges de Vínculo e Ações (3 Pontos) */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="font-bold text-white text-sm tracking-tight leading-snug">
+                            {tituloExibicao}
+                          </h3>
+                          {ehMinhaLoja && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                              Sua Loja
+                            </span>
+                          )}
+                          {ehMeuSuplente && !ehMinhaLoja && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                              Seu Assento
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Botão Discreto de 3 Pontos para Ações de Configuração */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLojaAcoesModal(l);
+                        }}
+                        className="p-1.5 -mr-1.5 -mt-1 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors cursor-pointer shrink-0"
+                        title="Ações da Loja"
+                        aria-label="Abrir opções de configuração"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Linha 2: Tags Institucionais (Potência, Rito, Cidade/Oriente, Horário de Sessão) */}
+                    <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                      <span className="px-2 py-0.5 rounded bg-[#202020] text-[#facc15] font-bold border border-[#333]">
+                        {l.potencia || 'GOB'}
+                      </span>
+                      <span className="text-gray-400 font-medium">
+                        {l.rito || 'REAA'}
+                      </span>
+                      {l.cidade && (
+                        <span className="flex items-center gap-1 text-gray-400 truncate">
+                          <MapPin className="w-3 h-3 text-gray-500 shrink-0" />
+                          <span className="truncate">{l.cidade}</span>
+                        </span>
+                      )}
+                      {l.dia_sessao && (
+                        <span className="flex items-center gap-1 text-gray-400 truncate">
+                          <Clock className="w-3 h-3 text-gray-500 shrink-0" />
+                          <span className="truncate">{l.dia_sessao} {l.horario_sessao ? `às ${l.horario_sessao}` : ''}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Linha 3: Status de Liderança (VM e Suplente) */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-1.5 border-t border-[#202020]/60 text-xs">
+                      {temVm ? (
+                        <div className="flex items-center gap-1.5 text-green-400 font-medium truncate" title="Venerável Mestre empossado">
+                          <Award className="w-3.5 h-3.5 shrink-0 text-green-400" />
+                          <span className="truncate">VM: {l.veneravel_nome}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-amber-400/90 font-medium" title="Mandato pendente de posse">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                          <span>VM: Pendente de posse</span>
+                        </div>
+                      )}
+
+                      {l.suplente_nome && (
+                        <div className="flex items-center gap-1.5 text-blue-400 font-medium truncate" title="Suplente do Conselho">
+                          <Users className="w-3.5 h-3.5 shrink-0 text-blue-400" />
+                          <span className="truncate">Suplente: {l.suplente_nome}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Tabela de Lojas — Versão Desktop (hidden md:block) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#262626] text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-[#101010]">
@@ -1437,6 +1615,395 @@ export default function PaginaLojas() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE DETALHES COMPLETOS DA LOJA (Ao tocar no card da loja) */}
+      {lojaDetalhesModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#121212] border border-[#2a2a2a] w-full max-w-2xl rounded-2xl p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            {/* Header do Modal */}
+            <div className="flex items-start justify-between pb-4 border-b border-[#222]">
+              <div>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="px-2 py-0.5 rounded bg-[#202020] text-[#facc15] font-bold text-xs border border-[#333]">
+                    {lojaDetalhesModal.potencia || 'GOB'}
+                  </span>
+                  <span className="text-xs font-semibold text-gray-400">
+                    {lojaDetalhesModal.rito || 'REAA'}
+                  </span>
+                  {userContext.loja_id && (String(lojaDetalhesModal.loja_id) === String(userContext.loja_id) || String(lojaDetalhesModal.id) === String(userContext.loja_id)) && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                      Sua Loja
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-xl font-black text-white tracking-tight">
+                  {(() => {
+                    const nomeLimpo = (lojaDetalhesModal.nome || '').replace(/^Loja\s+/i, '').trim();
+                    const ehGenerico = !nomeLimpo || nomeLimpo === String(lojaDetalhesModal.id) || nomeLimpo === String(lojaDetalhesModal.numero) || nomeLimpo === `#${lojaDetalhesModal.loja_id}`;
+                    const temNum = lojaDetalhesModal.numero && lojaDetalhesModal.numero !== 'S/N';
+                    if (ehGenerico) return `Loja nº ${temNum ? lojaDetalhesModal.numero : lojaDetalhesModal.id}`;
+                    return temNum ? `Loja ${nomeLimpo}, nº ${lojaDetalhesModal.numero}` : `Loja ${nomeLimpo}`;
+                  })()}
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {lojaDetalhesModal.cidade || 'Oriente Não Informado'} {lojaDetalhesModal.estado ? `— ${lojaDetalhesModal.estado}` : ''}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLojaDetalhesModal(null)}
+                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-[#202020] transition-colors"
+                title="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Corpo do Modal com Blocos de Informação */}
+            <div className="space-y-5 text-xs">
+              
+              {/* Bloco 1: Liderança no Conselho Regional */}
+              <div className="bg-[#181818] border border-[#262626] rounded-xl p-4 space-y-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#facc15] block">
+                  Liderança e Representação no Conselho
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-[#111] p-3 rounded-lg border border-[#222]">
+                    <span className="text-gray-500 block mb-1">Venerável Mestre</span>
+                    {lojaDetalhesModal.hasVm ? (
+                      <div className="flex items-center gap-1.5 text-green-400 font-bold">
+                        <Award className="w-4 h-4 shrink-0 text-green-400" />
+                        <span className="truncate">{lojaDetalhesModal.veneravel_nome}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                        <span>Pendente de Posse / Regularização</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-[#111] p-3 rounded-lg border border-[#222]">
+                    <span className="text-gray-500 block mb-1">Suplente do Conselho</span>
+                    {lojaDetalhesModal.suplente_nome ? (
+                      <div className="flex items-center gap-1.5 text-blue-400 font-bold">
+                        <Users className="w-4 h-4 shrink-0 text-blue-400" />
+                        <span className="truncate">{lojaDetalhesModal.suplente_nome}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 italic">Nenhum oficial designado</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloco 2: Templo e Sessões */}
+              <div className="bg-[#181818] border border-[#262626] rounded-xl p-4 space-y-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300 block">
+                  Templo e Calendário de Trabalhos
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-gray-500 block mb-0.5">Endereço do Templo</span>
+                    <p className="text-white font-medium">
+                      {lojaDetalhesModal.logradouro ? (
+                        <>
+                          {lojaDetalhesModal.logradouro}, {lojaDetalhesModal.numero_endereco || 's/n'}
+                          {lojaDetalhesModal.complemento ? ` - ${lojaDetalhesModal.complemento}` : ''}
+                          <br />
+                          {lojaDetalhesModal.bairro ? `${lojaDetalhesModal.bairro}, ` : ''}
+                          {lojaDetalhesModal.cidade || ''} - {lojaDetalhesModal.estado || ''}
+                          {lojaDetalhesModal.cep ? ` | CEP ${lojaDetalhesModal.cep}` : ''}
+                        </>
+                      ) : (
+                        <span className="text-gray-500 italic">Endereço ainda não informado</span>
+                      )}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-gray-500 block mb-0.5">Dia e Horário das Sessões</span>
+                    <p className="text-white font-medium">
+                      {lojaDetalhesModal.dia_sessao ? (
+                        <>
+                          {lojaDetalhesModal.dia_sessao}
+                          {lojaDetalhesModal.horario_sessao ? ` às ${lojaDetalhesModal.horario_sessao}` : ''}
+                          {lojaDetalhesModal.periodicidade ? ` (${lojaDetalhesModal.periodicidade})` : ''}
+                        </>
+                      ) : (
+                        <span className="text-gray-500 italic">Horário não cadastrado</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloco 3: Contatos Institucionais */}
+              <div className="bg-[#181818] border border-[#262626] rounded-xl p-4 space-y-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300 block">
+                  Contatos e Comunicação Institucional
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <span className="text-gray-500 block mb-0.5">E-mail</span>
+                    {lojaDetalhesModal.email ? (
+                      <a href={`mailto:${lojaDetalhesModal.email}`} className="text-[#facc15] hover:underline flex items-center gap-1 truncate">
+                        <Mail className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{lojaDetalhesModal.email}</span>
+                      </a>
+                    ) : (
+                      <span className="text-gray-500 italic">Não informado</span>
+                    )}
+                  </div>
+
+                  <div>
+                    <span className="text-gray-500 block mb-0.5">Telefone / WhatsApp</span>
+                    {lojaDetalhesModal.telefone ? (
+                      <a href={`tel:${lojaDetalhesModal.telefone}`} className="text-white hover:text-[#facc15] flex items-center gap-1 truncate">
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{lojaDetalhesModal.telefone}</span>
+                      </a>
+                    ) : (
+                      <span className="text-gray-500 italic">Não informado</span>
+                    )}
+                  </div>
+
+                  <div>
+                    <span className="text-gray-500 block mb-0.5">Website</span>
+                    {lojaDetalhesModal.site ? (
+                      <a href={lojaDetalhesModal.site} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline flex items-center gap-1 truncate">
+                        <Globe className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{lojaDetalhesModal.site}</span>
+                      </a>
+                    ) : (
+                      <span className="text-gray-500 italic">Não informado</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Rodapé do Modal com Ações Rápidas */}
+            <div className="flex items-center justify-between pt-4 border-t border-[#222] flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                {(userContext.is_diretoria || (userContext.loja_id && String(lojaDetalhesModal.loja_id) === String(userContext.loja_id))) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const l = lojaDetalhesModal;
+                      setLojaDetalhesModal(null);
+                      abrirEdicaoLoja(l);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#222] text-white hover:bg-[#333] transition-colors"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" /> Editar Cadastro
+                  </button>
+                )}
+                {(userContext.is_diretoria || (userContext.loja_id && String(lojaDetalhesModal.loja_id) === String(userContext.loja_id))) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const l = lojaDetalhesModal;
+                      setLojaDetalhesModal(null);
+                      setGestaoVmModal(l);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#facc15]/15 text-[#facc15] hover:bg-[#facc15]/25 border border-[#facc15]/30 transition-colors"
+                  >
+                    <Award className="w-3.5 h-3.5" /> Gerenciar VM
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setLojaDetalhesModal(null)}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold text-gray-300 hover:text-white bg-[#1a1a1a] hover:bg-[#252525] transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE AÇÕES DE CONFIGURAÇÃO (3 Pontos no Mobile) */}
+      {lojaAcoesModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-[#141414] border border-[#2a2a2a] w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            {/* Header da Ação */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#222]">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Opções de Configuração</span>
+                <h3 className="font-bold text-white text-base truncate">
+                  {(() => {
+                    const nomeLimpo = (lojaAcoesModal.nome || '').replace(/^Loja\s+/i, '').trim();
+                    const ehGenerico = !nomeLimpo || nomeLimpo === String(lojaAcoesModal.id) || nomeLimpo === String(lojaAcoesModal.numero) || nomeLimpo === `#${lojaAcoesModal.loja_id}`;
+                    const temNum = lojaAcoesModal.numero && lojaAcoesModal.numero !== 'S/N';
+                    if (ehGenerico) return `Loja nº ${temNum ? lojaAcoesModal.numero : lojaAcoesModal.id}`;
+                    return temNum ? `Loja ${nomeLimpo}, nº ${lojaAcoesModal.numero}` : `Loja ${nomeLimpo}`;
+                  })()}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLojaAcoesModal(null)}
+                className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-[#202020]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Lista de Botões de Ação */}
+            <div className="space-y-1.5 text-xs">
+              {/* Ver Detalhes */}
+              <button
+                type="button"
+                onClick={() => {
+                  const l = lojaAcoesModal;
+                  setLojaAcoesModal(null);
+                  setLojaDetalhesModal(l);
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+              >
+                <Info className="w-4 h-4 text-blue-400 shrink-0" />
+                <div>
+                  <div className="font-semibold text-white">Visualizar Informações Completas</div>
+                  <div className="text-[11px] text-gray-400">Ver endereço, reuniões, contatos e diretoria</div>
+                </div>
+              </button>
+
+              {/* Gerenciar / Empossar VM */}
+              {(userContext.is_diretoria || (userContext.loja_id && String(lojaAcoesModal.loja_id) === String(userContext.loja_id))) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const l = lojaAcoesModal;
+                    setLojaAcoesModal(null);
+                    setGestaoVmModal(l);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                >
+                  <Award className="w-4 h-4 text-[#facc15] shrink-0" />
+                  <div>
+                    <div className="font-semibold text-white">
+                      {lojaAcoesModal.hasVm ? 'Gerenciar Venerável Mestre' : 'Empossar Venerável Mestre'}
+                    </div>
+                    <div className="text-[11px] text-gray-400">Atualizar mandato ou realizar transmissão de posse</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Designar Suplente */}
+              {(userContext.is_diretoria || (userContext.loja_id && String(lojaAcoesModal.loja_id) === String(userContext.loja_id))) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const l = lojaAcoesModal;
+                    setLojaAcoesModal(null);
+                    abrirDesignarSuplente(l);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                >
+                  <UserCog className="w-4 h-4 text-blue-400 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-white">
+                      {lojaAcoesModal.suplente_nome ? 'Trocar Suplente do Conselho' : 'Designar Suplente do Conselho'}
+                    </div>
+                    <div className="text-[11px] text-gray-400">Indicar oficial eletivo da oficina para a cadeira regional</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Editar Dados Cadastrais */}
+              {(userContext.is_diretoria || (userContext.loja_id && String(lojaAcoesModal.loja_id) === String(userContext.loja_id))) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const l = lojaAcoesModal;
+                    setLojaAcoesModal(null);
+                    abrirEdicaoLoja(l);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                >
+                  <Edit3 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-white">Editar Dados Cadastrais da Loja</div>
+                    <div className="text-[11px] text-gray-400">Endereço, dia/horário de sessões e contatos</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Transmissão Emergencial de Cargo (Diretoria) */}
+              {userContext.is_diretoria && !lojaAcoesModal.hasVm && !lojaAcoesModal.suplente_pode_indicar_veneravel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const l = lojaAcoesModal;
+                    setLojaAcoesModal(null);
+                    concederTransmissaoEmergencial(l);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 text-orange-400 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-orange-400">Conceder Transmissão Emergencial</div>
+                    <div className="text-[11px] text-gray-400">Autorizar Mestre Instalado a indicar novo VM</div>
+                  </div>
+                </button>
+              )}
+
+              {userContext.is_diretoria && !lojaAcoesModal.hasVm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const l = lojaAcoesModal;
+                    setLojaAcoesModal(null);
+                    abrirTransmissaoEmergencial(l);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                >
+                  <Award className="w-4 h-4 text-orange-400 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-orange-400">Cadastrar VM Emergencial (Diretoria)</div>
+                    <div className="text-[11px] text-gray-400">Inserir novo Venerável Mestre diretamente pelo Conselho</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Desvincular Loja do Conselho (Diretoria) */}
+              {userContext.is_diretoria && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const l = lojaAcoesModal;
+                    setLojaAcoesModal(null);
+                    removerLoja(l.loja_id);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-left font-medium transition-colors cursor-pointer border border-red-500/20"
+                >
+                  <Trash2 className="w-4 h-4 text-red-400 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-red-400">Desvincular Loja do Conselho</div>
+                    <div className="text-[11px] text-red-400/80">Remover esta loja da jurisdição regional</div>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Botão Cancelar */}
+            <div className="pt-2 border-t border-[#222]">
+              <button
+                type="button"
+                onClick={() => setLojaAcoesModal(null)}
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-[#181818] hover:bg-[#222] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}

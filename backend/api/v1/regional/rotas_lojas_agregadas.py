@@ -95,17 +95,17 @@ def listar_lojas_conselho(
         return {"lojas": []}
 
     ids = [int(a.loja_id) for a in agregadas if a.loja_id.isdigit()]
-    lojas_info = {}
+    lojas_por_id = {}
+    lojas_por_num = {}
     if ids:
         try:
             lojas_api_list = LojasApiClient.buscar_lojas_multiplas(ids)
             for l in lojas_api_list:
                 if l.get("id") is not None:
-                    lojas_info[str(l.get("id"))] = l
-                if l.get("numero_loja"):
-                    lojas_info[str(l.get("numero_loja"))] = l
-                if l.get("numero"):
-                    lojas_info[str(l.get("numero"))] = l
+                    lojas_por_id[str(l.get("id"))] = l
+                num = l.get("numero_loja") or l.get("numero")
+                if num:
+                    lojas_por_num[str(num)] = l
         except Exception as e:
             logger.warning(f"Não foi possível obter dados enriquecidos de lojas via API: {e}")
 
@@ -117,7 +117,7 @@ def listar_lojas_conselho(
 
     resultado = []
     for a in agregadas:
-        info = lojas_info.get(a.loja_id, {})
+        info = lojas_por_id.get(str(a.loja_id)) or lojas_por_num.get(str(a.loja_id)) or {}
         suplente = suplentes_map.get(a.loja_id)
         
         nome_loja = info.get("nome") or info.get("nome_loja") or f"Loja {a.loja_id}"
