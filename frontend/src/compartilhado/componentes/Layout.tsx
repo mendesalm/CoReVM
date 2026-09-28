@@ -4,7 +4,7 @@ import { NavLink, Outlet, useParams, Link, useLocation } from 'react-router-dom'
 import {
   Bell, Calendar, BookOpenCheck, Vote, Landmark,
   FileText, Building2, Award, BarChart3, MessageSquare,
-  Bug, Menu, ChevronLeft, ChevronRight, LogOut, UserPlus, Fingerprint, Home
+  Bug, Menu, ChevronLeft, ChevronRight, LogOut, UserPlus, Fingerprint, Home, X
 } from 'lucide-react';
 import { useAuth, clienteHttp } from '../contextos/AuthContext';
 import LogoAnimadaCore from './LogoAnimadaCore';
@@ -22,6 +22,11 @@ export default function Layout() {
   const [isHovered, setIsHovered] = useState(false);
   const isExpanded = sidebarPinned || isHovered;
   const [showBugModal, setShowBugModal] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [location.pathname]);
 
   // Tooltip flutuante com posição fixa (escapa de overflow-y-auto e overflow-hidden)
   const [tooltipData, setTooltipData] = useState<{
@@ -253,13 +258,19 @@ export default function Layout() {
         <div className="flex items-center gap-3.5 min-w-0">
           <button
             type="button"
-            onClick={() => setSidebarPinned(!sidebarPinned)}
+            onClick={() => {
+              if (window.innerWidth < 768) {
+                setMobileDrawerOpen(prev => !prev);
+              } else {
+                setSidebarPinned(!sidebarPinned);
+              }
+            }}
             className={`p-2 rounded-xl transition-all cursor-pointer border shrink-0 ${
-              sidebarPinned 
+              sidebarPinned || mobileDrawerOpen
                 ? 'text-[#FDE68A] bg-[#0e1c36] border-[rgba(221,185,107,0.4)]' 
                 : 'text-gray-400 hover:text-[#FDE68A] hover:bg-[#0e1c36] border-transparent hover:border-[rgba(221,185,107,0.3)]'
             }`}
-            title={sidebarPinned ? "Desafixar menu lateral" : "Fixar / expandir menu lateral"}
+            title="Menu de Navegação"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -317,7 +328,7 @@ export default function Layout() {
         <aside 
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`transition-all duration-300 ease-in-out bg-[#070e1c]/95 backdrop-blur-md border-r border-[rgba(221,185,107,0.2)] flex flex-col justify-between shrink-0 select-none z-20 ${
+          className={`hidden md:flex transition-all duration-300 ease-in-out bg-[#070e1c]/95 backdrop-blur-md border-r border-[rgba(221,185,107,0.2)] flex-col justify-between shrink-0 select-none z-20 ${
             isExpanded ? 'w-72 shadow-2xl' : 'w-20'
           }`}
         >
@@ -462,9 +473,155 @@ export default function Layout() {
 
         </aside>
 
-        {/* ÁREA CENTRAL DE CONTEÚDO (Fundo Preto Abissal) */}
-        <main className="flex-1 flex flex-col h-full overflow-y-auto bg-[#050508]">
-          <Outlet />
+        {/* MOBILE DRAWER BACKDROP */}
+        {mobileDrawerOpen && (
+          <div 
+            className="md:hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 transition-opacity"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+        )}
+
+        {/* MOBILE DRAWER ASIDE */}
+        <aside 
+          className={`md:hidden fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-[#070e1c] border-r border-[rgba(221,185,107,0.3)] z-50 flex flex-col justify-between shadow-2xl transition-transform duration-300 ease-in-out ${
+            mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-[rgba(221,185,107,0.2)]">
+            <div className="flex items-center gap-2.5">
+              <LogoAnimadaCore theme="ouro" width={28} height={25} animated={false} />
+              <span className="text-xs font-bold text-[#FDE68A] uppercase tracking-wider">Módulos CoReVM</span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setMobileDrawerOpen(false)}
+              className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-[#0e1c36]"
+              title="Fechar Menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Lista de Módulos no Mobile Drawer */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-[#162744]">
+            {itensMenu.map((item) => {
+              const Icone = item.icone;
+              const [itemPath, itemQuery] = item.to.split('?');
+              const outroItemComQueryMesmoCaminho = itensMenu.find(
+                (outro) => outro !== item && outro.to.includes('?') && outro.to.split('?')[0] === itemPath
+              );
+              const isActive = item.exact
+                ? location.pathname === itemPath
+                : itemQuery
+                  ? location.pathname.startsWith(itemPath) && location.search.includes(itemQuery)
+                  : location.pathname.startsWith(itemPath) && !(
+                      outroItemComQueryMesmoCaminho
+                      && location.search.includes(outroItemComQueryMesmoCaminho.to.split('?')[1])
+                    );
+
+              return (
+                <NavLink
+                  key={item.id}
+                  to={item.to}
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] transition-colors ${
+                    isActive 
+                      ? 'bg-[rgba(221,185,107,0.18)] text-[#FDE68A] font-semibold border border-[rgba(221,185,107,0.4)]'
+                      : 'text-gray-300 hover:text-white hover:bg-[rgba(14,28,54,0.6)]'
+                  }`}
+                >
+                  <Icone className="w-5 h-5 shrink-0 text-[#DDB96B]" />
+                  <span className="text-sm">{item.titulo}</span>
+                </NavLink>
+              );
+            })}
+
+            <div className="pt-2 border-t border-[rgba(221,185,107,0.15)] my-2"></div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMobileDrawerOpen(false);
+                setShowBugModal(true);
+              }}
+              className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] text-amber-400 hover:bg-[rgba(14,28,54,0.6)] transition-colors"
+            >
+              <Bug className="w-5 h-5 shrink-0" />
+              <span className="text-sm font-bold">Reportar Bug</span>
+            </button>
+          </div>
+
+          <div className="p-3 border-t border-[rgba(221,185,107,0.15)] bg-[#070e1c]/90 text-center">
+            <p className="text-[10px] font-bold text-gray-300">Addex Solutions • 2026</p>
+          </div>
+        </aside>
+
+        {/* ÁREA CENTRAL DE CONTEÚDO */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#050508]">
+          <div className="flex-1 overflow-y-auto">
+            <Outlet />
+          </div>
+
+          {/* BARRA INFERIOR MOBILE (THUMB ZONE) */}
+          <nav className="md:hidden sticky bottom-0 left-0 right-0 h-16 pb-safe bg-[#070e1c]/95 backdrop-blur-md border-t border-[rgba(221,185,107,0.25)] flex items-center justify-around px-1 z-30 shrink-0 shadow-lg">
+            <NavLink
+              to={`/regiao/${id}`}
+              end
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
+                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                }`
+              }
+            >
+              <Bell className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px]">Avisos</span>
+            </NavLink>
+
+            <NavLink
+              to={`/regiao/${id}/lojas`}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
+                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                }`
+              }
+            >
+              <Building2 className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px]">Lojas</span>
+            </NavLink>
+
+            <NavLink
+              to={`/regiao/${id}/admissoes`}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
+                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                }`
+              }
+            >
+              <BookOpenCheck className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px]">Prévias</span>
+            </NavLink>
+
+            <NavLink
+              to={`/regiao/${id}/votacoes`}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
+                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                }`
+              }
+            >
+              <Vote className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px]">Votações</span>
+            </NavLink>
+
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="flex flex-col items-center justify-center flex-1 h-full min-h-[44px] text-gray-400 hover:text-[#FDE68A] transition-colors"
+            >
+              <Menu className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px]">Mais</span>
+            </button>
+          </nav>
         </main>
 
       </div>
