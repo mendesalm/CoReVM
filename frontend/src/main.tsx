@@ -15,6 +15,12 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
+import { inicializarDispositivoNativo, configurarBotaoVoltarNativo } from './compartilhado/utilitarios/dispositivoNativo';
+
+// Inicialização de hardware móvel (StatusBar, Splash, Keyboard, Back Button)
+inicializarDispositivoNativo();
+configurarBotaoVoltarNativo();
+
 // Registro do Service Worker PWA para suporte offline e instalabilidade
 if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
   window.addEventListener('load', () => {

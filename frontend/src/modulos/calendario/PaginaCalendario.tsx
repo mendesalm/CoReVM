@@ -9,6 +9,7 @@ import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Loader2, ShieldCheck, Calendar, List, Plus, Clock, Building2, CalendarPlus, Download, ChevronRight } from 'lucide-react';
 import { CampoData, CampoHora } from '../../compartilhado/componentes/SeletorDataHora';
 import { gerarLinkGoogleCalendar, baixarArquivoIcs } from '../../compartilhado/utilitarios/calendarioExport';
+import { feedbackTatil } from '../../compartilhado/utilitarios/dispositivoNativo';
 
 // CORREÇÃO (2026-09-19): esta tela era 100% mock — nunca chamava
 // GET /agenda/eventos (o calendário sempre começava vazio) e criar/editar/
@@ -295,10 +296,12 @@ export default function PaginaCalendario() {
           gerar_aviso: gerarAviso,
         });
       }
+      feedbackTatil.sucesso();
       setShowModal(false);
       resetForm();
       await carregarEventos();
     } catch (err: any) {
+      feedbackTatil.erro();
       alert(extrairMensagemErro(err, isEditing ? 'Erro ao atualizar evento' : 'Erro ao criar evento'));
     } finally {
       setSalvando(false);
@@ -311,10 +314,12 @@ export default function PaginaCalendario() {
     setSalvando(true);
     try {
       await clienteHttp.delete(`${API_URL}/regional/${regiaoId}/agenda/eventos/${eventId}`);
+      feedbackTatil.aviso();
       setShowModal(false);
       resetForm();
       await carregarEventos();
     } catch (err: any) {
+      feedbackTatil.erro();
       alert(extrairMensagemErro(err, 'Erro ao cancelar evento'));
     } finally {
       setSalvando(false);
@@ -425,7 +430,10 @@ export default function PaginaCalendario() {
             <div className="flex md:hidden bg-[#161616] p-1 rounded-xl border border-[#333]">
               <button
                 type="button"
-                onClick={() => setModoVisualizacao('lista')}
+                onClick={() => {
+                  feedbackTatil.clique();
+                  setModoVisualizacao('lista');
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   modoVisualizacao === 'lista'
                     ? 'bg-[#facc15] text-black shadow-md'
@@ -437,7 +445,10 @@ export default function PaginaCalendario() {
               </button>
               <button
                 type="button"
-                onClick={() => setModoVisualizacao('calendario')}
+                onClick={() => {
+                  feedbackTatil.clique();
+                  setModoVisualizacao('calendario');
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   modoVisualizacao === 'calendario'
                     ? 'bg-[#facc15] text-black shadow-md'
@@ -680,6 +691,7 @@ export default function PaginaCalendario() {
         <button
           type="button"
           onClick={() => {
+            feedbackTatil.clique();
             resetForm();
             const hoje = new Date().toISOString().slice(0, 10);
             setStartDate(hoje);
