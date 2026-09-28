@@ -1,6 +1,9 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import { useState, useEffect } from 'react';
-import { Search, Plus, MapPin, Users, Activity, Settings, ChevronRight, Loader2, UserPlus, Fingerprint } from 'lucide-react';
+import { 
+  Search, Plus, MapPin, Users, Activity, Settings, ChevronRight, 
+  Loader2, UserPlus, Fingerprint, MoreVertical, Trash2, Building2, X 
+} from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import BuscadorObreiro from '../../compartilhado/componentes/BuscadorObreiro';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
@@ -14,6 +17,7 @@ export default function PainelSuperAdmin() {
   const [loading, setLoading] = useState(true);
   const [regioes, setRegioes] = useState<any[]>([]);
   const [addObreiroModal, setAddObreiroModal] = useState<any>(null);
+  const [menuOpcoesRegiao, setMenuOpcoesRegiao] = useState<any>(null); // Menu de contexto / Bottom sheet mobile
 
   // Wizard States
   const [step, setStep] = useState(1);
@@ -168,37 +172,33 @@ export default function PainelSuperAdmin() {
     }
   };
 
+  const totalLojas = regioes.reduce((acc, r) => acc + (r.lojas?.length || 0), 0);
+  const regioesFiltradas = regioes.filter(r => r.nome.toLowerCase().includes(search.toLowerCase()));
+
   return (
-    <div className="h-full bg-[#080808] text-white p-8 font-sans overflow-y-auto">
+    <div className="h-full bg-[#080808] text-white p-4 sm:p-6 md:p-8 font-sans overflow-y-auto">
       <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-10">
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-[#facc15] mb-2">Administração Global (CoRe)</h1>
-            <p className="text-gray-400">Gerencie todos os Conselhos Regionais (Tenants) do sistema.</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-[#facc15] mb-1">Conselhos Regionais</h1>
+            <p className="text-xs md:text-sm text-gray-400">Administração Global e Gestão de Conselhos</p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Adicionado em 2026-09-17 -- link direto para a tela de
-                aprovacao de Solicitacoes de Cadastro (antes so existia
-                via Swagger). Fica aqui porque o painel do SuperAdmin
-                (esta pagina) nao usa o Layout.tsx com a barra lateral
-                regional, onde o mesmo item de menu tambem foi adicionado. */}
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               to="/solicitacoes-cadastro"
-              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <UserPlus className="w-5 h-5" />
-              Solicitações de Cadastro
+              <UserPlus className="w-4 h-4 text-[#facc15]" />
+              <span className="hidden sm:inline">Solicitações de Cadastro</span>
+              <span className="sm:hidden">Solicitações</span>
             </Link>
-            {/* Adicionado em 2026-09-18, mesma razão do link acima: o
-                SuperAdmin também é uma Pessoa que pode querer cadastrar
-                a própria passkey, e este painel não usa o Layout.tsx
-                onde o item "Minhas Passkeys" também foi adicionado. */}
             <Link
               to="/minhas-passkeys"
-              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <Fingerprint className="w-5 h-5" />
-              Minhas Passkeys
+              <Fingerprint className="w-4 h-4 text-blue-400" />
+              <span className="hidden sm:inline">Minhas Passkeys</span>
+              <span className="sm:hidden">Passkeys</span>
             </Link>
             <button
               onClick={() => {
@@ -210,16 +210,32 @@ export default function PainelSuperAdmin() {
                 setSecretarioId('');
                 setShowModal(true);
               }}
-              className="bg-[#facc15] hover:bg-[#eab308] text-black px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+              className="bg-[#facc15] hover:bg-[#eab308] text-black px-3.5 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Plus className="w-5 h-5" />
-              Novo Conselho
+              <Plus className="w-4 h-4" />
+              <span>Novo Conselho</span>
             </button>
           </div>
         </header>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        {/* Mobile: Micro-KPIs compactos em linha única (economiza ~400px verticais) */}
+        <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-1 mb-4 no-scrollbar">
+          <div className="flex items-center gap-1.5 bg-[#111] border border-[#222] px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
+            <MapPin className="text-blue-400 w-3.5 h-3.5" />
+            <span className="font-bold text-white">{regioes.length}</span> Conselhos
+          </div>
+          <div className="flex items-center gap-1.5 bg-[#111] border border-[#222] px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
+            <Building2 className="text-green-400 w-3.5 h-3.5" />
+            <span className="font-bold text-white">{totalLojas}</span> Lojas
+          </div>
+          <div className="flex items-center gap-1.5 bg-[#111] border border-[#222] px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="text-green-400 font-medium">Online</span>
+          </div>
+        </div>
+
+        {/* Desktop: Stats Row tradicional em 3 cards */}
+        <div className="hidden md:grid md:grid-cols-3 gap-6 mb-10">
           <div className="bg-[#111111] border border-[#222] p-6 rounded-xl flex items-center justify-between">
             <div>
               <p className="text-gray-400 mb-1">Total de Conselhos</p>
@@ -232,7 +248,7 @@ export default function PainelSuperAdmin() {
           <div className="bg-[#111111] border border-[#222] p-6 rounded-xl flex items-center justify-between">
             <div>
               <p className="text-gray-400 mb-1">Lojas Integradas</p>
-              <h3 className="text-3xl font-bold text-white">0 <span className="text-xs text-gray-500 font-normal ml-2">(Em breve)</span></h3>
+              <h3 className="text-3xl font-bold text-white">{totalLojas}</h3>
             </div>
             <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
               <Users className="text-green-500 w-6 h-6" />
@@ -249,85 +265,238 @@ export default function PainelSuperAdmin() {
           </div>
         </div>
 
-        {/* Search and Table */}
-        <div className="bg-[#111111] border border-[#222] rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-[#222] flex items-center gap-3">
-            <Search className="text-gray-500 w-5 h-5" />
+        {/* Search and List/Table Container */}
+        <div className="bg-[#111111] border border-[#222] rounded-xl overflow-hidden mb-8">
+          <div className="p-3.5 md:p-4 border-b border-[#222] flex items-center gap-3">
+            <Search className="text-gray-500 w-5 h-5 shrink-0" />
             <input 
               type="text" 
-              placeholder="Buscar conselho regional..." 
-              className="bg-transparent border-none outline-none text-white w-full placeholder-gray-500"
+              placeholder="Buscar conselho (ex: Anápolis, Ceres)..." 
+              className="bg-transparent border-none outline-none text-white w-full placeholder-gray-500 text-sm md:text-base"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
 
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#1a1a1a] text-gray-400 text-sm">
-                <th className="p-4 font-medium">Nome do Conselho</th>
-                <th className="p-4 font-medium">Lojas (Tenants)</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-500">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                    Carregando conselhos...
-                  </td>
+          {/* Desktop View: Tabela */}
+          <div className="hidden md:block">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#1a1a1a] text-gray-400 text-sm">
+                  <th className="p-4 font-medium">Nome do Conselho</th>
+                  <th className="p-4 font-medium">Lojas (Tenants)</th>
+                  <th className="p-4 font-medium">Status</th>
+                  <th className="p-4 font-medium text-right">Ações</th>
                 </tr>
-              ) : regioes.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-500">Nenhum conselho regional encontrado. Crie o primeiro!</td>
-                </tr>
-              ) : regioes.filter(r => r.nome.toLowerCase().includes(search.toLowerCase())).map(regiao => (
-                <tr key={regiao.id} className="border-b border-[#222] hover:bg-[#151515] transition-colors">
-                  <td className="p-4 font-medium text-[#facc15]">{regiao.nome} <span className="text-gray-500 text-xs ml-2">({regiao.uf})</span></td>
-                  <td className="p-4 text-gray-300">
-                      <button onClick={() => openViewLojas(regiao)} className="hover:text-[#facc15] underline decoration-dashed underline-offset-4 transition-colors">
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-gray-500">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-[#facc15]" />
+                      Carregando conselhos...
+                    </td>
+                  </tr>
+                ) : regioesFiltradas.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-gray-500">
+                      Nenhum conselho regional encontrado.
+                    </td>
+                  </tr>
+                ) : regioesFiltradas.map(regiao => (
+                  <tr key={regiao.id} className="border-b border-[#222] hover:bg-[#151515] transition-colors">
+                    <td className="p-4 font-medium text-[#facc15]">
+                      {regiao.nome} <span className="text-gray-500 text-xs ml-2">({regiao.uf || 'GO'})</span>
+                    </td>
+                    <td className="p-4 text-gray-300">
+                      <button onClick={() => openViewLojas(regiao)} className="hover:text-[#facc15] underline decoration-dashed underline-offset-4 transition-colors cursor-pointer">
                         {regiao.lojas?.length || 0} Lojas ativas
                       </button>
                     </td>
-                  <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      regiao.ativa ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'
-                    }`}>
-                      {regiao.ativa ? 'ATIVO' : 'INATIVO'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right flex justify-end gap-2">
-                    <button 
-                      onClick={() => openEditModal(regiao)}
-                      className="p-2 hover:bg-[#222] rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1"
-                      title="Editar Dados da Região"
+                    <td className="p-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        regiao.ativa ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'
+                      }`}>
+                        {regiao.ativa ? 'ATIVO' : 'INATIVO'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right flex justify-end gap-2">
+                      <button 
+                        onClick={() => openEditModal(regiao)}
+                        className="p-2 hover:bg-[#222] rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+                        title="Editar Dados da Região"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span className="text-sm">Editar</span>
+                      </button>
+                      <button 
+                        onClick={() => navigate(`/regiao/${regiao.id}`)}
+                        className="p-2 hover:bg-[#222] rounded-lg text-[#facc15] hover:text-[#eab308] transition-colors flex items-center gap-1 font-medium cursor-pointer"
+                        title="Entrar no Dashboard do Conselho"
+                      >
+                        Acessar <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(regiao.id)}
+                        className="p-2 hover:bg-[#222] rounded-lg text-red-500/50 hover:text-red-500 transition-colors flex items-center cursor-pointer"
+                        title="Deletar Região"
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile View: Cards Touch-First (Opção 1: toque abre conselho direto, 3-pontos abre opções) */}
+          <div className="block md:hidden divide-y divide-[#222]">
+            {loading ? (
+              <div className="p-8 text-center text-gray-500">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-[#facc15]" />
+                Carregando conselhos...
+              </div>
+            ) : regioesFiltradas.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                Nenhum conselho regional encontrado.
+              </div>
+            ) : (
+              regioesFiltradas.map(regiao => (
+                <div
+                  key={regiao.id}
+                  onClick={() => navigate(`/regiao/${regiao.id}`)}
+                  className="p-4 hover:bg-[#151515] active:bg-[#1a1a1a] transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <h3 className="text-base font-bold text-white group-hover:text-[#facc15] transition-colors truncate">
+                        {regiao.nome}
+                      </h3>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-[#222] text-gray-300">
+                        {regiao.uf || 'GO'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        regiao.ativa ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+                      }`}>
+                        {regiao.ativa ? 'ATIVO' : 'INATIVO'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-gray-500" />
+                      <span>{regiao.lojas?.length || 0} Lojas jurisdicionadas</span>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpcoesRegiao(regiao);
+                      }}
+                      className="p-2.5 text-gray-400 hover:text-white hover:bg-[#222] active:bg-[#333] rounded-xl transition-colors cursor-pointer"
+                      title="Mais opções do Conselho"
+                      aria-label="Mais opções"
                     >
-                      <Settings className="w-4 h-4" />
-                      <span className="text-sm">Editar</span>
+                      <MoreVertical className="w-5 h-5" />
                     </button>
-                    <button 
-                      onClick={() => navigate(`/regiao/${regiao.id}`)}
-                      className="p-2 hover:bg-[#222] rounded-lg text-[#facc15] hover:text-[#eab308] transition-colors flex items-center gap-1 font-medium"
-                      title="Entrar no Dashboard do Conselho"
-                    >
-                      Acessar <ChevronRight className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(regiao.id)}
-                      className="p-2 hover:bg-[#222] rounded-lg text-red-500/50 hover:text-red-500 transition-colors flex items-center"
-                      title="Deletar Região"
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              ))}
-</tbody>
-          </table>
+                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-[#facc15] transition-colors" />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Bottom Sheet de Opções Mobile para o Conselho Selecionado */}
+      {menuOpcoesRegiao && (
+        <div className="fixed inset-0 z-[80] md:hidden">
+          <div 
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+            onClick={() => setMenuOpcoesRegiao(null)}
+          />
+          <div className="fixed inset-x-0 bottom-0 bg-[#141414] border-t border-[#2a2a2a] rounded-t-3xl p-5 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between border-b border-[#222] pb-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Conselho Regional</p>
+                <h3 className="text-lg font-bold text-white">{menuOpcoesRegiao.nome} ({menuOpcoesRegiao.uf || 'GO'})</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMenuOpcoesRegiao(null)}
+                className="p-2 text-gray-400 hover:text-white rounded-full bg-[#222] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const regId = menuOpcoesRegiao.id;
+                  setMenuOpcoesRegiao(null);
+                  navigate(`/regiao/${regId}`);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-[#facc15]/10 border border-[#facc15]/30 text-[#facc15] font-bold text-sm hover:bg-[#facc15]/20 transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Activity className="w-4 h-4" /> Acessar Painel do Conselho
+                </span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const target = menuOpcoesRegiao;
+                  setMenuOpcoesRegiao(null);
+                  openViewLojas(target);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-[#1c1c1c] hover:bg-[#252525] border border-[#2a2a2a] text-gray-200 text-sm font-medium transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Building2 className="w-4 h-4 text-blue-400" />
+                  Ver Lojas Jurisdicionadas ({menuOpcoesRegiao.lojas?.length || 0})
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const target = menuOpcoesRegiao;
+                  setMenuOpcoesRegiao(null);
+                  openEditModal(target);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-[#1c1c1c] hover:bg-[#252525] border border-[#2a2a2a] text-gray-200 text-sm font-medium transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Settings className="w-4 h-4 text-gray-400" /> Editar Dados do Conselho
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const regId = menuOpcoesRegiao.id;
+                  setMenuOpcoesRegiao(null);
+                  handleDelete(regId);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-sm font-medium transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Trash2 className="w-4 h-4" /> Excluir Conselho
+                </span>
+                <ChevronRight className="w-4 h-4 text-red-500/50" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Criação (Wizard) */}
       {showModal && (
