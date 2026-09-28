@@ -1,5 +1,6 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
-import { StrictMode } from 'react'
+// Nota: StrictMode removido para evitar dupla inicialização do Google GSI
+// (@react-oauth/google v0.13.5 chama google.accounts.id.initialize() duas vezes com StrictMode)
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
@@ -8,11 +9,9 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '123456789-mock-id.apps.googleusercontent.com';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <App />
-    </GoogleOAuthProvider>
-  </StrictMode>,
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <App />
+  </GoogleOAuthProvider>,
 )
 
 import { inicializarDispositivoNativo, configurarBotaoVoltarNativo } from './compartilhado/utilitarios/dispositivoNativo';
