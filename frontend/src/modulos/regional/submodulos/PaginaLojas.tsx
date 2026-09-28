@@ -5,7 +5,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   Building2, ShieldCheck, Loader2, Award,
   Edit3, Trash2, Plus, Search, CheckCircle2, AlertTriangle, ArrowLeft,
-  Users, UserCog, X, Zap, MoreVertical, MapPin, Clock, Phone, Mail,
+  Users, UserCog, X, Zap, MoreVertical, Phone, Mail,
   Globe, Info
 } from 'lucide-react';
 import BuscadorLoja from '../../../compartilhado/componentes/BuscadorLoja';
@@ -232,30 +232,27 @@ export default function PaginaLojas() {
       }
 
       // MODO GERAL: Tabela de Lojas Jurisdicionadas do Conselho Regional
-      const idsNumericos = Array.from(new Set(
+      // Consulta estritamente pelos identificadores únicos (id ou codigo_loja)
+      const idsConsulta = Array.from(new Set(
         lojasBase
-          .flatMap((l: any) => [
-            parseInt(l.id || l.loja_id),
-            parseInt(l.numero || l.numero_loja)
-          ])
-          .filter((n: number) => !isNaN(n))
+          .map((l: any) => l.loja_id || l.id)
+          .filter(Boolean)
       ));
 
       let detailsMap: Record<string, any> = {};
       let vmStatusMap: Record<string, any> = {};
 
-      if (idsNumericos.length > 0) {
+      if (idsConsulta.length > 0) {
         try {
           const [detailsRes, vmStatusRes] = await Promise.all([
-            clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsNumericos).catch(() => null),
-            clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, idsNumericos).catch(() => null)
+            clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsConsulta).catch(() => null),
+            clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, idsConsulta).catch(() => null)
           ]);
 
           if (detailsRes?.data && Array.isArray(detailsRes.data)) {
             detailsRes.data.forEach((d: any) => {
               if (d.id != null) detailsMap[String(d.id)] = d;
-              if (d.numero) detailsMap[String(d.numero)] = d;
-              if (d.numero_loja) detailsMap[String(d.numero_loja)] = d;
+              if (d.codigo_loja) detailsMap[String(d.codigo_loja)] = d;
             });
           }
           if (vmStatusRes?.data && typeof vmStatusRes.data === 'object') {
@@ -267,26 +264,26 @@ export default function PaginaLojas() {
       }
 
       const lojasProcessadas = lojasBase.map((l: any) => {
-        const lojaIdStr = String(l.id || l.loja_id);
-        const numeroStr = String(l.numero || l.numero_loja || '');
-        const det = detailsMap[lojaIdStr] || (numeroStr ? detailsMap[numeroStr] : null);
+        const lojaIdStr = String(l.loja_id || l.id);
+        const det = detailsMap[lojaIdStr] || null;
         const nomeVmAtivo = vmStatusMap[lojaIdStr] 
           || (det && vmStatusMap[String(det.id)]) 
-          || (numeroStr ? vmStatusMap[numeroStr] : null) 
+          || (det?.codigo_loja && vmStatusMap[det.codigo_loja])
           || l.veneravel_nome 
           || null;
 
-        let nomeBase = det?.nome || det?.nome_loja || l.nome;
-        if (!nomeBase || nomeBase === `Loja ${lojaIdStr}` || nomeBase === `Loja #${lojaIdStr}`) {
-          nomeBase = det?.nome || det?.nome_loja || `Loja #${lojaIdStr}`;
-        }
-        const numeroFinal = det?.numero || det?.numero_loja || l.numero || l.numero_loja || 'S/N';
+        // Limpa o nome da loja removendo prefixo redundante "Loja" se houver
+        const nomeBruto = det?.nome_loja || det?.nome || l.nome_loja || l.nome || '';
+        const nomeLimpo = nomeBruto.replace(/^Loja\s+/i, '').trim() || `Loja #${lojaIdStr}`;
+        const numeroFinal = det?.numero_loja || det?.numero || l.numero_loja || l.numero || '';
 
         return {
           ...l,
-          id: parseInt(lojaIdStr),
+          id: l.id || lojaIdStr,
           loja_id: lojaIdStr,
-          nome: nomeBase,
+          codigo_loja: det?.codigo_loja || l.codigo_loja || null,
+          nome: nomeLimpo,
+          nome_loja: nomeLimpo,
           numero: String(numeroFinal),
           numero_loja: String(numeroFinal),
           cidade: det?.cidade || l.cidade || '',
@@ -701,101 +698,58 @@ export default function PaginaLojas() {
                 const ehMeuSuplente = Boolean(
                   userContext.usuario_id && l.suplente_usuario_id && String(userContext.usuario_id) === String(l.suplente_usuario_id)
                 );
-                const temVm = !!l.hasVm;
 
-                const nomeLimpo = (l.nome || '').replace(/^Loja\s+/i, '').trim();
-                const ehGenerico = !nomeLimpo || nomeLimpo === String(l.id) || nomeLimpo === String(l.numero) || nomeLimpo === `#${l.loja_id}`;
-                const temNum = l.numero && l.numero !== 'S/N';
-                const tituloExibicao = ehGenerico
-                  ? `Loja nº ${temNum ? l.numero : l.id}`
-                  : (temNum ? `Loja ${nomeLimpo}, nº ${l.numero}` : `Loja ${nomeLimpo}`);
+
+                // Composição Estrita: 'Loja ' + {nome_loja} + ', nº ' + {numero_loja}
+                const nomeLojaLimpo = (l.nome_loja || l.nome || '').replace(/^Loja\s+/i, '').trim();
+                const numLoja = l.numero_loja || l.numero;
+                const tituloCard = numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
 
                 return (
                   <div
                     key={l.loja_id}
                     onClick={() => setLojaDetalhesModal(l)}
-                    className={`p-4 transition-all active:bg-[#1c1c1c] hover:bg-[#181818] cursor-pointer flex flex-col gap-2.5 ${
-                      ehMinhaLoja ? 'bg-blue-500/[0.04] border-l-2 border-l-blue-500' : ''
+                    className={`p-4 transition-all active:bg-[#1c1c1c] hover:bg-[#181818] cursor-pointer flex items-center justify-between gap-3 ${
+                      ehMinhaLoja ? 'bg-blue-500/[0.04] border-l-4 border-l-blue-500' : ''
                     }`}
                   >
-                    {/* Linha 1: Título 'Loja {nome}, nº {numero}', Badges de Vínculo e Ações (3 Pontos) */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="font-bold text-white text-sm tracking-tight leading-snug">
-                            {tituloExibicao}
-                          </h3>
-                          {ehMinhaLoja && (
-                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-blue-500/15 text-blue-300 border border-blue-500/30">
-                              Sua Loja
-                            </span>
-                          )}
-                          {ehMeuSuplente && !ehMinhaLoja && (
-                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                              Seu Assento
-                            </span>
-                          )}
-                        </div>
+                    {/* Título Limpo Touch-Friendly */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-white text-sm tracking-tight leading-snug">
+                          {tituloCard}
+                        </h3>
+                        {ehMinhaLoja && (
+                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                            Sua Loja
+                          </span>
+                        )}
+                        {ehMeuSuplente && !ehMinhaLoja && (
+                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            Seu Assento
+                          </span>
+                        )}
                       </div>
-
-                      {/* Botão Discreto de 3 Pontos para Ações de Configuração */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setLojaAcoesModal(l);
-                        }}
-                        className="p-1.5 -mr-1.5 -mt-1 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors cursor-pointer shrink-0"
-                        title="Ações da Loja"
-                        aria-label="Abrir opções de configuração"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Linha 2: Tags Institucionais (Potência, Rito, Cidade/Oriente, Horário de Sessão) */}
-                    <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                      <span className="px-2 py-0.5 rounded bg-[#202020] text-[#facc15] font-bold border border-[#333]">
-                        {l.potencia || 'GOB'}
-                      </span>
-                      <span className="text-gray-400 font-medium">
-                        {l.rito || 'REAA'}
-                      </span>
                       {l.cidade && (
-                        <span className="flex items-center gap-1 text-gray-400 truncate">
-                          <MapPin className="w-3 h-3 text-gray-500 shrink-0" />
-                          <span className="truncate">{l.cidade}</span>
-                        </span>
-                      )}
-                      {l.dia_sessao && (
-                        <span className="flex items-center gap-1 text-gray-400 truncate">
-                          <Clock className="w-3 h-3 text-gray-500 shrink-0" />
-                          <span className="truncate">{l.dia_sessao} {l.horario_sessao ? `às ${l.horario_sessao}` : ''}</span>
+                        <span className="text-[11px] text-gray-500 block mt-0.5 truncate">
+                          {l.cidade}
                         </span>
                       )}
                     </div>
 
-                    {/* Linha 3: Status de Liderança (VM e Suplente) */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-1.5 border-t border-[#202020]/60 text-xs">
-                      {temVm ? (
-                        <div className="flex items-center gap-1.5 text-green-400 font-medium truncate" title="Venerável Mestre empossado">
-                          <Award className="w-3.5 h-3.5 shrink-0 text-green-400" />
-                          <span className="truncate">VM: {l.veneravel_nome}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-amber-400/90 font-medium" title="Mandato pendente de posse">
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                          <span>VM: Pendente de posse</span>
-                        </div>
-                      )}
-
-                      {l.suplente_nome && (
-                        <div className="flex items-center gap-1.5 text-blue-400 font-medium truncate" title="Suplente do Conselho">
-                          <Users className="w-3.5 h-3.5 shrink-0 text-blue-400" />
-                          <span className="truncate">Suplente: {l.suplente_nome}</span>
-                        </div>
-                      )}
-                    </div>
+                    {/* Botão Discreto de 3 Pontos para Ações de Configuração */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLojaAcoesModal(l);
+                      }}
+                      className="p-2 -mr-1 text-gray-400 hover:text-white hover:bg-[#252525] rounded-xl transition-colors cursor-pointer shrink-0"
+                      title="Ações da Loja"
+                      aria-label="Abrir opções de configuração"
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
                   </div>
                 );
               })
@@ -845,18 +799,18 @@ export default function PaginaLojas() {
                       && !temVm;
 
                     return (
-                      <tr key={l.loja_id} className={`hover:bg-[#181818] transition-colors group ${ehMinhaLoja ? 'bg-blue-500/[0.04]' : ''}`}>
-                        {/* Coluna unificada em um único texto "Loja {nome}, nº {número}" */}
+                      <tr 
+                        key={l.loja_id} 
+                        onClick={() => setLojaDetalhesModal(l)}
+                        className={`hover:bg-[#181818] transition-colors cursor-pointer group ${ehMinhaLoja ? 'bg-blue-500/[0.04]' : ''}`}
+                      >
+                        {/* Coluna unificada com padrão estrito: 'Loja {nome_loja}, nº {numero_loja}' */}
                         <td className="p-3.5 pl-5">
-                          <span className="font-bold text-white">
+                          <span className="font-bold text-white group-hover:text-[#facc15] transition-colors">
                             {(() => {
-                              const nomeLimpo = (l.nome || '').replace(/^Loja\s+/i, '').trim();
-                              const ehGenerico = !nomeLimpo || nomeLimpo === String(l.id) || nomeLimpo === String(l.numero) || nomeLimpo === `#${l.loja_id}`;
-                              const temNum = l.numero && l.numero !== 'S/N';
-                              if (ehGenerico) {
-                                return `Loja nº ${temNum ? l.numero : l.id}`;
-                              }
-                              return temNum ? `Loja ${nomeLimpo}, nº ${l.numero}` : `Loja ${nomeLimpo}`;
+                              const nomeLojaLimpo = (l.nome_loja || l.nome || '').replace(/^Loja\s+/i, '').trim();
+                              const numLoja = l.numero_loja || l.numero;
+                              return numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
                             })()}
                           </span>
                           {ehMinhaLoja && (
@@ -1641,11 +1595,9 @@ export default function PaginaLojas() {
                 </div>
                 <h2 className="text-xl font-black text-white tracking-tight">
                   {(() => {
-                    const nomeLimpo = (lojaDetalhesModal.nome || '').replace(/^Loja\s+/i, '').trim();
-                    const ehGenerico = !nomeLimpo || nomeLimpo === String(lojaDetalhesModal.id) || nomeLimpo === String(lojaDetalhesModal.numero) || nomeLimpo === `#${lojaDetalhesModal.loja_id}`;
-                    const temNum = lojaDetalhesModal.numero && lojaDetalhesModal.numero !== 'S/N';
-                    if (ehGenerico) return `Loja nº ${temNum ? lojaDetalhesModal.numero : lojaDetalhesModal.id}`;
-                    return temNum ? `Loja ${nomeLimpo}, nº ${lojaDetalhesModal.numero}` : `Loja ${nomeLimpo}`;
+                    const nomeLojaLimpo = (lojaDetalhesModal.nome_loja || lojaDetalhesModal.nome || '').replace(/^Loja\s+/i, '').trim();
+                    const numLoja = lojaDetalhesModal.numero_loja || lojaDetalhesModal.numero;
+                    return numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
                   })()}
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -1840,11 +1792,9 @@ export default function PaginaLojas() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Opções de Configuração</span>
                 <h3 className="font-bold text-white text-base truncate">
                   {(() => {
-                    const nomeLimpo = (lojaAcoesModal.nome || '').replace(/^Loja\s+/i, '').trim();
-                    const ehGenerico = !nomeLimpo || nomeLimpo === String(lojaAcoesModal.id) || nomeLimpo === String(lojaAcoesModal.numero) || nomeLimpo === `#${lojaAcoesModal.loja_id}`;
-                    const temNum = lojaAcoesModal.numero && lojaAcoesModal.numero !== 'S/N';
-                    if (ehGenerico) return `Loja nº ${temNum ? lojaAcoesModal.numero : lojaAcoesModal.id}`;
-                    return temNum ? `Loja ${nomeLimpo}, nº ${lojaAcoesModal.numero}` : `Loja ${nomeLimpo}`;
+                    const nomeLojaLimpo = (lojaAcoesModal.nome_loja || lojaAcoesModal.nome || '').replace(/^Loja\s+/i, '').trim();
+                    const numLoja = lojaAcoesModal.numero_loja || lojaAcoesModal.numero;
+                    return numLoja ? `Loja ${nomeLojaLimpo}, nº ${numLoja}` : `Loja ${nomeLojaLimpo}`;
                   })()}
                 </h3>
               </div>

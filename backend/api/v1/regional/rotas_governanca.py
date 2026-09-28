@@ -194,17 +194,15 @@ def obter_diretoria_regional(
                 logger.warning(f"Erro ao buscar obreiro {uid} para diretoria: {e}")
 
     lojas_por_id = {}
-    lojas_por_num = {}
-    lojas_ids_int = [int(d.loja_id) for d in diretoria if d.loja_id and str(d.loja_id).isdigit()]
-    if lojas_ids_int:
+    lojas_ids = [int(d.loja_id) if str(d.loja_id).isdigit() else str(d.loja_id) for d in diretoria if d.loja_id]
+    if lojas_ids:
         try:
-            lojas_list = LojasApiClient.buscar_lojas_multiplas(lojas_ids_int)
+            lojas_list = LojasApiClient.buscar_lojas_multiplas(lojas_ids)
             for l in lojas_list:
                 if l.get("id") is not None:
                     lojas_por_id[str(l.get("id"))] = l
-                num = l.get("numero_loja") or l.get("numero")
-                if num:
-                    lojas_por_num[str(num)] = l
+                if l.get("codigo_loja"):
+                    lojas_por_id[str(l.get("codigo_loja"))] = l
         except Exception as e:
             logger.warning(f"Erro ao buscar detalhes de lojas para diretoria: {e}")
 
@@ -215,9 +213,9 @@ def obter_diretoria_regional(
         vinculo_desatualizado = False
         loja_sem_vm = False
         sugestao = None
-        info_loja = (lojas_por_id.get(str(d.loja_id)) or lojas_por_num.get(str(d.loja_id)) or {}) if d.loja_id else {}
-        loja_numero = info_loja.get("numero_loja") or info_loja.get("numero") or (d.loja_id if d.loja_id and str(d.loja_id).isdigit() else None)
-        loja_nome = info_loja.get("nome") or info_loja.get("nome_loja")
+        info_loja = (lojas_por_id.get(str(d.loja_id)) or {}) if d.loja_id else {}
+        loja_numero = str(info_loja.get("numero_loja") or "") if info_loja else None
+        loja_nome = info_loja.get("nome_loja") or info_loja.get("nome")
 
         if d.loja_id and str(d.loja_id).isdigit():
             try:

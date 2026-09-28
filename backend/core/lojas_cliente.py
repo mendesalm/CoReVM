@@ -5,7 +5,7 @@ Substitui o acesso direto ao banco `lojas_db`, isolando a fronteira de dados
 e delegando autorizações, auditorias e regras de negócio para o ERP Lojas.
 """
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 import httpx
 from fastapi import HTTPException
 from loguru import logger
@@ -81,8 +81,8 @@ class LojasApiClient:
             return []
 
     @classmethod
-    def buscar_lojas_multiplas(cls, ids: List[int], token: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Busca detalhes de múltiplas lojas por lista de IDs."""
+    def buscar_lojas_multiplas(cls, ids: List[Union[int, str]], token: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Busca detalhes de múltiplas lojas por lista de IDs (inteiros ou codigo_loja/UUID)."""
         if not ids:
             return []
         headers = _montar_headers(token_bearer=token)
@@ -100,8 +100,8 @@ class LojasApiClient:
             return []
 
     @classmethod
-    def verificar_status_vm(cls, ids: List[int], token: Optional[str] = None) -> Dict[str, Optional[str]]:
-        """Verifica o status de Venerável Mestre ativo para um lote de lojas."""
+    def verificar_status_vm(cls, ids: List[Union[int, str]], token: Optional[str] = None) -> Dict[str, Optional[str]]:
+        """Verifica o status de Venerável Mestre ativo para um lote de lojas (por ID ou codigo_loja)."""
         if not ids:
             return {}
         headers = _montar_headers(token_bearer=token)

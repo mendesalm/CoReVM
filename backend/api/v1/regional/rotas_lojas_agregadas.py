@@ -94,18 +94,16 @@ def listar_lojas_conselho(
     if not agregadas:
         return {"lojas": []}
 
-    ids = [int(a.loja_id) for a in agregadas if a.loja_id.isdigit()]
+    ids = [int(a.loja_id) if a.loja_id.isdigit() else str(a.loja_id) for a in agregadas]
     lojas_por_id = {}
-    lojas_por_num = {}
     if ids:
         try:
             lojas_api_list = LojasApiClient.buscar_lojas_multiplas(ids)
             for l in lojas_api_list:
                 if l.get("id") is not None:
                     lojas_por_id[str(l.get("id"))] = l
-                num = l.get("numero_loja") or l.get("numero")
-                if num:
-                    lojas_por_num[str(num)] = l
+                if l.get("codigo_loja"):
+                    lojas_por_id[str(l.get("codigo_loja"))] = l
         except Exception as e:
             logger.warning(f"Não foi possível obter dados enriquecidos de lojas via API: {e}")
 
@@ -117,18 +115,20 @@ def listar_lojas_conselho(
 
     resultado = []
     for a in agregadas:
-        info = lojas_por_id.get(str(a.loja_id)) or lojas_por_num.get(str(a.loja_id)) or {}
+        info = lojas_por_id.get(str(a.loja_id)) or {}
         suplente = suplentes_map.get(a.loja_id)
         
-        nome_loja = info.get("nome") or info.get("nome_loja") or f"Loja {a.loja_id}"
-        numero_loja = info.get("numero_loja") or info.get("numero") or a.loja_id
+        nome_loja = info.get("nome_loja") or info.get("nome") or f"Loja {a.loja_id}"
+        numero_loja = str(info.get("numero_loja") or "")
         
         resultado.append({
             "id": a.loja_id,
             "loja_id": a.loja_id,
+            "codigo_loja": info.get("codigo_loja"),
             "nome": nome_loja,
-            "numero": str(numero_loja),
-            "numero_loja": str(numero_loja),
+            "nome_loja": nome_loja,
+            "numero": numero_loja,
+            "numero_loja": numero_loja,
             "potencia": info.get("potencia"),
             "rito": info.get("rito"),
             "cidade": info.get("cidade"),
