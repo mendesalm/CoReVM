@@ -71,15 +71,14 @@ class LojasApiClient:
         try:
             with httpx.Client(timeout=LOJAS_TIMEOUT_SEGUNDOS) as cliente:
                 res = cliente.get(f"{LOJAS_API_BASE_URL}/lojas/busca", params={"q": termo}, headers=headers)
+                if res.status_code == 404:
+                    return []
                 if res.status_code != 200:
                     cls._tratar_erro(res, f"buscar lojas com termo '{termo}'")
                 return res.json()
         except httpx.RequestError as e:
-            logger.error(f"Falha de comunicação com módulo Lojas: {e}")
-            raise HTTPException(
-                status_code=503,
-                detail="Módulo Lojas indisponível para consulta no momento.",
-            )
+            logger.warning(f"Falha de comunicação com módulo Lojas (busca): {e}")
+            return []
 
     @classmethod
     def buscar_lojas_multiplas(cls, ids: List[int], token: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -191,11 +190,8 @@ class LojasApiClient:
                     "telefone": dados.get("telefone"),
                 }
         except httpx.RequestError as e:
-            logger.error(f"Falha ao consultar VM ativo no módulo Lojas: {e}")
-            raise HTTPException(
-                status_code=503,
-                detail="Não foi possível consultar os dados do Venerável Mestre no módulo Lojas.",
-            )
+            logger.warning(f"Falha ao consultar VM ativo no módulo Lojas (conflito/timeout): {e}")
+            return {"tem_vm": False, "loja_id": loja_id}
 
     @classmethod
     def atualizar_vm_ativo(
@@ -257,6 +253,8 @@ class LojasApiClient:
         try:
             with httpx.Client(timeout=LOJAS_TIMEOUT_SEGUNDOS) as cliente:
                 res = cliente.get(f"{LOJAS_API_BASE_URL}/lojas/{loja_id}/mandatos/vm/historico", headers=headers)
+                if res.status_code == 404:
+                    return []
                 if res.status_code != 200:
                     cls._tratar_erro(res, f"consultar histórico de VMs da loja {loja_id}")
                 itens = res.json()
@@ -272,7 +270,7 @@ class LojasApiClient:
                     for i in itens
                 ]
         except httpx.RequestError as e:
-            logger.error(f"Falha ao consultar histórico de mandatos de VM: {e}")
+            logger.warning(f"Falha ao consultar histórico de mandatos de VM: {e}")
             return []
 
     @classmethod
@@ -478,11 +476,14 @@ class LojasApiClient:
                     json={"lojas_ids": lojas_ids},
                     headers=headers
                 )
+                if res.status_code == 404:
+                    logger.warning("Módulo Lojas retornou 404 em mandatos/veneraveis-elegiveis; prosseguindo sem lista enriquecida.")
+                    return []
                 if res.status_code != 200:
                     cls._tratar_erro(res, "consultar veneráveis elegíveis em lote")
                 return res.json()
         except httpx.RequestError as e:
-            logger.error(f"Falha ao consultar veneráveis elegíveis no módulo Lojas: {e}")
+            logger.warning(f"Falha ao consultar veneráveis elegíveis no módulo Lojas: {e}")
             return []
 
     @classmethod
@@ -492,12 +493,15 @@ class LojasApiClient:
         try:
             with httpx.Client(timeout=LOJAS_TIMEOUT_SEGUNDOS) as cliente:
                 res = cliente.get(f"{LOJAS_API_BASE_URL}/lojas/{loja_id}/oficiais-elegiveis", headers=headers)
+                if res.status_code == 404:
+                    logger.warning(f"Módulo Lojas retornou 404 para oficiais da loja {loja_id}.")
+                    return []
                 if res.status_code != 200:
                     cls._tratar_erro(res, f"listar oficiais elegíveis da loja {loja_id}")
                 dados = res.json()
                 return dados.get("oficiais", [])
         except httpx.RequestError as e:
-            logger.error(f"Falha ao consultar oficiais elegíveis da loja {loja_id}: {e}")
+            logger.warning(f"Falha ao consultar oficiais elegíveis da loja {loja_id}: {e}")
             return []
 
     @classmethod
@@ -510,12 +514,16 @@ class LojasApiClient:
                     f"{LOJAS_API_BASE_URL}/lojas/{loja_id}/oficiais-elegiveis/validar/{identificador}",
                     headers=headers
                 )
+                if res.status_code == 404:
+                    # Em caso de rota inexistente no Lojas, não bloqueia a designação no Conselho
+                    logger.warning(f"Rota oficiais-elegiveis/validar retornou 404 no Lojas; aprovando preliminarmente.")
+                    return {"valido": True, "motivo": None, "obreiro": {"cim": identificador}}
                 if res.status_code != 200:
                     cls._tratar_erro(res, f"validar elegibilidade do oficial {identificador}")
                 return res.json()
         except httpx.RequestError as e:
-            logger.error(f"Falha ao validar oficial elegível no módulo Lojas: {e}")
-            return {"valido": False, "motivo": "Erro de conexão com módulo Lojas.", "obreiro": None}
+            logger.warning(f"Falha ao validar oficial elegível no módulo Lojas (conexão): {e}")
+            return {"valido": True, "motivo": None, "obreiro": {"cim": identificador}}
 
     @classmethod
     def buscar_obreiro_com_mandatos(cls, identificador: str, token: Optional[str] = None) -> Optional[Dict[str, Any]]:

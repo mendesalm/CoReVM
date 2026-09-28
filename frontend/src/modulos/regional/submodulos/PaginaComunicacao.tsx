@@ -952,7 +952,7 @@ export const PaginaComunicacao: React.FC = () => {
                   >
                     <option value="">Selecione a Loja...</option>
                     {lojasDisponiveis
-                      .filter(l => l.id !== userContext.loja_id)
+                      .filter(l => String(l.id) !== String(userContext.loja_id))
                       .map((loja) => (
                         <option key={loja.id} value={loja.id}>
                           {loja.nome} nº {loja.numero} ({loja.rito || 'REAA'})

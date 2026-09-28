@@ -143,7 +143,7 @@ def listar_minhas_regioes(
 # ==============================================================================
 
 def _obter_veneraveis_elegiveis_core(db_core: Session, regiao_id: str) -> List[dict]:
-    """Obtém Veneráveis Mestres em exercício das Lojas ativas via LojasApiClient."""
+    """Obtém Veneráveis Mestres em exercício das Lojas ativas via LojasApiClient com tolerância a falhas."""
     agregadas = db_core.query(LojaAgregada).filter(
         LojaAgregada.regiao_id == regiao_id,
         LojaAgregada.ativa == True
@@ -152,7 +152,11 @@ def _obter_veneraveis_elegiveis_core(db_core: Session, regiao_id: str) -> List[d
     if not ids_lojas:
         return []
 
-    return LojasApiClient.obter_veneraveis_elegiveis(ids_lojas)
+    try:
+        return LojasApiClient.obter_veneraveis_elegiveis(ids_lojas)
+    except Exception as e:
+        logger.warning(f"Falha ao consultar veneráveis elegíveis para a região {regiao_id}: {e}")
+        return []
 
 
 @router.get("/{regiao_id}/veneraveis-elegiveis", response_model=List[VeneravelElegivelResponse], summary="Lista os Veneráveis Mestres elegíveis à Diretoria")
@@ -214,17 +218,18 @@ def obter_diretoria_regional(
 
             try:
                 vm_atual = LojasApiClient.obter_vm_ativo(int(d.loja_id))
-                if not vm_atual or not vm_atual.get("tem_vm"):
+                if vm_atual and vm_atual.get("tem_vm"):
+                    if vm_atual.get("cim") and vm_atual.get("cim") != d.usuario_id:
+                        vinculo_desatualizado = True
+                        sugestao = VeneravelElegivelResponse(
+                            usuario_id=vm_atual.get("cim") or "",
+                            nome_completo=vm_atual.get("nome_completo") or "",
+                            loja_id=d.loja_id,
+                            loja_nome=info_loja.get("nome_loja"),
+                            loja_numero=str(loja_numero) if loja_numero is not None else None,
+                        )
+                elif vm_atual and vm_atual.get("tem_vm") is False and info_loja:
                     loja_sem_vm = True
-                elif vm_atual.get("cim") != d.usuario_id:
-                    vinculo_desatualizado = True
-                    sugestao = VeneravelElegivelResponse(
-                        usuario_id=vm_atual.get("cim") or "",
-                        nome_completo=vm_atual.get("nome_completo") or "",
-                        loja_id=d.loja_id,
-                        loja_nome=info_loja.get("nome_loja"),
-                        loja_numero=str(loja_numero) if loja_numero is not None else None,
-                    )
             except Exception as e:
                 logger.warning(f"Erro ao verificar VM ativo da loja {d.loja_id}: {e}")
 
@@ -282,16 +287,18 @@ def atualizar_diretoria_regional(
         if uid and uid.strip():
             uid = uid.strip()
             elegivel = elegiveis_map.get(uid)
-            if not elegivel:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        f"O CIM '{uid}' informado para {rotulo} não corresponde a um Venerável "
-                        "Mestre em exercício em nenhuma Loja jurisdicionada a este Conselho. "
-                        "Verifique se o CIM está correto e se o cadastro da Loja foi atualizado."
-                    )
-                )
-            a_inserir.append((elegivel, cargo))
+            loja_id_alvo = None
+            if elegivel:
+                loja_id_alvo = elegivel.get("loja_id")
+            else:
+                # Fallback Soberano: se a integração externa não retornou o VM, preserva vínculo prévio se houver
+                membro_existente = db_core.query(DiretoriaConselho).filter(
+                    DiretoriaConselho.regiao_id == regiao_id,
+                    DiretoriaConselho.usuario_id == uid
+                ).first()
+                if membro_existente:
+                    loja_id_alvo = membro_existente.loja_id
+            a_inserir.append(({"usuario_id": uid, "loja_id": loja_id_alvo}, cargo))
 
     db_core.query(DiretoriaConselho).filter(DiretoriaConselho.regiao_id == regiao_id).delete()
 

@@ -84,7 +84,7 @@ export default function PaginaDiretoria() {
         clienteHttp.get(`${API_URL}/regional/${id}/me`),
         clienteHttp.get(`${API_URL}/regional/${id}/dashboard`),
         clienteHttp.get(`${API_URL}/regional/${id}/diretoria`),
-        clienteHttp.get(`${API_URL}/regional/${id}/veneraveis-elegiveis`)
+        clienteHttp.get(`${API_URL}/regional/${id}/veneraveis-elegiveis`).catch(() => ({ data: [] }))
       ]);
 
       setUserContext(userRes.data);
@@ -543,6 +543,11 @@ export default function PaginaDiretoria() {
                   className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                 >
                   <option value="">Selecione o Venerável Mestre...</option>
+                  {diretoriaForm.presidente_id && !veneraveisElegiveis.some(v => String(v.usuario_id) === String(diretoriaForm.presidente_id)) && (
+                    <option value={diretoriaForm.presidente_id}>
+                      {presidente?.nome_completo || diretoriaForm.presidente_id} (Titular Atual)
+                    </option>
+                  )}
                   {veneraveisElegiveis.map((v) => (
                     <option key={v.usuario_id} value={v.usuario_id}>
                       {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
@@ -561,6 +566,11 @@ export default function PaginaDiretoria() {
                   className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                 >
                   <option value="">Selecione o Venerável Mestre...</option>
+                  {diretoriaForm.vice_presidente_id && !veneraveisElegiveis.some(v => String(v.usuario_id) === String(diretoriaForm.vice_presidente_id)) && (
+                    <option value={diretoriaForm.vice_presidente_id}>
+                      {vicePresidente?.nome_completo || diretoriaForm.vice_presidente_id} (Titular Atual)
+                    </option>
+                  )}
                   {veneraveisElegiveis.map((v) => (
                     <option key={v.usuario_id} value={v.usuario_id}>
                       {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}
@@ -579,6 +589,11 @@ export default function PaginaDiretoria() {
                   className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-purple-400 focus:outline-none"
                 >
                   <option value="">Selecione o Venerável Mestre...</option>
+                  {diretoriaForm.secretario_id && !veneraveisElegiveis.some(v => String(v.usuario_id) === String(diretoriaForm.secretario_id)) && (
+                    <option value={diretoriaForm.secretario_id}>
+                      {secretario?.nome_completo || diretoriaForm.secretario_id} (Titular Atual)
+                    </option>
+                  )}
                   {veneraveisElegiveis.map((v) => (
                     <option key={v.usuario_id} value={v.usuario_id}>
                       {v.nome_completo || v.usuario_id} — Loja {v.loja_numero || v.loja_id}

@@ -111,9 +111,10 @@ export default function PainelSuperAdmin() {
       try {
         const idsToFetch = regiao.lojas.map((l: any) => parseInt(l.loja_id)).filter((id: number) => !isNaN(id));
         if(idsToFetch.length > 0) {
-          const res = await clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
+          const res = await clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch).catch(() => ({ data: [] }));
+          const detailsList = Array.isArray(res.data) ? res.data : [];
           const enrichedLojas = regiao.lojas.map((l: any) => {
-            const details = res.data.find((d: any) => String(d.id) === String(l.loja_id));
+            const details = detailsList.find((d: any) => String(d.id) === String(l.loja_id));
             return details ? { ...l, nome: details.nome, numero: details.numero } : l;
           });
           setViewLojasModal({ loading: false, nome: regiao.nome, lojas: enrichedLojas });
@@ -142,9 +143,10 @@ export default function PainelSuperAdmin() {
       try {
         const idsToFetch = regiao.lojas.map((l: any) => parseInt(l.loja_id)).filter((id: number) => !isNaN(id));
         if(idsToFetch.length > 0) {
-          const res = await clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
+          const res = await clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch).catch(() => ({ data: [] }));
+          const detailsList = Array.isArray(res.data) ? res.data : [];
           const enrichedLojas = regiao.lojas.map((l: any) => {
-            const details = res.data.find((d: any) => String(d.id) === String(l.loja_id));
+            const details = detailsList.find((d: any) => String(d.id) === String(l.loja_id));
             return details ? { ...l, nome: details.nome, numero: details.numero } : l;
           });
           setEditLojas(enrichedLojas);

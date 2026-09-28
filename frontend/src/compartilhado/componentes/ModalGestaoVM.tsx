@@ -61,8 +61,8 @@ export default function ModalGestaoVM({ loja, onSuccess, onClose }: ModalGestaoV
     setLoading(true);
     try {
       const [resVm, resHist] = await Promise.all([
-        clienteHttp.get(`${API_URL}/integracao/lojas/${loja.id}/vm`),
-        clienteHttp.get(`${API_URL}/integracao/lojas/${loja.id}/vm/historico`)
+        clienteHttp.get(`${API_URL}/integracao/lojas/${loja.id}/vm`).catch(() => ({ data: { tem_vm: false } })),
+        clienteHttp.get(`${API_URL}/integracao/lojas/${loja.id}/vm/historico`).catch(() => ({ data: [] }))
       ]);
 
       const vm = resVm.data;

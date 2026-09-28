@@ -202,7 +202,11 @@ def listar_oficiais_loja(
     if not str(loja_id).isdigit():
         return {"oficiais": []}
 
-    oficiais = LojasApiClient.listar_oficiais_loja(int(loja_id))
+    try:
+        oficiais = LojasApiClient.listar_oficiais_loja(int(loja_id))
+    except Exception as e:
+        logger.warning(f"Erro ao listar oficiais da loja {loja_id}: {e}")
+        oficiais = []
     return {"oficiais": oficiais}
 
 
