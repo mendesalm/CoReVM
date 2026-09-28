@@ -108,8 +108,25 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   useEffect(() => {
     const initAuth = async () => {
-      // 1. SSO local (localStorage)
-      let storedToken = obterTokenSessaoValido();
+      // 0. SSO via URL query (?sso_token=... ou ?token=...) vindo do Hub e-Sigma
+      let storedToken: string | null = null;
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('sso_token') || params.get('token');
+        if (urlToken && isTokenValido(urlToken)) {
+          storedToken = urlToken;
+          localStorage.setItem('@corevm:token', urlToken);
+          params.delete('sso_token');
+          params.delete('token');
+          const remainingQuery = params.toString() ? `?${params.toString()}` : '';
+          window.history.replaceState({}, document.title, `${window.location.pathname}${remainingQuery}`);
+        }
+      }
+
+      // 1. SSO local (localStorage) se não veio pela URL
+      if (!storedToken) {
+        storedToken = obterTokenSessaoValido();
+      }
 
       // 2. SSO Multi-Domínio: se não houver localmente, consulta o e-Sigma via cookie HttpOnly
       if (!storedToken) {
