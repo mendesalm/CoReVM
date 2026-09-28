@@ -14,3 +14,13 @@ createRoot(document.getElementById('root')!).render(
     </GoogleOAuthProvider>
   </StrictMode>,
 )
+
+// Registro do Service Worker PWA para suporte offline e instalabilidade
+if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.debug('Falha não-bloqueante no registro do Service Worker:', err);
+    });
+  });
+}
+

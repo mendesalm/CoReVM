@@ -4,13 +4,15 @@ import { NavLink, Outlet, useParams, Link, useLocation } from 'react-router-dom'
 import {
   Bell, Calendar, BookOpenCheck, Vote, Landmark,
   FileText, Building2, Award, BarChart3, MessageSquare,
-  Bug, Menu, ChevronLeft, ChevronRight, LogOut, UserPlus, Fingerprint, Home, X
+  Bug, Menu, ChevronLeft, ChevronRight, LogOut, UserPlus, Fingerprint, Home, X, Download
 } from 'lucide-react';
 import { useAuth, clienteHttp } from '../contextos/AuthContext';
+import { usePwaInstall } from '../hooks/usePwaInstall';
 import LogoAnimadaCore from './LogoAnimadaCore';
 import ModalReportarBug from './ModalReportarBug';
 
 export default function Layout() {
+  const { podeInstalar, dispararInstalacao } = usePwaInstall();
   const { id } = useParams();
   const location = useLocation();
   const { usuario, logout } = useAuth();
@@ -292,8 +294,20 @@ export default function Layout() {
           </h1>
         </div>
 
-        {/* Direita: Usuário Ativo, Role Maçônica e Logout */}
+        {/* Direita: Usuário Ativo, Role Maçônica, Botão Instalar e Logout */}
         <div className="flex items-center gap-3.5">
+          {podeInstalar && (
+            <button
+              type="button"
+              onClick={dispararInstalacao}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[rgba(221,185,107,0.15)] hover:bg-[rgba(221,185,107,0.25)] border border-[rgba(221,185,107,0.4)] text-[#FDE68A] text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              title="Instalar Aplicativo no dispositivo"
+            >
+              <Download className="w-3.5 h-3.5 animate-bounce" />
+              <span className="hidden sm:inline">Instalar App</span>
+            </button>
+          )}
+
           <div className="flex items-center gap-3 pl-3 border-l border-[#222]">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#854d0e] to-[#facc15] flex items-center justify-center font-bold text-black text-xs shadow-md">
               {usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'C'}
@@ -537,6 +551,20 @@ export default function Layout() {
             })}
 
             <div className="pt-2 border-t border-[rgba(221,185,107,0.15)] my-2"></div>
+
+            {podeInstalar && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  dispararInstalacao();
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-[#DDB96B]/50 text-[#FDE68A] hover:bg-amber-500/30 transition-all font-semibold shadow-lg mb-2"
+              >
+                <Download className="w-5 h-5 shrink-0 animate-bounce" />
+                <span className="text-sm">Instalar Aplicativo</span>
+              </button>
+            )}
 
             <button
               type="button"
