@@ -234,7 +234,6 @@ class LojasApiClient:
         try:
             from database import engine_lojas
             from sqlalchemy import text
-            from datetime import datetime
 
             # Mapa de normalização de rito: converte variações do frontend para o valor
             # canônico armazenado no tipo ENUM do PostgreSQL (RitoEnum.value no módulo Lojas).
@@ -262,7 +261,7 @@ class LojasApiClient:
             }
 
             campos_set = []
-            params: Dict[str, Any] = {"agora": datetime.utcnow()}
+            params: Dict[str, Any] = {}
             if str(loja_id).isdigit():
                 params["loja_id_int"] = int(loja_id)
                 condicao_where = "(id = :loja_id_int OR codigo_loja = :loja_id_str)"
@@ -306,8 +305,10 @@ class LojasApiClient:
             if not campos_set:
                 return {"status": "success", "message": "Nenhum campo a atualizar.", "loja_id": loja_id}
 
-            campos_set.append("atualizado_em = :agora")
+            # Nota: não incluímos atualizado_em aqui — é gerenciado pelo onupdate do SQLAlchemy
+            # no módulo Lojas; inserir manualmente pode causar erro se a coluna não existir no schema
             sql_update = f"UPDATE lojas SET {', '.join(campos_set)} WHERE {condicao_where}"
+            logger.info(f"Fallback SQL para loja {loja_id}: {sql_update} | params keys: {list(params.keys())}")
 
             with engine_lojas.connect() as conn:
                 res_up = conn.execute(text(sql_update), params)
@@ -322,6 +323,7 @@ class LojasApiClient:
         except Exception as ex_db:
             logger.error(f"Erro no fallback de atualização de loja em lojas_db: {ex_db}")
             raise HTTPException(status_code=500, detail=f"Erro ao salvar dados da loja: {str(ex_db)}")
+
 
     @classmethod
     def obter_vm_ativo(cls, loja_id: int, token: Optional[str] = None) -> dict:
