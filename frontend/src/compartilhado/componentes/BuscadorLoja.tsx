@@ -1,9 +1,8 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import { useState } from 'react';
-import axios from 'axios';
 import { Search, Plus, Check } from 'lucide-react';
 import ModalCadastroLoja from './ModalCadastroLoja';
-import { API_URL } from '../servicos/configuracaoApi';
+import { clienteHttp, API_URL } from '../contextos/AuthContext';
 
 interface Props {
   onSelect: (loja: { id: number, nome: string, numero: string }) => void;
@@ -23,7 +22,7 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
       return;
     }
     try {
-      const res = await axios.get(`${API_URL}/integracao/lojas/busca?q=${termo}`);
+      const res = await clienteHttp.get(`${API_URL}/integracao/lojas/busca?q=${termo}`);
       setLojasEncontradas(res.data);
       // Pré-marcar todas por padrão
       setSelectedIds(res.data.map((l: any) => l.id));

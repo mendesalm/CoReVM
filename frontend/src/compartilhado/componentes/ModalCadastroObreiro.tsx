@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { formatarCPF, formatarTelefone } from '../utils/formatadores';
 import { Loader2, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
 import { CampoData } from './SeletorDataHora';
-import { API_URL } from '../servicos/configuracaoApi';
+import { clienteHttp, API_URL } from '../contextos/AuthContext';
 
 interface Props {
   cargoPadrao?: string;
@@ -53,7 +52,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
 
     setBuscandoCim(true);
     try {
-      const res = await axios.get(`${API_URL}/integracao/obreiros/busca/${termo}`);
+      const res = await clienteHttp.get(`${API_URL}/integracao/obreiros/busca/${termo}`);
       const o = res.data;
       setFormData(prev => ({
         ...prev,
@@ -91,7 +90,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
         ...formData,
         cpf: formData.cpf ? formData.cpf.replace(/\D/g, '') : null
       };
-      const res = await axios.post(`${API_URL}/integracao/obreiros/`, payload);
+      const res = await clienteHttp.post(`${API_URL}/integracao/obreiros/`, payload);
       onSuccess(res.data.cim);
     } catch (err: any) {
       console.error("Erro ao cadastrar Obreiro", err);

@@ -1,6 +1,5 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Award, Calendar, Edit3, Trash2, CheckCircle2, 
   AlertCircle, Loader2, X, Mail, Phone, 
@@ -8,6 +7,7 @@ import {
 } from 'lucide-react';
 import { formatarCPF, formatarTelefone } from '../utils/formatadores';
 import { CampoData } from './SeletorDataHora';
+import { clienteHttp, API_URL } from '../contextos/AuthContext';
 
 interface ModalGestaoVMProps {
   loja: {
@@ -21,8 +21,6 @@ interface ModalGestaoVMProps {
   onSuccess: () => void;
   onClose: () => void;
 }
-
-import { API_URL } from '../servicos/configuracaoApi';
 
 export default function ModalGestaoVM({ loja, onSuccess, onClose }: ModalGestaoVMProps) {
   const [activeTab, setActiveTab] = useState<'visualizar' | 'substituir' | 'historico'>('visualizar');
@@ -63,8 +61,8 @@ export default function ModalGestaoVM({ loja, onSuccess, onClose }: ModalGestaoV
     setLoading(true);
     try {
       const [resVm, resHist] = await Promise.all([
-        axios.get(`${API_URL}/integracao/lojas/${loja.id}/vm`),
-        axios.get(`${API_URL}/integracao/lojas/${loja.id}/vm/historico`)
+        clienteHttp.get(`${API_URL}/integracao/lojas/${loja.id}/vm`),
+        clienteHttp.get(`${API_URL}/integracao/lojas/${loja.id}/vm/historico`)
       ]);
 
       const vm = resVm.data;
@@ -105,7 +103,7 @@ export default function ModalGestaoVM({ loja, onSuccess, onClose }: ModalGestaoV
 
     setBuscandoCim(true);
     try {
-      const res = await axios.get(`${API_URL}/integracao/obreiros/busca/${termo}`);
+      const res = await clienteHttp.get(`${API_URL}/integracao/obreiros/busca/${termo}`);
       const o = res.data;
       setNovaGestaoForm(prev => ({
         ...prev,
@@ -143,7 +141,7 @@ export default function ModalGestaoVM({ loja, onSuccess, onClose }: ModalGestaoV
         data_inicio: editForm.data_inicio || null
       };
 
-      await axios.put(`${API_URL}/integracao/lojas/${loja.id}/vm`, payload);
+      await clienteHttp.put(`${API_URL}/integracao/lojas/${loja.id}/vm`, payload);
       alert('Dados do Venerável Mestre e vigência do mandato atualizados com sucesso!');
       setIsEditing(false);
       await carregarDados();
@@ -165,7 +163,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
 
     setEncerrandoMandato(true);
     try {
-      await axios.delete(`${API_URL}/integracao/lojas/${loja.id}/vm`);
+      await clienteHttp.delete(`${API_URL}/integracao/lojas/${loja.id}/vm`);
       alert('Mandato de Venerável Mestre encerrado com sucesso. Status retornado para Pendente.');
       await carregarDados();
       onSuccess();
@@ -197,7 +195,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
         data_inicio_mandato: novaGestaoForm.data_inicio_mandato
       };
 
-      await axios.post(`${API_URL}/integracao/obreiros/`, payload);
+      await clienteHttp.post(`${API_URL}/integracao/obreiros/`, payload);
       alert(`Novo Venerável Mestre (Ir. ${novaGestaoForm.nome_completo}) empossado com sucesso!`);
       setNovaGestaoForm({
         cim: '',

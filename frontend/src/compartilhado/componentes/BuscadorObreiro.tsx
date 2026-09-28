@@ -1,9 +1,8 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Search, Plus, CheckCircle2, Loader2 } from 'lucide-react';
 import ModalCadastroObreiro from './ModalCadastroObreiro';
-import { API_URL } from '../servicos/configuracaoApi';
+import { clienteHttp, API_URL } from '../contextos/AuthContext';
 
 interface Props {
   cargo: string;
@@ -33,7 +32,7 @@ export default function BuscadorObreiro({ cargo, lojasConselho, defaultCim, onSu
     setErro('');
     setMostrarCadastroObreiro(false);
     try {
-      const res = await axios.get(`${API_URL}/integracao/obreiros/busca/${term}`);
+      const res = await clienteHttp.get(`${API_URL}/integracao/obreiros/busca/${term}`);
       setNomeEncontrado(res.data.nome_completo);
       setTravar(true);
       onSuccess(term);

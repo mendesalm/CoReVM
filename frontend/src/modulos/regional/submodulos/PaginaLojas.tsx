@@ -1,6 +1,4 @@
-// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthContext';
 import { CampoData, CampoHora } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
@@ -157,7 +155,7 @@ export default function PaginaLojas() {
     if (!editLojaModal) return;
     setSalvandoLoja(true);
     try {
-      await axios.put(`${API_URL}/integracao/lojas/${editLojaModal.loja_id}`, editLojaForm);
+      await clienteHttp.put(`${API_URL}/integracao/lojas/${editLojaModal.loja_id}`, editLojaForm);
       alert('Cadastro da loja atualizado com sucesso!');
       setEditLojaModal(null);
       setReloadKey(k => k + 1);
@@ -197,8 +195,8 @@ export default function PaginaLojas() {
           return;
         }
         const [detailsRes, vmStatusRes] = await Promise.all([
-          axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, [lojaBase.id]),
-          axios.post(`${API_URL}/integracao/lojas/status_vm`, [lojaBase.id])
+          clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, [lojaBase.id]),
+          clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, [lojaBase.id])
         ]);
         const det = detailsRes.data.find((d: any) => String(d.id) === String(lojaBase.id));
         const nomeVmAtivo = vmStatusRes.data[lojaBase.id];
@@ -237,8 +235,8 @@ export default function PaginaLojas() {
         const ids = data.lojas.map((l: any) => parseInt(l.loja_id)).filter((n: number) => !isNaN(n));
         if (ids.length > 0) {
           const [detailsRes, vmStatusRes] = await Promise.all([
-            axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, ids),
-            axios.post(`${API_URL}/integracao/lojas/status_vm`, ids)
+            clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, ids),
+            clienteHttp.post(`${API_URL}/integracao/lojas/status_vm`, ids)
           ]);
           data.lojas = data.lojas.map((l: any) => {
             const det = detailsRes.data.find((d: any) => String(d.id) === String(l.loja_id));

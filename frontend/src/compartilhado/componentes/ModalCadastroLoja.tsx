@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { API_URL } from '../servicos/configuracaoApi';
+import { clienteHttp, API_URL } from '../contextos/AuthContext';
 
 interface Props {
   onSuccess: (loja: any) => void;
@@ -37,7 +37,7 @@ export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/integracao/lojas/`, formData);
+      const res = await clienteHttp.post(`${API_URL}/integracao/lojas/`, formData);
       onSuccess({
         id: res.data.loja_id, // ID interno (lojas_db)
         nome: res.data.nome,

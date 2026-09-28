@@ -69,8 +69,12 @@ export function obterTokenSessaoValido(): string | null {
   return null;
 }
 
-// Interceptor para injetar o token ativo
+// Interceptor para normalizar URL (evitando duplicações de /api/v1) e injetar o token ativo
 clienteHttp.interceptors.request.use((config) => {
+  if (config.url) {
+    // Se a URL iniciar com /api/v1 (ex: montada com ${API_URL}/rota), remove o prefixo duplicado
+    config.url = config.url.replace(/^\/?api\/v1(\/|$)/, '/');
+  }
   const token = obterTokenSessaoValido();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;

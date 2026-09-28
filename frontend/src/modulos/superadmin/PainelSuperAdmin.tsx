@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, MapPin, Users, Activity, Settings, ChevronRight, Loader2, UserPlus, Fingerprint } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import BuscadorObreiro from '../../compartilhado/componentes/BuscadorObreiro';
 import BuscadorLoja from '../../compartilhado/componentes/BuscadorLoja';
 import ModalCadastroObreiro from '../../compartilhado/componentes/ModalCadastroObreiro';
-import { API_URL } from '../../compartilhado/contextos/AuthContext';
+import { clienteHttp, API_URL } from '../../compartilhado/contextos/AuthContext';
 
 export default function PainelSuperAdmin() {
   const navigate = useNavigate();
@@ -41,7 +40,7 @@ export default function PainelSuperAdmin() {
   const fetchRegioes = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/regioes/`);
+      const res = await clienteHttp.get(`${API_URL}/regioes/`);
       setRegioes(res.data);
     } catch (err) {
       console.error("Erro ao buscar regiões", err);
@@ -63,7 +62,7 @@ export default function PainelSuperAdmin() {
     }
 
     try {
-        await axios.post(`${API_URL}/regioes/`, {
+        await clienteHttp.post(`${API_URL}/regioes/`, {
           nome: nome,
           uf: uf,
           presidente_id: presidenteId || null,
@@ -90,7 +89,7 @@ export default function PainelSuperAdmin() {
     if (!editModal) return;
     
     try {
-      await axios.put(`${API_URL}/regioes/${editModal.id}`, {
+      await clienteHttp.put(`${API_URL}/regioes/${editModal.id}`, {
         nome: editModal.nome,
         uf: editModal.uf,
         presidente_id: editPresidente || null,
@@ -112,7 +111,7 @@ export default function PainelSuperAdmin() {
       try {
         const idsToFetch = regiao.lojas.map((l: any) => parseInt(l.loja_id)).filter((id: number) => !isNaN(id));
         if(idsToFetch.length > 0) {
-          const res = await axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
+          const res = await clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
           const enrichedLojas = regiao.lojas.map((l: any) => {
             const details = res.data.find((d: any) => String(d.id) === String(l.loja_id));
             return details ? { ...l, nome: details.nome, numero: details.numero } : l;
@@ -143,7 +142,7 @@ export default function PainelSuperAdmin() {
       try {
         const idsToFetch = regiao.lojas.map((l: any) => parseInt(l.loja_id)).filter((id: number) => !isNaN(id));
         if(idsToFetch.length > 0) {
-          const res = await axios.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
+          const res = await clienteHttp.post(`${API_URL}/integracao/lojas/busca/multiplas`, idsToFetch);
           const enrichedLojas = regiao.lojas.map((l: any) => {
             const details = res.data.find((d: any) => String(d.id) === String(l.loja_id));
             return details ? { ...l, nome: details.nome, numero: details.numero } : l;
@@ -159,7 +158,7 @@ export default function PainelSuperAdmin() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Deseja realmente deletar este Conselho Regional?")) return;
     try {
-      await axios.delete(`${API_URL}/regioes/${id}`);
+      await clienteHttp.delete(`${API_URL}/regioes/${id}`);
       fetchRegioes();
     } catch (err) {
       console.error("Erro ao deletar região", err);
