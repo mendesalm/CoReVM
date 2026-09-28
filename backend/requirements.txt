@@ -10,3 +10,4 @@ apscheduler
 jinja2
 reportlab
 python-multipart
+httpx
