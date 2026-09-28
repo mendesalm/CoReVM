@@ -262,12 +262,16 @@ class LojasApiClient:
 
             campos_set = []
             params: Dict[str, Any] = {}
+            # Separação estrita dos dois casos para evitar erro de tipo no PostgreSQL:
+            # codigo_loja é UUID — comparar '140' (string numérica) com UUID causa
+            # "invalid input syntax for type uuid" mesmo dentro de um OR.
             if str(loja_id).isdigit():
                 params["loja_id_int"] = int(loja_id)
-                condicao_where = "(id = :loja_id_int OR codigo_loja = :loja_id_str)"
+                condicao_where = "id = :loja_id_int"
             else:
+                params["loja_id_str"] = str(loja_id)
                 condicao_where = "codigo_loja = :loja_id_str"
-            params["loja_id_str"] = str(loja_id)
+
 
             mapeamento = {
                 "nome": "nome_loja",
