@@ -652,21 +652,42 @@ export default function PaginaLojas() {
         {/* Card Principal: Tabela de Lojas */}
         <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-2xl">
           
-          {/* Barra de Filtros e Busca */}
-          <div className="p-5 border-b border-[#262626] flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+          {/* Barra de Filtros e Busca
+              ALTERAÇÃO (2026-09-29): em mobile a busca ocupa linha própria (w-full)
+              e os botões de filtro ficam ocultos (md:flex) — os cards de KPI no topo
+              já permitem filtrar por Todas/Com VM/Pendentes com o mesmo efeito,
+              tornando os botões redundantes e espremidos em telas pequenas. */}
+          <div className="p-4 sm:p-5 border-b border-[#262626]">
+
+            {/* Linha única em mobile: busca full-width + botão + */}
+            <div className="flex items-center gap-3">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input 
+                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
                   type="text"
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  placeholder="Filtrar por nome da loja, número, rito, oriente ou VM..."
-                  className="w-full bg-[#0d0d0d] border border-[#333] rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-gray-500 focus:border-[#facc15] focus:outline-none transition-colors"
+                  placeholder="Buscar loja, número, rito, oriente ou VM..."
+                  className="w-full bg-[#0d0d0d] border border-[#333] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#facc15] focus:outline-none transition-colors"
                 />
               </div>
 
-              {/* Seletor de Filtro de Status */}
+              {/* Botão + visível em mobile (ao lado da busca) */}
+              {userContext.is_diretoria && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddLojaModal(true)}
+                  className="md:hidden inline-flex items-center justify-center text-black bg-[#facc15] hover:bg-[#eab308] p-2.5 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+                  title="Vincular Nova Loja"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Segunda linha: botões de filtro (apenas desktop) + botão + desktop */}
+            <div className="hidden md:flex items-center justify-between gap-3 mt-3">
+              {/* Seletor de Filtro de Status — redundante em mobile, visível só em desktop */}
               <div className="flex items-center bg-[#0d0d0d] border border-[#333] rounded-xl p-1 text-xs">
                 <button
                   type="button"
@@ -690,19 +711,19 @@ export default function PaginaLojas() {
                   Pendentes ({lojasPendentes})
                 </button>
               </div>
-            </div>
 
-            {/* Ação Primária no Topo (Adicionar Loja para Diretoria) */}
-            {userContext.is_diretoria && (
-              <button
-                type="button"
-                onClick={() => setShowAddLojaModal(true)}
-                className="inline-flex items-center justify-center text-black bg-[#facc15] hover:bg-[#eab308] p-2.5 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
-                title="Vincular Nova Loja"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            )}
+              {/* Botão + versão desktop */}
+              {userContext.is_diretoria && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddLojaModal(true)}
+                  className="inline-flex items-center justify-center text-black bg-[#facc15] hover:bg-[#eab308] p-2.5 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+                  title="Vincular Nova Loja"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Visualização Mobile: Cards Touch-Friendly Limpos (md:hidden) */}
