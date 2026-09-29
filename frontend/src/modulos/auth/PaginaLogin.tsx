@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth, clienteHttp, ESIGMA_API_URL } from '../../compartilhado/contextos/AuthContext';
 import HeroBackground from '../../compartilhado/componentes/HeroBackground';
 import LogoAnimadaCore from '../../compartilhado/componentes/LogoAnimadaCore';
-import { GoogleLogin } from '@react-oauth/google';
 
 interface RegiaoVinculada {
   regiao_id: string;
@@ -56,40 +55,6 @@ export default function PaginaLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    setErro(null);
-    setCarregando(true);
-    try {
-      const credential = credentialResponse?.credential;
-      if (!credential) throw new Error('O Google não retornou uma credencial válida.');
-
-      const resposta = await axios.post(`${ESIGMA_API_URL}/auth/google`, {
-        credential,
-        modulo_origem: 'corevm'
-      });
-      const { access_token, deve_trocar_senha } = resposta.data;
-      const payload = decodificarPayloadJwt(access_token);
-
-      login(access_token, {
-        id: payload.user_id,
-        nome: payload.sub,
-        email: payload.sub,
-        roles: payload.role ? [payload.role] : [],
-      });
-
-      if (deve_trocar_senha) {
-        navigate('/trocar-senha-obrigatoria', { replace: true });
-        return;
-      }
-
-      const regioes = await buscarMinhasRegioes();
-      navegarAposLogin(regioes, payload.role, navigate);
-    } catch (err: any) {
-      setErro(err.response?.data?.detail || err.message || 'Falha no login com Google.');
-    } finally {
-      setCarregando(false);
-    }
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,24 +195,6 @@ export default function PaginaLogin() {
               {carregando ? 'Autenticando...' : 'Entrar'}
             </button>
 
-            {/* Divisor "ou" */}
-            <div className="flex items-center my-5 w-full">
-              <div className="flex-1 h-px bg-white/10"></div>
-              <span className="px-3 text-xs text-slate-400">ou</span>
-              <div className="flex-1 h-px bg-white/10"></div>
-            </div>
-
-            {/* Google Login */}
-            <div className="flex justify-center mb-4 w-full">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setErro('Ocorreu um erro ao tentar fazer login com o Google')}
-                theme="filled_black"
-                text="continue_with"
-                width="380"
-              />
-            </div>
-
             {/* Links Auxiliares no Rodapé */}
             <div className="text-center pt-2 space-y-2">
               <p className="text-xs text-slate-400">
@@ -260,24 +207,6 @@ export default function PaginaLogin() {
                   Solicitar cadastro
                 </button>
               </p>
-
-              <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 pt-1">
-                <button
-                  type="button"
-                  onClick={() => navigate('/entrar-com-link')}
-                  className="hover:text-[#DDB96B] hover:underline transition-colors"
-                >
-                  Entrar sem senha (link)
-                </button>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/entrar-com-passkey')}
-                  className="hover:text-[#DDB96B] hover:underline transition-colors"
-                >
-                  Entrar com passkey
-                </button>
-              </div>
             </div>
           </form>
 
