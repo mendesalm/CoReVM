@@ -498,48 +498,56 @@ export default function PaginaCalendario() {
           </div>
 
           {/* Grupo de Filtros Unificado */}
-          <div className="flex flex-wrap md:flex-nowrap items-center bg-[#111] border border-[#222] rounded-xl p-1 gap-1">
-            <select
-              value={filtroTipo}
-              onChange={(e) => setFiltroTipo(e.target.value)}
-              className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 md:w-auto hover:text-white border-r border-[#222] appearance-none"
-            >
-              <option value="TODOS" className="bg-[#111]">Todos os tipos</option>
-              {tiposEvento.map((t) => (
-                <option key={t.tipo} value={t.tipo} className="bg-[#111]">{t.rotulo}</option>
-              ))}
-            </select>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center bg-[#111] border border-[#222] rounded-xl p-1 gap-1">
             
-            <select
-              value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
-              className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 md:w-auto hover:text-white border-r border-[#222] appearance-none"
-            >
-              <option value="TODOS" className="bg-[#111]">Todos os status</option>
-              {Object.entries(STATUS_ROTULOS).map(([valor, rotulo]) => (
-                <option key={valor} value={valor} className="bg-[#111]">{rotulo}</option>
-              ))}
-            </select>
+            <div className="flex items-center flex-1">
+              <select
+                value={filtroTipo}
+                onChange={(e) => setFiltroTipo(e.target.value)}
+                className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 min-w-0 hover:text-white border-r border-[#222] appearance-none"
+              >
+                <option value="TODOS" className="bg-[#111]">Todos os tipos</option>
+                {tiposEvento.map((t) => (
+                  <option key={t.tipo} value={t.tipo} className="bg-[#111]">{t.rotulo}</option>
+                ))}
+              </select>
+              
+              <select
+                value={filtroStatus}
+                onChange={(e) => setFiltroStatus(e.target.value)}
+                className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 min-w-0 hover:text-white md:border-r border-[#222] appearance-none"
+              >
+                <option value="TODOS" className="bg-[#111]">Todos os status</option>
+                {Object.entries(STATUS_ROTULOS).map(([valor, rotulo]) => (
+                  <option key={valor} value={valor} className="bg-[#111]">{rotulo}</option>
+                ))}
+              </select>
+            </div>
 
-            <label className="flex items-center gap-1.5 px-3 py-1.5 font-medium text-gray-300 hover:text-white cursor-pointer select-none transition-colors border-r border-[#222]">
-              <input
-                type="checkbox"
-                checked={mostrarCancelados}
-                onChange={(e) => setMostrarCancelados(e.target.checked)}
-                className="w-3.5 h-3.5 accent-[#facc15] bg-[#1a1a1a] border-[#333] rounded"
-              />
-              Cancelados
-            </label>
+            <div className="hidden md:block w-px h-5 bg-[#222] mx-1" />
+            <div className="md:hidden w-full h-px bg-[#222] my-0.5" />
 
-            <button
-              type="button"
-              onClick={() => setMostrarLegenda(!mostrarLegenda)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-[#facc15]/20 text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-[#222]'}`}
-            >
-              <Palette className="w-3.5 h-3.5" />
-              Legenda
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mostrarLegenda ? 'rotate-180' : ''}`} />
-            </button>
+            <div className="flex items-center">
+              <label className="flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 font-medium text-gray-300 hover:text-white cursor-pointer select-none transition-colors border-r border-[#222]">
+                <input
+                  type="checkbox"
+                  checked={mostrarCancelados}
+                  onChange={(e) => setMostrarCancelados(e.target.checked)}
+                  className="w-3.5 h-3.5 accent-[#facc15] bg-[#1a1a1a] border-[#333] rounded"
+                />
+                Cancelados
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setMostrarLegenda(!mostrarLegenda)}
+                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-[#facc15]/20 text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-[#222]'}`}
+              >
+                <Palette className="w-3.5 h-3.5" />
+                Legenda
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mostrarLegenda ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
           </div>
 
           {/* Botão Novo Evento no Desktop */}
