@@ -4,7 +4,7 @@ import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
   Award, ShieldCheck, Loader2, Calendar,
-  Edit3, ArrowLeft, CheckCircle2, UserCheck, Shield, AlertTriangle, Zap
+  Edit3, ArrowLeft, CheckCircle2, UserCheck, Shield, AlertTriangle, Zap, X
 } from 'lucide-react';
 
 // CORREÇÃO (2026-09-14, bug reportado em teste): esta página nunca tinha
@@ -75,6 +75,22 @@ export default function PaginaDiretoria() {
   const [emergenciaCargoAberto, setEmergenciaCargoAberto] = useState<string | null>(null);
   const [emergenciaSelecionado, setEmergenciaSelecionado] = useState('');
   const [salvandoEmergencia, setSalvandoEmergencia] = useState(false);
+
+
+  // Drawer states
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<{
+    membro: any;
+    nomeCargo: string;
+    iconeCorrente: React.ReactNode;
+    descricaoCargo: string;
+    cargoValor: string;
+  } | null>(null);
+
+  const openDrawer = (membro: any, nomeCargo: string, iconeCorrente: React.ReactNode, descricaoCargo: string, cargoValor: string) => {
+    setSelectedRole({ membro, nomeCargo, iconeCorrente, descricaoCargo, cargoValor });
+    setDrawerOpen(true);
+  };
 
   // Carregar dados
   const fetchData = async () => {
@@ -180,7 +196,7 @@ function formatarLojaMembro(membro: any): string {
     const aberto = emergenciaCargoAberto === cargoValor;
     const rotuloLoja = formatarLojaMembro(membro);
     return (
-      <div className="mt-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[11px] space-y-2">
+      <div className="mt-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[11px] space-y-2 cursor-default" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {membro.vinculo_desatualizado && membro.sugestao_novo_veneravel ? (
@@ -341,7 +357,7 @@ function formatarLojaMembro(membro: any): string {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Card: Presidente */}
-          <div className="bg-[#141414] border border-[#2b2b2b] hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group">
+          <div onClick={() => openDrawer(presidente, 'Presidente', <Shield className="w-5 h-5 text-[#facc15]" />, 'Presidência executiva, convocação de plenárias e representação institucional.', 'presidente')} className="bg-[#141414] border border-[#2b2b2b] hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30">
@@ -400,7 +416,7 @@ function formatarLojaMembro(membro: any): string {
           </div>
 
           {/* Card: Vice-Presidente */}
-          <div className="bg-[#141414] border border-[#2b2b2b] hover:border-blue-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group">
+          <div onClick={() => openDrawer(vicePresidente, 'Vice-Presidente', <UserCheck className="w-5 h-5 text-blue-400" />, 'Sucessão executiva regimental e articulação com as comissões técnicas.', 'vice-presidente')} className="bg-[#141414] border border-[#2b2b2b] hover:border-blue-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-400 border border-blue-500/30">
@@ -459,7 +475,7 @@ function formatarLojaMembro(membro: any): string {
           </div>
 
           {/* Card: Secretário */}
-          <div className="bg-[#141414] border border-[#2b2b2b] hover:border-purple-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group">
+          <div onClick={() => openDrawer(secretario, 'Secretário', <Award className="w-5 h-5 text-purple-400" />, 'Redação de atas, acervo documental, circulares e comunicações formais.', 'secretario')} className="bg-[#141414] border border-[#2b2b2b] hover:border-purple-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/15 text-purple-400 border border-purple-500/30">
@@ -544,6 +560,114 @@ function formatarLojaMembro(membro: any): string {
         </div>
 
       </div>
+
+
+      {/* Drawer Lateral */}
+      {drawerOpen && selectedRole && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] transition-opacity" 
+            onClick={() => setDrawerOpen(false)}
+          ></div>
+          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#111] border-l border-[#333] shadow-2xl z-[90] transform transition-transform overflow-y-auto flex flex-col">
+            <div className="p-6 border-b border-[#222] flex items-center justify-between sticky top-0 bg-[#111] z-10">
+              <div className="flex items-center gap-3">
+                 <div className="p-2.5 bg-gray-800/50 rounded-xl border border-gray-700/50">
+                   {selectedRole.iconeCorrente}
+                 </div>
+                 <div>
+                   <h2 className="text-lg font-bold text-white uppercase tracking-wider">{selectedRole.nomeCargo}</h2>
+                   <p className="text-xs text-gray-400">{selectedRole.descricaoCargo}</p>
+                 </div>
+              </div>
+              <button 
+                onClick={() => setDrawerOpen(false)} 
+                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-[#222] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6 flex-1">
+              {selectedRole.membro ? (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#222] to-[#0a0a0a] border border-[#333] flex items-center justify-center font-black text-2xl text-white shadow-inner shrink-0">
+                      {selectedRole.membro.nome_completo ? selectedRole.membro.nome_completo.charAt(0).toUpperCase() : (selectedRole.nomeCargo.charAt(0))}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white leading-tight">
+                        {selectedRole.membro.nome_completo || `CIM: ${selectedRole.membro.usuario_id}`}
+                      </h3>
+                      <p className="text-sm text-gray-400 font-mono mt-1">CIM: {selectedRole.membro.usuario_id}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-[#181818] p-4 rounded-xl border border-[#2b2b2b]">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Informações de Contato</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Email:</span>
+                          <span className="text-gray-200">{selectedRole.membro.email || 'contato@corevm.org'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#181818] p-4 rounded-xl border border-[#2b2b2b]">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Escopo do Mandato</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between gap-4">
+                          <span className="text-gray-500 shrink-0">Loja de Vínculo:</span>
+                          <span className="text-gray-200 text-right truncate" title={formatarLojaMembro(selectedRole.membro)}>
+                            {formatarLojaMembro(selectedRole.membro)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-gray-500 shrink-0">Início do Mandato:</span>
+                          <span className="text-gray-200 text-right">{selectedRole.membro.inicio_mandato || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-gray-500 shrink-0">Término do Mandato:</span>
+                          <span className="text-gray-200 text-right">{selectedRole.membro.termino_mandato || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-gray-500 shrink-0">Status do Titular:</span>
+                          {selectedRole.membro.vinculo_desatualizado || selectedRole.membro.loja_sem_vm ? (
+                            <span className="text-orange-400 font-semibold flex items-center gap-1 justify-end">
+                              <AlertTriangle className="w-3.5 h-3.5" /> Assento a Atualizar
+                            </span>
+                          ) : (
+                            <span className="text-green-400 font-semibold flex items-center gap-1 justify-end">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Titular Ativo
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {userContext.is_diretoria && (
+                      <div className="bg-[#181818] p-4 rounded-xl border border-[#2b2b2b]">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Gestão de Crise (Alerta)</h4>
+                        {(!selectedRole.membro.vinculo_desatualizado && !selectedRole.membro.loja_sem_vm) ? (
+                           <div className="text-sm text-gray-500 italic">Nenhum aviso ou pendência para este cargo.</div>
+                        ) : (
+                           renderAvisoOrfao(selectedRole.membro, selectedRole.cargoValor)
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                  <AlertTriangle className="w-10 h-10 text-gray-600" />
+                  <p className="text-gray-400 font-medium">Cargo atualmente vago ou aguardando nomeação.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal: Gerenciar Mesa Diretora e Mandato */}
       {showDiretoriaModal && (
