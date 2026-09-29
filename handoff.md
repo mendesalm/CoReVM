@@ -1,127 +1,107 @@
 # Handoff — CoReVM
-**Gerado em:** 2026-09-28T20:51:00-03:00  
-**Sessão:** UX Mobile-First + Fix PUT /integracao/lojas/{id}
+**Gerado em:** 2026-09-28T21:06:00-03:00  
+**Sessão:** Fix completo do PUT /integracao/lojas/{id} — raiz do 500
 
 ---
 
-## 1. Estado atual do projeto
+## 1. Estado atual
 
-O projeto está **funcional na VPS** (`core.e-sigma.app`). Os deploys desta sessão foram disparados via GitHub Actions e devem estar concluídos.
-
----
-
-## 2. O que foi feito nesta sessão
-
-### 2.1 Fix: `PUT /api/v1/integracao/lojas/{loja_id}` — 404 → 500 → ✅ Corrigido
-
-**Commits desta sessão:**
-| Hash | Descrição |
-|---|---|
-| `ab3ac69` (Lojas) | `fix(auth)`: aceitar X-Service-Key sem Authorization obrigatório |
-| `473082f` | `fix(lojas-cliente)`: fallback resiliente (atualizar_loja, obter_vm_ativo, etc.) |
-| `3eaaa4f` | `fix(auth)`: remover StrictMode → elimina google.accounts.id.initialize() duplo |
-| `b492296` | `fix(lojas-cliente)`: normalizar rito canônico no fallback SQL |
-
-**Root cause resolvido:**
-1. A API HTTP do Lojas na VPS exigia `Authorization: Bearer <token>` obrigatório, mas o token do CoReVM não era válido no contexto do Lojas → 422, tratado como 404 pelo CoReVM.
-2. O fallback SQL direto ao `lojas_db` enviava string bruta (`"Rito York"`) para o campo `ENUM` do PostgreSQL → 500.
-
-**Solução implementada:**
-- `Lojas/backend/core/auth_esigma.py`: nova função `obter_usuario_esigma_opcional`
-- `Lojas/backend/core/dependencies.py`: dependências de autorização aceitam `X-Service-Key` sem `Authorization`
-- `CoReVM/backend/core/lojas_cliente.py`: fallback resiliente com mapa de normalização de rito
-
-### 2.2 Fix: Google GSI `initialize() called multiple times`
-
-- `CoReVM/frontend/src/main.tsx`: removido `<StrictMode>` — o React 18 StrictMode montava o `GoogleOAuthProvider` duas vezes em dev, chamando `google.accounts.id.initialize()` duas vezes.
-- `@react-oauth/google v0.13.5` é a versão mais recente e não corrige isso nativamente.
-
-### 2.3 UX Mobile-First (sessões anteriores — já commitado)
-
-- Cards Touch-Friendly nas telas de Lojas (mobile): formato `Loja {nome_loja}, nº {numero_loja}`
-- Botão de 3 pontos para ações de configuração (VM, Suplente, Editar, Excluir)
-- `formatarTituloLoja()` helper centralizado em `PaginaLojas.tsx`
-- Dashboard mobile com widgets compactos (substituiu widgets superdimensionados)
+O deploy dos commits desta sessão estava em andamento ao encerrar (~21:06). Aguardar ~3 minutos e **testar a atualização de rito de uma loja** para confirmar que o 500 foi resolvido.
 
 ---
 
-## 3. Pendências conhecidas
+## 2. Histórico completo de bugs resolvidos nesta sessão (PUT /integracao/lojas/140)
 
-### 3.1 Validação pendente na VPS
-- Após o deploy desta sessão, **testar manualmente**:
-  ```bash
-  # Atualizar rito de uma loja (deve retornar 200)
-  curl -X PUT https://core.e-sigma.app/api/v1/integracao/lojas/140 \
-    -H "Authorization: Bearer <token_real>" \
-    -H "Content-Type: application/json" \
-    -d '{"rito": "REAA"}'
-  ```
-- Verificar se o warning do Google GSI sumiu no console do browser em produção.
+O erro passou por **quatro causas em camadas**, cada uma revelada após a correção anterior:
 
-### 3.2 Valor canônico do Enum `Rito Escocês Retificado` no banco
+### Camada 1 — 404 → `auth_esigma.py` / `dependencies.py` (Lojas)
+- **Causa:** `Authorization: Bearer <token>` obrigatório na API do Lojas. Token do CoReVM inválido no contexto do Lojas → 422 → tratado como 404.
+- **Fix (Lojas):** `obter_usuario_esigma_opcional` + `get_usuario_e_obreiro_opcional`. `X-Service-Key` autoriza sem `Authorization`.
 
-> ⚠️ **ATENÇÃO:** O `RitoEnum.RER` tem `value = "Rito Escocês Retificado"` no Python, mas o tipo ENUM no PostgreSQL pode ter o valor com ou sem acento (`Retificado` vs `Retificado`). Verificar com:
-> ```sql
-> SELECT unnest(enum_range(NULL::ritoEnum));
-> ```
-> Se o valor canônico no banco for diferente, o mapa `_MAPA_RITO_CANONICO` no `lojas_cliente.py` e `loja_admin_service.py` precisa ser ajustado.
+### Camada 2 — 500 por `RitoEnum` inválido → `loja_admin_service.py` (Lojas)
+- **Causa:** `loja.rito = rito_val` (string pura) no `except` do `RitoEnum(rito_val)` → SQLAlchemy rejeita string no campo Enum.
+- **Fix (Lojas):** Mapa de normalização `_mapa_rito` converte variações do frontend para `RitoEnum.value` antes de atribuir.
 
-### 3.3 `DiretoriaConselho` vazia no banco
-- A tabela `DiretoriaConselho` tem 0 registros — a tela de Mesa Diretora do Conselho mostra vazio.
-- A rota `PUT /api/v1/regioes/{id}` recria a diretoria ao receber o payload.
-- **Não é bug — é dado faltante.** Precisará ser preenchido via interface.
+### Camada 3 — 500 por UUID no WHERE → `lojas_cliente.py` (CoReVM)
+- **Causa:** Fallback SQL: `WHERE (id = :int OR codigo_loja = :str)`. `codigo_loja` é UUID. PostgreSQL rejeita `'140'` como UUID → `invalid input syntax for type uuid`.
+- **Fix (CoReVM):** Separação estrita: `id = :int` para IDs numéricos, `codigo_loja = :uuid` para UUIDs.
 
-### 3.4 Google GSI em produção (se persistir)
-- Se o warning ainda aparecer em produção (não em dev), investigar se alguma página importa diretamente `window.google.accounts.id.initialize()` ou se há um segundo `<GoogleLogin>` em algum componente fora de `PaginaLogin.tsx`.
+### Camada 4 — 500 por string vazia em ENUM → `rotas_lojas.py` + `lojas_cliente.py` + `loja_admin_service.py`
+- **Causa (descoberta pelos screenshots do usuário):** Frontend envia **todos os campos** do formulário, incluindo `dia_sessao=""`, `periodicidade=""`, `horario_sessao=""`. String `""` é inválida para `dia_sessao_enum` no PostgreSQL → `InvalidTextRepresentation`.
+- **Fix (3 camadas):**
+  - `rotas_lojas.py`: filtra `{k:v for ... if v is not None and str(v).strip() != ""}` antes de passar ao `LojasApiClient`
+  - `lojas_cliente.py` fallback: mesma condição na iteração do mapeamento SQL
+  - `loja_admin_service.py`: filtro de strings vazias antes de qualquer atribuição ao ORM
 
 ---
 
-## 4. Arquitetura e decisões relevantes
+## 3. Commits desta sessão (todos em `main`)
 
-### Fluxo de atualização de loja (CoReVM → Lojas)
+| Hash | Repo | Descrição |
+|---|---|---|
+| `ab3ac69` | Lojas | fix(auth): X-Service-Key sem Authorization |
+| `473082f` | CoReVM | fix(lojas-cliente): fallback resiliente (4 funções) |
+| `3eaaa4f` | CoReVM | fix(auth): remover StrictMode → Google GSI duplo |
+| `b492296` | CoReVM | fix(lojas-cliente): normalizar rito canônico |
+| `564ebd8` | Lojas | fix(rito): RitoEnum normalização robusta |
+| `79e8544` | CoReVM | fix: remover atualizado_em do fallback SQL |
+| `d4b2a2c` | CoReVM | fix: WHERE clause UUID — separar id de codigo_loja |
+| `eba2fa1` | CoReVM | fix: filtrar strings vazias do payload (3 camadas) |
+| `f98863b` | Lojas | fix(service): filtrar strings vazias em atualizar_dados_loja |
+
+---
+
+## 4. Pendências para a próxima sessão
+
+### 4.1 ⚠️ VERIFICAR — Deploy e teste na VPS
+- Commits foram feitos às 21:05. O deploy encerra ~21:08-21:10.
+- **Testar:** editar o rito de qualquer loja no CoReVM → deve retornar sucesso sem 500.
+
+### 4.2 Google GSI warning persistente
+- `feature_collector.js:23 using deprecated parameters` ainda aparece no console.
+- Causa: `@react-oauth/google v0.13.5` + cache do PWA na VPS ainda pode ter o `main.tsx` antigo com `<StrictMode>`.
+- Ação: limpar cache do browser/PWA e testar novamente. Se persistir em produção (não dev), investigar se há outro `GoogleLogin` em algum componente.
+
+### 4.3 DiretoriaConselho vazia
+- Tabela `DiretoriaConselho` tem 0 registros → tela de Mesa Diretora mostra vazio.
+- Não é bug — é dado faltante. Preencher via interface.
+
+### 4.4 UX Mobile — continuação
+- Sessões anteriores já cobriram Lojas. Próximos módulos a revisar:
+  - `PainelConselho` (dashboard principal)
+  - Telas de mandatos e suplentes
+
+---
+
+## 5. Arquitetura do fluxo de atualização de loja
 
 ```
 Frontend CoReVM
-  → PUT /api/v1/integracao/lojas/{id}  (CoReVM backend)
-    → HTTP: PUT lojas.e-sigma.app/api/v1/lojas/{id}
-         headers: X-Service-Key, Authorization (opcional), X-Operador-Papel: DIRETORIA_REGIONAL
-         [se 200] → retorna sucesso
-         [se erro] → fallback: UPDATE lojas SET ... WHERE id = :id (direto em lojas_db)
-                               + normalização de ENUM rito antes do INSERT
+  → PUT /api/v1/integracao/lojas/{id}
+      payload filtrado: sem None, sem strings vazias
+    → [CoReVM backend] rotas_lojas.py → LojasApiClient.atualizar_loja()
+      → HTTP PUT http://localhost:8001/api/v1/lojas/{id}
+           X-Service-Key: <chave>
+           X-Operador-Papel: DIRETORIA_REGIONAL
+           [sem Authorization — opcional]
+        → [Lojas backend] exigir_permissao_gestao_loja
+             verifica X-Service-Key → autoriza
+           → atualizar_dados_loja() — payload já sem strings vazias
+           [retorna 200] ✓
+
+      [se HTTP falha] → fallback SQL direto ao lojas_db
+           WHERE id = :int  (nunca mistura UUID)
+           strings vazias ignoradas
+           rito normalizado para ENUM canônico
 ```
 
-### Mapa de valores canônicos do `RitoEnum`
-
-| Valor Python | Value armazenado no DB |
-|---|---|
-| `REAA` | `"REAA"` |
-| `YORK` | `"Rito York"` |
-| `SCHRODER` | `"Rito Schroder"` |
-| `BRASILEIRO` | `"Rito Brasileiro"` |
-| `MODERNO` | `"Rito Moderno"` |
-| `ADONHIRAMITA` | `"Rito Adonhiramita"` |
-| `RER` | `"Rito Escocês Retificado"` |
-
-### Service Key inter-módulos
-- `LOJAS_SERVICE_KEY=lBo_w3qPZ9GDL0O5jq8PgOpjKc8M2J1YdV7QfOj_Zfw` (VPS `.env`)
-- `LOJAS_API_BASE_URL=http://localhost:8001/api/v1`
-
 ---
 
-## 5. Arquivos principais modificados nesta sessão
+## 6. Arquivos principais modificados
 
-| Arquivo | Motivo |
+| Arquivo | Modificações |
 |---|---|
-| `backend/core/lojas_cliente.py` | Fallback resiliente + normalização de rito |
-| `frontend/src/main.tsx` | Remoção do StrictMode |
-| `frontend/src/modulos/regional/submodulos/PaginaLojas.tsx` | UX Mobile-First (sessão anterior) |
-| `public/sw.js` | Cache PWA v3 (sessão anterior) |
-
----
-
-## 6. Próximos passos sugeridos
-
-1. **Verificar o deploy da VPS** e testar atualização de rito na interface
-2. **Preencher DiretoriaConselho** via interface do CoReVM
-3. **UX Mobile** — continuar a análise nos outros módulos (ex: PainelConselho, telas de mandatos)
-4. Avaliar migração do `@react-oauth/google` quando versão > 0.13.5 for lançada (com suporte a StrictMode)
+| `backend/api/v1/integracao/rotas_lojas.py` | Filtro de strings vazias no payload |
+| `backend/core/lojas_cliente.py` | Fallback: WHERE UUID/int separado, filtro strings vazias, normalização rito |
+| `frontend/src/main.tsx` | `<StrictMode>` removido |
+| `frontend/src/modulos/regional/submodulos/PaginaLojas.tsx` | UX Mobile-First (sessões anteriores) |
