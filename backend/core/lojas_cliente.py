@@ -296,7 +296,7 @@ class LojasApiClient:
             }
 
             for chave, col in mapeamento.items():
-                if chave in payload and payload[chave] is not None:
+                if chave in payload and payload[chave] is not None and str(payload[chave]).strip() != "":
                     param_nome = f"val_{col}"
                     if param_nome not in params:
                         valor = payload[chave]

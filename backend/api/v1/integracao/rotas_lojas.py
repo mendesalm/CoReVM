@@ -105,13 +105,19 @@ def atualizar_loja_integracao(
 ):
     """Atualização cadastral da loja delegada para a API do Lojas."""
     logger.info(f"Atualizando cadastro da Loja {loja_id} via API Lojas")
-    payload = loja_in.model_dump(exclude_unset=True)
+    # Exclui campos não definidos E strings vazias — strings vazias causam erro
+    # em colunas ENUM do PostgreSQL (dia_sessao_enum, ritoEnum, etc.)
+    payload_raw = loja_in.model_dump(exclude_unset=True)
+    payload = {k: v for k, v in payload_raw.items() if v is not None and str(v).strip() != ""}
+    if not payload:
+        return {"status": "success", "message": "Nenhum campo a atualizar.", "loja_id": loja_id}
     return LojasApiClient.atualizar_loja(
         loja_id=loja_id,
         payload=payload,
         token=authorization,
         papel_operador="DIRETORIA_REGIONAL",
     )
+
 
 
 class VmMandatoUpdatePayload(BaseModel):
