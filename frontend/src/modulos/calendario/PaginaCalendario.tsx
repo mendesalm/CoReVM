@@ -6,7 +6,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Loader2, ShieldCheck, Calendar, List, Plus, Clock, Building2, CalendarPlus, Download, ChevronRight } from 'lucide-react';
+import { Loader2, ShieldCheck, Calendar, List, Plus, Clock, Building2, CalendarPlus, Download, ChevronRight, ChevronDown, Palette } from 'lucide-react';
 import { CampoData, CampoHora } from '../../compartilhado/componentes/SeletorDataHora';
 import { gerarLinkGoogleCalendar, baixarArquivoIcs } from '../../compartilhado/utilitarios/calendarioExport';
 import { feedbackTatil } from '../../compartilhado/utilitarios/dispositivoNativo';
@@ -116,6 +116,7 @@ export default function PaginaCalendario() {
   const [filtroTipo, setFiltroTipo] = useState('TODOS');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [mostrarCancelados, setMostrarCancelados] = useState(false);
+  const [mostrarLegenda, setMostrarLegenda] = useState(false);
 
   // Modo de visualização responsivo: 'lista' (feed ergonômico mobile) ou 'calendario' (grid mensal)
   const [modoVisualizacao, setModoVisualizacao] = useState<'lista' | 'calendario'>(() => {
@@ -467,13 +468,13 @@ export default function PaginaCalendario() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 text-xs w-full lg:w-auto">
           {/* Alternador Desktop */}
-          <div className="hidden md:flex bg-[#161616] p-1 rounded-xl border border-[#333] mr-2">
+          <div className="hidden md:flex bg-[#111] p-1 rounded-xl border border-[#222]">
             <button
               type="button"
               onClick={() => setModoVisualizacao('lista')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 modoVisualizacao === 'lista'
                   ? 'bg-[#facc15] text-black shadow-md'
                   : 'text-gray-400 hover:text-white'
@@ -485,7 +486,7 @@ export default function PaginaCalendario() {
             <button
               type="button"
               onClick={() => setModoVisualizacao('calendario')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 modoVisualizacao === 'calendario'
                   ? 'bg-[#facc15] text-black shadow-md'
                   : 'text-gray-400 hover:text-white'
@@ -496,35 +497,50 @@ export default function PaginaCalendario() {
             </button>
           </div>
 
-          <select
-            value={filtroTipo}
-            onChange={(e) => setFiltroTipo(e.target.value)}
-            className="bg-[#141414] text-gray-200 border border-[#333] rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer text-xs"
-          >
-            <option value="TODOS">Todos os tipos</option>
-            {tiposEvento.map((t) => (
-              <option key={t.tipo} value={t.tipo}>{t.rotulo}</option>
-            ))}
-          </select>
-          <select
-            value={filtroStatus}
-            onChange={(e) => setFiltroStatus(e.target.value)}
-            className="bg-[#141414] text-gray-200 border border-[#333] rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer text-xs"
-          >
-            <option value="TODOS">Todos os status</option>
-            {Object.entries(STATUS_ROTULOS).map(([valor, rotulo]) => (
-              <option key={valor} value={valor}>{rotulo}</option>
-            ))}
-          </select>
-          <label className="flex items-center gap-1.5 text-xs font-medium text-gray-400 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={mostrarCancelados}
-              onChange={(e) => setMostrarCancelados(e.target.checked)}
-              className="w-3.5 h-3.5 accent-[#facc15] bg-[#141414] border-[#333] rounded"
-            />
-            Cancelados
-          </label>
+          {/* Grupo de Filtros Unificado */}
+          <div className="flex flex-wrap md:flex-nowrap items-center bg-[#111] border border-[#222] rounded-xl p-1 gap-1">
+            <select
+              value={filtroTipo}
+              onChange={(e) => setFiltroTipo(e.target.value)}
+              className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 md:w-auto hover:text-white border-r border-[#222] appearance-none"
+            >
+              <option value="TODOS" className="bg-[#111]">Todos os tipos</option>
+              {tiposEvento.map((t) => (
+                <option key={t.tipo} value={t.tipo} className="bg-[#111]">{t.rotulo}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 md:w-auto hover:text-white border-r border-[#222] appearance-none"
+            >
+              <option value="TODOS" className="bg-[#111]">Todos os status</option>
+              {Object.entries(STATUS_ROTULOS).map(([valor, rotulo]) => (
+                <option key={valor} value={valor} className="bg-[#111]">{rotulo}</option>
+              ))}
+            </select>
+
+            <label className="flex items-center gap-1.5 px-3 py-1.5 font-medium text-gray-300 hover:text-white cursor-pointer select-none transition-colors border-r border-[#222]">
+              <input
+                type="checkbox"
+                checked={mostrarCancelados}
+                onChange={(e) => setMostrarCancelados(e.target.checked)}
+                className="w-3.5 h-3.5 accent-[#facc15] bg-[#1a1a1a] border-[#333] rounded"
+              />
+              Cancelados
+            </label>
+
+            <button
+              type="button"
+              onClick={() => setMostrarLegenda(!mostrarLegenda)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-[#facc15]/20 text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-[#222]'}`}
+            >
+              <Palette className="w-3.5 h-3.5" />
+              Legenda
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mostrarLegenda ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
 
           {/* Botão Novo Evento no Desktop */}
           {tiposPermitidos.length > 0 && (
@@ -538,7 +554,7 @@ export default function PaginaCalendario() {
                 setIsEditing(false);
                 setShowModal(true);
               }}
-              className="hidden md:flex items-center gap-1.5 ml-2 px-3 py-1.5 bg-[#facc15] hover:bg-[#eab308] text-black font-semibold rounded-lg transition-colors shadow-sm"
+              className="hidden md:flex items-center gap-2 ml-auto px-4 py-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold rounded-xl transition-all shadow-md"
             >
               <Plus className="w-4 h-4" />
               Novo Evento
@@ -553,14 +569,19 @@ export default function PaginaCalendario() {
         </div>
       )}
 
-      {/* Legenda de cores por tipo */}
-      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-gray-400">
-        {tiposEvento.map((t) => (
-          <div key={t.tipo} className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COR_POR_TIPO[t.tipo] || COR_PADRAO }} />
-            <span>{t.rotulo}</span>
+      {/* Legenda de cores por tipo (Accordion) */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${mostrarLegenda ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0 m-0'}`}>
+        <div className="bg-[#111] border border-[#222] rounded-xl p-4 shadow-xl">
+          <h3 className="text-xs font-bold text-gray-300 mb-3 uppercase tracking-wider">Legenda de Cores</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3 text-[11px] text-gray-400">
+            {tiposEvento.map((t) => (
+              <div key={t.tipo} className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm" style={{ backgroundColor: COR_POR_TIPO[t.tipo] || COR_PADRAO }} />
+                <span className="font-medium truncate" title={t.rotulo}>{t.rotulo}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Renderização condicional: Visão Lista (Feed Mobile) vs Visão Calendário Mensal */}
