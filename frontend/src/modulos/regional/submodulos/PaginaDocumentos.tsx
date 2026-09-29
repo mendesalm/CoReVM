@@ -30,6 +30,13 @@ function extrairMensagemErro(err: any, mensagemPadrao: string): string {
   return mensagemPadrao;
 }
 
+function formatarTamanho(bytes?: number): string {
+  if (bytes === undefined || bytes === null) return 'N/A';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 interface DocumentoItem {
   id: string;
   regiao_id: string;
@@ -856,60 +863,131 @@ export default function PaginaDocumentos() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MODAL: LEITOR DE PDF INTEGRADO */}
+      {/* DRAWER: DETALHES DO DOCUMENTO */}
       {/* ========================================================================= */}
       {modalVisualizarAberto && documentoVisualizando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-          <div className="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-            {/* Topo do Visualizador */}
-            <div className="p-4 border-b border-[#242424] flex items-center justify-between bg-[#111]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
-                  <FileText className="w-5 h-5" />
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm transition-opacity"
+            onClick={() => setModalVisualizarAberto(false)}
+          />
+          
+          {/* Drawer Lateral */}
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-4xl bg-[#141414] border-l border-[#2b2b2b] shadow-2xl flex flex-col animate-fade-in sm:translate-x-0">
+            {/* Header do Drawer */}
+            <div className="p-5 border-b border-[#242424] flex items-start justify-between bg-[#111]">
+              <div className="flex gap-4">
+                <div className="p-3 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15] h-fit">
+                  <FileText className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>{documentoVisualizando.titulo}</span>
+                  <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-mono text-[#facc15] bg-[#1c1c1c] px-2 py-0.5 rounded border border-[#2c2c2c]">
                       {documentoVisualizando.codigo_documento}
                     </span>
-                  </h3>
-                  <p className="text-[11px] text-[#888]">
-                    Data: {documentoVisualizando.data_documento} &bull; Emissor: {documentoVisualizando.autor_nome}
-                    {documentoVisualizando.data_expiracao && (
-                      <> &bull; <span className="text-amber-400">Expira em {new Date(documentoVisualizando.data_expiracao + 'T00:00:00').toLocaleDateString('pt-BR')}</span></>
+                    {documentoVisualizando.arquivado && (
+                       <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-900 border border-gray-700 text-gray-400">
+                         Arquivado
+                       </span>
                     )}
-                    {documentoVisualizando.arquivado && <> &bull; <span className="text-gray-400">Arquivado</span></>}
-                  </p>
+                  </div>
+                  <h2 className="text-xl font-bold text-white leading-tight pr-4">
+                    {documentoVisualizando.titulo}
+                  </h2>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalVisualizarAberto(false)}
+                className="p-2 text-[#888] hover:text-white rounded-xl hover:bg-[#222] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Corpo do Drawer (Metadados + Iframe) */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+              {/* Coluna Esquerda: Metadados e Ações */}
+              <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-[#242424] bg-[#161616] flex flex-col overflow-y-auto">
+                <div className="p-5 space-y-6">
+                  {/* Ação Principal */}
+                  <button
+                    onClick={() => handleDownloadArquivo(documentoVisualizando.id)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#facc15] hover:bg-[#eab308] text-black text-sm font-extrabold rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+                  >
+                    <Download className="w-4 h-4" /> Baixar Documento
+                  </button>
+
+                  {/* Informações */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider border-b border-[#222] pb-2">
+                      Detalhes
+                    </h3>
+                    
+                    <div>
+                      <span className="block text-[10px] text-[#666] uppercase mb-0.5">Autor / Emissor</span>
+                      <span className="text-sm text-white font-medium">{documentoVisualizando.autor_nome}</span>
+                      <span className="block text-xs text-[#aaa]">{documentoVisualizando.tipo_origem === 'LOJA' ? `Loja ${documentoVisualizando.loja_emissora_nome}` : 'Conselho Regional'}</span>
+                    </div>
+
+                    <div>
+                      <span className="block text-[10px] text-[#666] uppercase mb-0.5">Data do Documento</span>
+                      <span className="text-sm text-[#ccc] flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#facc15]" /> {documentoVisualizando.data_documento}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="block text-[10px] text-[#666] uppercase mb-0.5">Tamanho</span>
+                      <span className="text-sm text-[#ccc]">{formatarTamanho(documentoVisualizando.tamanho_bytes)}</span>
+                    </div>
+
+                    <div>
+                      <span className="block text-[10px] text-[#666] uppercase mb-0.5">Categoria</span>
+                      <span className="text-sm text-[#ccc]">{documentoVisualizando.categoria}</span>
+                    </div>
+
+                    {documentoVisualizando.descricao_ementa && (
+                      <div>
+                        <span className="block text-[10px] text-[#666] uppercase mb-1">Ementa / Descrição</span>
+                        <p className="text-xs text-[#aaa] leading-relaxed bg-[#111] p-3 rounded-lg border border-[#222]">
+                          {documentoVisualizando.descricao_ementa}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Estatísticas (Downloads) */}
+                  <div className="space-y-4 pt-4 border-t border-[#222]">
+                    <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider">
+                      Histórico / Interações
+                    </h3>
+                    <div className="flex items-center gap-3 bg-[#111] border border-[#222] p-3 rounded-xl">
+                      <div className="p-2 bg-blue-950/40 rounded-lg">
+                        <HardDriveDownload className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div>
+                        <span className="block text-lg font-bold text-white leading-none">
+                          {documentoVisualizando.downloads_count}
+                        </span>
+                        <span className="text-[10px] text-[#777] uppercase">Downloads realizados</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleDownloadArquivo(documentoVisualizando.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#facc15] hover:bg-[#eab308] text-black text-xs font-extrabold rounded-xl shadow transition-all"
-                >
-                  <Download className="w-3.5 h-3.5" /> Baixar PDF
-                </button>
-                <button
-                  onClick={() => setModalVisualizarAberto(false)}
-                  className="p-1.5 text-[#888] hover:text-white rounded-xl hover:bg-[#222]"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              {/* Coluna Direita: Visualizador de PDF */}
+              <div className="flex-1 bg-[#1e1e1e] relative h-[50vh] md:h-auto">
+                <iframe
+                  src={`${API_URL}/regional/${id}/documentos/${documentoVisualizando.id}/arquivo#toolbar=1`}
+                  title={documentoVisualizando.titulo}
+                  className="w-full h-full border-none"
+                />
               </div>
             </div>
-
-            {/* Visualizador Iframe */}
-            <div className="flex-1 bg-[#1e1e1e] relative">
-              <iframe
-                src={`${API_URL}/regional/${id}/documentos/${documentoVisualizando.id}/arquivo#toolbar=1`}
-                title={documentoVisualizando.titulo}
-                className="w-full h-full border-none"
-              />
-            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* ========================================================================= */}
