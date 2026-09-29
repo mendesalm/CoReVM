@@ -103,6 +103,9 @@ export default function Layout() {
   // rotas ainda exigem o perfil "cheio" (Diretoria/Suplente/VM). Ver
   // claude/roteiro-testes-manuais.md, item B.10, no Project "Core".
   const [meuRole, setMeuRole] = useState<string | null>(null);
+  
+  const isSuperAdmin = usuario?.roles?.includes('super_admin') || usuario?.roles?.includes('superadmin') || usuario?.roles?.includes('sistema');
+
   useEffect(() => {
     const fetchMeuContexto = async () => {
       try {
@@ -296,6 +299,17 @@ export default function Layout() {
 
         {/* Direita: Usuário Ativo, Role Maçônica, Botão Instalar e Logout */}
         <div className="flex items-center gap-3.5">
+          {isSuperAdmin && (
+            <Link
+              to="/superadmin"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-400 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              title="Voltar ao Painel Geral (SuperAdmin)"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Painel Geral</span>
+            </Link>
+          )}
+
           {podeInstalar && (
             <button
               type="button"
