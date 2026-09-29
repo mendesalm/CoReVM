@@ -490,45 +490,9 @@ export default function PaginaVotacoes() {
           </div>
         </div>
 
-        {/* Barra de Filtros por Modalidade & Status */}
-        <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 space-y-3">
-          
-          {/* Linha 1: Abas por Natureza */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              <button
-                onClick={() => setFiltroTipo('TODAS')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  filtroTipo === 'TODAS' 
-                    ? 'bg-[#facc15] text-black shadow-md shadow-[#facc15]/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-                }`}
-              >
-                Todas ({votacoes.length})
-              </button>
-              <button
-                onClick={() => setFiltroTipo('DELIBERACAO')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  filtroTipo === 'DELIBERACAO' 
-                    ? 'bg-amber-500 text-black shadow-md shadow-amber-500/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-                }`}
-              >
-                Deliberações Formais
-              </button>
-              <button
-                onClick={() => setFiltroTipo('CONSULTA')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  filtroTipo === 'CONSULTA' 
-                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-                }`}
-              >
-                Consultas Regionais
-              </button>
-            </div>
-
-            {/* Campo de Busca Rápida */}
+        {/* Barra de Filtros Unificada */}
+        <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             <div className="relative min-w-[260px] flex-1 sm:flex-initial">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
               <input 
@@ -539,86 +503,63 @@ export default function PaginaVotacoes() {
                 className="w-full pl-10 pr-4 py-2 bg-[#0c0c0c] border border-[#2b2b2b] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
               />
             </div>
-          </div>
 
-          {/* Linha 2: Filtro por Status + Ordenação + Itens por Página */}
-          <div className="pt-2 border-t border-[#1e1e1e] flex flex-wrap items-center justify-between gap-3 text-xs">
-            
-            <div className="flex items-center gap-1 bg-[#0a0a0a] border border-[#222] p-1 rounded-xl">
-              <button
-                onClick={() => setFiltroStatus('TODOS')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
-                  filtroStatus === 'TODOS' 
-                    ? 'bg-[#252525] text-white shadow' 
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 font-medium">Natureza:</span>
+              <select
+                value={filtroTipo}
+                onChange={(e: any) => setFiltroTipo(e.target.value)}
+                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
               >
-                Todas
-              </button>
-              <button
-                onClick={() => setFiltroStatus('EM_ANDAMENTO')}
-                className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
-                  filtroStatus === 'EM_ANDAMENTO' 
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                    : 'text-gray-400 hover:text-emerald-300'
-                }`}
-              >
-                <Clock className="w-3 h-3 text-emerald-400" />
-                Em Aberto ({totalEmAndamento})
-              </button>
-              <button
-                onClick={() => setFiltroStatus('ENCERRADA')}
-                className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
-                  filtroStatus === 'ENCERRADA' 
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
-                    : 'text-gray-400 hover:text-blue-300'
-                }`}
-              >
-                <CheckCheck className="w-3 h-3 text-blue-400" />
-                Encerradas ({totalEncerradas})
-              </button>
-              <button
-                onClick={() => setFiltroStatus('MINHA_PENDENTE')}
-                className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
-                  filtroStatus === 'MINHA_PENDENTE' 
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
-                    : 'text-gray-400 hover:text-amber-300'
-                }`}
-              >
-                <AlertCircle className="w-3 h-3 text-amber-400" />
-                Minha Loja Pendente ({totalMinhasPendentes})
-              </button>
+                <option value="TODAS">Todas ({votacoes.length})</option>
+                <option value="DELIBERACAO">Deliberações Formais</option>
+                <option value="CONSULTA">Consultas Regionais</option>
+              </select>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
-                <span className="text-gray-400 font-medium">Ordenar por:</span>
-                <select
-                  value={ordenacao}
-                  onChange={(e: any) => setOrdenacao(e.target.value)}
-                  className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
-                >
-                  <option value="RECENTES">Mais Recentes</option>
-                  <option value="PRAZO">Prazo de Encerramento</option>
-                  <option value="MAIS_VOTADAS">Mais Votadas</option>
-                  <option value="PENDENTES_PRIMEIRO">Pendentes Primeiro</option>
-                </select>
-              </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 font-medium">Status:</span>
+              <select
+                value={filtroStatus}
+                onChange={(e: any) => setFiltroStatus(e.target.value)}
+                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
+              >
+                <option value="TODOS">Todos</option>
+                <option value="EM_ANDAMENTO">Em Aberto ({totalEmAndamento})</option>
+                <option value="ENCERRADA">Encerradas ({totalEncerradas})</option>
+                <option value="MINHA_PENDENTE">Minha Loja Pendente ({totalMinhasPendentes})</option>
+              </select>
+            </div>
+          </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-gray-400 font-medium">Exibir:</span>
-                <select
-                  value={itensPorPagina}
-                  onChange={(e) => setItensPorPagina(Number(e.target.value))}
-                  className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
-                >
-                  <option value={6}>6 por página</option>
-                  <option value={9}>9 por página</option>
-                  <option value={12}>12 por página</option>
-                  <option value={9999}>Todas</option>
-                </select>
-              </div>
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <div className="flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-gray-400 font-medium">Ordenar por:</span>
+              <select
+                value={ordenacao}
+                onChange={(e: any) => setOrdenacao(e.target.value)}
+                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
+              >
+                <option value="RECENTES">Mais Recentes</option>
+                <option value="PRAZO">Prazo de Encerramento</option>
+                <option value="MAIS_VOTADAS">Mais Votadas</option>
+                <option value="PENDENTES_PRIMEIRO">Pendentes Primeiro</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 font-medium">Exibir:</span>
+              <select
+                value={itensPorPagina}
+                onChange={(e) => setItensPorPagina(Number(e.target.value))}
+                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
+              >
+                <option value={6}>6</option>
+                <option value={9}>9</option>
+                <option value={12}>12</option>
+                <option value={9999}>Todas</option>
+              </select>
             </div>
           </div>
         </div>
@@ -641,7 +582,8 @@ export default function PaginaVotacoes() {
               return (
                 <div
                   key={votacao.id}
-                  className={`border rounded-2xl p-5 shadow-xl transition-all duration-200 flex flex-col justify-between group ${
+                  onClick={() => abrirModalVoto(votacao)}
+                  className={`border rounded-2xl p-5 shadow-xl transition-all duration-200 flex flex-col justify-between group cursor-pointer ${
                     minhaLojaVotou
                       ? 'bg-gradient-to-b from-emerald-950/15 via-[#131414] to-[#141414] border-emerald-500/30 hover:border-emerald-500/50'
                       : isAberta
@@ -679,7 +621,7 @@ export default function PaginaVotacoes() {
 
                         {votacao.pode_gerenciar && (
                           <button
-                            onClick={() => handleExcluirVotacao(votacao.id)}
+                            onClick={(e) => { e.stopPropagation(); handleExcluirVotacao(votacao.id); }}
                             className="p-1 text-gray-500 hover:text-red-400 rounded-md hover:bg-red-500/10 transition-colors ml-1"
                             title="Ocultar esta votação"
                           >
@@ -768,7 +710,7 @@ export default function PaginaVotacoes() {
                     <div className="flex items-center justify-between gap-2">
                       {votacao.pode_gerenciar && (
                         <button
-                          onClick={() => handleAlternarStatusVotacao(votacao.id, votacao.status)}
+                          onClick={(e) => { e.stopPropagation(); handleAlternarStatusVotacao(votacao.id, votacao.status); }}
                           className="text-[11px] font-semibold text-gray-400 hover:text-white transition-colors"
                         >
                           {isAberta ? 'Encerrar Votação' : 'Reabrir Votação'}
@@ -776,7 +718,7 @@ export default function PaginaVotacoes() {
                       )}
 
                       <button
-                        onClick={() => abrirModalVoto(votacao)}
+                        onClick={(e) => { e.stopPropagation(); abrirModalVoto(votacao); }}
                         className={`flex items-center gap-1.5 px-3.5 py-1.5 font-bold text-xs rounded-xl border transition-all ml-auto ${
                           !minhaLojaVotou && isAberta
                             ? 'bg-[#facc15] hover:bg-[#eab308] text-black border-[#facc15] shadow-md shadow-[#facc15]/10'
@@ -840,10 +782,11 @@ export default function PaginaVotacoes() {
       {/* MODAL DE VOTAÇÃO INTERATIVA & APURAÇÃO EM TEMPO REAL      */}
       {/* ========================================================= */}
       {votacaoSelecionada && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121212] border border-[#2b2b2b] rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
+          <div className="absolute inset-0" onClick={() => setVotacaoSelecionada(null)}></div>
+          <div className="relative w-full max-w-md bg-[#121212] h-full shadow-2xl flex flex-col border-l border-[#2b2b2b] animate-in slide-in-from-right duration-300 overflow-hidden">
             
-            {/* Header do Modal */}
+            {/* Header do Drawer */}
             <div className="px-6 py-4 bg-[#181818] border-b border-[#292929] flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
