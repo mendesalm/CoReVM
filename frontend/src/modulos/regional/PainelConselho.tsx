@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  ShieldCheck, Loader2, Award, Calendar,
+  ShieldCheck, Award, Calendar,
   Bell, Pin, Archive, ArchiveRestore, Plus, AlertTriangle, AlertOctagon,
   Sparkles, Megaphone, CheckCheck, Eye
 } from 'lucide-react';
@@ -599,9 +599,38 @@ export default function PainelConselho() {
   };
 
   if (loading) {
+    // Skeleton elegante — simula a estrutura real do painel (stat-bar + 2 colunas)
+    // para reduzir a percepção de lentidão e preparar o olho do usuário.
     return (
-      <div className="h-screen bg-[#080808] flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-[#facc15] animate-spin" />
+      <div className="min-h-screen bg-[#080808] p-6 sm:p-8 animate-pulse">
+        {/* Stat-bar skeleton */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="h-20 bg-[#111] border border-[#222] rounded-2xl w-full" />
+        </div>
+        {/* Grid de 2 colunas skeleton */}
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[0, 1].map((col) => (
+            <div key={col} className="bg-[#121212] border border-[#222] rounded-2xl p-5 space-y-4" style={{ height: 'calc(100vh - 260px)' }}>
+              {/* Cabeçalho da coluna */}
+              <div className="flex items-center justify-between pb-4 border-b border-[#222]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#1e1e1e]" />
+                  <div className="space-y-1.5">
+                    <div className="h-4 w-36 bg-[#1e1e1e] rounded-lg" />
+                    <div className="h-3 w-52 bg-[#1a1a1a] rounded-lg" />
+                  </div>
+                </div>
+                <div className="h-8 w-28 bg-[#1e1e1e] rounded-xl" />
+              </div>
+              {/* Grade de cards skeleton */}
+              <div className="grid gap-3 pt-1" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-28 bg-[#1a1a1a] rounded-xl border border-[#242424]" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -632,17 +661,17 @@ export default function PainelConselho() {
   ];
   const itemEmFoco = itemEmFocoId ? avisos.find((a: any) => a.id === itemEmFocoId) : null;
 
+  // Métricas calculadas para a stat-bar de resumo do painel
+  const totalUrgentes = avisos.filter((a: any) => a.nivel === 'ALTO' && !a.arquivado).length;
+  const totalAlertas = avisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length;
+  const totalNaoLidos = avisos.filter((a: any) => !a.lido && !a.arquivado).length;
+  const totalFixados = avisos.filter((a: any) => a.fixado && !a.arquivado).length;
+
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200 p-6 sm:p-8">
+    <div className="min-h-screen bg-[#080808] text-gray-200 p-4 sm:p-6">
 
       {/* ALTERAÇÃO (2026-09-19, pedido do usuário): defs SVG globais (invisíveis,
-          0x0px) para a "dobra" realista das miniaturas de post-it/documento —
-          gradiente por nível (mesma cor da borda, mas com sombreado simulando
-          o papel curvando) + um filtro de sombra suave por baixo da dobra.
-          Um único bloco de defs, referenciado por todas as miniaturas via
-          `url(#crvm-dogear-<nivel>)`/`url(#crvm-dogear-sombra)` — SVG permite
-          referenciar defs de qualquer lugar do mesmo documento, não precisa
-          duplicar em cada card. */}
+          0x0px) para a "dobra" realista das miniaturas de post-it/documento. */}
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id="crvm-dogear-baixo" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -666,11 +695,85 @@ export default function PainelConselho() {
         </defs>
       </svg>
 
-      {/* Container Principal: Grid de 2 Colunas (Avisos à esquerda, Notificações à direita) */}
-      <div className="max-w-7xl mx-auto space-y-6">
+      {/* Container Principal */}
+      <div className="max-w-7xl mx-auto space-y-4">
 
-        {/* ALTERAÇÃO (2026-09-12): toggle "ver arquivados" — só Diretoria/
-            SuperAdmin, que são os únicos com permissão de reativar. */}
+        {/* ============================================================ */}
+        {/* STAT-BAR DE RESUMO — leitura instantânea do estado do mural  */}
+        {/* ALTERAÇÃO (2026-09-29): header imponente com gradiente ouro/  */}
+        {/* azul profundo e 4 métricas-chave; substitui a página em branco*/}
+        {/* sem contexto que existia antes do carregamento terminar.       */}
+        {/* ============================================================ */}
+        <div className="relative overflow-hidden rounded-2xl border border-[rgba(221,185,107,0.25)] bg-gradient-to-r from-[#070e1c] via-[#0a1628] to-[#07101e] shadow-2xl">
+          {/* Brilho decorativo de fundo */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(221,185,107,0.06)] via-transparent to-[rgba(59,130,246,0.04)] pointer-events-none" />
+          <div className="relative px-5 py-4 flex flex-wrap items-center gap-4 sm:gap-6">
+            {/* Título/identidade do mural */}
+            <div className="flex items-center gap-3 mr-auto">
+              <div className="p-2 rounded-xl bg-[rgba(221,185,107,0.12)] border border-[rgba(221,185,107,0.25)]">
+                <ShieldCheck className="w-5 h-5 text-[#FDE68A]" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#DDB96B]">Mural do Conselho</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Avisos e Notificações regionais</p>
+              </div>
+            </div>
+
+            {/* Métrica: Urgentes */}
+            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
+              totalUrgentes > 0
+                ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                : 'bg-[#111] border-[#222] text-gray-600'
+            }`}>
+              <AlertOctagon className="w-4 h-4 shrink-0" />
+              <div className="text-right">
+                <p className="text-base font-black leading-none">{totalUrgentes}</p>
+                <p className="text-[10px] font-medium opacity-80">urgente{totalUrgentes !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+
+            {/* Métrica: Alertas */}
+            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
+              totalAlertas > 0
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                : 'bg-[#111] border-[#222] text-gray-600'
+            }`}>
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <div className="text-right">
+                <p className="text-base font-black leading-none">{totalAlertas}</p>
+                <p className="text-[10px] font-medium opacity-80">alerta{totalAlertas !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+
+            {/* Métrica: Não lidos */}
+            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
+              totalNaoLidos > 0
+                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                : 'bg-[#111] border-[#222] text-gray-600'
+            }`}>
+              <Eye className="w-4 h-4 shrink-0" />
+              <div className="text-right">
+                <p className="text-base font-black leading-none">{totalNaoLidos}</p>
+                <p className="text-[10px] font-medium opacity-80">não {totalNaoLidos !== 1 ? 'lidos' : 'lido'}</p>
+              </div>
+            </div>
+
+            {/* Métrica: Fixados */}
+            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
+              totalFixados > 0
+                ? 'bg-[#facc15]/10 border-[#facc15]/30 text-[#facc15]'
+                : 'bg-[#111] border-[#222] text-gray-600'
+            }`}>
+              <Pin className="w-4 h-4 shrink-0" />
+              <div className="text-right">
+                <p className="text-base font-black leading-none">{totalFixados}</p>
+                <p className="text-[10px] font-medium opacity-80">fixado{totalFixados !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Toggle "ver arquivados" — só Diretoria/SuperAdmin */}
         {(userContext.is_diretoria || userContext.role?.toUpperCase() === 'SUPERADMIN') && (
           <div className="flex justify-end">
             <button
@@ -688,60 +791,93 @@ export default function PainelConselho() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
           {/* ======================================================== */}
-          {/* COLUNA 1: AVISOS (COM BORDAS CONFORME O NÍVEL: VERDE, AMARELO, VERMELHO) */}
+          {/* COLUNA 1: AVISOS */}
           {/* ======================================================== */}
           <div
             className="bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col"
-            style={{ height: 'calc(100vh - 200px)' }}
+            style={{ height: 'calc(100vh - 240px)' }}
           >
-
             {/* Cabeçalho da Coluna de Avisos */}
             <div className="flex items-center justify-between pb-4 border-b border-[#222] gap-3 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 shrink-0">
                   <Megaphone className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
                       Mural de Avisos
                     </h2>
-                    <span className="bg-[#1e1e1e] text-[#facc15] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#333]">
-                      {itensAvisos.length}
-                    </span>
+                    {/* Contadores por nível — ALTERAÇÃO (2026-09-29): pills compactas
+                        por nível substituem o único badge de total, dando leitura
+                        imediata de quantos são urgentes/alertas/informativos. */}
+                    <div className="flex items-center gap-1">
+                      {itensAvisos.filter((a: any) => a.nivel === 'ALTO' && !a.arquivado).length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-red-500/20 text-red-400 border border-red-500/30">
+                          <AlertOctagon className="w-2.5 h-2.5" />
+                          {itensAvisos.filter((a: any) => a.nivel === 'ALTO' && !a.arquivado).length}
+                        </span>
+                      )}
+                      {itensAvisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          {itensAvisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length}
+                        </span>
+                      )}
+                      <span className="bg-[#1e1e1e] text-gray-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#333]">
+                        {itensAvisos.length}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-gray-500 mt-0.5">
                     Comunicados e convocações solenes do Conselho
                   </p>
                 </div>
               </div>
 
+              {/* Botão com micro-animação de brilho ao hover — ALTERAÇÃO (2026-09-29) */}
               <button
                 type="button"
                 onClick={() => abrirModalNovo('AVISO')}
-                className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3.5 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+                className="group relative inline-flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3.5 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0 overflow-hidden"
               >
-                <Plus className="w-4 h-4" /> Novo Aviso
+                {/* Brilho deslizante ao hover */}
+                <span className="absolute inset-0 w-full h-full translate-x-[-110%] group-hover:translate-x-[110%] bg-white/20 skew-x-[-15deg] transition-transform duration-500 pointer-events-none" />
+                <Plus className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">Novo Aviso</span>
               </button>
             </div>
 
-            {/* Corpo: quadro de miniaturas clicáveis (fixados primeiro) —
-                ALTERAÇÃO (2026-09-19): a coluna inteira agora ocupa a altura
-                disponível da tela (`calc(100vh - 200px)`), com o cabeçalho
-                fixo (`shrink-0`) e só o grid de miniaturas rolando por
-                dentro (`flex-1 min-h-0 overflow-y-auto`) — antes a coluna
-                crescia junto com o conteúdo, exigindo rolar a página toda. */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1 mt-2 pt-3 [scrollbar-gutter:stable]">
+            {/* Corpo: quadro de miniaturas com scrollbar customizada (oculta; visível no hover) */}
+            <div className="flex-1 min-h-0 overflow-y-auto mt-2 pt-3 pr-1
+              [scrollbar-width:thin] [scrollbar-color:transparent_transparent]
+              hover:[scrollbar-color:rgba(63,63,70,0.8)_transparent]
+              [&::-webkit-scrollbar]:w-1.5
+              [&::-webkit-scrollbar-thumb]:rounded-full
+              [&::-webkit-scrollbar-thumb]:bg-transparent
+              hover:[&::-webkit-scrollbar-thumb]:bg-[#3f3f46]/80
+              [scrollbar-gutter:stable]">
               {itensAvisos.length === 0 ? (
-                <div className="text-center py-20 text-gray-500 space-y-2">
-                  <Megaphone className="w-10 h-10 mx-auto text-gray-700 stroke-1" />
-                  <p className="text-xs font-medium">Nenhum comunicado ou aviso cadastrado no momento.</p>
+                /* Estado vazio elegante — ALTERAÇÃO (2026-09-29) */
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
+                  <div className="p-5 rounded-2xl bg-[#1a1a1a] border border-[#252525]">
+                    <Megaphone className="w-12 h-12 text-gray-700 stroke-1" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-400">Mural limpo</p>
+                    <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                      Nenhum comunicado publicado.<br />Use o botão acima para registrar um aviso.
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div className="grid gap-3 pb-1" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+                /* Grid com tamanho máximo controlado — ALTERAÇÃO (2026-09-29):
+                   minmax(0, 120px) evita post-its gigantes em telas largas,
+                   auto-fill preenche naturalmente sem quebrar em 3 forçados. */
+                <div className="grid gap-3 pb-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))' }}>
                   {avisosOrdenados.map((a: any) => renderAvisoMini(a))}
                 </div>
               )}
@@ -750,29 +886,42 @@ export default function PainelConselho() {
           </div>
 
           {/* ======================================================== */}
-          {/* COLUNA 2: NOTIFICAÇÕES (ESTILO DIFERENCIADO + ÍCONES COMPATÍVEIS COM O NÍVEL) */}
+          {/* COLUNA 2: NOTIFICAÇÕES */}
           {/* ======================================================== */}
           <div
             className="bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col"
-            style={{ height: 'calc(100vh - 200px)' }}
+            style={{ height: 'calc(100vh - 240px)' }}
           >
-
             {/* Cabeçalho da Coluna de Notificações */}
             <div className="flex items-center justify-between pb-4 border-b border-[#222] gap-3 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 shrink-0">
                   <Bell className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
                       Notificações & Informes
                     </h2>
-                    <span className="bg-[#1e1e1e] text-blue-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#333]">
-                      {itensNotificacoes.length}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {itensNotificacoes.filter((n: any) => n.nivel === 'ALTO' && !n.arquivado).length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-red-500/20 text-red-400 border border-red-500/30">
+                          <AlertOctagon className="w-2.5 h-2.5" />
+                          {itensNotificacoes.filter((n: any) => n.nivel === 'ALTO' && !n.arquivado).length}
+                        </span>
+                      )}
+                      {itensNotificacoes.filter((n: any) => n.nivel === 'MEDIO' && !n.arquivado).length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          {itensNotificacoes.filter((n: any) => n.nivel === 'MEDIO' && !n.arquivado).length}
+                        </span>
+                      )}
+                      <span className="bg-[#1e1e1e] text-blue-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#333]">
+                        {itensNotificacoes.length}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-gray-500 mt-0.5">
                     Alertas dinâmicos, novidades e informes das Lojas
                   </p>
                 </div>
@@ -781,23 +930,37 @@ export default function PainelConselho() {
               <button
                 type="button"
                 onClick={() => abrirModalNovo('NOTIFICACAO')}
-                className="inline-flex items-center gap-1.5 text-xs font-bold bg-blue-500 hover:bg-blue-400 text-black px-3.5 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+                className="group relative inline-flex items-center gap-1.5 text-xs font-bold bg-blue-500 hover:bg-blue-400 text-black px-3.5 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0 overflow-hidden"
               >
-                <Plus className="w-4 h-4" /> Nova Notificação
+                <span className="absolute inset-0 w-full h-full translate-x-[-110%] group-hover:translate-x-[110%] bg-white/20 skew-x-[-15deg] transition-transform duration-500 pointer-events-none" />
+                <Plus className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">Nova Notificação</span>
               </button>
             </div>
 
-            {/* Corpo: quadro de miniaturas clicáveis (fixados primeiro) —
-                mesma mecânica de altura total/rolagem interna da coluna de
-                Avisos, ver comentário equivalente acima. */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1 mt-2 pt-3 [scrollbar-gutter:stable]">
+            {/* Corpo: quadro de miniaturas com scrollbar customizada */}
+            <div className="flex-1 min-h-0 overflow-y-auto mt-2 pt-3 pr-1
+              [scrollbar-width:thin] [scrollbar-color:transparent_transparent]
+              hover:[scrollbar-color:rgba(63,63,70,0.8)_transparent]
+              [&::-webkit-scrollbar]:w-1.5
+              [&::-webkit-scrollbar-thumb]:rounded-full
+              [&::-webkit-scrollbar-thumb]:bg-transparent
+              hover:[&::-webkit-scrollbar-thumb]:bg-[#3f3f46]/80
+              [scrollbar-gutter:stable]">
               {itensNotificacoes.length === 0 ? (
-                <div className="text-center py-20 text-gray-500 space-y-2">
-                  <Bell className="w-10 h-10 mx-auto text-gray-700 stroke-1" />
-                  <p className="text-xs font-medium">Nenhuma notificação registrada no momento.</p>
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
+                  <div className="p-5 rounded-2xl bg-[#1a1a1a] border border-[#252525]">
+                    <Bell className="w-12 h-12 text-gray-700 stroke-1" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-400">Sem notificações</p>
+                    <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                      Nenhuma notificação registrada.<br />Use o botão acima para criar um informe.
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div className="grid gap-3 pb-1" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+                <div className="grid gap-3 pb-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))' }}>
                   {notifOrdenadas.map((n: any) => renderNotificacaoMini(n))}
                 </div>
               )}
@@ -809,29 +972,55 @@ export default function PainelConselho() {
 
       </div>
 
-      {/* Modal de detalhe — reutiliza os cards completos originais
-          (renderAvisoCard/renderNotificacaoCard) sem alteração; a miniatura
-          é apenas um atalho visual, todas as ações (marcar lido, arquivar,
-          reativar) continuam disponíveis aqui dentro. */}
-      {itemEmFoco && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto"
-          onClick={() => setItemEmFocoId(null)}
-        >
-          <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            {itemEmFoco.tipo === 'NOTIFICACAO' ? renderNotificacaoCard(itemEmFoco) : renderAvisoCard(itemEmFoco)}
-            <div className="flex justify-end mt-3">
-              <button
-                type="button"
-                onClick={() => setItemEmFocoId(null)}
-                className="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors cursor-pointer bg-[#111] border border-[#333] rounded-xl"
-              >
-                Fechar
-              </button>
+      {/* Modal de detalhe — ALTERAÇÃO (2026-09-29): cabeçalho colorido por
+          nível e animação de entrada slide-up + fade para entrada mais suave.
+          Reutiliza renderAvisoCard/renderNotificacaoCard para o conteúdo. */}
+      {itemEmFoco && (() => {
+        const cor = corNivel(itemEmFoco.nivel);
+        const isNotif = itemEmFoco.tipo === 'NOTIFICACAO';
+        return (
+          <div
+            className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-[70] p-4 overflow-y-auto"
+            onClick={() => setItemEmFocoId(null)}
+          >
+            <div
+              className="w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Cabeçalho colorido por nível */}
+              <div className={`flex items-center gap-3 px-5 py-3 rounded-t-2xl border-x border-t ${cor.border} ${cor.bg}`}>
+                <div className={`p-1.5 rounded-lg border ${cor.border} ${cor.bg}`}>
+                  {isNotif
+                    ? <Bell className={`w-4 h-4 ${cor.text}`} />
+                    : <Megaphone className={`w-4 h-4 ${cor.text}`} />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-bold uppercase tracking-widest ${cor.text}`}>
+                    {isNotif ? 'Notificação' : 'Aviso'} — {
+                      itemEmFoco.nivel === 'ALTO' ? 'Urgência' :
+                      itemEmFoco.nivel === 'MEDIO' ? 'Alerta' : 'Informativo'
+                    }
+                  </p>
+                  <p className="text-[10px] text-gray-500 truncate mt-0.5">{itemEmFoco.titulo}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setItemEmFocoId(null)}
+                  className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0 cursor-pointer"
+                  title="Fechar"
+                >
+                  ✕
+                </button>
+              </div>
+              {/* Conteúdo completo do card */}
+              <div className="rounded-b-2xl overflow-hidden">
+                {isNotif ? renderNotificacaoCard(itemEmFoco) : renderAvisoCard(itemEmFoco)}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Modal: Publicar Novo Comunicado (Aviso ou Notificação) */}
       {showNovoAvisoModal && (() => {

@@ -554,10 +554,8 @@ export default function PaginaLojas() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#facc15] uppercase tracking-wider">Módulo 07</span>
-                <span className="text-gray-600">•</span>
                 <h1 className="text-sm font-bold text-white tracking-wide uppercase">
-                  Gestão das Lojas Jurisdicionadas
+                  Lojas Jurisdicionadas
                 </h1>
               </div>
               <p className="text-xs text-gray-400 mt-0.5">
@@ -699,9 +697,10 @@ export default function PaginaLojas() {
               <button
                 type="button"
                 onClick={() => setShowAddLojaModal(true)}
-                className="inline-flex items-center gap-2 text-xs font-bold text-black bg-[#facc15] hover:bg-[#eab308] px-4 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+                className="inline-flex items-center justify-center text-black bg-[#facc15] hover:bg-[#eab308] p-2.5 rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+                title="Vincular Nova Loja"
               >
-                <Plus className="w-4 h-4" /> Vincular Nova Loja
+                <Plus className="w-4 h-4" />
               </button>
             )}
           </div>
