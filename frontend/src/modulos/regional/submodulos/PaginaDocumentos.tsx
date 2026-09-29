@@ -323,7 +323,7 @@ export default function PaginaDocumentos() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-[#f5f5f5] p-6 lg:p-8 font-sans selection:bg-[#facc15]/30">
+    <div className="min-h-screen bg-[#080808] text-gray-200">
       
       {/* 1. CABEÇALHO & BARRA DE SIMULAÇÃO */}
       <div className="max-w-7xl mx-auto mb-8">

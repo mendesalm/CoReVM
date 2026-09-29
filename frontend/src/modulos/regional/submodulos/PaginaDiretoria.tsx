@@ -279,12 +279,12 @@ function formatarLojaMembro(membro: any): string {
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
       
-      {/* Sub-Header Contextual & Seletor de Simulação */}
+      {/* Sub-Header Contextual */}
       <div className="bg-[#111] border-b border-[#222]">
-        <div className="max-w-6xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link 
-              to={`/regiao/${id}`} 
+            <Link
+              to={`/regiao/${id}`}
               className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
@@ -294,13 +294,7 @@ function formatarLojaMembro(membro: any): string {
               <Award className="w-5 h-5"/>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#facc15] uppercase tracking-wider">Módulo 08</span>
-                <span className="text-gray-600">•</span>
-                <h1 className="text-sm font-bold text-white tracking-wide uppercase">
-                  Gestão da Mesa Diretora
-                </h1>
-              </div>
+              <h1 className="text-sm font-bold text-white tracking-wide uppercase">Mesa Diretora</h1>
               <p className="text-xs text-gray-400 mt-0.5">
                 {conselho?.nome || 'Conselho Regional'} — Liderança executiva, titulares e vigência do mandato
               </p>

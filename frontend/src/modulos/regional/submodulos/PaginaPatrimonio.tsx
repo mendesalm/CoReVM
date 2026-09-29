@@ -408,28 +408,28 @@ export default function PaginaPatrimonio() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-[#f5f5f5] p-6 lg:p-8 font-sans selection:bg-[#facc15]/30">
+    <div className="min-h-screen bg-[#080808] text-gray-200">
       
-      {/* 1. CABEÇALHO & BARRA DE SIMULAÇÃO */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#222] pb-6">
-          <div>
-            <div className="flex items-center gap-3 text-xs text-[#888] mb-2 uppercase tracking-wider">
-              <Link to={`/regiao/${id}`} className="hover:text-[#facc15] flex items-center gap-1 transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5" /> Painel do Conselho
-              </Link>
-              <span>/</span>
-              <span className="text-[#facc15]">Patrimônio & Ajuda Mútua</span>
-            </div>
-            <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Landmark className="w-8 h-8 text-[#facc15]" />
-              Patrimônio & Rede de Ajuda Mútua
-            </h1>
-            <p className="text-sm text-[#aaa] mt-1">
-              Inventário de bens do conselho, cessão fraterna de ativos de hospitalaria e rede colaborativa das lojas.
-            </p>
-          </div>
 
+      {/* Sub-Header Contextual */}
+      <div className="bg-[#111] border-b border-[#222]">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/regiao/${id}`}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              title="Voltar ao Painel Geral"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+              <Landmark className="w-5 h-5"/>
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-white tracking-wide uppercase">Patrimônio</h1>
+              <p className="text-xs text-gray-400 mt-0.5">Inventário e bens do Conselho Regional</p>
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-3">
             {/* Botão Novo Cadastro */}
             <button
@@ -452,12 +452,15 @@ export default function PaginaPatrimonio() {
                 });
                 setModalNovoItemAberto(true);
               }}
-              className="flex items-center gap-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+              className="flex items-center gap-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
             >
               <Plus className="w-4 h-4" /> Cadastrar Bem
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 pb-12 space-y-6">
 
         {/* ALERTA DE SUCESSO / ERRO */}
         {sucesso && (
@@ -476,6 +479,7 @@ export default function PaginaPatrimonio() {
             <button onClick={() => setErro('')}><X className="w-3.5 h-3.5" /></button>
           </div>
         )}
+
 
         {/* 2. PAINEL DE MÉTRICAS EM TEMPO REAL */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">

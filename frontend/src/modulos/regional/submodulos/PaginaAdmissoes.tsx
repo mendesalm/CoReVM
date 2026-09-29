@@ -449,41 +449,25 @@ export default function PaginaAdmissoes() {
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
       
-      {/* Header Superior com Simulação de Acesso */}
-      <div className="max-w-7xl mx-auto px-6 pt-6 pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Sub-Header Contextual */}
+      <div className="bg-[#111] border-b border-[#222]">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link 
-              to={`/regiao/${id}`} 
-              className="p-2 text-gray-400 hover:text-white hover:bg-[#1f1f1f] rounded-xl transition-colors"
+            <Link
+              to={`/regiao/${id}`}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/20">
-              <BookOpenCheck className="w-6 h-6"/>
+            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+              <BookOpenCheck className="w-5 h-5"/>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-extrabold text-white tracking-wide">
-                  Mural de Admissão
-                </h1>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/20">
-                  {previas.length} documentos
-                </span>
-                {totalAveriguadas > 0 && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <CheckCheck className="w-3 h-3" />
-                    {totalAveriguadas} averiguadas
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Propostas de Iniciação, Filiação ou Regularização
-              </p>
+              <h1 className="text-sm font-bold text-white tracking-wide uppercase">Mural de Admissão</h1>
+              <p className="text-xs text-gray-400 mt-0.5">Propostas de Iniciação, Filiação ou Regularização</p>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowNovaPreviaModal(true)}

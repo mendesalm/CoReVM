@@ -397,37 +397,35 @@ export default function PaginaVotacoes() {
   return (
     <div className="min-h-screen bg-[#080808] text-gray-200">
       
-      {/* Header Superior com Simulação de Acesso */}
-      <div className="max-w-7xl mx-auto px-6 pt-6 pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Sub-Header Contextual */}
+      <div className="bg-[#111] border-b border-[#222]">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link 
-              to={`/regiao/${id}`} 
-              className="p-2 text-gray-400 hover:text-white hover:bg-[#1f1f1f] rounded-xl transition-colors"
+            <Link
+              to={`/regiao/${id}`}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/20">
-              <Vote className="w-6 h-6"/>
+            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+              <Vote className="w-5 h-5"/>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-extrabold text-white tracking-wide">
-                  Enquetes e Votações
-                </h1>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/20">
+                <h1 className="text-sm font-bold text-white tracking-wide uppercase">Enquetes e Votações</h1>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#facc15]/10 text-[#facc15] border border-[#facc15]/20">
                   {votacoes.length} cadastradas
                 </span>
                 {totalEmAndamento > 0 && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {totalEmAndamento} ativas
                   </span>
                 )}
               </div>
               <p className="text-xs text-gray-400 mt-0.5">
-                Consultas oficiais e deliberações plenárias do Conselho Regional
+                Consultas oficiais e deliberações do Conselho
               </p>
             </div>
           </div>
@@ -435,7 +433,7 @@ export default function PaginaVotacoes() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowNovaVotacaoModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs rounded-xl shadow-lg shadow-[#facc15]/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-2 px-3.5 py-2 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               Nova Deliberação / Enquete

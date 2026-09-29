@@ -102,6 +102,13 @@ export default function PainelConselho() {
   // "LIDO"/desafixado sem precisar fechar e reabrir.
   const [itemEmFocoId, setItemEmFocoId] = useState<string | null>(null);
 
+  // Aba ativa no modo mobile — 'avisos' ou 'notificacoes'
+  // ALTERAÇÃO (2026-09-29): substitui o empilhamento vertical que escondia
+  // o widget de Notificações abaixo do widget de Avisos; agora o usuário
+  // vê claramente que existem dois contextos separados e navega entre eles
+  // com um toque, sem precisar rolar a página.
+  const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
+
   // Carregar dados e avisos
   // CORREÇÃO (2026-09-14): as duas chamadas não dependem uma da outra —
   // antes eram sequenciais (`await` uma depois da outra), o que somava o
@@ -793,14 +800,62 @@ export default function PainelConselho() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
+          {/* Barra de abas — exclusiva mobile (lg:hidden)
+              ALTERAÇÃO (2026-09-29): substitui o empilhamento vertical que escondia
+              o widget de Notificações abaixo do widget de Avisos; agora o usuário
+              vê claramente que existem dois contextos separados e navega entre eles
+              com um toque, sem precisar rolar a página. */}
+          <div className="lg:hidden col-span-full flex rounded-2xl bg-[#121212] border border-[#222] p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => setAbaAtiva('avisos')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                abaAtiva === 'avisos'
+                  ? 'bg-[#facc15] text-black shadow-sm'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Megaphone className="w-3.5 h-3.5" />
+              Avisos
+              {/* Badge de não-lidos em avisos */}
+              {itensAvisos.filter((a: any) => !a.lido && !a.arquivado).length > 0 && (
+                <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${
+                  abaAtiva === 'avisos' ? 'bg-black/20 text-black' : 'bg-[#facc15]/20 text-[#facc15]'
+                }`}>
+                  {itensAvisos.filter((a: any) => !a.lido && !a.arquivado).length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAbaAtiva('notificacoes')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                abaAtiva === 'notificacoes'
+                  ? 'bg-blue-500 text-black shadow-sm'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Bell className="w-3.5 h-3.5" />
+              Notificações
+              {/* Badge de não-lidos em notificações */}
+              {itensNotificacoes.filter((n: any) => !n.lido && !n.arquivado).length > 0 && (
+                <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${
+                  abaAtiva === 'notificacoes' ? 'bg-black/20 text-black' : 'bg-blue-500/20 text-blue-400'
+                }`}>
+                  {itensNotificacoes.filter((n: any) => !n.lido && !n.arquivado).length}
+                </span>
+              )}
+            </button>
+          </div>
+
           {/* ======================================================== */}
           {/* COLUNA 1: AVISOS */}
           {/* ======================================================== */}
           <div
-            className="bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col"
-            style={{ height: 'calc(100vh - 240px)' }}
+            className={`bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col ${abaAtiva === 'notificacoes' ? 'hidden lg:flex' : 'flex'}`}
+            style={{ height: 'calc(100vh - 280px)' }}
           >
-            {/* Cabeçalho da Coluna de Avisos */}
+
             <div className="flex items-center justify-between pb-4 border-b border-[#222] gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 shrink-0">
@@ -889,10 +944,11 @@ export default function PainelConselho() {
           {/* COLUNA 2: NOTIFICAÇÕES */}
           {/* ======================================================== */}
           <div
-            className="bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col"
-            style={{ height: 'calc(100vh - 240px)' }}
+            className={`bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col ${abaAtiva === 'avisos' ? 'hidden lg:flex' : 'flex'}`}
+            style={{ height: 'calc(100vh - 280px)' }}
           >
             {/* Cabeçalho da Coluna de Notificações */}
+
             <div className="flex items-center justify-between pb-4 border-b border-[#222] gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 shrink-0">

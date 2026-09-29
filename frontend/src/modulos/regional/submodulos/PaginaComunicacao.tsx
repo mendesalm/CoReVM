@@ -380,44 +380,34 @@ export const PaginaComunicacao: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 pb-16">
-      {/* 1. TOPO: Identificação e Simulação de Usuário */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#121212] border border-[#222] p-4 rounded-lg">
-        <div className="flex items-center space-x-3">
-          <Link 
-            to={`/regiao/${regiaoId}`}
-            className="p-2 hover:bg-[#1a1a1a] rounded-lg text-gray-400 hover:text-white transition-colors"
-            title="Voltar ao Painel Regional"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                MÓDULO DE COMUNICAÇÃO & PRANCHAS
-              </span>
-              <span className="text-xs text-gray-500">•</span>
-              <span className="text-xs text-emerald-400 font-medium">Canal Sigiloso com Criptografia de Acesso</span>
+    <div className="min-h-screen bg-[#080808] text-gray-200">
+      
+      {/* Sub-Header Contextual */}
+      <div className="bg-[#111] border-b border-[#222]">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/regiao/${regiaoId}`}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              title="Voltar ao Painel Geral"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+              <MessageSquare className="w-5 h-5"/>
             </div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2 mt-0.5">
-              <MessageSquare className="w-5 h-5 text-macaonico-dourado" />
-              Comunicação Interna e Correspondência Inter-Lojas
-            </h1>
-          </div>
-        </div>
-
-        {/* Perfil do usuário autenticado */}
-        <div className="flex items-center space-x-3 w-full lg:w-auto justify-end">
-          <div className="text-right">
-            <div className="text-xs text-gray-400">Perfil:</div>
-            <div className="text-xs font-semibold text-macaonico-dourado">
-              {userContext.role} {userContext.loja_id ? `(Loja ${userContext.loja_id})` : ''}
+            <div>
+              <h1 className="text-sm font-bold text-white tracking-wide uppercase">Comunicação Interna</h1>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Canal sigiloso e correspondência inter-lojas
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Alertas */}
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6 pb-16">
+        {/* Alertas */}
       {erro && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -1040,6 +1030,7 @@ export const PaginaComunicacao: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
