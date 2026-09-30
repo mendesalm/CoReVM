@@ -461,37 +461,40 @@ export default function PaginaAdmissoes() {
         <button
           type="button"
           onClick={() => setFiltroTipo('INICIACAO')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-3 rounded-t-xl text-[13px] font-bold transition-all ${
+          className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'INICIACAO'
               ? 'bg-[#d4b97f] text-[#212836]'
               : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          INICIAÇÃO {totalIniciacoes}
+          <span>INICIAÇÃO</span>
+          <span className="text-[14px]">{totalIniciacoes}</span>
         </button>
         
         <button
           type="button"
           onClick={() => setFiltroTipo('FILIACAO')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-3 rounded-t-xl text-[13px] font-bold transition-all ${
+          className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'FILIACAO'
               ? 'bg-[#d4b97f] text-[#212836]'
               : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          FILIAÇÃO {totalFiliacoes}
+          <span>FILIAÇÃO</span>
+          <span className="text-[14px]">{totalFiliacoes}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setFiltroTipo('REGULARIZACAO')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-3 rounded-t-xl text-[13px] font-bold transition-all ${
+          className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'REGULARIZACAO'
               ? 'bg-[#d4b97f] text-[#212836]'
               : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          REGULARIZAÇÃO {totalRegularizacoes}
+          <span>REGULARIZAÇÃO</span>
+          <span className="text-[14px]">{totalRegularizacoes}</span>
         </button>
       </div>
 
@@ -552,7 +555,7 @@ export default function PaginaAdmissoes() {
                           </p>
 
                           <p className="text-[10px] text-gray-400 leading-tight mb-3">
-                             Loja {previa.loja_numero || previa.loja_nome}
+                             Loja {previa.loja_nome}{previa.loja_numero ? `, nº ${previa.loja_numero}` : \'\'}
                           </p>
                           
                           <div className="mt-auto flex items-center justify-between">
