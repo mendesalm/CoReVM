@@ -710,20 +710,20 @@ export default function PainelConselho() {
       <div className="max-w-xl mx-auto w-full flex-1 flex flex-col min-h-0">
         
         {/* CABEÇALHO (Card Hero) - Clone do Mural de Admissões */}
-          <div className="bg-[#070e1c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-lg shrink-0">
+          <div className="bg-[#070e1c] border border-slate-700/60 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-lg shrink-0">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#d4b97f] rounded-xl flex items-center justify-center text-[#212836] shrink-0 shadow-inner">
+              <div className="w-12 h-12 bg-slate-700 border border-slate-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-inner">
                 <Megaphone className="w-7 h-7" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-sigma-gold leading-tight">Mural de Avisos</h1>
+                <h1 className="text-xl font-bold text-slate-100 leading-tight">Mural de Avisos</h1>
                 <p className="text-[10px] sm:text-xs text-gray-300">Avisos e notificações regionais</p>
               </div>
             </div>
             
             <button
               onClick={() => { setAvisoForm({...avisoForm, tipo: abaAtiva === 'avisos' ? 'AVISO' : 'NOTIFICACAO'}); setShowNovoAvisoModal(true); }}
-              className="w-12 h-12 bg-[#1f2937] border border-gray-600 rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md shrink-0"
+              className="w-12 h-12 bg-slate-800 border border-slate-600 rounded-xl flex items-center justify-center text-white hover:bg-slate-700 transition-colors shadow-md shrink-0"
               title="Novo"
             >
               <Plus className="w-8 h-8 font-light" />
@@ -738,7 +738,7 @@ export default function PainelConselho() {
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
               abaAtiva === 'avisos'
                 ? 'bg-sigma-gold text-[#070F1E]'
-                : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+                : 'bg-sigma-surface text-white hover:bg-slate-700'
             }`}
           >
             <Megaphone className="w-4 h-4" />
@@ -757,7 +757,7 @@ export default function PainelConselho() {
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
               abaAtiva === 'notificacoes'
                 ? 'bg-blue-500 text-[#070F1E]'
-                : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+                : 'bg-sigma-surface text-white hover:bg-slate-700'
             }`}
           >
             <Bell className="w-4 h-4" />
@@ -861,17 +861,17 @@ export default function PainelConselho() {
           <div className="grid grid-cols-2 border-t border-sigma-border bg-sigma-elevated mt-auto shrink-0">
             <button 
                 onClick={() => setMostrarArquivados(v => !v)}
-                className={`flex items-center justify-between p-4 border-r border-sigma-border transition-colors cursor-pointer ${mostrarArquivados ? 'bg-sigma-gold/10 text-sigma-gold' : 'hover:bg-white/5'}`}
+                className={`flex items-center justify-between p-4 border-r border-sigma-border transition-colors cursor-pointer ${mostrarArquivados ? 'bg-sigma-gold/10 text-slate-100' : 'hover:bg-white/5'}`}
               >
                 <div className="flex items-center gap-2">
-                  <ArchiveRestore className={`w-5 h-5 ${mostrarArquivados ? 'text-sigma-gold' : 'text-gray-400'}`} />
+                  <ArchiveRestore className={`w-5 h-5 ${mostrarArquivados ? 'text-slate-100' : 'text-gray-400'}`} />
                   <div className="text-left leading-tight">
                     <span className="text-[10px] font-bold block">{mostrarArquivados ? 'Ocultar' : 'Ver'}</span>
                     <span className="text-[11px] font-bold">Arquivados</span>
                   </div>
                 </div>
                 {mostrarArquivados && (
-                  <span className="text-sm font-black text-sigma-gold">
+                  <span className="text-sm font-black text-slate-100">
                     {avisos.filter((a: any) => a.arquivado && a.tipo === (abaAtiva === 'avisos' ? 'AVISO' : 'NOTIFICACAO')).length}
                   </span>
                 )}
@@ -911,7 +911,7 @@ export default function PainelConselho() {
               {/* CABEÇALHO */}
               <div className={`flex items-center justify-between p-4 border-b border-sigma-border ${cor.bg}`}>
                  <div className="flex items-center gap-3">
-                     <div className={`p-2 rounded-xl border ${cor.border} bg-[#1f2937] shadow-sm`}>
+                     <div className={`p-2 rounded-xl border ${cor.border} bg-slate-800 shadow-sm`}>
                          {isNotif ? <Bell className={`w-5 h-5 ${cor.text}`} /> : <Megaphone className={`w-5 h-5 ${cor.text}`} />}
                      </div>
                      <div>
@@ -934,7 +934,7 @@ export default function PainelConselho() {
               </div>
               
               {/* RODAPÉ */}
-              <div className="p-4 border-t border-sigma-border bg-[#1f2937] flex items-center justify-between gap-3 flex-wrap shadow-inner">
+              <div className="p-4 border-t border-sigma-border bg-slate-800 flex items-center justify-between gap-3 flex-wrap shadow-inner">
                  <div className="text-xs text-gray-400">
                     <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-[#facc15]"/> <strong className="text-gray-300 font-medium">{itemEmFoco.autor_nome || 'Conselho'}</strong> {itemEmFoco.loja_id ? `(Loja ${itemEmFoco.loja_numero || itemEmFoco.loja_id})` : ''}</span>
                     <span className="flex items-center gap-1 mt-1"><Calendar className="w-3.5 h-3.5"/> {itemEmFoco.data_publicacao ? itemEmFoco.data_publicacao.split('-').reverse().join('/') : ''}</span>

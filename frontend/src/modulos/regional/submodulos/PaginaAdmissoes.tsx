@@ -434,13 +434,13 @@ export default function PaginaAdmissoes() {
     <div className="h-full flex flex-col p-4 sm:p-6 lg:p-8 min-h-0 bg-[#080808]">
       
       {/* HEADER DO PAINEL */}
-      <div className="bg-[#070e1c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shrink-0 shadow-lg">
+      <div className="bg-[#070e1c] border border-slate-700/60 rounded-2xl p-4 flex items-center justify-between mb-4 shrink-0 shadow-lg">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-[#d4b97f] rounded-xl flex items-center justify-center text-[#212836] shrink-0 shadow-inner">
+          <div className="w-12 h-12 bg-slate-700 border border-slate-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-inner">
             <UserSearch className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-sigma-gold leading-tight">Mural de Admissões</h1>
+            <h1 className="text-xl font-bold text-slate-100 leading-tight">Mural de Admissões</h1>
             <p className="text-[10px] sm:text-xs text-gray-300">Propostas de iniciação, filiação ou regularização</p>
           </div>
         </div>
@@ -448,7 +448,7 @@ export default function PaginaAdmissoes() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowNovaPreviaModal(true)}
-            className="w-12 h-12 bg-[#1f2937] border border-gray-600 rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md shrink-0"
+            className="w-12 h-12 bg-slate-800 border border-slate-600 rounded-xl flex items-center justify-center text-white hover:bg-slate-700 transition-colors shadow-md shrink-0"
             title="Nova Admissão"
           >
             <Plus className="w-8 h-8 font-light" />
@@ -463,8 +463,8 @@ export default function PaginaAdmissoes() {
           onClick={() => setFiltroTipo('INICIACAO')}
           className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'INICIACAO'
-              ? 'bg-[#d4b97f] text-[#212836]'
-              : 'bg-[#070e1c] text-white hover:bg-[#3b4354]'
+              ? 'bg-slate-700 border border-slate-600 text-white'
+              : 'bg-[#070e1c] text-white hover:bg-slate-800/80 text-slate-400'
           }`}
         >
           <span>INICIAÇÃO</span>
@@ -476,8 +476,8 @@ export default function PaginaAdmissoes() {
           onClick={() => setFiltroTipo('FILIACAO')}
           className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'FILIACAO'
-              ? 'bg-[#d4b97f] text-[#212836]'
-              : 'bg-[#070e1c] text-white hover:bg-[#3b4354]'
+              ? 'bg-slate-700 border border-slate-600 text-white'
+              : 'bg-[#070e1c] text-white hover:bg-slate-800/80 text-slate-400'
           }`}
         >
           <span>FILIAÇÃO</span>
@@ -489,8 +489,8 @@ export default function PaginaAdmissoes() {
           onClick={() => setFiltroTipo('REGULARIZACAO')}
           className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'REGULARIZACAO'
-              ? 'bg-[#d4b97f] text-[#212836]'
-              : 'bg-[#070e1c] text-white hover:bg-[#3b4354]'
+              ? 'bg-slate-700 border border-slate-600 text-white'
+              : 'bg-[#070e1c] text-white hover:bg-slate-800/80 text-slate-400'
           }`}
         >
           <span>REGULARIZAÇÃO</span>
@@ -499,7 +499,7 @@ export default function PaginaAdmissoes() {
       </div>
 
       {/* CONTEÚDO PRINCIPAL (Grid e Cards) */}
-      <div className="bg-[#070e1c] border border-gray-700/50 rounded-b-2xl rounded-tr-2xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
+      <div className="bg-[#070e1c] border border-slate-700/60 rounded-b-2xl rounded-tr-2xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
         
         
 
@@ -525,7 +525,7 @@ export default function PaginaAdmissoes() {
                   let corText = 'text-emerald-400';
                   if (previa.tipo === 'INICIACAO') {
                      corHex = '#facc15';
-                     corText = 'text-sigma-gold';
+                     corText = 'text-slate-100';
                   } else if (previa.tipo === 'FILIACAO') {
                      corHex = '#3b82f6';
                      corText = 'text-blue-400';
@@ -542,7 +542,7 @@ export default function PaginaAdmissoes() {
                       >
                         <div
                           onClick={() => abrirModalConsideracoes(previa)}
-                          className={`crvm-dogear-card p-4 min-h-[120px] flex flex-col cursor-pointer hover:brightness-110 transition-all bg-[#212836] ${isAveriguado ? 'opacity-60 saturate-[0.8]' : ''}`}
+                          className={`crvm-dogear-card p-4 min-h-[120px] flex flex-col cursor-pointer hover:brightness-110 transition-all bg-slate-800 ${isAveriguado ? 'opacity-60 saturate-[0.8]' : ''}`}
                         >
                           <div className="crvm-dogear-fold"></div>
                           
@@ -569,7 +569,7 @@ export default function PaginaAdmissoes() {
                                </span>
                             )}
                             <div className="relative">
-                              <Pin className="w-5 h-5 text-sigma-gold opacity-80 drop-shadow-md" style={{ fill: 'transparent', transform: 'rotate(45deg)' }} />
+                              <Pin className="w-5 h-5 text-slate-400 opacity-60 drop-shadow-md" style={{ fill: 'transparent', transform: 'rotate(45deg)' }} />
                             </div>
                           </div>
                         </div>
@@ -582,8 +582,8 @@ export default function PaginaAdmissoes() {
         </div>
 
         {/* SPLIT FOOTER */}
-          <div className="grid grid-cols-2 border-t border-gray-700/50 bg-[#070e1c] mt-auto shrink-0">
-            <div className="flex items-center justify-between p-4 border-r border-gray-700/50">
+          <div className="grid grid-cols-2 border-t border-slate-700/60 bg-[#070e1c] mt-auto shrink-0">
+            <div className="flex items-center justify-between p-4 border-r border-slate-700/60">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-white" />
                 <span className="text-xs font-bold text-white">Verificados</span>
