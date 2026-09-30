@@ -555,7 +555,7 @@ export default function PaginaAdmissoes() {
                           </p>
 
                           <p className="text-[10px] text-gray-400 leading-tight mb-3">
-                             Loja {previa.loja_nome}{previa.loja_numero ? `, nº ${previa.loja_numero}` : \'\'}
+                             Loja {previa.loja_nome}{previa.loja_numero ? `, nº ${previa.loja_numero}` : ''}
                           </p>
                           
                           <div className="mt-auto flex items-center justify-between">
