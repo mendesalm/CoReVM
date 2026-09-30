@@ -380,15 +380,15 @@ export const PaginaComunicacao: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
       
       {/* Sub-Header Contextual */}
-      <div className="bg-[#111] border-b border-[#222]">
+      <div className="bg-sigma-surface border-b border-sigma-border">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               to={`/regiao/${regiaoId}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -430,7 +430,7 @@ export const PaginaComunicacao: React.FC = () => {
 
       {/* 2. CARDS DE ESTATÍSTICAS RÁPIDAS */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+        <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
           <div className="flex items-center justify-between text-gray-400 text-xs">
             <span>Total de Pranchas</span>
             <Inbox className="w-4 h-4 text-amber-400" />
@@ -439,7 +439,7 @@ export const PaginaComunicacao: React.FC = () => {
           <div className="text-[10px] text-gray-400">{estatisticas.topicos_abertos} em tramitação</div>
         </div>
 
-        <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+        <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
           <div className="flex items-center justify-between text-gray-400 text-xs">
             <span>Mensagens Não Lidas</span>
             <MessageSquare className="w-4 h-4 text-red-400" />
@@ -453,7 +453,7 @@ export const PaginaComunicacao: React.FC = () => {
           <div className="text-[10px] text-red-400">Aguardando seu visto</div>
         </div>
 
-        <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+        <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
           <div className="flex items-center justify-between text-gray-400 text-xs">
             <span>Canais Inter-Lojas</span>
             <HeartHandshake className="w-4 h-4 text-purple-400" />
@@ -462,7 +462,7 @@ export const PaginaComunicacao: React.FC = () => {
           <div className="text-[10px] text-gray-400">Comunicação Restrita</div>
         </div>
 
-        <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+        <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
           <div className="flex items-center justify-between text-gray-400 text-xs">
             <span>Pranchas Circulares</span>
             <Radio className="w-4 h-4 text-blue-400" />
@@ -475,9 +475,9 @@ export const PaginaComunicacao: React.FC = () => {
       {/* 3. SPLIT VIEW: LISTA DE CORRESPONDÊNCIAS (ESQUERDA) + CHAT/PRANCHA (DIREITA) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start min-h-[650px]">
         {/* COLUNA ESQUERDA: LISTA DE TÓPICOS (5 colunas) */}
-        <div className="lg:col-span-5 bg-[#121212] border border-[#222] rounded-lg flex flex-col h-[650px] overflow-hidden">
+        <div className="lg:col-span-5 bg-sigma-surface border border-sigma-border rounded-lg flex flex-col h-[650px] overflow-hidden">
           {/* Topo da lista: Botão Nova Prancha + Filtros de Alcance */}
-          <div className="p-3 border-b border-[#222] space-y-3 bg-[#161616]">
+          <div className="p-3 border-b border-sigma-border space-y-3 bg-[#161616]">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-bold text-white flex items-center gap-2">
                 <Inbox className="w-4 h-4 text-macaonico-dourado" />
@@ -540,14 +540,14 @@ export const PaginaComunicacao: React.FC = () => {
                   placeholder="Buscar assunto, loja..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="w-full bg-[#080808] border border-[#333] text-xs text-gray-200 rounded pl-8 pr-2 py-1.5 focus:border-macaonico-dourado focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border text-xs text-gray-200 rounded pl-8 pr-2 py-1.5 focus:border-macaonico-dourado focus:outline-none"
                 />
               </div>
 
               <select
                 value={filtroStatus}
                 onChange={(e) => setFiltroStatus(e.target.value)}
-                className="bg-[#080808] border border-[#333] text-xs text-gray-300 rounded px-2 py-1.5 focus:border-macaonico-dourado focus:outline-none"
+                className="bg-sigma-bg border border-sigma-border text-xs text-gray-300 rounded px-2 py-1.5 focus:border-macaonico-dourado focus:outline-none"
               >
                 <option value="TODOS">Todos os Status</option>
                 <option value="ABERTA">Abertas</option>
@@ -594,7 +594,7 @@ export const PaginaComunicacao: React.FC = () => {
                     key={topico.id}
                     onClick={() => setTopicoSelecionado(topico)}
                     className={`p-3 cursor-pointer transition-colors space-y-1.5 ${
-                      isSelected ? 'bg-[#1a1a1a] border-l-2 border-amber-400' : 'hover:bg-[#151515]'
+                      isSelected ? 'bg-sigma-elevated border-l-2 border-amber-400' : 'hover:bg-[#151515]'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1 text-[11px]">
@@ -627,7 +627,7 @@ export const PaginaComunicacao: React.FC = () => {
                         <span className={`px-1.5 py-0.5 rounded font-semibold ${
                           topico.prioridade === 'URGENTE' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
                           topico.prioridade === 'CONFIDENCIAL' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                          'bg-[#222] text-gray-400'
+                          'bg-sigma-elevated text-gray-400'
                         }`}>
                           {topico.prioridade}
                         </span>
@@ -652,11 +652,11 @@ export const PaginaComunicacao: React.FC = () => {
         </div>
 
         {/* COLUNA DIREITA: HISTÓRICO DE MENSAGENS E ENVIO (7 colunas) */}
-        <div className="lg:col-span-7 bg-[#121212] border border-[#222] rounded-lg flex flex-col h-[650px] overflow-hidden">
+        <div className="lg:col-span-7 bg-sigma-surface border border-sigma-border rounded-lg flex flex-col h-[650px] overflow-hidden">
           {topicoSelecionado ? (
             <>
               {/* Cabeçalho do Chat */}
-              <div className="p-4 border-b border-[#222] bg-[#161616] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 border-b border-sigma-border bg-[#161616] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     {topicoSelecionado.tipo_alcance === 'LOJA_LOJA' ? (
@@ -709,7 +709,7 @@ export const PaginaComunicacao: React.FC = () => {
               </div>
 
               {/* Área de Mensagens (Timeline com Scroll) */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#0c0c0c]">
+              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-sigma-surface">
                 {loadingChat ? (
                   <div className="py-20 text-center text-gray-400 space-y-2">
                     <Loader2 className="w-6 h-6 animate-spin text-amber-400 mx-auto" />
@@ -730,11 +730,11 @@ export const PaginaComunicacao: React.FC = () => {
                       >
                         <div className={`max-w-[85%] rounded-lg p-3.5 space-y-2 border ${
                           souAutor 
-                            ? 'bg-[#181818] border-amber-500/30 text-gray-200' 
-                            : 'bg-[#141414] border-[#2c2c2c] text-gray-200'
+                            ? 'bg-sigma-elevated border-amber-500/30 text-gray-200' 
+                            : 'bg-sigma-surface border-[#2c2c2c] text-gray-200'
                         }`}>
                           {/* Cabeçalho do Remetente */}
-                          <div className="flex items-center justify-between gap-3 border-b border-[#222] pb-1.5 text-xs">
+                          <div className="flex items-center justify-between gap-3 border-b border-sigma-border pb-1.5 text-xs">
                             <div className="font-bold flex items-center gap-1.5 text-white">
                               {msg.tipo_remetente === 'DIRETORIA' ? (
                                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
@@ -755,7 +755,7 @@ export const PaginaComunicacao: React.FC = () => {
 
                           {/* Anexo se houver */}
                           {msg.arquivo_nome && (
-                            <div className="bg-[#080808] border border-[#2a2a2a] p-2 rounded flex items-center justify-between text-xs">
+                            <div className="bg-sigma-bg border border-[#2a2a2a] p-2 rounded flex items-center justify-between text-xs">
                               <div className="flex items-center space-x-2 truncate max-w-[200px]">
                                 <Paperclip className="w-3.5 h-3.5 text-amber-400" />
                                 <span className="text-gray-300 truncate">{msg.arquivo_nome}</span>
@@ -765,7 +765,7 @@ export const PaginaComunicacao: React.FC = () => {
                           )}
 
                           {/* Rodapé da Mensagem: Botão PDF + Confirmação de Leitura */}
-                          <div className="flex items-center justify-between pt-1 border-t border-[#222] text-[10px]">
+                          <div className="flex items-center justify-between pt-1 border-t border-sigma-border text-[10px]">
                             <button
                               onClick={() => handleBaixarPranchaPdf(msg.id)}
                               disabled={baixandoPdfId === msg.id}
@@ -799,9 +799,9 @@ export const PaginaComunicacao: React.FC = () => {
               </div>
 
               {/* Formulário de Envio de Réplica */}
-              <form onSubmit={handleEnviarMensagem} className="p-3 border-t border-[#222] bg-[#161616] space-y-2">
+              <form onSubmit={handleEnviarMensagem} className="p-3 border-t border-sigma-border bg-[#161616] space-y-2">
                 {arquivoAnexo && (
-                  <div className="flex items-center justify-between bg-[#1e1e1e] border border-[#333] px-3 py-1.5 rounded text-xs">
+                  <div className="flex items-center justify-between bg-[#1e1e1e] border border-sigma-border px-3 py-1.5 rounded text-xs">
                     <span className="text-gray-300 flex items-center gap-1.5 truncate max-w-[250px]">
                       <Paperclip className="w-3.5 h-3.5 text-amber-400" />
                       {arquivoAnexo.name}
@@ -823,11 +823,11 @@ export const PaginaComunicacao: React.FC = () => {
                       placeholder="Redigir prancha / resposta oficial..."
                       value={novoTexto}
                       onChange={(e) => setNovoTexto(e.target.value)}
-                      className="w-full bg-[#080808] border border-[#333] text-xs text-gray-200 rounded p-2.5 focus:border-macaonico-dourado focus:outline-none resize-none"
+                      className="w-full bg-sigma-bg border border-sigma-border text-xs text-gray-200 rounded p-2.5 focus:border-macaonico-dourado focus:outline-none resize-none"
                     />
                   </div>
 
-                  <label className="p-2.5 bg-[#222] hover:bg-[#2a2a2a] border border-[#333] rounded cursor-pointer text-gray-300 hover:text-white transition-colors" title="Anexar arquivo ou prancha física">
+                  <label className="p-2.5 bg-sigma-elevated hover:bg-[#2a2a2a] border border-sigma-border rounded cursor-pointer text-gray-300 hover:text-white transition-colors" title="Anexar arquivo ou prancha física">
                     <Paperclip className="w-4 h-4" />
                     <input 
                       type="file" 
@@ -865,9 +865,9 @@ export const PaginaComunicacao: React.FC = () => {
 
       {/* MODAL: NOVA PRANCHA OFICIAL / CANAL DE COMUNICAÇÃO */}
       {modalNovoAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-[#141414] border border-[#2a2a2a] rounded-lg max-w-lg w-full p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#222] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-sigma-bg/80 p-4">
+          <div className="bg-sigma-surface border border-[#2a2a2a] rounded-lg max-w-lg w-full p-5 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-sigma-border pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <FileText className="w-5 h-5 text-macaonico-dourado" />
                 Expedir Nova Prancha Oficial
@@ -891,7 +891,7 @@ export const PaginaComunicacao: React.FC = () => {
                     className={`p-2 rounded border text-left flex flex-col justify-between ${
                       formNovo.tipo_alcance === 'CONSELHO_LOJA' 
                         ? 'border-amber-500 bg-amber-500/10 text-white font-bold' 
-                        : 'border-[#333] bg-[#0c0c0c] text-gray-400'
+                        : 'border-sigma-border bg-sigma-surface text-gray-400'
                     }`}
                   >
                     <Building className="w-4 h-4 mb-1 text-amber-400" />
@@ -904,7 +904,7 @@ export const PaginaComunicacao: React.FC = () => {
                     className={`p-2 rounded border text-left flex flex-col justify-between ${
                       formNovo.tipo_alcance === 'LOJA_LOJA' 
                         ? 'border-purple-500 bg-purple-500/10 text-white font-bold' 
-                        : 'border-[#333] bg-[#0c0c0c] text-gray-400'
+                        : 'border-sigma-border bg-sigma-surface text-gray-400'
                     }`}
                   >
                     <HeartHandshake className="w-4 h-4 mb-1 text-purple-400" />
@@ -918,7 +918,7 @@ export const PaginaComunicacao: React.FC = () => {
                       className={`p-2 rounded border text-left flex flex-col justify-between ${
                         formNovo.tipo_alcance === 'CIRCULAR' 
                           ? 'border-blue-500 bg-blue-500/10 text-white font-bold' 
-                          : 'border-[#333] bg-[#0c0c0c] text-gray-400'
+                          : 'border-sigma-border bg-sigma-surface text-gray-400'
                       }`}
                     >
                       <Radio className="w-4 h-4 mb-1 text-blue-400" />
@@ -937,7 +937,7 @@ export const PaginaComunicacao: React.FC = () => {
                   <select
                     value={formNovo.loja_destino_id}
                     onChange={(e) => setFormNovo({ ...formNovo, loja_destino_id: e.target.value })}
-                    className="w-full bg-[#080808] border border-[#333] text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
+                    className="w-full bg-sigma-bg border border-sigma-border text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
                     required
                   >
                     <option value="">Selecione a Loja...</option>
@@ -960,7 +960,7 @@ export const PaginaComunicacao: React.FC = () => {
                   placeholder="Ex: Consulta sobre Sindicância Fraterna / Solicitação de Ajuda Mútua"
                   value={formNovo.assunto}
                   onChange={(e) => setFormNovo({ ...formNovo, assunto: e.target.value })}
-                  className="w-full bg-[#080808] border border-[#333] text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
                   required
                 />
               </div>
@@ -972,7 +972,7 @@ export const PaginaComunicacao: React.FC = () => {
                   <select
                     value={formNovo.categoria}
                     onChange={(e) => setFormNovo({ ...formNovo, categoria: e.target.value })}
-                    className="w-full bg-[#080808] border border-[#333] text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
+                    className="w-full bg-sigma-bg border border-sigma-border text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
                   >
                     <option value="ADMINISTRATIVO">Administrativo</option>
                     <option value="INTER_LOJAS">Inter-Lojas / Ajuda Mútua</option>
@@ -988,7 +988,7 @@ export const PaginaComunicacao: React.FC = () => {
                   <select
                     value={formNovo.prioridade}
                     onChange={(e) => setFormNovo({ ...formNovo, prioridade: e.target.value })}
-                    className="w-full bg-[#080808] border border-[#333] text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
+                    className="w-full bg-sigma-bg border border-sigma-border text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none"
                   >
                     <option value="NORMAL">Normal</option>
                     <option value="URGENTE">Urgente</option>
@@ -1005,12 +1005,12 @@ export const PaginaComunicacao: React.FC = () => {
                   placeholder="Redija o teor completo do ofício ou prancha maçônica..."
                   value={formNovo.mensagem_inicial}
                   onChange={(e) => setFormNovo({ ...formNovo, mensagem_inicial: e.target.value })}
-                  className="w-full bg-[#080808] border border-[#333] text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none resize-none"
+                  className="w-full bg-sigma-bg border border-sigma-border text-gray-200 rounded p-2 focus:border-macaonico-dourado focus:outline-none resize-none"
                   required
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#222]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-sigma-border">
                 <button
                   type="button"
                   onClick={() => setModalNovoAberto(false)}

@@ -108,7 +108,7 @@ export default function PaginaSolicitarCadastro() {
       <HeroBackground />
 
       <div className="w-full max-w-lg relative z-10">
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
+        <div className="bg-sigma-elevated/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
           <div className="flex flex-col items-center text-center mb-8">
             <div className="mb-4">
               <LogoAnimadaCore width={90} height={90} animated={true} />
@@ -142,7 +142,7 @@ export default function PaginaSolicitarCadastro() {
                   value={form.potencia_informada}
                   onChange={atualizarCampo('potencia_informada')}
                   placeholder="Potência (digite de cor — sem sugestões)"
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <Landmark className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
               </div>
@@ -156,7 +156,7 @@ export default function PaginaSolicitarCadastro() {
                     value={form.numero_loja_informado}
                     onChange={atualizarCampo('numero_loja_informado')}
                     placeholder="Número da Loja"
-                    className="w-full bg-[#222] border border-gray-700 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                    className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                   />
                   <Hash className="w-5 h-5 text-gray-500 absolute left-3.5 top-3.5" />
                 </div>
@@ -168,7 +168,7 @@ export default function PaginaSolicitarCadastro() {
                     value={form.nome_loja_informado}
                     onChange={atualizarCampo('nome_loja_informado')}
                     placeholder="Nome da Loja"
-                    className="w-full bg-[#222] border border-gray-700 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                    className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                   />
                   <Building2 className="w-5 h-5 text-gray-500 absolute left-3.5 top-3.5" />
                 </div>
@@ -181,7 +181,7 @@ export default function PaginaSolicitarCadastro() {
                   value={form.nome_completo}
                   onChange={atualizarCampo('nome_completo')}
                   placeholder="Nome completo"
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <User className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
               </div>
@@ -191,7 +191,7 @@ export default function PaginaSolicitarCadastro() {
                   required
                   value={form.grau_maconico}
                   onChange={atualizarCampo('grau_maconico')}
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a] appearance-none"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a] appearance-none"
                 >
                   <option value="" disabled>
                     Grau maçônico
@@ -212,7 +212,7 @@ export default function PaginaSolicitarCadastro() {
                   value={form.cim}
                   onChange={atualizarCampo('cim')}
                   placeholder="CIM"
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl px-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <input
                   type="text"
@@ -220,7 +220,7 @@ export default function PaginaSolicitarCadastro() {
                   value={form.cpf}
                   onChange={atualizarCampo('cpf')}
                   placeholder="CPF"
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl px-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
               </div>
 
@@ -231,7 +231,7 @@ export default function PaginaSolicitarCadastro() {
                   value={form.email}
                   onChange={atualizarCampo('email')}
                   placeholder="E-mail (é para onde vai a senha provisória, se aprovado)"
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <Mail className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
               </div>
@@ -243,7 +243,7 @@ export default function PaginaSolicitarCadastro() {
                   value={form.telefone}
                   onChange={atualizarCampo('telefone')}
                   placeholder="Telefone"
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <Phone className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
               </div>
@@ -255,7 +255,7 @@ export default function PaginaSolicitarCadastro() {
                   value={form.cargo_atual}
                   onChange={atualizarCampo('cargo_atual')}
                   placeholder="Cargo atual"
-                  className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                  className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                 />
                 <Briefcase className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
               </div>

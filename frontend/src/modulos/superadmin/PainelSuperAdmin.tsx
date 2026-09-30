@@ -176,7 +176,7 @@ export default function PainelSuperAdmin() {
   const regioesFiltradas = regioes.filter(r => r.nome.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="h-full bg-[#080808] text-white p-4 sm:p-6 md:p-8 font-sans overflow-y-auto">
+    <div className="h-full bg-sigma-bg text-white p-4 sm:p-6 md:p-8 font-sans overflow-y-auto">
       <div className="max-w-6xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-10">
           <div>
@@ -186,7 +186,7 @@ export default function PainelSuperAdmin() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               to="/solicitacoes-cadastro"
-              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
+              className="border border-sigma-border hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
             >
               <UserPlus className="w-4 h-4 text-[#facc15]" />
               <span className="hidden sm:inline">Solicitações de Cadastro</span>
@@ -194,7 +194,7 @@ export default function PainelSuperAdmin() {
             </Link>
             <Link
               to="/minhas-passkeys"
-              className="border border-[#333] hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
+              className="border border-sigma-border hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Fingerprint className="w-4 h-4 text-blue-400" />
               <span className="hidden sm:inline">Minhas Passkeys</span>
@@ -220,15 +220,15 @@ export default function PainelSuperAdmin() {
 
         {/* Mobile: Micro-KPIs compactos em linha única (economiza ~400px verticais) */}
         <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-1 mb-4 no-scrollbar">
-          <div className="flex items-center gap-1.5 bg-[#111] border border-[#222] px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
+          <div className="flex items-center gap-1.5 bg-sigma-surface border border-sigma-border px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
             <MapPin className="text-blue-400 w-3.5 h-3.5" />
             <span className="font-bold text-white">{regioes.length}</span> Conselhos
           </div>
-          <div className="flex items-center gap-1.5 bg-[#111] border border-[#222] px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
+          <div className="flex items-center gap-1.5 bg-sigma-surface border border-sigma-border px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
             <Building2 className="text-green-400 w-3.5 h-3.5" />
             <span className="font-bold text-white">{totalLojas}</span> Lojas
           </div>
-          <div className="flex items-center gap-1.5 bg-[#111] border border-[#222] px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
+          <div className="flex items-center gap-1.5 bg-sigma-surface border border-sigma-border px-3 py-1.5 rounded-full shrink-0 text-xs text-gray-300">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             <span className="text-green-400 font-medium">Online</span>
           </div>
@@ -236,7 +236,7 @@ export default function PainelSuperAdmin() {
 
         {/* Desktop: Stats Row tradicional em 3 cards */}
         <div className="hidden md:grid md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-[#111111] border border-[#222] p-6 rounded-xl flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border p-6 rounded-xl flex items-center justify-between">
             <div>
               <p className="text-gray-400 mb-1">Total de Conselhos</p>
               <h3 className="text-3xl font-bold text-white">{regioes.length}</h3>
@@ -245,7 +245,7 @@ export default function PainelSuperAdmin() {
               <MapPin className="text-blue-500 w-6 h-6" />
             </div>
           </div>
-          <div className="bg-[#111111] border border-[#222] p-6 rounded-xl flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border p-6 rounded-xl flex items-center justify-between">
             <div>
               <p className="text-gray-400 mb-1">Lojas Integradas</p>
               <h3 className="text-3xl font-bold text-white">{totalLojas}</h3>
@@ -254,7 +254,7 @@ export default function PainelSuperAdmin() {
               <Users className="text-green-500 w-6 h-6" />
             </div>
           </div>
-          <div className="bg-[#111111] border border-[#222] p-6 rounded-xl flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border p-6 rounded-xl flex items-center justify-between">
             <div>
               <p className="text-gray-400 mb-1">Status do Sistema</p>
               <h3 className="text-3xl font-bold text-green-500">Online</h3>
@@ -266,8 +266,8 @@ export default function PainelSuperAdmin() {
         </div>
 
         {/* Search and List/Table Container */}
-        <div className="bg-[#111111] border border-[#222] rounded-xl overflow-hidden mb-8">
-          <div className="p-3.5 md:p-4 border-b border-[#222] flex items-center gap-3">
+        <div className="bg-sigma-surface border border-sigma-border rounded-xl overflow-hidden mb-8">
+          <div className="p-3.5 md:p-4 border-b border-sigma-border flex items-center gap-3">
             <Search className="text-gray-500 w-5 h-5 shrink-0" />
             <input 
               type="text" 
@@ -282,7 +282,7 @@ export default function PainelSuperAdmin() {
           <div className="hidden md:block">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#1a1a1a] text-gray-400 text-sm">
+                <tr className="bg-sigma-elevated text-gray-400 text-sm">
                   <th className="p-4 font-medium">Nome do Conselho</th>
                   <th className="p-4 font-medium">Lojas (Tenants)</th>
                   <th className="p-4 font-medium">Status</th>
@@ -304,7 +304,7 @@ export default function PainelSuperAdmin() {
                     </td>
                   </tr>
                 ) : regioesFiltradas.map(regiao => (
-                  <tr key={regiao.id} className="border-b border-[#222] hover:bg-[#151515] transition-colors">
+                  <tr key={regiao.id} className="border-b border-sigma-border hover:bg-[#151515] transition-colors">
                     <td className="p-4 font-medium text-[#facc15]">
                       {regiao.nome} <span className="text-gray-500 text-xs ml-2">({regiao.uf || 'GO'})</span>
                     </td>
@@ -323,7 +323,7 @@ export default function PainelSuperAdmin() {
                     <td className="p-4 text-right flex justify-end gap-2">
                       <button 
                         onClick={() => openEditModal(regiao)}
-                        className="p-2 hover:bg-[#222] rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+                        className="p-2 hover:bg-sigma-elevated rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
                         title="Editar Dados da Região"
                       >
                         <Settings className="w-4 h-4" />
@@ -331,14 +331,14 @@ export default function PainelSuperAdmin() {
                       </button>
                       <button 
                         onClick={() => navigate(`/regiao/${regiao.id}`)}
-                        className="p-2 hover:bg-[#222] rounded-lg text-[#facc15] hover:text-[#eab308] transition-colors flex items-center gap-1 font-medium cursor-pointer"
+                        className="p-2 hover:bg-sigma-elevated rounded-lg text-[#facc15] hover:text-[#eab308] transition-colors flex items-center gap-1 font-medium cursor-pointer"
                         title="Entrar no Dashboard do Conselho"
                       >
                         Acessar <ChevronRight className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(regiao.id)}
-                        className="p-2 hover:bg-[#222] rounded-lg text-red-500/50 hover:text-red-500 transition-colors flex items-center cursor-pointer"
+                        className="p-2 hover:bg-sigma-elevated rounded-lg text-red-500/50 hover:text-red-500 transition-colors flex items-center cursor-pointer"
                         title="Deletar Região"
                       >
                         Excluir
@@ -366,14 +366,14 @@ export default function PainelSuperAdmin() {
                 <div
                   key={regiao.id}
                   onClick={() => navigate(`/regiao/${regiao.id}`)}
-                  className="p-4 hover:bg-[#151515] active:bg-[#1a1a1a] transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                  className="p-4 hover:bg-[#151515] active:bg-sigma-elevated transition-all cursor-pointer flex items-center justify-between gap-3 group"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <h3 className="text-base font-bold text-white group-hover:text-[#facc15] transition-colors truncate">
                         {regiao.nome}
                       </h3>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-[#222] text-gray-300">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-sigma-elevated text-gray-300">
                         {regiao.uf || 'GO'}
                       </span>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -395,7 +395,7 @@ export default function PainelSuperAdmin() {
                         e.stopPropagation();
                         setMenuOpcoesRegiao(regiao);
                       }}
-                      className="p-2.5 text-gray-400 hover:text-white hover:bg-[#222] active:bg-[#333] rounded-xl transition-colors cursor-pointer"
+                      className="p-2.5 text-gray-400 hover:text-white hover:bg-sigma-elevated active:bg-[#333] rounded-xl transition-colors cursor-pointer"
                       title="Mais opções do Conselho"
                       aria-label="Mais opções"
                     >
@@ -414,11 +414,11 @@ export default function PainelSuperAdmin() {
       {menuOpcoesRegiao && (
         <div className="fixed inset-0 z-[80] md:hidden">
           <div 
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-sigma-bg/75 backdrop-blur-sm transition-opacity"
             onClick={() => setMenuOpcoesRegiao(null)}
           />
-          <div className="fixed inset-x-0 bottom-0 bg-[#141414] border-t border-[#2a2a2a] rounded-t-3xl p-5 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center justify-between border-b border-[#222] pb-3">
+          <div className="fixed inset-x-0 bottom-0 bg-sigma-surface border-t border-[#2a2a2a] rounded-t-3xl p-5 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between border-b border-sigma-border pb-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Conselho Regional</p>
                 <h3 className="text-lg font-bold text-white">{menuOpcoesRegiao.nome} ({menuOpcoesRegiao.uf || 'GO'})</h3>
@@ -426,7 +426,7 @@ export default function PainelSuperAdmin() {
               <button
                 type="button"
                 onClick={() => setMenuOpcoesRegiao(null)}
-                className="p-2 text-gray-400 hover:text-white rounded-full bg-[#222] cursor-pointer"
+                className="p-2 text-gray-400 hover:text-white rounded-full bg-sigma-elevated cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -455,7 +455,7 @@ export default function PainelSuperAdmin() {
                   setMenuOpcoesRegiao(null);
                   openViewLojas(target);
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-[#1c1c1c] hover:bg-[#252525] border border-[#2a2a2a] text-gray-200 text-sm font-medium transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-[#1c1c1c] hover:bg-sigma-elevated border border-[#2a2a2a] text-gray-200 text-sm font-medium transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2.5">
                   <Building2 className="w-4 h-4 text-blue-400" />
@@ -471,7 +471,7 @@ export default function PainelSuperAdmin() {
                   setMenuOpcoesRegiao(null);
                   openEditModal(target);
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-[#1c1c1c] hover:bg-[#252525] border border-[#2a2a2a] text-gray-200 text-sm font-medium transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-[#1c1c1c] hover:bg-sigma-elevated border border-[#2a2a2a] text-gray-200 text-sm font-medium transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2.5">
                   <Settings className="w-4 h-4 text-gray-400" /> Editar Dados do Conselho
@@ -500,8 +500,8 @@ export default function PainelSuperAdmin() {
 
       {/* Modal de Criação (Wizard) */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-[#facc15]">Criar Novo Conselho Regional</h2>
               <div className="flex gap-2">
@@ -515,11 +515,11 @@ export default function PainelSuperAdmin() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-400 mb-1">Nome do Conselho</label>
-                    <input type="text" value={nome} onChange={e => setNome(e.target.value)} required placeholder="Ex: Conselho Regional de Anápolis" className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none" />
+                    <input type="text" value={nome} onChange={e => setNome(e.target.value)} required placeholder="Ex: Conselho Regional de Anápolis" className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-1">Estado (UF)</label>
-                    <select value={uf} onChange={e => setUf(e.target.value)} className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none">
+                    <select value={uf} onChange={e => setUf(e.target.value)} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none">
                       <option value="GO">GO</option>
                       <option value="DF">DF</option>
                       <option value="SP">SP</option>
@@ -529,7 +529,7 @@ export default function PainelSuperAdmin() {
                   </div>
                 </div>
 
-                <div className="border-t border-[#333] pt-6 space-y-4">
+                <div className="border-t border-sigma-border pt-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-200">Lojas do Conselho</h3>
                     {selectedLojas.length > 0 && <span className="text-xs bg-[#333] px-2 py-1 rounded text-gray-300">{selectedLojas.length} selecionadas</span>}
@@ -551,10 +551,10 @@ export default function PainelSuperAdmin() {
                   />
 
                   {selectedLojas.length > 0 && (
-                    <div className="mt-4 p-4 bg-[#151515] border border-[#333] rounded-lg max-h-48 overflow-y-auto">
+                    <div className="mt-4 p-4 bg-[#151515] border border-sigma-border rounded-lg max-h-48 overflow-y-auto">
                       <ul className="space-y-2">
                         {selectedLojas.map(loja => (
-                          <li key={loja.id} className="flex items-center justify-between text-sm text-gray-300 bg-[#080808] p-2 rounded">
+                          <li key={loja.id} className="flex items-center justify-between text-sm text-gray-300 bg-sigma-bg p-2 rounded">
                             <span>{loja.nome} <span className="text-gray-500 ml-1">(Nº {loja.numero})</span></span>
                             <button 
                               type="button"
@@ -570,7 +570,7 @@ export default function PainelSuperAdmin() {
                   )}
                 </div>
 
-                <div className="border-t border-[#333] pt-6 flex justify-end gap-3">
+                <div className="border-t border-sigma-border pt-6 flex justify-end gap-3">
                   <button 
                     type="button"
                     onClick={() => { setShowModal(false); setStep(1); }}
@@ -599,11 +599,11 @@ export default function PainelSuperAdmin() {
                     <BuscadorObreiro cargo="Secretário" lojasConselho={selectedLojas} onSuccess={(cim) => setSecretarioId(cim)} />
                   </div>
 
-                  <div className="border-t border-[#333] pt-6 flex justify-between">
+                  <div className="border-t border-sigma-border pt-6 flex justify-between">
                     <button 
                       type="button"
                       onClick={() => setStep(1)}
-                      className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white transition-colors border border-[#333]"
+                      className="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-white transition-colors border border-sigma-border"
                     >
                       Voltar
                     </button>
@@ -633,19 +633,19 @@ export default function PainelSuperAdmin() {
 
       {/* Modal de Edição */}
       {editModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-2xl">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-2xl">
             <h2 className="text-2xl font-bold text-[#facc15] mb-6">Editar Conselho Regional</h2>
             
             <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Nome do Conselho</label>
-                  <input type="text" value={editModal.nome} onChange={e => setEditModal({...editModal, nome: e.target.value})} required className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none" />
+                  <input type="text" value={editModal.nome} onChange={e => setEditModal({...editModal, nome: e.target.value})} required className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Estado (UF)</label>
-                  <select value={editModal.uf} onChange={e => setEditModal({...editModal, uf: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none">
+                  <select value={editModal.uf} onChange={e => setEditModal({...editModal, uf: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none">
                     <option value="GO">GO</option>
                     <option value="DF">DF</option>
                     <option value="SP">SP</option>
@@ -655,7 +655,7 @@ export default function PainelSuperAdmin() {
                 </div>
               </div>
 
-              <div className="border-t border-[#333] pt-4">
+              <div className="border-t border-sigma-border pt-4">
                 <h3 className="text-md font-semibold text-gray-200 mb-2">Lojas do Conselho</h3>
                 <BuscadorLoja 
                   onSelect={(loja) => {
@@ -672,10 +672,10 @@ export default function PainelSuperAdmin() {
                 />
                 
                 {editLojas.length > 0 && (
-                  <div className="mt-2 p-3 bg-[#151515] border border-[#333] rounded-lg max-h-32 overflow-y-auto">
+                  <div className="mt-2 p-3 bg-[#151515] border border-sigma-border rounded-lg max-h-32 overflow-y-auto">
                     <ul className="space-y-2">
                       {editLojas.map(loja => (
-                          <li key={loja.id} className="flex items-center justify-between text-xs text-gray-300 bg-[#080808] p-2 rounded">
+                          <li key={loja.id} className="flex items-center justify-between text-xs text-gray-300 bg-sigma-bg p-2 rounded">
                             <span>{loja.nome ? `Loja ${loja.nome}, nº ${loja.numero}` : `(Nº ${loja.numero || (loja.loja_id ? String(loja.loja_id).substring(0,8) : '')})`}</span>
                             <div className="flex items-center gap-2">
                               <button 
@@ -700,7 +700,7 @@ export default function PainelSuperAdmin() {
                 )}
               </div>
 
-              <div className="border-t border-[#333] pt-4 space-y-4">
+              <div className="border-t border-sigma-border pt-4 space-y-4">
                 <h3 className="text-md font-semibold text-gray-200">Diretoria</h3>
                 <BuscadorObreiro cargo="Presidente" lojasConselho={editLojas} onSuccess={(cim) => setEditPresidente(cim)} />
                 {editPresidente && <div className="text-xs text-green-500 ml-1">CIM Atual: {editPresidente}</div>}
@@ -712,7 +712,7 @@ export default function PainelSuperAdmin() {
                 {editSecretario && <div className="text-xs text-green-500 ml-1">CIM Atual: {editSecretario}</div>}
               </div>
 
-              <div className="border-t border-[#333] pt-6 flex justify-end gap-3 sticky bottom-0 bg-[#111] py-2">
+              <div className="border-t border-sigma-border pt-6 flex justify-end gap-3 sticky bottom-0 bg-sigma-surface py-2">
                 <button 
                   type="button"
                   onClick={() => setEditModal(null)}
@@ -734,8 +734,8 @@ export default function PainelSuperAdmin() {
       )}
       {/* Modal de View Lojas */}
       {viewLojasModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-xl">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-[#facc15]">Lojas: {viewLojasModal.nome}</h2>
               <button onClick={() => setViewLojasModal(null)} className="text-gray-400 hover:text-white">✕</button>
@@ -748,7 +748,7 @@ export default function PainelSuperAdmin() {
               ) : (
                 <ul className="space-y-2">
                   {viewLojasModal.lojas.map((loja: any, idx: number) => (
-                    <li key={idx} className="p-3 bg-[#1a1a1a] border border-[#333] rounded-lg text-gray-200 flex justify-between items-center">
+                    <li key={idx} className="p-3 bg-sigma-elevated border border-sigma-border rounded-lg text-gray-200 flex justify-between items-center">
                       <span className="font-medium">
                         {loja.nome ? `Loja ${loja.nome}, nº ${loja.numero}` : `(Nº ${loja.numero || loja.loja_id})`}
                       </span>

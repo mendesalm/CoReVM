@@ -400,7 +400,7 @@ export default function PaginaCalendario() {
   if (erro && eventos.length === 0 && !userContext) {
     return (
       <div className="p-8 h-full flex items-center justify-center">
-        <div className="max-w-md w-full p-8 text-center bg-[#141414] border border-[#2b2b2b] rounded-2xl shadow-2xl space-y-4">
+        <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
           <div className="w-16 h-16 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
             <ShieldCheck className="w-8 h-8" />
           </div>
@@ -428,7 +428,7 @@ export default function PaginaCalendario() {
             <h1 className="text-2xl sm:text-3xl font-bold text-[#facc15]">Calendário Regional</h1>
             
             {/* Alternador de Visão no topo para Mobile */}
-            <div className="flex md:hidden bg-[#161616] p-1 rounded-xl border border-[#333]">
+            <div className="flex md:hidden bg-[#161616] p-1 rounded-xl border border-sigma-border">
               <button
                 type="button"
                 onClick={() => {
@@ -470,7 +470,7 @@ export default function PaginaCalendario() {
 
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 text-xs w-full lg:w-auto">
           {/* Alternador Desktop */}
-          <div className="hidden md:flex bg-[#111] p-1 rounded-xl border border-[#222]">
+          <div className="hidden md:flex bg-sigma-surface p-1 rounded-xl border border-sigma-border">
             <button
               type="button"
               onClick={() => setModoVisualizacao('lista')}
@@ -498,42 +498,42 @@ export default function PaginaCalendario() {
           </div>
 
           {/* Grupo de Filtros Unificado */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center bg-[#111] border border-[#222] rounded-xl p-1 gap-1">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center bg-sigma-surface border border-sigma-border rounded-xl p-1 gap-1">
             
             <div className="flex items-center flex-1">
               <select
                 value={filtroTipo}
                 onChange={(e) => setFiltroTipo(e.target.value)}
-                className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 min-w-0 hover:text-white border-r border-[#222] appearance-none"
+                className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 min-w-0 hover:text-white border-r border-sigma-border appearance-none"
               >
-                <option value="TODOS" className="bg-[#111]">Todos os tipos</option>
+                <option value="TODOS" className="bg-sigma-surface">Todos os tipos</option>
                 {tiposEvento.map((t) => (
-                  <option key={t.tipo} value={t.tipo} className="bg-[#111]">{t.rotulo}</option>
+                  <option key={t.tipo} value={t.tipo} className="bg-sigma-surface">{t.rotulo}</option>
                 ))}
               </select>
               
               <select
                 value={filtroStatus}
                 onChange={(e) => setFiltroStatus(e.target.value)}
-                className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 min-w-0 hover:text-white md:border-r border-[#222] appearance-none"
+                className="bg-transparent text-gray-300 font-medium px-2 py-1.5 focus:outline-none cursor-pointer flex-1 min-w-0 hover:text-white md:border-r border-sigma-border appearance-none"
               >
-                <option value="TODOS" className="bg-[#111]">Todos os status</option>
+                <option value="TODOS" className="bg-sigma-surface">Todos os status</option>
                 {Object.entries(STATUS_ROTULOS).map(([valor, rotulo]) => (
-                  <option key={valor} value={valor} className="bg-[#111]">{rotulo}</option>
+                  <option key={valor} value={valor} className="bg-sigma-surface">{rotulo}</option>
                 ))}
               </select>
             </div>
 
-            <div className="hidden md:block w-px h-5 bg-[#222] mx-1" />
-            <div className="md:hidden w-full h-px bg-[#222] my-0.5" />
+            <div className="hidden md:block w-px h-5 bg-sigma-elevated mx-1" />
+            <div className="md:hidden w-full h-px bg-sigma-elevated my-0.5" />
 
             <div className="flex items-center">
-              <label className="flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 font-medium text-gray-300 hover:text-white cursor-pointer select-none transition-colors border-r border-[#222]">
+              <label className="flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 font-medium text-gray-300 hover:text-white cursor-pointer select-none transition-colors border-r border-sigma-border">
                 <input
                   type="checkbox"
                   checked={mostrarCancelados}
                   onChange={(e) => setMostrarCancelados(e.target.checked)}
-                  className="w-3.5 h-3.5 accent-[#facc15] bg-[#1a1a1a] border-[#333] rounded"
+                  className="w-3.5 h-3.5 accent-[#facc15] bg-sigma-elevated border-sigma-border rounded"
                 />
                 Cancelados
               </label>
@@ -541,7 +541,7 @@ export default function PaginaCalendario() {
               <button
                 type="button"
                 onClick={() => setMostrarLegenda(!mostrarLegenda)}
-                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-[#facc15]/20 text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-[#222]'}`}
+                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-[#facc15]/20 text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-sigma-elevated'}`}
               >
                 <Palette className="w-3.5 h-3.5" />
                 Legenda
@@ -579,7 +579,7 @@ export default function PaginaCalendario() {
 
       {/* Legenda de cores por tipo (Accordion) */}
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${mostrarLegenda ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0 m-0'}`}>
-        <div className="bg-[#111] border border-[#222] rounded-xl p-4 shadow-xl">
+        <div className="bg-sigma-surface border border-sigma-border rounded-xl p-4 shadow-xl">
           <h3 className="text-xs font-bold text-gray-300 mb-3 uppercase tracking-wider">Legenda de Cores</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3 text-[11px] text-gray-400">
             {tiposEvento.map((t) => (
@@ -596,7 +596,7 @@ export default function PaginaCalendario() {
       {modoVisualizacao === 'lista' ? (
         <div className="flex-1 overflow-y-auto space-y-3 pr-1">
           {eventosOrdenados.length === 0 ? (
-            <div className="bg-[#111] border border-[#2b2b2b] rounded-2xl p-8 text-center text-gray-400 my-6">
+            <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-8 text-center text-gray-400 my-6">
               <Calendar className="w-12 h-12 mx-auto text-gray-600 mb-3" />
               <p className="font-semibold text-white">Nenhum evento encontrado</p>
               <p className="text-xs text-gray-500 mt-1">Ajuste os filtros ou crie um novo compromisso na agenda.</p>
@@ -615,7 +615,7 @@ export default function PaginaCalendario() {
                 <div
                   key={evento.id}
                   onClick={() => abrirDetalheDoEvento(evento)}
-                  className={`bg-[#141414] hover:bg-[#1a1a1a] active:bg-[#202020] border border-[#282828] hover:border-[#444] rounded-2xl p-4 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-md ${
+                  className={`bg-sigma-surface hover:bg-sigma-elevated active:bg-[#202020] border border-sigma-border hover:border-[#444] rounded-2xl p-4 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-md ${
                     evento.status === 'CANCELADO' ? 'opacity-40 line-through' : ''
                   }`}
                 >
@@ -683,7 +683,7 @@ export default function PaginaCalendario() {
           )}
         </div>
       ) : (
-        <div className="bg-[#111111] border border-[#333] rounded-xl p-3 sm:p-6 flex-1 text-gray-300 min-h-[450px]">
+        <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3 sm:p-6 flex-1 text-gray-300 min-h-[450px]">
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
@@ -736,8 +736,8 @@ export default function PaginaCalendario() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-[#333] rounded-xl p-6 w-full max-w-lg my-auto">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-6 w-full max-w-lg my-auto">
             <h2 className="text-xl font-bold text-[#facc15] mb-1">
               {isEditing ? (somenteLeitura ? 'Detalhes do Evento' : 'Editar Evento') : 'Novo Evento'}
             </h2>
@@ -760,7 +760,7 @@ export default function PaginaCalendario() {
                   placeholder="Reunião de Veneráveis..."
                   required
                   disabled={somenteLeitura}
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                 />
               </div>
 
@@ -772,7 +772,7 @@ export default function PaginaCalendario() {
                     onChange={e => { setTipo(e.target.value); setSubtipo(''); }}
                     required
                     disabled={somenteLeitura}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60 cursor-pointer"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60 cursor-pointer"
                   >
                     <option value="" disabled>Selecione...</option>
                     {tiposPermitidos.map((t) => (
@@ -794,7 +794,7 @@ export default function PaginaCalendario() {
                       onChange={e => setSubtipo(e.target.value)}
                       required
                       disabled={somenteLeitura}
-                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60 cursor-pointer"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60 cursor-pointer"
                     >
                       <option value="" disabled>Selecione...</option>
                       {tipoInfoSelecionado.subtipos_validos.map((s) => (
@@ -820,7 +820,7 @@ export default function PaginaCalendario() {
                   onChange={e => setDescricao(e.target.value)}
                   placeholder="Instruções sobre trajes, pauta, links ou detalhes adicionais..."
                   disabled={somenteLeitura}
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none resize-none h-24 disabled:opacity-60"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none resize-none h-24 disabled:opacity-60"
                 />
               </div>
 
@@ -831,7 +831,7 @@ export default function PaginaCalendario() {
                   checked={isAllDay}
                   onChange={e => setIsAllDay(e.target.checked)}
                   disabled={somenteLeitura}
-                  className="w-4 h-4 accent-[#facc15] bg-[#080808] border-[#333] rounded"
+                  className="w-4 h-4 accent-[#facc15] bg-sigma-bg border-sigma-border rounded"
                 />
                 <label htmlFor="allday" className="text-sm font-medium text-gray-300 cursor-pointer">Dia Inteiro (Sem horário fixo)</label>
               </div>
@@ -843,7 +843,7 @@ export default function PaginaCalendario() {
                     value={startDate}
                     onChange={(v) => setStartDate(v)}
                     disabled={somenteLeitura}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                   />
                 </div>
                 {!isAllDay && (
@@ -853,7 +853,7 @@ export default function PaginaCalendario() {
                       value={startTime}
                       onChange={(v) => setStartTime(v)}
                       disabled={somenteLeitura}
-                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                     />
                   </div>
                 )}
@@ -866,7 +866,7 @@ export default function PaginaCalendario() {
                     value={endDate}
                     onChange={(v) => setEndDate(v)}
                     disabled={somenteLeitura}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                   />
                 </div>
                 {!isAllDay && (
@@ -876,7 +876,7 @@ export default function PaginaCalendario() {
                       value={endTime}
                       onChange={(v) => setEndTime(v)}
                       disabled={somenteLeitura}
-                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none disabled:opacity-60"
                     />
                   </div>
                 )}
@@ -888,7 +888,7 @@ export default function PaginaCalendario() {
                   <select
                     value={statusEvento}
                     onChange={e => setStatusEvento(e.target.value)}
-                    className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none cursor-pointer"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white focus:border-[#facc15] focus:outline-none cursor-pointer"
                   >
                     {Object.entries(STATUS_ROTULOS).map(([valor, rotulo]) => (
                       <option key={valor} value={valor}>{rotulo}</option>
@@ -904,7 +904,7 @@ export default function PaginaCalendario() {
                     id="gerar-aviso"
                     checked={gerarAviso}
                     onChange={e => setGerarAviso(e.target.checked)}
-                    className="w-4 h-4 accent-[#facc15] bg-[#080808] border-[#333] rounded"
+                    className="w-4 h-4 accent-[#facc15] bg-sigma-bg border-sigma-border rounded"
                   />
                   <label htmlFor="gerar-aviso" className="text-sm font-medium text-gray-300 cursor-pointer">
                     Publicar também um Aviso de lembrete no Mural
@@ -914,7 +914,7 @@ export default function PaginaCalendario() {
 
               {/* Ações de Sincronização com Calendário do Usuário (Google e Apple Calendar) */}
               {isEditing && eventoSelecionado && (
-                <div className="bg-[#181818] border border-[#2d2d2d] rounded-xl p-3 my-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="bg-sigma-elevated border border-[#2d2d2d] rounded-xl p-3 my-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2">
                     <CalendarPlus className="w-4 h-4 text-[#facc15]" />
                     <span className="text-xs font-semibold text-gray-200">Sincronizar no seu celular:</span>
@@ -933,7 +933,7 @@ export default function PaginaCalendario() {
                       })}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#252525] hover:bg-[#333] border border-[#444] rounded-lg text-[11px] font-medium text-gray-200 hover:text-white transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-sigma-elevated hover:bg-[#333] border border-[#444] rounded-lg text-[11px] font-medium text-gray-200 hover:text-white transition-colors"
                     >
                       <Calendar className="w-3.5 h-3.5 text-blue-400" />
                       Google Agenda
@@ -952,7 +952,7 @@ export default function PaginaCalendario() {
                           diaInteiro: isAllDay,
                         });
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#252525] hover:bg-[#333] border border-[#444] rounded-lg text-[11px] font-medium text-gray-200 hover:text-white transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-sigma-elevated hover:bg-[#333] border border-[#444] rounded-lg text-[11px] font-medium text-gray-200 hover:text-white transition-colors"
                     >
                       <Download className="w-3.5 h-3.5 text-emerald-400" />
                       Apple / iCal
@@ -961,7 +961,7 @@ export default function PaginaCalendario() {
                 </div>
               )}
 
-              <div className="border-t border-[#333] pt-4 flex justify-between items-center mt-4">
+              <div className="border-t border-sigma-border pt-4 flex justify-between items-center mt-4">
                 {isEditing && !somenteLeitura ? (
                   <button
                     type="button"

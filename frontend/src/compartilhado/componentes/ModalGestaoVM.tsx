@@ -226,11 +226,11 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-      <div className="bg-[#111] border border-[#333] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+      <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Topo do Modal */}
-        <div className="bg-gradient-to-r from-[#181818] via-[#141414] to-[#181818] p-5 border-b border-[#2b2b2b] flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#181818] via-[#141414] to-[#181818] p-5 border-b border-sigma-border flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/30 rounded-xl text-[#facc15]">
               <Award className="w-6 h-6" />
@@ -240,7 +240,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                 <h2 className="text-lg font-bold text-white tracking-wide">
                   Gestão do Venerável Mestre
                 </h2>
-                <span className="bg-[#222] text-[#facc15] text-[11px] font-bold px-2 py-0.5 rounded border border-[#444]">
+                <span className="bg-sigma-elevated text-[#facc15] text-[11px] font-bold px-2 py-0.5 rounded border border-[#444]">
                   Loja {loja.numero}
                 </span>
               </div>
@@ -252,14 +252,14 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Abas de Navegação */}
-        <div className="flex border-b border-[#2b2b2b] bg-[#141414] px-5">
+        <div className="flex border-b border-sigma-border bg-sigma-surface px-5">
           <button
             type="button"
             onClick={() => setActiveTab('visualizar')}
@@ -331,7 +331,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 pt-4 border-t border-[#2b2b2b] text-xs">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 pt-4 border-t border-sigma-border text-xs">
                             <div className="flex items-center gap-2 text-gray-300">
                               <Mail className="w-4 h-4 text-gray-400" />
                               <span className="text-gray-400">E-mail:</span>
@@ -382,7 +382,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                     ) : (
                       /* Formulário de Edição do Mandato Vigente */
                       <form onSubmit={handleSalvarEdicao} className="space-y-4">
-                        <div className="bg-[#181818] border border-[#333] rounded-xl p-4 mb-2">
+                        <div className="bg-sigma-elevated border border-sigma-border rounded-xl p-4 mb-2">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-xs text-[#facc15] font-semibold">Editando cadastro do Venerável Mestre</p>
@@ -403,7 +403,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                             required
                             value={editForm.nome_completo}
                             onChange={(e) => setEditForm({...editForm, nome_completo: e.target.value})}
-                            className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                            className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                           />
                         </div>
 
@@ -417,7 +417,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                               required
                               value={editForm.email}
                               onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                              className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                              className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                             />
                           </div>
                           <div>
@@ -428,7 +428,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                               type="text"
                               value={editForm.telefone}
                               onChange={(e) => setEditForm({...editForm, telefone: formatarTelefone(e.target.value)})}
-                              className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                              className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                               placeholder="(00) 00000-0000"
                             />
                           </div>
@@ -443,7 +443,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                               type="text"
                               value={editForm.cpf}
                               onChange={(e) => setEditForm({...editForm, cpf: formatarCPF(e.target.value)})}
-                              className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                              className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                               placeholder="000.000.000-00"
                             />
                           </div>
@@ -454,12 +454,12 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                             <CampoData
                               value={editForm.data_inicio}
                               onChange={(v) => setEditForm({...editForm, data_inicio: v})}
-                              className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                              className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                             />
                           </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                        <div className="flex justify-end gap-3 pt-4 border-t border-sigma-border">
                           <button
                             type="button"
                             onClick={() => setIsEditing(false)}
@@ -480,7 +480,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                     )
                   ) : (
                     /* Sem VM Ativo */
-                    <div className="text-center py-10 space-y-4 bg-[#151515] border border-dashed border-[#333] rounded-xl p-8">
+                    <div className="text-center py-10 space-y-4 bg-[#151515] border border-dashed border-sigma-border rounded-xl p-8">
                       <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
                         <AlertCircle className="w-6 h-6" />
                       </div>
@@ -527,7 +527,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                         value={novaGestaoForm.cim}
                         onChange={handleCimChange}
                         placeholder="Digite o CIM (ex: 292936)"
-                        className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white font-mono focus:border-[#facc15] focus:outline-none pr-10"
+                        className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white font-mono focus:border-[#facc15] focus:outline-none pr-10"
                       />
                       <div className="absolute right-3 top-2.5 text-gray-400">
                         {buscandoCim ? (
@@ -556,7 +556,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                       required
                       value={novaGestaoForm.nome_completo}
                       onChange={(e) => setNovaGestaoForm({...novaGestaoForm, nome_completo: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                     />
                   </div>
 
@@ -570,7 +570,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                         required
                         value={novaGestaoForm.email}
                         onChange={(e) => setNovaGestaoForm({...novaGestaoForm, email: e.target.value})}
-                        className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                        className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                       />
                     </div>
                     <div>
@@ -581,7 +581,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                         type="text"
                         value={novaGestaoForm.telefone}
                         onChange={(e) => setNovaGestaoForm({...novaGestaoForm, telefone: formatarTelefone(e.target.value)})}
-                        className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                        className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                         placeholder="(00) 00000-0000"
                       />
                     </div>
@@ -596,7 +596,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                         type="text"
                         value={novaGestaoForm.cpf}
                         onChange={(e) => setNovaGestaoForm({...novaGestaoForm, cpf: formatarCPF(e.target.value)})}
-                        className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                        className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                         placeholder="000.000.000-00"
                       />
                     </div>
@@ -607,12 +607,12 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                       <CampoData
                         value={novaGestaoForm.data_inicio_mandato}
                         onChange={(v) => setNovaGestaoForm({...novaGestaoForm, data_inicio_mandato: v})}
-                        className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                        className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                  <div className="flex justify-end gap-3 pt-4 border-t border-sigma-border">
                     <button
                       type="button"
                       onClick={onClose}
@@ -635,7 +635,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
               {/* ABA 3: HISTÓRICO DE MANDATOS */}
               {activeTab === 'historico' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#222]">
+                  <div className="flex items-center justify-between pb-2 border-b border-sigma-border">
                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                       Registro Cronológico de Veneráveis Mestres
                     </h4>

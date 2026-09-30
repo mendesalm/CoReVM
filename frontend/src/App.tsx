@@ -28,7 +28,7 @@ import { AuthProvider, useAuth } from './compartilhado/contextos/AuthContext';
 function RotaProtegida({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { token, usuario, carregando } = useAuth();
   
-  if (carregando) return <div className="h-screen w-screen flex items-center justify-center bg-black text-macaonico-dourado">Carregando Core...</div>;
+  if (carregando) return <div className="h-screen w-screen flex items-center justify-center bg-sigma-bg text-macaonico-dourado">Carregando Core...</div>;
   if (!token || !usuario) return <Navigate to="/login" replace />;
   if (allowedRoles && !usuario.roles.some(r => allowedRoles.includes(r))) {
     return <div className="p-8 text-red-500">Acesso negado. Nível de permissão insuficiente.</div>;

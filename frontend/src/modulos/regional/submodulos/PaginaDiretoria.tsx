@@ -238,7 +238,7 @@ function formatarLojaMembro(membro: any): string {
             <select
               value={emergenciaSelecionado}
               onChange={(e) => setEmergenciaSelecionado(e.target.value)}
-              className="w-full bg-[#080808] border border-orange-500/40 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+              className="w-full bg-sigma-bg border border-orange-500/40 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-orange-400"
             >
               <option value="">Selecione um Venerável Mestre elegível...</option>
               {veneraveisElegiveis.map((v) => {
@@ -278,7 +278,7 @@ function formatarLojaMembro(membro: any): string {
 
   if (loading) {
     return (
-      <div className="h-screen bg-[#080808] flex items-center justify-center">
+      <div className="h-screen bg-sigma-bg flex items-center justify-center">
         <Loader2 className="w-12 h-12 text-[#facc15] animate-spin" />
       </div>
     );
@@ -286,22 +286,22 @@ function formatarLojaMembro(membro: any): string {
 
   if (erro) {
     return (
-      <div className="h-screen bg-[#080808] flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
+      <div className="h-screen bg-sigma-bg flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
         <ShieldCheck className="w-16 h-16"/> {erro}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
       
       {/* Sub-Header Contextual */}
-      <div className="bg-[#111] border-b border-[#222]">
+      <div className="bg-sigma-surface border-b border-sigma-border">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               to={`/regiao/${id}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -329,7 +329,7 @@ function formatarLojaMembro(membro: any): string {
                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                 MANDATO VIGENTE ATIVO
               </span>
-              <span className="px-3 py-1 bg-[#222] text-[#facc15] border border-[#444] rounded-full font-semibold text-xs flex items-center gap-1.5">
+              <span className="px-3 py-1 bg-sigma-elevated text-[#facc15] border border-[#444] rounded-full font-semibold text-xs flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-[#facc15]" />
                 Gestão: {presidente?.inicio_mandato?.split('-')[0] || '2026'} - {presidente?.termino_mandato?.split('-')[0] || '2027'}
               </span>
@@ -357,7 +357,7 @@ function formatarLojaMembro(membro: any): string {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Card: Presidente */}
-          <div onClick={() => openDrawer(presidente, 'Presidente', <Shield className="w-5 h-5 text-[#facc15]" />, 'Presidência executiva, convocação de plenárias e representação institucional.', 'presidente')} className="bg-[#141414] border border-[#2b2b2b] hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
+          <div onClick={() => openDrawer(presidente, 'Presidente', <Shield className="w-5 h-5 text-[#facc15]" />, 'Presidência executiva, convocação de plenárias e representação institucional.', 'presidente')} className="bg-sigma-surface border border-sigma-border hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30">
@@ -380,7 +380,7 @@ function formatarLojaMembro(membro: any): string {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#222] space-y-2 text-xs">
+              <div className="pt-4 border-t border-sigma-border space-y-2 text-xs">
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Loja de Vínculo:</span>
                   <span className="text-gray-200 truncate max-w-[170px] font-medium" title={formatarLojaMembro(presidente)}>
@@ -410,13 +410,13 @@ function formatarLojaMembro(membro: any): string {
               {userContext.is_diretoria && renderAvisoOrfao(presidente, 'presidente')}
             </div>
 
-            <div className="mt-6 pt-3 border-t border-[#222] text-[11px] text-gray-500">
+            <div className="mt-6 pt-3 border-t border-sigma-border text-[11px] text-gray-500">
               Presidência executiva, convocação de plenárias e representação institucional.
             </div>
           </div>
 
           {/* Card: Vice-Presidente */}
-          <div onClick={() => openDrawer(vicePresidente, 'Vice-Presidente', <UserCheck className="w-5 h-5 text-blue-400" />, 'Sucessão executiva regimental e articulação com as comissões técnicas.', 'vice-presidente')} className="bg-[#141414] border border-[#2b2b2b] hover:border-blue-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
+          <div onClick={() => openDrawer(vicePresidente, 'Vice-Presidente', <UserCheck className="w-5 h-5 text-blue-400" />, 'Sucessão executiva regimental e articulação com as comissões técnicas.', 'vice-presidente')} className="bg-sigma-surface border border-sigma-border hover:border-blue-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-400 border border-blue-500/30">
@@ -439,7 +439,7 @@ function formatarLojaMembro(membro: any): string {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#222] space-y-2 text-xs">
+              <div className="pt-4 border-t border-sigma-border space-y-2 text-xs">
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Loja de Vínculo:</span>
                   <span className="text-gray-200 truncate max-w-[170px] font-medium" title={formatarLojaMembro(vicePresidente)}>
@@ -469,13 +469,13 @@ function formatarLojaMembro(membro: any): string {
               {userContext.is_diretoria && renderAvisoOrfao(vicePresidente, 'vice-presidente')}
             </div>
 
-            <div className="mt-6 pt-3 border-t border-[#222] text-[11px] text-gray-500">
+            <div className="mt-6 pt-3 border-t border-sigma-border text-[11px] text-gray-500">
               Sucessão executiva regimental e articulação com as comissões técnicas.
             </div>
           </div>
 
           {/* Card: Secretário */}
-          <div onClick={() => openDrawer(secretario, 'Secretário', <Award className="w-5 h-5 text-purple-400" />, 'Redação de atas, acervo documental, circulares e comunicações formais.', 'secretario')} className="bg-[#141414] border border-[#2b2b2b] hover:border-purple-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
+          <div onClick={() => openDrawer(secretario, 'Secretário', <Award className="w-5 h-5 text-purple-400" />, 'Redação de atas, acervo documental, circulares e comunicações formais.', 'secretario')} className="bg-sigma-surface border border-sigma-border hover:border-purple-500/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/15 text-purple-400 border border-purple-500/30">
@@ -498,7 +498,7 @@ function formatarLojaMembro(membro: any): string {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#222] space-y-2 text-xs">
+              <div className="pt-4 border-t border-sigma-border space-y-2 text-xs">
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Loja de Vínculo:</span>
                   <span className="text-gray-200 truncate max-w-[170px] font-medium" title={formatarLojaMembro(secretario)}>
@@ -528,7 +528,7 @@ function formatarLojaMembro(membro: any): string {
               {userContext.is_diretoria && renderAvisoOrfao(secretario, 'secretario')}
             </div>
 
-            <div className="mt-6 pt-3 border-t border-[#222] text-[11px] text-gray-500">
+            <div className="mt-6 pt-3 border-t border-sigma-border text-[11px] text-gray-500">
               Redação de atas, acervo documental, circulares e comunicações formais.
             </div>
           </div>
@@ -536,21 +536,21 @@ function formatarLojaMembro(membro: any): string {
         </div>
 
         {/* Painel Informativo da Vigência */}
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 shadow-xl">
+        <div className="bg-sigma-surface border border-[#2a2a2a] rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-[#facc15]" />
             Cronograma do Mandato Oficial
           </h3>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="p-4 rounded-xl bg-[#0d0d0d] border border-[#222]">
+            <div className="p-4 rounded-xl bg-sigma-surface border border-sigma-border">
               <span className="text-gray-500 block mb-1">Data Oficial de Posse / Início:</span>
               <span className="text-white font-bold text-base font-mono">
                 {presidente?.inicio_mandato || secretario?.inicio_mandato || '2026-09-08'}
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#0d0d0d] border border-[#222]">
+            <div className="p-4 rounded-xl bg-sigma-surface border border-sigma-border">
               <span className="text-gray-500 block mb-1">Data Prevista de Término / Transição:</span>
               <span className="text-white font-bold text-base font-mono">
                 {presidente?.termino_mandato || secretario?.termino_mandato || '2027-09-08'}
@@ -566,11 +566,11 @@ function formatarLojaMembro(membro: any): string {
       {drawerOpen && selectedRole && (
         <>
           <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] transition-opacity" 
+            className="fixed inset-0 bg-sigma-bg/60 backdrop-blur-sm z-[80] transition-opacity" 
             onClick={() => setDrawerOpen(false)}
           ></div>
-          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#111] border-l border-[#333] shadow-2xl z-[90] transform transition-transform overflow-y-auto flex flex-col">
-            <div className="p-6 border-b border-[#222] flex items-center justify-between sticky top-0 bg-[#111] z-10">
+          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-sigma-surface border-l border-sigma-border shadow-2xl z-[90] transform transition-transform overflow-y-auto flex flex-col">
+            <div className="p-6 border-b border-sigma-border flex items-center justify-between sticky top-0 bg-sigma-surface z-10">
               <div className="flex items-center gap-3">
                  <div className="p-2.5 bg-gray-800/50 rounded-xl border border-gray-700/50">
                    {selectedRole.iconeCorrente}
@@ -582,7 +582,7 @@ function formatarLojaMembro(membro: any): string {
               </div>
               <button 
                 onClick={() => setDrawerOpen(false)} 
-                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-[#222] transition-colors"
+                className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-sigma-elevated transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -592,7 +592,7 @@ function formatarLojaMembro(membro: any): string {
               {selectedRole.membro ? (
                 <>
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#222] to-[#0a0a0a] border border-[#333] flex items-center justify-center font-black text-2xl text-white shadow-inner shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#222] to-[#0a0a0a] border border-sigma-border flex items-center justify-center font-black text-2xl text-white shadow-inner shrink-0">
                       {selectedRole.membro.nome_completo ? selectedRole.membro.nome_completo.charAt(0).toUpperCase() : (selectedRole.nomeCargo.charAt(0))}
                     </div>
                     <div>
@@ -604,7 +604,7 @@ function formatarLojaMembro(membro: any): string {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="bg-[#181818] p-4 rounded-xl border border-[#2b2b2b]">
+                    <div className="bg-sigma-elevated p-4 rounded-xl border border-sigma-border">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Informações de Contato</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -614,7 +614,7 @@ function formatarLojaMembro(membro: any): string {
                       </div>
                     </div>
 
-                    <div className="bg-[#181818] p-4 rounded-xl border border-[#2b2b2b]">
+                    <div className="bg-sigma-elevated p-4 rounded-xl border border-sigma-border">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Escopo do Mandato</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between gap-4">
@@ -647,7 +647,7 @@ function formatarLojaMembro(membro: any): string {
                     </div>
 
                     {userContext.is_diretoria && (
-                      <div className="bg-[#181818] p-4 rounded-xl border border-[#2b2b2b]">
+                      <div className="bg-sigma-elevated p-4 rounded-xl border border-sigma-border">
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Gestão de Crise (Alerta)</h4>
                         {(!selectedRole.membro.vinculo_desatualizado && !selectedRole.membro.loja_sem_vm) ? (
                            <div className="text-sm text-gray-500 italic">Nenhum aviso ou pendência para este cargo.</div>
@@ -671,8 +671,8 @@ function formatarLojaMembro(membro: any): string {
 
       {/* Modal: Gerenciar Mesa Diretora e Mandato */}
       {showDiretoriaModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/30">
                 <Award className="w-6 h-6" />
@@ -699,7 +699,7 @@ function formatarLojaMembro(membro: any): string {
                 <select
                   value={diretoriaForm.presidente_id}
                   onChange={(e) => setDiretoriaForm({...diretoriaForm, presidente_id: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                 >
                   <option value="">Selecione o Venerável Mestre...</option>
                   {diretoriaForm.presidente_id && !veneraveisElegiveis.some(v => String(v.usuario_id) === String(diretoriaForm.presidente_id)) && (
@@ -728,7 +728,7 @@ function formatarLojaMembro(membro: any): string {
                 <select
                   value={diretoriaForm.vice_presidente_id}
                   onChange={(e) => setDiretoriaForm({...diretoriaForm, vice_presidente_id: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                 >
                   <option value="">Selecione o Venerável Mestre...</option>
                   {diretoriaForm.vice_presidente_id && !veneraveisElegiveis.some(v => String(v.usuario_id) === String(diretoriaForm.vice_presidente_id)) && (
@@ -757,7 +757,7 @@ function formatarLojaMembro(membro: any): string {
                 <select
                   value={diretoriaForm.secretario_id}
                   onChange={(e) => setDiretoriaForm({...diretoriaForm, secretario_id: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-purple-400 focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-purple-400 focus:outline-none"
                 >
                   <option value="">Selecione o Venerável Mestre...</option>
                   {diretoriaForm.secretario_id && !veneraveisElegiveis.some(v => String(v.usuario_id) === String(diretoriaForm.secretario_id)) && (
@@ -785,7 +785,7 @@ function formatarLojaMembro(membro: any): string {
                   <CampoData
                     value={diretoriaForm.inicio_mandato}
                     onChange={(v) => setDiretoriaForm({...diretoriaForm, inicio_mandato: v})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
@@ -793,12 +793,12 @@ function formatarLojaMembro(membro: any): string {
                   <CampoData
                     value={diretoriaForm.termino_mandato}
                     onChange={(v) => setDiretoriaForm({...diretoriaForm, termino_mandato: v})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+              <div className="flex justify-end gap-3 pt-4 border-t border-sigma-border">
                 <button 
                   type="button" 
                   onClick={() => setShowDiretoriaModal(false)}

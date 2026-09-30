@@ -101,8 +101,8 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 overflow-y-auto">
-      <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-xl my-auto shadow-2xl">
+    <div className="fixed inset-0 bg-sigma-bg/80 flex items-center justify-center z-[60] p-4 overflow-y-auto">
+      <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl my-auto shadow-2xl">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15]">
             <UserCheck className="w-6 h-6" />
@@ -143,7 +143,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
                   value={formData.cim} 
                   onChange={handleCimChange}
                   placeholder="Ex: 314445"
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
                 />
                 {buscandoCim && (
                   <div className="absolute right-3 top-3">
@@ -162,7 +162,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
                 onChange={e => setFormData({...formData, cpf: formatarCPF(e.target.value)})} 
                 placeholder="000.000.000-00" 
                 maxLength={14} 
-                className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
+                className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
               />
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
               value={formData.nome_completo} 
               onChange={e => setFormData({...formData, nome_completo: e.target.value})} 
               placeholder="Nome do obreiro..."
-              className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
+              className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
             />
           </div>
 
@@ -192,7 +192,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
                 value={formData.email} 
                 onChange={e => setFormData({...formData, email: e.target.value})} 
                 placeholder="obreiro@exemplo.com"
-                className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
+                className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
               />
             </div>
             <div>
@@ -205,12 +205,12 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
                 onChange={e => setFormData({...formData, telefone: formatarTelefone(e.target.value)})} 
                 placeholder="(00) 00000-0000"
                 maxLength={15} 
-                className="w-full bg-[#080808] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
+                className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none" 
               />
             </div>
           </div>
 
-          <div className="border-t border-[#333] pt-4 mt-2">
+          <div className="border-t border-sigma-border pt-4 mt-2">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Vínculo com a Loja e Mandato</h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
@@ -218,7 +218,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
                 <select 
                   value={formData.loja_id} 
                   onChange={e => setFormData({...formData, loja_id: parseInt(e.target.value)})} 
-                  className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-xs text-white"
                 >
                   {lojasDisponiveis.map(l => (
                     <option key={l.id} value={l.id}>{l.nome}</option>
@@ -228,9 +228,9 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Cargo no Mandato</label>
                 {cargoPadrao ? (
-                  <input type="text" readOnly value={formData.cargo_atual} className="w-full bg-[#222] border border-[#333] rounded-lg p-2 text-xs text-gray-300 cursor-not-allowed font-semibold" />
+                  <input type="text" readOnly value={formData.cargo_atual} className="w-full bg-sigma-elevated border border-sigma-border rounded-lg p-2 text-xs text-gray-300 cursor-not-allowed font-semibold" />
                 ) : (
-                  <select value={formData.cargo_atual} onChange={e => setFormData({...formData, cargo_atual: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white">
+                  <select value={formData.cargo_atual} onChange={e => setFormData({...formData, cargo_atual: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-xs text-white">
                     {cargosComuns.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 )}

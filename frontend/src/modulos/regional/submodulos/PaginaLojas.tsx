@@ -505,7 +505,7 @@ export default function PaginaLojas() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-[#080808] flex items-center justify-center">
+      <div className="h-screen bg-sigma-bg flex items-center justify-center">
         <Loader2 className="w-12 h-12 text-[#facc15] animate-spin" />
       </div>
     );
@@ -513,14 +513,14 @@ export default function PaginaLojas() {
 
   if (erro) {
     return (
-      <div className="h-screen bg-[#080808] flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
+      <div className="h-screen bg-sigma-bg flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
         <ShieldCheck className="w-16 h-16"/> {erro}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
 
       {/* ALTERAÇÃO (2026-09-18, revisão a pedido do usuário): "Minha Loja"
           agora troca a tela inteira por um painel dedicado -- os widgets do
@@ -539,12 +539,12 @@ export default function PaginaLojas() {
       ) : (
       <>
       {/* Sub-Header Contextual */}
-      <div className="bg-[#111] border-b border-[#222]">
+      <div className="bg-sigma-surface border-b border-sigma-border">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link 
               to={`/regiao/${id}`} 
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -576,7 +576,7 @@ export default function PaginaLojas() {
             className={`p-2.5 rounded-xl border text-left transition-all ${
               filtroStatus === 'TODAS'
                 ? 'bg-[#facc15]/10 border-[#facc15] ring-1 ring-[#facc15]/30'
-                : 'bg-[#141414] border-[#262626] text-gray-400'
+                : 'bg-sigma-surface border-[#262626] text-gray-400'
             }`}
           >
             <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider truncate">Lojas</span>
@@ -590,7 +590,7 @@ export default function PaginaLojas() {
             className={`p-2.5 rounded-xl border text-left transition-all ${
               filtroStatus === 'COM_VM'
                 ? 'bg-green-500/15 border-green-500 ring-1 ring-green-500/30'
-                : 'bg-[#141414] border-[#262626] text-gray-400'
+                : 'bg-sigma-surface border-[#262626] text-gray-400'
             }`}
           >
             <span className="text-[10px] uppercase font-bold text-green-400 block tracking-wider truncate">Com VM</span>
@@ -604,7 +604,7 @@ export default function PaginaLojas() {
             className={`p-2.5 rounded-xl border text-left transition-all ${
               filtroStatus === 'PENDENTES'
                 ? 'bg-amber-500/15 border-amber-500 ring-1 ring-amber-500/30'
-                : 'bg-[#141414] border-[#262626] text-gray-400'
+                : 'bg-sigma-surface border-[#262626] text-gray-400'
             }`}
           >
             <span className="text-[10px] uppercase font-bold text-amber-400 block tracking-wider truncate">Pendentes</span>
@@ -615,7 +615,7 @@ export default function PaginaLojas() {
 
         {/* Painel de Métricas Rápidas — Versão Desktop (Cards amplos) */}
         <div className="hidden md:grid md:grid-cols-3 gap-4">
-          <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-[#262626] rounded-xl p-4 flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-gray-400 block mb-1">Lojas Jurisdicionadas</span>
               <div className="text-2xl font-black text-white">{totalLojas}</div>
@@ -626,7 +626,7 @@ export default function PaginaLojas() {
             </div>
           </div>
 
-          <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-[#262626] rounded-xl p-4 flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-gray-400 block mb-1">Com Venerável Mestre</span>
               <div className="text-2xl font-black text-green-400">{lojasComVm}</div>
@@ -637,7 +637,7 @@ export default function PaginaLojas() {
             </div>
           </div>
 
-          <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-[#262626] rounded-xl p-4 flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-gray-400 block mb-1">Mandatos Pendentes</span>
               <div className="text-2xl font-black text-amber-400">{lojasPendentes}</div>
@@ -650,7 +650,7 @@ export default function PaginaLojas() {
         </div>
 
         {/* Card Principal: Tabela de Lojas */}
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-2xl">
+        <div className="bg-sigma-surface border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-2xl">
           
           {/* Barra de Filtros e Busca
               ALTERAÇÃO (2026-09-29): em mobile a busca ocupa linha própria (w-full)
@@ -668,7 +668,7 @@ export default function PaginaLojas() {
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   placeholder="Buscar loja, número, rito, oriente ou VM..."
-                  className="w-full bg-[#0d0d0d] border border-[#333] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#facc15] focus:outline-none transition-colors"
+                  className="w-full bg-sigma-surface border border-sigma-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#facc15] focus:outline-none transition-colors"
                 />
               </div>
 
@@ -688,7 +688,7 @@ export default function PaginaLojas() {
             {/* Segunda linha: botões de filtro (apenas desktop) + botão + desktop */}
             <div className="hidden md:flex items-center justify-between gap-3 mt-3">
               {/* Seletor de Filtro de Status — redundante em mobile, visível só em desktop */}
-              <div className="flex items-center bg-[#0d0d0d] border border-[#333] rounded-xl p-1 text-xs">
+              <div className="flex items-center bg-sigma-surface border border-sigma-border rounded-xl p-1 text-xs">
                 <button
                   type="button"
                   onClick={() => setFiltroStatus('TODAS')}
@@ -749,7 +749,7 @@ export default function PaginaLojas() {
                   <div
                     key={l.loja_id}
                     onClick={() => setLojaDetalhesModal(l)}
-                    className={`p-4 transition-all active:bg-[#1c1c1c] hover:bg-[#181818] cursor-pointer flex items-center justify-between gap-3 ${
+                    className={`p-4 transition-all active:bg-[#1c1c1c] hover:bg-sigma-elevated cursor-pointer flex items-center justify-between gap-3 ${
                       ehMinhaLoja ? 'bg-blue-500/[0.04] border-l-4 border-l-blue-500' : ''
                     }`}
                   >
@@ -784,7 +784,7 @@ export default function PaginaLojas() {
                         e.stopPropagation();
                         setLojaAcoesModal(l);
                       }}
-                      className="p-2 -mr-1 text-gray-400 hover:text-white hover:bg-[#252525] rounded-xl transition-colors cursor-pointer shrink-0"
+                      className="p-2 -mr-1 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-xl transition-colors cursor-pointer shrink-0"
                       title="Ações da Loja"
                       aria-label="Abrir opções de configuração"
                     >
@@ -842,7 +842,7 @@ export default function PaginaLojas() {
                       <tr 
                         key={l.loja_id} 
                         onClick={() => setLojaDetalhesModal(l)}
-                        className={`hover:bg-[#181818] transition-colors cursor-pointer group ${ehMinhaLoja ? 'bg-blue-500/[0.04]' : ''}`}
+                        className={`hover:bg-sigma-elevated transition-colors cursor-pointer group ${ehMinhaLoja ? 'bg-blue-500/[0.04]' : ''}`}
                       >
                         {/* Coluna unificada com padrão estrito: 'Loja {nome_loja}, nº {numero_loja}' */}
                         <td className="p-3.5 pl-5">
@@ -868,7 +868,7 @@ export default function PaginaLojas() {
                         </td>
 
                         <td className="p-3.5">
-                          <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide bg-[#202020] text-[#facc15] border border-[#333]">
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide bg-[#202020] text-[#facc15] border border-sigma-border">
                             {l.potencia || 'GOB'}
                           </span>
                         </td>
@@ -1033,8 +1033,8 @@ export default function PaginaLojas() {
 
       {/* Modal: Vincular Loja ao Conselho */}
       {showAddLojaModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-xl shadow-2xl">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-xl shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/30">
                 <Building2 className="w-6 h-6" />
@@ -1047,7 +1047,7 @@ export default function PaginaLojas() {
             
             <BuscadorLoja onSelect={(loja) => vincularLoja(loja.id)} />
             
-            <div className="flex justify-end mt-6 pt-4 border-t border-[#222]">
+            <div className="flex justify-end mt-6 pt-4 border-t border-sigma-border">
               <button 
                 type="button"
                 onClick={() => setShowAddLojaModal(false)} 
@@ -1099,12 +1099,12 @@ export default function PaginaLojas() {
 
       {/* Modal: Edição Cadastral da Loja */}
       {editLojaModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
           {/* ALTERAÇÃO (2026-09-19): max-w-xl (era max-w-lg) e max-h-[85vh]
               com overflow interno — o formulário ganhou seções de endereço,
               sessão e contato institucional e não cabe mais numa tela sem
               rolagem própria do card. */}
-          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/30">
                 <Building2 className="w-6 h-6" />
@@ -1125,7 +1125,7 @@ export default function PaginaLojas() {
                   required
                   value={editLojaForm.nome}
                   onChange={(e) => setEditLojaForm({...editLojaForm, nome: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                 />
               </div>
 
@@ -1139,7 +1139,7 @@ export default function PaginaLojas() {
                     required
                     value={editLojaForm.numero}
                     onChange={(e) => setEditLojaForm({...editLojaForm, numero: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1150,7 +1150,7 @@ export default function PaginaLojas() {
                     type="text" 
                     value={editLojaForm.cidade}
                     onChange={(e) => setEditLojaForm({...editLojaForm, cidade: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1162,7 +1162,7 @@ export default function PaginaLojas() {
                 <select 
                   value={editLojaForm.rito}
                   onChange={(e) => setEditLojaForm({...editLojaForm, rito: e.target.value})}
-                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                 >
                   <option value="REAA">REAA</option>
                   <option value="Rito York">Rito de York</option>
@@ -1179,7 +1179,7 @@ export default function PaginaLojas() {
                   ("outros itens poderiam ser incluídos para edição, como
                   dias de sessão, endereço, entre outros"). Ver
                   claude/roteiro-testes-manuais.md no Project "Core". */}
-              <div className="pt-2 border-t border-[#222]">
+              <div className="pt-2 border-t border-sigma-border">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Endereço</p>
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="col-span-2">
@@ -1191,7 +1191,7 @@ export default function PaginaLojas() {
                       value={editLojaForm.logradouro}
                       onChange={(e) => setEditLojaForm({...editLojaForm, logradouro: e.target.value})}
                       placeholder="Rua, Avenida..."
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1202,7 +1202,7 @@ export default function PaginaLojas() {
                       type="text"
                       value={editLojaForm.numero_endereco}
                       onChange={(e) => setEditLojaForm({...editLojaForm, numero_endereco: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1216,7 +1216,7 @@ export default function PaginaLojas() {
                       value={editLojaForm.complemento}
                       onChange={(e) => setEditLojaForm({...editLojaForm, complemento: e.target.value})}
                       placeholder="Sala, andar..."
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1227,7 +1227,7 @@ export default function PaginaLojas() {
                       type="text"
                       value={editLojaForm.bairro}
                       onChange={(e) => setEditLojaForm({...editLojaForm, bairro: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1239,7 +1239,7 @@ export default function PaginaLojas() {
                       value={editLojaForm.cep}
                       onChange={(e) => setEditLojaForm({...editLojaForm, cep: e.target.value})}
                       placeholder="00000-000"
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1254,13 +1254,13 @@ export default function PaginaLojas() {
                       value={editLojaForm.estado}
                       onChange={(e) => setEditLojaForm({...editLojaForm, estado: e.target.value.toUpperCase()})}
                       placeholder="SP"
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white uppercase focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white uppercase focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[#222]">
+              <div className="pt-2 border-t border-sigma-border">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Dia e Horário de Sessão</p>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
@@ -1270,7 +1270,7 @@ export default function PaginaLojas() {
                     <select
                       value={editLojaForm.dia_sessao}
                       onChange={(e) => setEditLojaForm({...editLojaForm, dia_sessao: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     >
                       <option value="">—</option>
                       <option value="Domingos">Domingos</option>
@@ -1289,7 +1289,7 @@ export default function PaginaLojas() {
                     <select
                       value={editLojaForm.periodicidade}
                       onChange={(e) => setEditLojaForm({...editLojaForm, periodicidade: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     >
                       <option value="">—</option>
                       <option value="Semanal">Semanal</option>
@@ -1304,13 +1304,13 @@ export default function PaginaLojas() {
                     <CampoHora
                       value={editLojaForm.horario_sessao}
                       onChange={(v) => setEditLojaForm({...editLojaForm, horario_sessao: v})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[#222]">
+              <div className="pt-2 border-t border-sigma-border">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Contato Institucional</p>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
@@ -1321,7 +1321,7 @@ export default function PaginaLojas() {
                       type="email"
                       value={editLojaForm.email}
                       onChange={(e) => setEditLojaForm({...editLojaForm, email: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1332,7 +1332,7 @@ export default function PaginaLojas() {
                       type="text"
                       value={editLojaForm.telefone}
                       onChange={(e) => setEditLojaForm({...editLojaForm, telefone: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1346,7 +1346,7 @@ export default function PaginaLojas() {
                       value={editLojaForm.site}
                       onChange={(e) => setEditLojaForm({...editLojaForm, site: e.target.value})}
                       placeholder="https://..."
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1358,13 +1358,13 @@ export default function PaginaLojas() {
                       value={editLojaForm.cnpj}
                       onChange={(e) => setEditLojaForm({...editLojaForm, cnpj: e.target.value})}
                       placeholder="00.000.000/0000-00"
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-blue-400 focus:outline-none"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+              <div className="flex justify-end gap-3 pt-4 border-t border-sigma-border">
                 <button 
                   type="button" 
                   onClick={() => setEditLojaModal(null)}
@@ -1387,8 +1387,8 @@ export default function PaginaLojas() {
 
       {/* Modal: Designação Livre de Suplente do Conselho */}
       {designarSuplenteModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/30">
@@ -1404,7 +1404,7 @@ export default function PaginaLojas() {
               <button
                 type="button"
                 onClick={() => setDesignarSuplenteModal(null)}
-                className="p-1.5 text-gray-500 hover:text-white hover:bg-[#222] rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-gray-500 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1451,7 +1451,7 @@ export default function PaginaLojas() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#222]">
+                <div className="flex items-center justify-between gap-3 pt-4 border-t border-sigma-border">
                   {designarSuplenteModal.suplente_nome ? (
                     <button
                       type="button"
@@ -1492,8 +1492,8 @@ export default function PaginaLojas() {
           Ver regional/rotas.py e claude/decisao-transmissao-cargo-vm.md no
           Project. */}
       {transmissaoModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-orange-500/30 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+          <div className="bg-sigma-surface border border-orange-500/30 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-orange-500/10 rounded-xl text-orange-400 border border-orange-500/30">
@@ -1509,7 +1509,7 @@ export default function PaginaLojas() {
               <button
                 type="button"
                 onClick={() => setTransmissaoModal(null)}
-                className="p-1.5 text-gray-500 hover:text-white hover:bg-[#222] rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-gray-500 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1533,7 +1533,7 @@ export default function PaginaLojas() {
                     required
                     value={transmissaoForm.cim}
                     onChange={(e) => setTransmissaoForm({ ...transmissaoForm, cim: e.target.value })}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-orange-400 focus:outline-none"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-orange-400 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1541,7 +1541,7 @@ export default function PaginaLojas() {
                   <CampoData
                     value={transmissaoForm.data_inicio_mandato}
                     onChange={(v) => setTransmissaoForm({ ...transmissaoForm, data_inicio_mandato: v })}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
                   />
                 </div>
               </div>
@@ -1553,7 +1553,7 @@ export default function PaginaLojas() {
                   required
                   value={transmissaoForm.nome_completo}
                   onChange={(e) => setTransmissaoForm({ ...transmissaoForm, nome_completo: e.target.value })}
-                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-orange-400 focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-orange-400 focus:outline-none"
                 />
               </div>
 
@@ -1564,7 +1564,7 @@ export default function PaginaLojas() {
                     type="email"
                     value={transmissaoForm.email}
                     onChange={(e) => setTransmissaoForm({ ...transmissaoForm, email: e.target.value })}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
                   />
                 </div>
                 <div>
@@ -1573,7 +1573,7 @@ export default function PaginaLojas() {
                     type="text"
                     value={transmissaoForm.telefone}
                     onChange={(e) => setTransmissaoForm({ ...transmissaoForm, telefone: e.target.value })}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
                   />
                 </div>
               </div>
@@ -1584,11 +1584,11 @@ export default function PaginaLojas() {
                   type="text"
                   value={transmissaoForm.cpf}
                   onChange={(e) => setTransmissaoForm({ ...transmissaoForm, cpf: e.target.value })}
-                  className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-orange-400"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+              <div className="flex justify-end gap-3 pt-4 border-t border-sigma-border">
                 <button
                   type="button"
                   onClick={() => setTransmissaoModal(null)}
@@ -1611,13 +1611,13 @@ export default function PaginaLojas() {
 
       {/* MODAL DE DETALHES COMPLETOS DA LOJA (Ao tocar no card da loja) */}
       {lojaDetalhesModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#121212] border border-[#2a2a2a] w-full max-w-2xl rounded-2xl p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-sigma-surface border border-[#2a2a2a] w-full max-w-2xl rounded-2xl p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
             {/* Header do Modal */}
-            <div className="flex items-start justify-between pb-4 border-b border-[#222]">
+            <div className="flex items-start justify-between pb-4 border-b border-sigma-border">
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="px-2 py-0.5 rounded bg-[#202020] text-[#facc15] font-bold text-xs border border-[#333]">
+                  <span className="px-2 py-0.5 rounded bg-[#202020] text-[#facc15] font-bold text-xs border border-sigma-border">
                     {lojaDetalhesModal.potencia || 'GOB'}
                   </span>
                   <span className="text-xs font-semibold text-gray-400">
@@ -1650,12 +1650,12 @@ export default function PaginaLojas() {
             <div className="space-y-5 text-xs">
               
               {/* Bloco 1: Liderança no Conselho Regional */}
-              <div className="bg-[#181818] border border-[#262626] rounded-xl p-4 space-y-3">
+              <div className="bg-sigma-elevated border border-[#262626] rounded-xl p-4 space-y-3">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#facc15] block">
                   Liderança e Representação no Conselho
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="bg-[#111] p-3 rounded-lg border border-[#222]">
+                  <div className="bg-sigma-surface p-3 rounded-lg border border-sigma-border">
                     <span className="text-gray-500 block mb-1">Venerável Mestre</span>
                     {lojaDetalhesModal.hasVm ? (
                       <div className="flex items-center gap-1.5 text-green-400 font-bold">
@@ -1670,7 +1670,7 @@ export default function PaginaLojas() {
                     )}
                   </div>
 
-                  <div className="bg-[#111] p-3 rounded-lg border border-[#222]">
+                  <div className="bg-sigma-surface p-3 rounded-lg border border-sigma-border">
                     <span className="text-gray-500 block mb-1">Suplente do Conselho</span>
                     {lojaDetalhesModal.suplente_nome ? (
                       <div className="flex items-center gap-1.5 text-blue-400 font-bold">
@@ -1685,7 +1685,7 @@ export default function PaginaLojas() {
               </div>
 
               {/* Bloco 2: Templo e Sessões */}
-              <div className="bg-[#181818] border border-[#262626] rounded-xl p-4 space-y-3">
+              <div className="bg-sigma-elevated border border-[#262626] rounded-xl p-4 space-y-3">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300 block">
                   Templo e Calendário de Trabalhos
                 </span>
@@ -1726,7 +1726,7 @@ export default function PaginaLojas() {
               </div>
 
               {/* Bloco 3: Contatos Institucionais */}
-              <div className="bg-[#181818] border border-[#262626] rounded-xl p-4 space-y-3">
+              <div className="bg-sigma-elevated border border-[#262626] rounded-xl p-4 space-y-3">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300 block">
                   Contatos e Comunicação Institucional
                 </span>
@@ -1772,7 +1772,7 @@ export default function PaginaLojas() {
             </div>
 
             {/* Rodapé do Modal com Ações Rápidas */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#222] flex-wrap gap-2">
+            <div className="flex items-center justify-between pt-4 border-t border-sigma-border flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 {(userContext.is_diretoria || (userContext.loja_id && String(lojaDetalhesModal.loja_id) === String(userContext.loja_id))) && (
                   <button
@@ -1782,7 +1782,7 @@ export default function PaginaLojas() {
                       setLojaDetalhesModal(null);
                       abrirEdicaoLoja(l);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#222] text-white hover:bg-[#333] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sigma-elevated text-white hover:bg-[#333] transition-colors"
                   >
                     <Edit3 className="w-3.5 h-3.5" /> Editar Cadastro
                   </button>
@@ -1805,7 +1805,7 @@ export default function PaginaLojas() {
               <button
                 type="button"
                 onClick={() => setLojaDetalhesModal(null)}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold text-gray-300 hover:text-white bg-[#1a1a1a] hover:bg-[#252525] transition-colors"
+                className="px-4 py-1.5 rounded-lg text-xs font-bold text-gray-300 hover:text-white bg-sigma-elevated hover:bg-sigma-elevated transition-colors"
               >
                 Fechar
               </button>
@@ -1816,10 +1816,10 @@ export default function PaginaLojas() {
 
       {/* MODAL DE AÇÕES DE CONFIGURAÇÃO (3 Pontos no Mobile) */}
       {lojaAcoesModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-[#141414] border border-[#2a2a2a] w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-sigma-surface border border-[#2a2a2a] w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
             {/* Header da Ação */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#222]">
+            <div className="flex items-center justify-between pb-3 border-b border-sigma-border">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Opções de Configuração</span>
                 <h3 className="font-bold text-white text-base truncate">
@@ -1845,7 +1845,7 @@ export default function PaginaLojas() {
                   setLojaAcoesModal(null);
                   setLojaDetalhesModal(l);
                 }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-sigma-elevated hover:bg-sigma-elevated text-white text-left font-medium transition-colors cursor-pointer"
               >
                 <Info className="w-4 h-4 text-blue-400 shrink-0" />
                 <div>
@@ -1863,7 +1863,7 @@ export default function PaginaLojas() {
                     setLojaAcoesModal(null);
                     setGestaoVmModal(l);
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-sigma-elevated hover:bg-sigma-elevated text-white text-left font-medium transition-colors cursor-pointer"
                 >
                   <Award className="w-4 h-4 text-[#facc15] shrink-0" />
                   <div>
@@ -1884,7 +1884,7 @@ export default function PaginaLojas() {
                     setLojaAcoesModal(null);
                     abrirDesignarSuplente(l);
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-sigma-elevated hover:bg-sigma-elevated text-white text-left font-medium transition-colors cursor-pointer"
                 >
                   <UserCog className="w-4 h-4 text-blue-400 shrink-0" />
                   <div>
@@ -1905,7 +1905,7 @@ export default function PaginaLojas() {
                     setLojaAcoesModal(null);
                     abrirEdicaoLoja(l);
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-sigma-elevated hover:bg-sigma-elevated text-white text-left font-medium transition-colors cursor-pointer"
                 >
                   <Edit3 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <div>
@@ -1924,7 +1924,7 @@ export default function PaginaLojas() {
                     setLojaAcoesModal(null);
                     concederTransmissaoEmergencial(l);
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-sigma-elevated hover:bg-sigma-elevated text-white text-left font-medium transition-colors cursor-pointer"
                 >
                   <Zap className="w-4 h-4 text-orange-400 shrink-0" />
                   <div>
@@ -1942,7 +1942,7 @@ export default function PaginaLojas() {
                     setLojaAcoesModal(null);
                     abrirTransmissaoEmergencial(l);
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] hover:bg-[#222] text-white text-left font-medium transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-sigma-elevated hover:bg-sigma-elevated text-white text-left font-medium transition-colors cursor-pointer"
                 >
                   <Award className="w-4 h-4 text-orange-400 shrink-0" />
                   <div>
@@ -1973,11 +1973,11 @@ export default function PaginaLojas() {
             </div>
 
             {/* Botão Cancelar */}
-            <div className="pt-2 border-t border-[#222]">
+            <div className="pt-2 border-t border-sigma-border">
               <button
                 type="button"
                 onClick={() => setLojaAcoesModal(null)}
-                className="w-full py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-[#181818] hover:bg-[#222] transition-colors"
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-sigma-elevated hover:bg-sigma-elevated transition-colors"
               >
                 Cancelar
               </button>

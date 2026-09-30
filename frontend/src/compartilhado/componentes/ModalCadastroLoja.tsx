@@ -52,8 +52,8 @@ export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
-      <div className="bg-[#111] border border-[#333] rounded-xl p-8 w-full max-w-xl">
+    <div className="fixed inset-0 bg-sigma-bg/80 flex items-center justify-center z-[60] p-4">
+      <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl">
         <h2 className="text-xl font-bold text-[#facc15] mb-4">Cadastro Rápido de Loja</h2>
         <p className="text-sm text-gray-400 mb-6">Esta loja não foi encontrada no banco. Preencha os dados básicos para registrar no sistema.</p>
         
@@ -61,41 +61,41 @@ export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-400">Título</label>
-              <select value={formData.titulo_loja} onChange={e => setFormData({...formData, titulo_loja: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white">
+              <select value={formData.titulo_loja} onChange={e => setFormData({...formData, titulo_loja: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white">
                 <option value="ARLS">ARLS (Simbólica)</option>
                 <option value="ARBLS">ARBLS (Benemérita)</option>
               </select>
             </div>
             <div>
               <label className="block text-sm text-gray-400">Número</label>
-              <input type="number" required value={formData.numero_loja} onChange={e => setFormData({...formData, numero_loja: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white" />
+              <input type="number" required value={formData.numero_loja} onChange={e => setFormData({...formData, numero_loja: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white" />
             </div>
           </div>
           
           <div>
             <label className="block text-sm text-gray-400">Nome da Loja</label>
-            <input type="text" required value={formData.nome_loja} onChange={e => setFormData({...formData, nome_loja: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white" />
+            <input type="text" required value={formData.nome_loja} onChange={e => setFormData({...formData, nome_loja: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white" />
           </div>
 
           <div>
             <label className="block text-sm text-gray-400">Rito</label>
-            <select value={formData.rito} onChange={e => setFormData({...formData, rito: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white">
+            <select value={formData.rito} onChange={e => setFormData({...formData, rito: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white">
               <option value="REAA">REAA</option>
               <option value="Rito York">York</option>
               <option value="Rito Brasileiro">Brasileiro</option>
             </select>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 border-t border-[#333] pt-4 mt-2">
+          <div className="grid grid-cols-3 gap-4 border-t border-sigma-border pt-4 mt-2">
             <div>
               <label className="block text-sm text-gray-400">CEP</label>
-              <input type="text" maxLength={9} onBlur={(e) => fetchCep(e.target.value)} value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white" />
+              <input type="text" maxLength={9} onBlur={(e) => fetchCep(e.target.value)} value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white" />
             </div>
             <div className="col-span-2">
               <label className="block text-sm text-gray-400">Cidade / UF</label>
               <div className="flex gap-2">
-                <input type="text" required value={formData.cidade} onChange={e => setFormData({...formData, cidade: e.target.value})} className="w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-white" placeholder="Cidade" />
-                <input type="text" required maxLength={2} value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value.toUpperCase()})} className="w-16 bg-[#080808] border border-[#333] rounded-lg p-2 text-white" />
+                <input type="text" required value={formData.cidade} onChange={e => setFormData({...formData, cidade: e.target.value})} className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white" placeholder="Cidade" />
+                <input type="text" required maxLength={2} value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value.toUpperCase()})} className="w-16 bg-sigma-bg border border-sigma-border rounded-lg p-2 text-white" />
               </div>
             </div>
           </div>

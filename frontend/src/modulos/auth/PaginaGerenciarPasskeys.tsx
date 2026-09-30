@@ -118,7 +118,7 @@ export default function PaginaGerenciarPasskeys() {
         </div>
       )}
 
-      <div className="bg-[#141414] border border-[#242424] rounded-2xl p-5 mb-6">
+      <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-300 mb-3">Cadastrar uma nova passkey neste dispositivo</h2>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
@@ -140,7 +140,7 @@ export default function PaginaGerenciarPasskeys() {
         </div>
       </div>
 
-      <div className="bg-[#141414] border border-[#242424] rounded-2xl overflow-hidden">
+      <div className="bg-sigma-surface border border-[#242424] rounded-2xl overflow-hidden">
         <h2 className="text-sm font-semibold text-gray-300 px-5 pt-4 pb-2">Passkeys cadastradas</h2>
         {carregando ? (
           <p className="px-5 pb-5 text-sm text-gray-500">Carregando...</p>

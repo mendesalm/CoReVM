@@ -104,7 +104,7 @@ export default function PaginaConfirmarMagicLink() {
       <HeroBackground />
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20 text-center">
+        <div className="bg-sigma-elevated/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20 text-center">
           <div className="flex flex-col items-center mb-6">
             <LogoAnimadaCore width={90} height={90} animated={!erro} />
           </div>

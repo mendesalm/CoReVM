@@ -254,7 +254,7 @@ export default function Layout() {
     : itensMenuCompleto;
 
   return (
-    <div className="flex flex-col h-screen bg-[#050508] text-gray-200 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen bg-sigma-bg text-gray-200 overflow-hidden font-sans">
       
       {/* HEADER FULL-WIDTH (Deep Blue Glass) */}
       <header className="w-full h-16 bg-[#070e1c]/95 backdrop-blur-md border-b border-[rgba(221,185,107,0.2)] px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 shadow-lg select-none">
@@ -322,7 +322,7 @@ export default function Layout() {
             </button>
           )}
 
-          <div className="flex items-center gap-3 pl-3 border-l border-[#222]">
+          <div className="flex items-center gap-3 pl-3 border-l border-sigma-border">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#854d0e] to-[#facc15] flex items-center justify-center font-bold text-black text-xs shadow-md">
               {usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'C'}
             </div>
@@ -504,7 +504,7 @@ export default function Layout() {
         {/* MOBILE DRAWER BACKDROP */}
         {mobileDrawerOpen && (
           <div 
-            className="md:hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 transition-opacity"
+            className="md:hidden fixed inset-0 bg-sigma-bg/75 backdrop-blur-sm z-40 transition-opacity"
             onClick={() => setMobileDrawerOpen(false)}
           />
         )}
@@ -601,7 +601,7 @@ export default function Layout() {
         </aside>
 
         {/* ÁREA CENTRAL DE CONTEÚDO */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#050508]">
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-sigma-bg">
           <div className="flex-1 overflow-y-auto">
             <Outlet />
           </div>
@@ -684,7 +684,7 @@ export default function Layout() {
             top: `${tooltipData.top}px`, 
             left: `${tooltipData.left}px` 
           }}
-          className="fixed -translate-y-1/2 px-4 py-2.5 bg-[#141414]/95 backdrop-blur-xl text-white rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] border border-[#383838] z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-200 min-w-[200px] max-w-[320px]"
+          className="fixed -translate-y-1/2 px-4 py-2.5 bg-sigma-surface/95 backdrop-blur-xl text-white rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] border border-sigma-border z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-200 min-w-[200px] max-w-[320px]"
         >
           <div className="flex items-center gap-2 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#facc15] animate-pulse"></span>

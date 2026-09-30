@@ -179,7 +179,7 @@ export default function PaginaSolicitacoesCadastro() {
         <button
           type="button"
           onClick={buscarLista}
-          className="flex items-center gap-2 text-xs text-gray-400 hover:text-[#facc15] transition-colors px-3 py-1.5 rounded-lg border border-[#333] hover:border-[#facc15]/40"
+          className="flex items-center gap-2 text-xs text-gray-400 hover:text-[#facc15] transition-colors px-3 py-1.5 rounded-lg border border-sigma-border hover:border-[#facc15]/40"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${carregando ? 'animate-spin' : ''}`} /> Atualizar
         </button>
@@ -200,7 +200,7 @@ export default function PaginaSolicitacoesCadastro() {
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               statusFiltro === f.valor
                 ? 'bg-[#facc15]/10 text-[#facc15] border-[#facc15]/40'
-                : 'text-gray-400 border-[#333] hover:text-white hover:border-[#555]'
+                : 'text-gray-400 border-sigma-border hover:text-white hover:border-[#555]'
             }`}
           >
             {f.rotulo}
@@ -224,13 +224,13 @@ export default function PaginaSolicitacoesCadastro() {
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : lista.length === 0 ? (
-        <div className="text-center py-16 text-sm text-gray-500 border border-dashed border-[#333] rounded-2xl">
+        <div className="text-center py-16 text-sm text-gray-500 border border-dashed border-sigma-border rounded-2xl">
           Nenhuma solicitação {statusFiltro ? `com status "${statusFiltro}"` : ''} para mostrar.
         </div>
       ) : (
         <div className="space-y-3">
           {lista.map((s) => (
-            <div key={s.id} className="bg-[#141414] border border-[#262626] rounded-2xl p-5">
+            <div key={s.id} className="bg-sigma-surface border border-[#262626] rounded-2xl p-5">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -314,7 +314,7 @@ export default function PaginaSolicitacoesCadastro() {
                       value={novoCargoPorId[s.id] || ''}
                       onChange={(e) => setNovoCargoPorId((atual) => ({ ...atual, [s.id]: e.target.value }))}
                       placeholder='Ou defina um novo cargo para este candidato (ex.: "Obreiro")'
-                      className="flex-1 bg-[#1c1c1c] border border-[#333] rounded-lg px-3 py-2 text-xs text-white focus:border-orange-500/50 outline-none"
+                      className="flex-1 bg-[#1c1c1c] border border-sigma-border rounded-lg px-3 py-2 text-xs text-white focus:border-orange-500/50 outline-none"
                     />
                     <button
                       type="button"
@@ -365,7 +365,7 @@ export default function PaginaSolicitacoesCadastro() {
                     value={motivoPorId[s.id] || ''}
                     onChange={(e) => setMotivoPorId((atual) => ({ ...atual, [s.id]: e.target.value }))}
                     placeholder="Motivo da rejeição (mínimo 3 caracteres)"
-                    className="flex-1 bg-[#1c1c1c] border border-[#333] rounded-lg px-3 py-2 text-xs text-white focus:border-red-500/50 outline-none"
+                    className="flex-1 bg-[#1c1c1c] border border-sigma-border rounded-lg px-3 py-2 text-xs text-white focus:border-red-500/50 outline-none"
                   />
                   <button
                     type="button"

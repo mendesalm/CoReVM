@@ -71,13 +71,13 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
           placeholder="Buscar Loja por Nome, Número ou Cidade (Mín. 3 caracteres)..." 
           value={lojaBusca}
           onChange={(e) => handleBuscarLoja(e.target.value)}
-          className="w-full bg-[#080808] border border-[#333] rounded-lg pl-10 p-3 text-white focus:border-[#facc15] focus:outline-none" 
+          className="w-full bg-sigma-bg border border-sigma-border rounded-lg pl-10 p-3 text-white focus:border-[#facc15] focus:outline-none" 
         />
       </div>
 
       {lojasEncontradas.length > 0 && lojaBusca.length >= 3 && (
-          <div className="bg-[#080808] border border-[#333] rounded-lg overflow-hidden">
-            <div className="p-3 bg-[#151515] border-b border-[#333] flex justify-between items-center">
+          <div className="bg-sigma-bg border border-sigma-border rounded-lg overflow-hidden">
+            <div className="p-3 bg-[#151515] border-b border-sigma-border flex justify-between items-center">
               <span className="text-sm text-gray-400">{lojasEncontradas.length} lojas encontradas</span>
               <button 
                 type="button" 
@@ -90,14 +90,14 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
               </button>
             </div>
             <table className="w-full text-sm text-left">
-              <thead className="bg-[#111] text-gray-400">
+              <thead className="bg-sigma-surface text-gray-400">
                 <tr>
                   <th className="px-4 py-3 w-12">
                     <input 
                       type="checkbox" 
                       onChange={(e) => setSelectedIds(e.target.checked ? lojasEncontradas.map(l => l.id) : [])}
                       checked={lojasEncontradas.length > 0 && selectedIds.length === lojasEncontradas.length}
-                      className="rounded bg-black border-[#333] text-[#facc15] focus:ring-[#facc15]"
+                      className="rounded bg-sigma-bg border-sigma-border text-[#facc15] focus:ring-[#facc15]"
                     />
                   </th>
                   <th className="px-4 py-3">Número</th>
@@ -108,13 +108,13 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
               </thead>
               <tbody className="divide-y divide-[#222]">
                 {lojasEncontradas.map(loja => (
-                  <tr key={loja.id} className="hover:bg-[#1a1a1a] transition-colors cursor-pointer" onClick={() => toggleSelection(loja.id)}>
+                  <tr key={loja.id} className="hover:bg-sigma-elevated transition-colors cursor-pointer" onClick={() => toggleSelection(loja.id)}>
                     <td className="px-4 py-3">
                       <input 
                         type="checkbox"
                         checked={selectedIds.includes(loja.id)}
                         onChange={() => {}} // Controlled by tr onClick
-                        className="rounded bg-black border-[#333] text-[#facc15] focus:ring-[#facc15]"
+                        className="rounded bg-sigma-bg border-sigma-border text-[#facc15] focus:ring-[#facc15]"
                       />
                     </td>
                     <td className="px-4 py-3 text-gray-300 font-mono">{loja.numero_loja || loja.numero}</td>

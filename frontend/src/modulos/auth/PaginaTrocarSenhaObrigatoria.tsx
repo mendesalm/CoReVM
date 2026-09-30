@@ -87,7 +87,7 @@ export default function PaginaTrocarSenhaObrigatoria() {
       <HeroBackground />
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
+        <div className="bg-sigma-elevated/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
           <div className="flex flex-col items-center text-center mb-8">
             <div className="mb-4">
               <LogoAnimadaCore width={90} height={90} animated={true} />
@@ -115,7 +115,7 @@ export default function PaginaTrocarSenhaObrigatoria() {
                 value={senhaAtual}
                 onChange={(e) => setSenhaAtual(e.target.value)}
                 placeholder="Senha provisória (recebida por e-mail)"
-                className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
               />
               <KeyRound className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
             </div>
@@ -127,7 +127,7 @@ export default function PaginaTrocarSenhaObrigatoria() {
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
                 placeholder="Nova senha (mín. 10, com maiúscula/minúscula/número/especial)"
-                className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
               />
               <Lock className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
             </div>
@@ -139,7 +139,7 @@ export default function PaginaTrocarSenhaObrigatoria() {
                 value={confirmacaoSenha}
                 onChange={(e) => setConfirmacaoSenha(e.target.value)}
                 placeholder="Confirme a nova senha"
-                className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
               />
               <Lock className="w-5 h-5 text-gray-500 absolute left-4 top-3.5" />
             </div>

@@ -254,7 +254,7 @@ export default function PainelConselho() {
         aria-hidden={keySuffix ? true : undefined}
         className={`p-4 sm:p-5 rounded-2xl transition-all ${borderClass} ${
           a.arquivado
-            ? 'bg-[#111] opacity-60'
+            ? 'bg-sigma-surface opacity-60'
             : a.fixado
               ? 'bg-gradient-to-r from-[#1c1a12] via-[#161510] to-[#121212]'
               : isUrgente
@@ -304,7 +304,7 @@ export default function PainelConselho() {
                 <button
                   type="button"
                   onClick={() => handleMarcarLido(a.id)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#1e1e1e] text-gray-400 border border-[#333] hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#1e1e1e] text-gray-400 border border-sigma-border hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
                   title="Marcar como lido"
                 >
                   <Eye className="w-3 h-3" /> NÃO LIDO
@@ -436,7 +436,7 @@ export default function PainelConselho() {
                 <button
                   type="button"
                   onClick={() => handleMarcarLido(n.id)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#1e1e1e] text-gray-400 border border-[#333] hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#1e1e1e] text-gray-400 border border-sigma-border hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
                   title="Marcar como lido"
                 >
                   <Eye className="w-3 h-3" /> NÃO LIDO
@@ -609,22 +609,22 @@ export default function PainelConselho() {
     // Skeleton elegante — simula a estrutura real do painel (stat-bar + 2 colunas)
     // para reduzir a percepção de lentidão e preparar o olho do usuário.
     return (
-      <div className="min-h-screen bg-[#080808] p-6 sm:p-8 animate-pulse">
+      <div className="min-h-screen bg-sigma-bg p-6 sm:p-8 animate-pulse">
         {/* Stat-bar skeleton */}
         <div className="max-w-7xl mx-auto mb-6">
-          <div className="h-20 bg-[#111] border border-[#222] rounded-2xl w-full" />
+          <div className="h-20 bg-sigma-surface border border-sigma-border rounded-2xl w-full" />
         </div>
         {/* Grid de 2 colunas skeleton */}
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[0, 1].map((col) => (
-            <div key={col} className="bg-[#121212] border border-[#222] rounded-2xl p-5 space-y-4" style={{ height: 'calc(100vh - 260px)' }}>
+            <div key={col} className="bg-sigma-surface border border-sigma-border rounded-2xl p-5 space-y-4" style={{ height: 'calc(100vh - 260px)' }}>
               {/* Cabeçalho da coluna */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#222]">
+              <div className="flex items-center justify-between pb-4 border-b border-sigma-border">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#1e1e1e]" />
                   <div className="space-y-1.5">
                     <div className="h-4 w-36 bg-[#1e1e1e] rounded-lg" />
-                    <div className="h-3 w-52 bg-[#1a1a1a] rounded-lg" />
+                    <div className="h-3 w-52 bg-sigma-elevated rounded-lg" />
                   </div>
                 </div>
                 <div className="h-8 w-28 bg-[#1e1e1e] rounded-xl" />
@@ -632,7 +632,7 @@ export default function PainelConselho() {
               {/* Grade de cards skeleton */}
               <div className="grid gap-3 pt-1" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-28 bg-[#1a1a1a] rounded-xl border border-[#242424]" />
+                  <div key={i} className="h-28 bg-sigma-elevated rounded-xl border border-[#242424]" />
                 ))}
               </div>
             </div>
@@ -644,7 +644,7 @@ export default function PainelConselho() {
 
   if (erro) {
     return (
-      <div className="h-screen bg-[#080808] flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
+      <div className="h-screen bg-sigma-bg flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
         <ShieldCheck className="w-16 h-16"/> {erro}
       </div>
     );
@@ -675,7 +675,7 @@ export default function PainelConselho() {
   const totalFixados = avisos.filter((a: any) => a.fixado && !a.arquivado).length;
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200 p-4 sm:p-6">
+    <div className="min-h-screen bg-sigma-bg text-gray-200 p-4 sm:p-6">
 
       {/* ALTERAÇÃO (2026-09-19, pedido do usuário): defs SVG globais (invisíveis,
           0x0px) para a "dobra" realista das miniaturas de post-it/documento. */}
@@ -730,7 +730,7 @@ export default function PainelConselho() {
             <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
               totalUrgentes > 0
                 ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                : 'bg-[#111] border-[#222] text-gray-600'
+                : 'bg-sigma-surface border-sigma-border text-gray-600'
             }`}>
               <AlertOctagon className="w-4 h-4 shrink-0" />
               <div className="text-right">
@@ -743,7 +743,7 @@ export default function PainelConselho() {
             <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
               totalAlertas > 0
                 ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                : 'bg-[#111] border-[#222] text-gray-600'
+                : 'bg-sigma-surface border-sigma-border text-gray-600'
             }`}>
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <div className="text-right">
@@ -756,7 +756,7 @@ export default function PainelConselho() {
             <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
               totalNaoLidos > 0
                 ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                : 'bg-[#111] border-[#222] text-gray-600'
+                : 'bg-sigma-surface border-sigma-border text-gray-600'
             }`}>
               <Eye className="w-4 h-4 shrink-0" />
               <div className="text-right">
@@ -769,7 +769,7 @@ export default function PainelConselho() {
             <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
               totalFixados > 0
                 ? 'bg-[#facc15]/10 border-[#facc15]/30 text-[#facc15]'
-                : 'bg-[#111] border-[#222] text-gray-600'
+                : 'bg-sigma-surface border-sigma-border text-gray-600'
             }`}>
               <Pin className="w-4 h-4 shrink-0" />
               <div className="text-right">
@@ -789,7 +789,7 @@ export default function PainelConselho() {
               className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer border ${
                 mostrarArquivados
                   ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/40'
-                  : 'bg-[#181818] text-gray-400 border-[#333] hover:text-white'
+                  : 'bg-sigma-elevated text-gray-400 border-sigma-border hover:text-white'
               }`}
             >
               {mostrarArquivados ? <Eye className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
@@ -805,7 +805,7 @@ export default function PainelConselho() {
               o widget de Notificações abaixo do widget de Avisos; agora o usuário
               vê claramente que existem dois contextos separados e navega entre eles
               com um toque, sem precisar rolar a página. */}
-          <div className="lg:hidden col-span-full flex rounded-2xl bg-[#121212] border border-[#222] p-1 gap-1">
+          <div className="lg:hidden col-span-full flex rounded-2xl bg-sigma-surface border border-sigma-border p-1 gap-1">
             <button
               type="button"
               onClick={() => setAbaAtiva('avisos')}
@@ -820,7 +820,7 @@ export default function PainelConselho() {
               {/* Badge de não-lidos em avisos */}
               {itensAvisos.filter((a: any) => !a.lido && !a.arquivado).length > 0 && (
                 <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${
-                  abaAtiva === 'avisos' ? 'bg-black/20 text-black' : 'bg-[#facc15]/20 text-[#facc15]'
+                  abaAtiva === 'avisos' ? 'bg-sigma-bg/20 text-black' : 'bg-[#facc15]/20 text-[#facc15]'
                 }`}>
                   {itensAvisos.filter((a: any) => !a.lido && !a.arquivado).length}
                 </span>
@@ -840,7 +840,7 @@ export default function PainelConselho() {
               {/* Badge de não-lidos em notificações */}
               {itensNotificacoes.filter((n: any) => !n.lido && !n.arquivado).length > 0 && (
                 <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${
-                  abaAtiva === 'notificacoes' ? 'bg-black/20 text-black' : 'bg-blue-500/20 text-blue-400'
+                  abaAtiva === 'notificacoes' ? 'bg-sigma-bg/20 text-black' : 'bg-blue-500/20 text-blue-400'
                 }`}>
                   {itensNotificacoes.filter((n: any) => !n.lido && !n.arquivado).length}
                 </span>
@@ -852,11 +852,11 @@ export default function PainelConselho() {
           {/* COLUNA 1: AVISOS */}
           {/* ======================================================== */}
           <div
-            className={`bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col ${abaAtiva === 'notificacoes' ? 'hidden lg:flex' : 'flex'}`}
+            className={`bg-sigma-surface border border-sigma-border rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col ${abaAtiva === 'notificacoes' ? 'hidden lg:flex' : 'flex'}`}
             style={{ height: 'calc(100vh - 280px)' }}
           >
 
-            <div className="flex items-center justify-between pb-4 border-b border-[#222] gap-3 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-sigma-border gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 shrink-0">
                   <Megaphone className="w-5 h-5" />
@@ -882,7 +882,7 @@ export default function PainelConselho() {
                           {itensAvisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length}
                         </span>
                       )}
-                      <span className="bg-[#1e1e1e] text-gray-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#333]">
+                      <span className="bg-[#1e1e1e] text-gray-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-sigma-border">
                         {itensAvisos.length}
                       </span>
                     </div>
@@ -918,7 +918,7 @@ export default function PainelConselho() {
               {itensAvisos.length === 0 ? (
                 /* Estado vazio elegante — ALTERAÇÃO (2026-09-29) */
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
-                  <div className="p-5 rounded-2xl bg-[#1a1a1a] border border-[#252525]">
+                  <div className="p-5 rounded-2xl bg-sigma-elevated border border-sigma-border">
                     <Megaphone className="w-12 h-12 text-gray-700 stroke-1" />
                   </div>
                   <div>
@@ -944,12 +944,12 @@ export default function PainelConselho() {
           {/* COLUNA 2: NOTIFICAÇÕES */}
           {/* ======================================================== */}
           <div
-            className={`bg-[#121212] border border-[#222] rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col ${abaAtiva === 'avisos' ? 'hidden lg:flex' : 'flex'}`}
+            className={`bg-sigma-surface border border-sigma-border rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col ${abaAtiva === 'avisos' ? 'hidden lg:flex' : 'flex'}`}
             style={{ height: 'calc(100vh - 280px)' }}
           >
             {/* Cabeçalho da Coluna de Notificações */}
 
-            <div className="flex items-center justify-between pb-4 border-b border-[#222] gap-3 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-sigma-border gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 shrink-0">
                   <Bell className="w-5 h-5" />
@@ -972,7 +972,7 @@ export default function PainelConselho() {
                           {itensNotificacoes.filter((n: any) => n.nivel === 'MEDIO' && !n.arquivado).length}
                         </span>
                       )}
-                      <span className="bg-[#1e1e1e] text-blue-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#333]">
+                      <span className="bg-[#1e1e1e] text-blue-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-sigma-border">
                         {itensNotificacoes.length}
                       </span>
                     </div>
@@ -1005,7 +1005,7 @@ export default function PainelConselho() {
               [scrollbar-gutter:stable]">
               {itensNotificacoes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
-                  <div className="p-5 rounded-2xl bg-[#1a1a1a] border border-[#252525]">
+                  <div className="p-5 rounded-2xl bg-sigma-elevated border border-sigma-border">
                     <Bell className="w-12 h-12 text-gray-700 stroke-1" />
                   </div>
                   <div>
@@ -1036,7 +1036,7 @@ export default function PainelConselho() {
         const isNotif = itemEmFoco.tipo === 'NOTIFICACAO';
         return (
           <div
-            className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-[70] p-4 overflow-y-auto"
+            className="fixed inset-0 bg-sigma-bg/85 backdrop-blur-md flex items-center justify-center z-[70] p-4 overflow-y-auto"
             onClick={() => setItemEmFocoId(null)}
           >
             <div
@@ -1084,8 +1084,8 @@ export default function PainelConselho() {
         const excedeuLimite = numPalavras > 200;
 
         return (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-            <div className="bg-[#111] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+            <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className={`p-2.5 rounded-xl border ${
                   avisoForm.tipo === 'NOTIFICACAO'
@@ -1114,7 +1114,7 @@ export default function PainelConselho() {
                     className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                       avisoForm.tipo === 'AVISO'
                         ? 'bg-[#facc15] text-black border-[#facc15]'
-                        : 'bg-[#181818] text-gray-400 border-[#333] hover:text-white'
+                        : 'bg-sigma-elevated text-gray-400 border-sigma-border hover:text-white'
                     }`}
                   >
                     <Megaphone className="w-4 h-4" /> Coluna de Avisos
@@ -1125,7 +1125,7 @@ export default function PainelConselho() {
                     className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                       avisoForm.tipo === 'NOTIFICACAO'
                         ? 'bg-blue-500 text-black border-blue-500'
-                        : 'bg-[#181818] text-gray-400 border-[#333] hover:text-white'
+                        : 'bg-sigma-elevated text-gray-400 border-sigma-border hover:text-white'
                     }`}
                   >
                     <Bell className="w-4 h-4" /> Coluna de Notificações
@@ -1142,7 +1142,7 @@ export default function PainelConselho() {
                     placeholder="Ex: Convocação para Sessão Conjunta / Alerta de Prazo..."
                     value={avisoForm.titulo}
                     onChange={(e) => setAvisoForm({...avisoForm, titulo: e.target.value})}
-                    className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
+                    className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none"
                   />
                 </div>
 
@@ -1154,7 +1154,7 @@ export default function PainelConselho() {
                     <select
                       value={avisoForm.nivel}
                       onChange={(e) => setAvisoForm({...avisoForm, nivel: e.target.value})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-xs text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-xs text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
                     >
                       <option value="BAIXO">🟢 Baixo - Informativo (Borda Verde)</option>
                       <option value="MEDIO">🟡 Médio - Alerta (Borda Amarela)</option>
@@ -1169,7 +1169,7 @@ export default function PainelConselho() {
                     <CampoData
                       value={avisoForm.data_validade}
                       onChange={(v) => setAvisoForm({...avisoForm, data_validade: v})}
-                      className="w-full bg-[#080808] border border-[#333] rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
                 </div>
@@ -1189,8 +1189,8 @@ export default function PainelConselho() {
                     value={avisoForm.conteudo}
                     onChange={(e) => setAvisoForm({...avisoForm, conteudo: e.target.value})}
                     placeholder="Escreva os detalhes da mensagem (máximo de 200 palavras)..."
-                    className={`w-full bg-[#080808] border rounded-xl p-2.5 text-xs text-white focus:outline-none ${
-                      excedeuLimite ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#facc15]'
+                    className={`w-full bg-sigma-bg border rounded-xl p-2.5 text-xs text-white focus:outline-none ${
+                      excedeuLimite ? 'border-red-500 focus:border-red-500' : 'border-sigma-border focus:border-[#facc15]'
                     }`}
                   />
                   {excedeuLimite && (
@@ -1207,14 +1207,14 @@ export default function PainelConselho() {
                         type="checkbox"
                         checked={avisoForm.fixado}
                         onChange={(e) => setAvisoForm({...avisoForm, fixado: e.target.checked})}
-                        className="rounded border-[#444] text-[#facc15] focus:ring-[#facc15] h-4 w-4 bg-[#222]"
+                        className="rounded border-[#444] text-[#facc15] focus:ring-[#facc15] h-4 w-4 bg-sigma-elevated"
                       />
                       <span>Fixar no topo da coluna</span>
                     </label>
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                <div className="flex justify-end gap-3 pt-4 border-t border-sigma-border">
                   <button
                     type="button"
                     onClick={() => setShowNovoAvisoModal(false)}

@@ -325,16 +325,16 @@ export default function PaginaDocumentos() {
       case 'MODELO':
         return { label: 'Modelo Padrão', icon: FileCheck, corBadge: 'bg-amber-950/60 border-amber-500/30 text-amber-300' };
       default:
-        return { label: cat, icon: FileText, corBadge: 'bg-neutral-800 border-[#333] text-[#aaa]' };
+        return { label: cat, icon: FileText, corBadge: 'bg-neutral-800 border-sigma-border text-[#aaa]' };
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
       
       {/* 1. CABEÇALHO & BARRA DE SIMULAÇÃO */}
       <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#222] pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sigma-border pb-6">
           <div>
             <div className="flex items-center gap-3 text-xs text-[#888] mb-2 uppercase tracking-wider">
               <Link to={`/regiao/${id}`} className="hover:text-[#facc15] flex items-center gap-1 transition-colors">
@@ -415,7 +415,7 @@ export default function PaginaDocumentos() {
 
         {/* 2. PAINEL DE MÉTRICAS SUPERIOR */}
         <div className="hidden lg:grid lg:grid-cols-4 gap-4 mt-6">
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-[#facc15]" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Repositório Geral</span>
@@ -430,7 +430,7 @@ export default function PaginaDocumentos() {
             </p>
           </div>
 
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Atas Plenárias</span>
@@ -443,7 +443,7 @@ export default function PaginaDocumentos() {
             <p className="text-[11px] text-[#666] mt-2">Memória e deliberações das reuniões</p>
           </div>
 
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-purple-500" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Decretos & Regimentos</span>
@@ -456,7 +456,7 @@ export default function PaginaDocumentos() {
             <p className="text-[11px] text-[#666] mt-2">Atos oficiais e regulamentos canônicos</p>
           </div>
 
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Circulares & Convites</span>
@@ -471,7 +471,7 @@ export default function PaginaDocumentos() {
         </div>
 
         {/* 3. BARRA DE ABAS DE CATEGORIA */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-[#222] mt-8 overflow-x-auto pb-1">
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-sigma-border mt-8 overflow-x-auto pb-1">
           {[
             { id: 'TODAS', label: 'Todos os Documentos', count: estatisticas.total_documentos },
             { id: 'ATA', label: 'Atas de Reuniões', count: estatisticas.total_atas },
@@ -492,7 +492,7 @@ export default function PaginaDocumentos() {
             >
               <span>{aba.label}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                categoriaFiltro === aba.id ? 'bg-black/20 text-black' : 'bg-[#222] text-[#888]'
+                categoriaFiltro === aba.id ? 'bg-sigma-bg/20 text-black' : 'bg-sigma-elevated text-[#888]'
               }`}>
                 {aba.count}
               </span>
@@ -501,7 +501,7 @@ export default function PaginaDocumentos() {
         </div>
 
         {/* 4. BARRA DE FERRAMENTAS (BUSCA + ORIGEM + ALTERNAR VISUALIZAÇÃO) */}
-        <div className="bg-[#121212] border border-[#242424] rounded-2xl p-4 my-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-4 my-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative min-w-[260px]">
               <Search className="w-4 h-4 text-[#666] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -510,14 +510,14 @@ export default function PaginaDocumentos() {
                 placeholder="Buscar por título, código, ementa..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full bg-[#181818] border border-[#303030] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#666] focus:border-[#facc15] focus:outline-none"
+                className="w-full bg-sigma-elevated border border-[#303030] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#666] focus:border-[#facc15] focus:outline-none"
               />
             </div>
 
             <select
               value={origemFiltro}
               onChange={(e) => setOrigemFiltro(e.target.value)}
-              className="bg-[#181818] border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none"
+              className="bg-sigma-elevated border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none"
             >
               <option value="TODOS">Todas as Origens</option>
               <option value="CONSELHO">Mesa Diretora (Conselho)</option>
@@ -529,14 +529,14 @@ export default function PaginaDocumentos() {
                 type="checkbox"
                 checked={mostrarArquivados}
                 onChange={(e) => setMostrarArquivados(e.target.checked)}
-                className="w-3.5 h-3.5 accent-[#facc15] bg-[#181818] border-[#303030] rounded"
+                className="w-3.5 h-3.5 accent-[#facc15] bg-sigma-elevated border-[#303030] rounded"
               />
               Mostrar arquivados
             </label>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-[#181818] border border-[#303030] rounded-xl p-1">
+            <div className="flex items-center bg-sigma-elevated border border-[#303030] rounded-xl p-1">
               <button
                 onClick={() => setModoVisualizacao('grid')}
                 className={`p-1.5 rounded-lg text-xs transition-all ${
@@ -570,7 +570,7 @@ export default function PaginaDocumentos() {
             <span className="text-xs">Carregando acervo documental oficial...</span>
           </div>
         ) : documentos.length === 0 ? (
-          <div className="bg-[#121212] border border-[#222] rounded-2xl p-12 text-center text-[#777]">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-12 text-center text-[#777]">
             <FileText className="w-12 h-12 text-[#444] mx-auto mb-3" />
             <h3 className="text-base font-bold text-white mb-1">Nenhum documento localizado</h3>
             <p className="text-xs max-w-md mx-auto">
@@ -588,7 +588,7 @@ export default function PaginaDocumentos() {
               return (
                 <div
                   key={doc.id}
-                  className={`bg-[#121212] border border-[#242424] hover:border-[#383838] rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 shadow-xl group relative overflow-hidden ${doc.arquivado ? 'opacity-60' : ''}`}
+                  className={`bg-sigma-surface border border-[#242424] hover:border-sigma-border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 shadow-xl group relative overflow-hidden ${doc.arquivado ? 'opacity-60' : ''}`}
                 >
                   <div>
                     {/* Topo: Categoria + Origem + Código */}
@@ -603,7 +603,7 @@ export default function PaginaDocumentos() {
                             <Archive className="w-3 h-3" /> Arquivado
                           </span>
                         )}
-                        <span className="text-[10px] font-mono text-[#888] bg-[#181818] px-2 py-0.5 rounded border border-[#2c2c2c]">
+                        <span className="text-[10px] font-mono text-[#888] bg-sigma-elevated px-2 py-0.5 rounded border border-[#2c2c2c]">
                           {doc.codigo_documento}
                         </span>
                       </div>
@@ -615,9 +615,9 @@ export default function PaginaDocumentos() {
                         setDocumentoVisualizando(doc);
                         setModalVisualizarAberto(true);
                       }}
-                      className="bg-gradient-to-b from-[#181818] to-[#121212] border border-[#2b2b2b] rounded-xl p-4 mb-4 cursor-pointer hover:border-[#facc15]/50 transition-all relative group/doc"
+                      className="bg-gradient-to-b from-[#181818] to-[#121212] border border-sigma-border rounded-xl p-4 mb-4 cursor-pointer hover:border-[#facc15]/50 transition-all relative group/doc"
                     >
-                      <div className="text-center pb-2 border-b border-[#292929]">
+                      <div className="text-center pb-2 border-b border-sigma-border">
                         <span className="text-[8px] tracking-widest text-[#facc15] font-bold block">
                           A.'. G.'. D.'. G.'. A.'. D.'. U.'.
                         </span>
@@ -632,7 +632,7 @@ export default function PaginaDocumentos() {
                         <div className="h-1.5 bg-[#262626] rounded w-4/6" />
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-[#222] text-[10px] text-[#666]">
+                      <div className="flex items-center justify-between pt-2 border-t border-sigma-border text-[10px] text-[#666]">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-[#facc15]" /> {doc.data_documento}
                         </span>
@@ -654,7 +654,7 @@ export default function PaginaDocumentos() {
                     )}
 
                     {/* Metadados */}
-                    <div className="space-y-1 text-[11px] text-[#777] bg-[#161616] p-2.5 rounded-xl border border-[#222] mb-4">
+                    <div className="space-y-1 text-[11px] text-[#777] bg-[#161616] p-2.5 rounded-xl border border-sigma-border mb-4">
                       <div className="flex justify-between">
                         <span>Emissor:</span>
                         <strong className="text-[#ccc] truncate max-w-[180px]">
@@ -677,7 +677,7 @@ export default function PaginaDocumentos() {
                   </div>
 
                   {/* Rodapé do Card: Ações */}
-                  <div className="pt-3 border-t border-[#222] flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-sigma-border flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 text-[10px] text-[#777]">
                       <HardDriveDownload className="w-3.5 h-3.5" />
                       <span>{doc.downloads_count} downloads</span>
@@ -689,14 +689,14 @@ export default function PaginaDocumentos() {
                           setDocumentoVisualizando(doc);
                           setModalVisualizarAberto(true);
                         }}
-                        className="px-3 py-1.5 bg-[#1a1a1a] hover:bg-[#252525] text-xs font-semibold text-white border border-[#333] rounded-xl flex items-center gap-1.5 transition-all"
+                        className="px-3 py-1.5 bg-sigma-elevated hover:bg-sigma-elevated text-xs font-semibold text-white border border-sigma-border rounded-xl flex items-center gap-1.5 transition-all"
                       >
                         <Eye className="w-3.5 h-3.5 text-[#facc15]" /> Ler
                       </button>
 
                       <button
                         onClick={() => handleDownloadArquivo(doc.id)}
-                        className="p-1.5 bg-[#1a1a1a] hover:bg-[#facc15] text-[#aaa] hover:text-black border border-[#333] rounded-xl transition-all"
+                        className="p-1.5 bg-sigma-elevated hover:bg-[#facc15] text-[#aaa] hover:text-black border border-sigma-border rounded-xl transition-all"
                         title="Baixar PDF"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -706,7 +706,7 @@ export default function PaginaDocumentos() {
                         doc.arquivado ? (
                           <button
                             onClick={() => handleReativarDocumento(doc.id, doc.titulo)}
-                            className="p-1.5 bg-[#1a1a1a] hover:bg-[#facc15]/20 text-[#666] hover:text-[#facc15] border border-[#2e2e2e] rounded-xl transition-all"
+                            className="p-1.5 bg-sigma-elevated hover:bg-[#facc15]/20 text-[#666] hover:text-[#facc15] border border-[#2e2e2e] rounded-xl transition-all"
                             title="Reativar"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
@@ -714,7 +714,7 @@ export default function PaginaDocumentos() {
                         ) : (
                           <button
                             onClick={() => handleExcluirDocumento(doc.id, doc.titulo)}
-                            className="p-1.5 bg-[#1a1a1a] hover:bg-red-950/40 text-[#666] hover:text-red-400 border border-[#2e2e2e] rounded-xl transition-all"
+                            className="p-1.5 bg-sigma-elevated hover:bg-red-950/40 text-[#666] hover:text-red-400 border border-[#2e2e2e] rounded-xl transition-all"
                             title="Excluir / Ocultar"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -729,7 +729,7 @@ export default function PaginaDocumentos() {
           </div>
         ) : (
           /* MODO TABELA ANALÍTICA */
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-[#ccc]">
                 <thead className="bg-[#161616] text-[#777] uppercase text-[10px] tracking-wider border-b border-[#242424]">
@@ -749,7 +749,7 @@ export default function PaginaDocumentos() {
                     const isLoja = doc.tipo_origem === 'LOJA';
 
                     return (
-                      <tr key={doc.id} className={`hover:bg-[#181818]/60 transition-colors ${doc.arquivado ? 'opacity-60' : ''}`}>
+                      <tr key={doc.id} className={`hover:bg-sigma-elevated/60 transition-colors ${doc.arquivado ? 'opacity-60' : ''}`}>
                         <td className="py-3 px-4 font-mono font-bold text-[#facc15]">
                           {doc.codigo_documento}
                         </td>
@@ -796,14 +796,14 @@ export default function PaginaDocumentos() {
                                 setDocumentoVisualizando(doc);
                                 setModalVisualizarAberto(true);
                               }}
-                              className="p-1.5 bg-[#1c1c1c] hover:bg-[#252525] text-[#ddd] rounded-lg transition-colors"
+                              className="p-1.5 bg-[#1c1c1c] hover:bg-sigma-elevated text-[#ddd] rounded-lg transition-colors"
                               title="Visualizar"
                             >
                               <Eye className="w-3.5 h-3.5 text-[#facc15]" />
                             </button>
                             <button
                               onClick={() => handleDownloadArquivo(doc.id)}
-                              className="p-1.5 bg-[#1c1c1c] hover:bg-[#252525] text-[#ddd] rounded-lg transition-colors"
+                              className="p-1.5 bg-[#1c1c1c] hover:bg-sigma-elevated text-[#ddd] rounded-lg transition-colors"
                               title="Baixar PDF"
                             >
                               <Download className="w-3.5 h-3.5" />
@@ -840,20 +840,20 @@ export default function PaginaDocumentos() {
 
         {/* Paginação */}
         {totalPaginas > 1 && (
-          <div className="flex items-center justify-between mt-8 border-t border-[#222] pt-4 text-xs text-[#888]">
+          <div className="flex items-center justify-between mt-8 border-t border-sigma-border pt-4 text-xs text-[#888]">
             <span>Página {paginaAtual} de {totalPaginas}</span>
             <div className="flex items-center gap-2">
               <button
                 disabled={paginaAtual <= 1}
                 onClick={() => setPaginaAtual(p => p - 1)}
-                className="p-2 bg-[#121212] border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
+                className="p-2 bg-sigma-surface border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 disabled={paginaAtual >= totalPaginas}
                 onClick={() => setPaginaAtual(p => p + 1)}
-                className="p-2 bg-[#121212] border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
+                className="p-2 bg-sigma-surface border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -869,14 +869,14 @@ export default function PaginaDocumentos() {
         <>
           {/* Overlay */}
           <div 
-            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 z-40 bg-sigma-bg/80 backdrop-blur-sm transition-opacity"
             onClick={() => setModalVisualizarAberto(false)}
           />
           
           {/* Drawer Lateral */}
-          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-4xl bg-[#141414] border-l border-[#2b2b2b] shadow-2xl flex flex-col animate-fade-in sm:translate-x-0">
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-4xl bg-sigma-surface border-l border-sigma-border shadow-2xl flex flex-col animate-fade-in sm:translate-x-0">
             {/* Header do Drawer */}
-            <div className="p-5 border-b border-[#242424] flex items-start justify-between bg-[#111]">
+            <div className="p-5 border-b border-[#242424] flex items-start justify-between bg-sigma-surface">
               <div className="flex gap-4">
                 <div className="p-3 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15] h-fit">
                   <FileText className="w-6 h-6" />
@@ -899,7 +899,7 @@ export default function PaginaDocumentos() {
               </div>
               <button
                 onClick={() => setModalVisualizarAberto(false)}
-                className="p-2 text-[#888] hover:text-white rounded-xl hover:bg-[#222] transition-colors"
+                className="p-2 text-[#888] hover:text-white rounded-xl hover:bg-sigma-elevated transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -920,7 +920,7 @@ export default function PaginaDocumentos() {
 
                   {/* Informações */}
                   <div className="space-y-4">
-                    <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider border-b border-[#222] pb-2">
+                    <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider border-b border-sigma-border pb-2">
                       Detalhes
                     </h3>
                     
@@ -950,7 +950,7 @@ export default function PaginaDocumentos() {
                     {documentoVisualizando.descricao_ementa && (
                       <div>
                         <span className="block text-[10px] text-[#666] uppercase mb-1">Ementa / Descrição</span>
-                        <p className="text-xs text-[#aaa] leading-relaxed bg-[#111] p-3 rounded-lg border border-[#222]">
+                        <p className="text-xs text-[#aaa] leading-relaxed bg-sigma-surface p-3 rounded-lg border border-sigma-border">
                           {documentoVisualizando.descricao_ementa}
                         </p>
                       </div>
@@ -958,11 +958,11 @@ export default function PaginaDocumentos() {
                   </div>
 
                   {/* Estatísticas (Downloads) */}
-                  <div className="space-y-4 pt-4 border-t border-[#222]">
+                  <div className="space-y-4 pt-4 border-t border-sigma-border">
                     <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider">
                       Histórico / Interações
                     </h3>
-                    <div className="flex items-center gap-3 bg-[#111] border border-[#222] p-3 rounded-xl">
+                    <div className="flex items-center gap-3 bg-sigma-surface border border-sigma-border p-3 rounded-xl">
                       <div className="p-2 bg-blue-950/40 rounded-lg">
                         <HardDriveDownload className="w-4 h-4 text-blue-400" />
                       </div>
@@ -994,9 +994,9 @@ export default function PaginaDocumentos() {
       {/* MODAL: PUBLICAR NOVO DOCUMENTO */}
       {/* ========================================================================= */}
       {modalPublicarAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-[#242424] flex items-center justify-between bg-[#111]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-sigma-bg/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-[#242424] flex items-center justify-between bg-sigma-surface">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
                   <Plus className="w-5 h-5" />
@@ -1046,7 +1046,7 @@ export default function PaginaDocumentos() {
                     <select
                       value={formGerar.categoria}
                       onChange={(e) => setFormGerar({...formGerar, categoria: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     >
                       <option value="ATA">📑 Ata de Sessão / Reunião</option>
                       <option value="DECRETO">📜 Decreto Regional</option>
@@ -1062,7 +1062,7 @@ export default function PaginaDocumentos() {
                     <select
                       value={formGerar.tipo_origem}
                       onChange={(e) => setFormGerar({...formGerar, tipo_origem: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     >
                       <option value="CONSELHO">Mesa Diretora do Conselho</option>
                       <option value="LOJA">Loja Jurisdicionada</option>
@@ -1079,7 +1079,7 @@ export default function PaginaDocumentos() {
                         placeholder="Ex: ARLS Estrela de Anápolis"
                         value={formGerar.loja_emissora_nome}
                         onChange={(e) => setFormGerar({...formGerar, loja_emissora_nome: e.target.value})}
-                        className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400"
+                        className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400"
                       />
                     </div>
                     <div>
@@ -1089,7 +1089,7 @@ export default function PaginaDocumentos() {
                         placeholder="Ex: 42"
                         value={formGerar.loja_emissora_numero}
                         onChange={(e) => setFormGerar({...formGerar, loja_emissora_numero: e.target.value})}
-                        className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400"
+                        className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400"
                       />
                     </div>
                   </div>
@@ -1103,7 +1103,7 @@ export default function PaginaDocumentos() {
                     placeholder="Ex: Ata da 5ª Reunião Ordinária ou Prancha Convite Aniversário"
                     value={formGerar.titulo}
                     onChange={(e) => setFormGerar({...formGerar, titulo: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
 
@@ -1115,7 +1115,7 @@ export default function PaginaDocumentos() {
                       placeholder="Auto gerado se vazio (Ex: ATA-CORE-05/2026)"
                       value={formGerar.codigo_documento}
                       onChange={(e) => setFormGerar({...formGerar, codigo_documento: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
                   <div>
@@ -1123,7 +1123,7 @@ export default function PaginaDocumentos() {
                     <CampoData
                       value={formGerar.data_documento}
                       onChange={(v) => setFormGerar({...formGerar, data_documento: v})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
                 </div>
@@ -1134,7 +1134,7 @@ export default function PaginaDocumentos() {
                     id="tem-expiracao-gerar"
                     checked={temExpiracaoGerar}
                     onChange={(e) => { setTemExpiracaoGerar(e.target.checked); if (!e.target.checked) setFormGerar({...formGerar, data_expiracao: ''}); }}
-                    className="w-4 h-4 accent-[#facc15] bg-[#181818] border-[#303030] rounded"
+                    className="w-4 h-4 accent-[#facc15] bg-sigma-elevated border-[#303030] rounded"
                   />
                   <label htmlFor="tem-expiracao-gerar" className="text-xs font-medium text-[#ccc] cursor-pointer">
                     Expira automaticamente numa data (arquivamento automático)
@@ -1147,7 +1147,7 @@ export default function PaginaDocumentos() {
                       value={formGerar.data_expiracao}
                       onChange={(v) => setFormGerar({...formGerar, data_expiracao: v})}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                     <p className="text-[10px] text-[#777] mt-1">Depois dessa data, o sistema arquiva este documento/convite automaticamente.</p>
                   </div>
@@ -1160,7 +1160,7 @@ export default function PaginaDocumentos() {
                     placeholder="Breve resumo do conteúdo da prancha..."
                     value={formGerar.descricao_ementa}
                     onChange={(e) => setFormGerar({...formGerar, descricao_ementa: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
 
@@ -1172,7 +1172,7 @@ export default function PaginaDocumentos() {
                     placeholder="Redija o texto oficial da ata, decreto, circular ou convite. O ReportLab diagramará o PDF oficial automaticamente..."
                     value={formGerar.conteudo_texto}
                     onChange={(e) => setFormGerar({...formGerar, conteudo_texto: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15] font-serif leading-relaxed"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15] font-serif leading-relaxed"
                   />
                 </div>
 
@@ -1201,7 +1201,7 @@ export default function PaginaDocumentos() {
                     <select
                       value={formUpload.categoria}
                       onChange={(e) => setFormUpload({...formUpload, categoria: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     >
                       <option value="ATA">📑 Ata de Sessão / Reunião</option>
                       <option value="DECRETO">📜 Decreto Regional</option>
@@ -1217,7 +1217,7 @@ export default function PaginaDocumentos() {
                     <select
                       value={formUpload.tipo_origem}
                       onChange={(e) => setFormUpload({...formUpload, tipo_origem: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     >
                       <option value="CONSELHO">Mesa Diretora do Conselho</option>
                       <option value="LOJA">Loja Jurisdicionada</option>
@@ -1233,7 +1233,7 @@ export default function PaginaDocumentos() {
                     placeholder="Ex: Ata Digitalizada ou Convite em PDF"
                     value={formUpload.titulo}
                     onChange={(e) => setFormUpload({...formUpload, titulo: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
 
@@ -1245,7 +1245,7 @@ export default function PaginaDocumentos() {
                       placeholder="Auto gerado se vazio"
                       value={formUpload.codigo_documento}
                       onChange={(e) => setFormUpload({...formUpload, codigo_documento: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
                   <div>
@@ -1253,7 +1253,7 @@ export default function PaginaDocumentos() {
                     <CampoData
                       value={formUpload.data_documento}
                       onChange={(v) => setFormUpload({...formUpload, data_documento: v})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                   </div>
                 </div>
@@ -1264,7 +1264,7 @@ export default function PaginaDocumentos() {
                     id="tem-expiracao-upload"
                     checked={temExpiracaoUpload}
                     onChange={(e) => { setTemExpiracaoUpload(e.target.checked); if (!e.target.checked) setFormUpload({...formUpload, data_expiracao: ''}); }}
-                    className="w-4 h-4 accent-[#facc15] bg-[#181818] border-[#303030] rounded"
+                    className="w-4 h-4 accent-[#facc15] bg-sigma-elevated border-[#303030] rounded"
                   />
                   <label htmlFor="tem-expiracao-upload" className="text-xs font-medium text-[#ccc] cursor-pointer">
                     Expira automaticamente numa data (arquivamento automático)
@@ -1277,7 +1277,7 @@ export default function PaginaDocumentos() {
                       value={formUpload.data_expiracao}
                       onChange={(v) => setFormUpload({...formUpload, data_expiracao: v})}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                     />
                     <p className="text-[10px] text-[#777] mt-1">Depois dessa data, o sistema arquiva este documento/convite automaticamente.</p>
                   </div>
@@ -1290,13 +1290,13 @@ export default function PaginaDocumentos() {
                     placeholder="Breve descrição do teor do arquivo..."
                     value={formUpload.descricao_ementa}
                     onChange={(e) => setFormUpload({...formUpload, descricao_ementa: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-[#888] mb-1.5">Arquivo do Documento (.PDF)</label>
-                  <div className="border-2 border-dashed border-[#303030] hover:border-[#facc15] rounded-xl p-6 text-center cursor-pointer bg-[#181818] transition-colors">
+                  <div className="border-2 border-dashed border-[#303030] hover:border-[#facc15] rounded-xl p-6 text-center cursor-pointer bg-sigma-elevated transition-colors">
                     <input
                       type="file"
                       required

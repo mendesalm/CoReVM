@@ -56,11 +56,11 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
-      <div className="bg-[#121212] border border-[#333] rounded-2xl p-6 w-full max-w-lg shadow-2xl relative text-white animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
+      <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-lg shadow-2xl relative text-white animate-in fade-in zoom-in-95 duration-200">
         
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#222]">
+        <div className="flex items-center justify-between pb-4 border-b border-sigma-border">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
               <Bug className="w-6 h-6" />
@@ -72,7 +72,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-[#222] transition-colors"
+            className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-sigma-elevated transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -98,7 +98,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
                 placeholder="Ex: Falha ao tentar salvar o formulário de aviso..."
-                className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none transition-colors"
+                className="w-full bg-[#0a0a0a] border border-sigma-border rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none transition-colors"
               />
             </div>
 
@@ -110,7 +110,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
                 <select
                   value={modulo}
                   onChange={(e) => setModulo(e.target.value)}
-                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-3 py-2 text-xs text-white focus:border-[#facc15] focus:outline-none"
+                  className="w-full bg-[#0a0a0a] border border-sigma-border rounded-xl px-3 py-2 text-xs text-white focus:border-[#facc15] focus:outline-none"
                 >
                   {modulosDisponiveis.map((m) => (
                     <option key={m} value={m}>{m}</option>
@@ -125,7 +125,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
                 <select
                   value={severidade}
                   onChange={(e) => setSeveridade(e.target.value)}
-                  className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-3 py-2 text-xs text-white focus:border-[#facc15] focus:outline-none"
+                  className="w-full bg-[#0a0a0a] border border-sigma-border rounded-xl px-3 py-2 text-xs text-white focus:border-[#facc15] focus:outline-none"
                 >
                   <option value="BAIXA">🟢 Baixa (Apenas visual / cosmético)</option>
                   <option value="MEDIA">🟡 Média (Dificuldade pontual de uso)</option>
@@ -145,12 +145,12 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 placeholder="Descreva o passo a passo para reproduzir a falha, dados informados e a mensagem de erro..."
-                className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-3 text-xs text-white focus:border-[#facc15] focus:outline-none transition-colors leading-relaxed"
+                className="w-full bg-[#0a0a0a] border border-sigma-border rounded-xl p-3 text-xs text-white focus:border-[#facc15] focus:outline-none transition-colors leading-relaxed"
               />
             </div>
 
             {/* Metadados Técnicos Automáticos */}
-            <div className="p-3 bg-[#0a0a0a] border border-[#222] rounded-xl text-[11px] text-gray-400 space-y-1">
+            <div className="p-3 bg-[#0a0a0a] border border-sigma-border rounded-xl text-[11px] text-gray-400 space-y-1">
               <div className="flex items-center gap-1.5 text-gray-300">
                 <AlertTriangle className="w-3.5 h-3.5 text-[#facc15]" />
                 <span className="font-semibold">Contexto capturado automaticamente:</span>
@@ -163,7 +163,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white rounded-xl hover:bg-[#222] transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white rounded-xl hover:bg-sigma-elevated transition-colors"
               >
                 Cancelar
               </button>

@@ -429,8 +429,8 @@ export default function PaginaAdmissoes() {
 
   if (erro && previas.length === 0) {
     return (
-      <div className="min-h-screen bg-[#080808] flex items-center justify-center p-6 text-gray-200">
-        <div className="max-w-md w-full p-8 text-center bg-[#141414] border border-[#2b2b2b] rounded-2xl shadow-2xl space-y-4">
+      <div className="min-h-screen bg-sigma-bg flex items-center justify-center p-6 text-gray-200">
+        <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
           <div className="w-16 h-16 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
             <ShieldCheck className="w-8 h-8" />
           </div>
@@ -451,15 +451,15 @@ export default function PaginaAdmissoes() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
       
       {/* Sub-Header Contextual */}
-      <div className="bg-[#111] border-b border-[#222]">
+      <div className="bg-sigma-surface border-b border-sigma-border">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               to={`/regiao/${id}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -488,7 +488,7 @@ export default function PaginaAdmissoes() {
         
         {/* Painel de Métricas Rápidas */}
         <div className="hidden lg:grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Prévias</span>
               <span className="text-xl font-black text-white">{previas.length}</span>
@@ -498,7 +498,7 @@ export default function PaginaAdmissoes() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Iniciações</span>
               <span className="text-xl font-black text-amber-400">{totalIniciacoes}</span>
@@ -508,7 +508,7 @@ export default function PaginaAdmissoes() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Filiações</span>
               <span className="text-xl font-black text-blue-400">{totalFiliacoes}</span>
@@ -518,7 +518,7 @@ export default function PaginaAdmissoes() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Regularizações</span>
               <span className="text-xl font-black text-purple-400">{totalRegularizacoes}</span>
@@ -528,7 +528,7 @@ export default function PaginaAdmissoes() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between col-span-2 sm:col-span-1">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between col-span-2 sm:col-span-1">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Averiguadas</span>
               <div className="flex items-baseline gap-1">
@@ -543,7 +543,7 @@ export default function PaginaAdmissoes() {
         </div>
 
         {/* Barra de Filtros por Modalidade & Status */}
-        <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 space-y-3">
+        <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 space-y-3">
           
           {/* Linha 1: Abas por Natureza do Processo */}
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -598,7 +598,7 @@ export default function PaginaAdmissoes() {
                 placeholder="Buscar candidato, loja ou número..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[#0c0c0c] border border-[#2b2b2b] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-sigma-surface border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
               />
             </div>
           </div>
@@ -607,12 +607,12 @@ export default function PaginaAdmissoes() {
           <div className="pt-2 border-t border-[#1e1e1e] flex flex-wrap items-center justify-between gap-3 text-xs">
             
             {/* Filtro de Status de Verificação */}
-            <div className="flex items-center gap-1 bg-[#0a0a0a] border border-[#222] p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-[#0a0a0a] border border-sigma-border p-1 rounded-xl">
               <button
                 onClick={() => setFiltroStatus('TODOS')}
                 className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
                   filtroStatus === 'TODOS' 
-                    ? 'bg-[#252525] text-white shadow' 
+                    ? 'bg-sigma-elevated text-white shadow' 
                     : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
@@ -678,7 +678,7 @@ export default function PaginaAdmissoes() {
 
         {/* Grid de Cards de Prévias */}
         {previasOrdenadas.length === 0 ? (
-          <div className="bg-[#121212] border border-[#222] rounded-2xl p-12 text-center text-gray-400">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-12 text-center text-gray-400">
             <BookOpenCheck className="w-12 h-12 mx-auto mb-3 text-gray-600 stroke-[1.5]" />
             <h3 className="text-base font-bold text-gray-300 mb-1">Nenhuma prévia encontrada</h3>
             <p className="text-xs text-gray-500 max-w-md mx-auto">
@@ -701,7 +701,7 @@ export default function PaginaAdmissoes() {
                   {/* Versão Mobile */}
                   <div
                     onClick={() => abrirModalConsideracoes(previa)}
-                    className="lg:hidden flex items-center justify-between p-3 bg-[#141414] border border-[#252525] rounded-xl active:bg-[#1a1a1a] transition-colors cursor-pointer"
+                    className="lg:hidden flex items-center justify-between p-3 bg-sigma-surface border border-sigma-border rounded-xl active:bg-sigma-elevated transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2 overflow-hidden">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${corSinalizador}`} title={isAveriguado ? "Averiguada" : (previa.total_consideracoes > 0 ? "Em análise" : "Não aberta / Nova")} />
@@ -720,7 +720,7 @@ export default function PaginaAdmissoes() {
                     className={`hidden lg:flex border rounded-2xl p-5 shadow-xl transition-all duration-200 flex-col justify-between group relative ${
                       isAveriguado 
                         ? 'bg-gradient-to-b from-emerald-950/20 via-[#131414] to-[#141414] border-emerald-500/40 hover:border-emerald-500/60 shadow-emerald-950/20' 
-                        : 'bg-[#141414] border-[#252525] hover:border-[#383838]'
+                        : 'bg-sigma-surface border-sigma-border hover:border-sigma-border'
                     }`}
                   >
                   <div>
@@ -773,7 +773,7 @@ export default function PaginaAdmissoes() {
                     </h2>
 
                     {/* Candidato Proposto */}
-                    <div className="flex items-center gap-2 p-2.5 bg-[#0d0d0d] border border-[#222] rounded-xl mb-3.5">
+                    <div className="flex items-center gap-2 p-2.5 bg-sigma-surface border border-sigma-border rounded-xl mb-3.5">
                       <div className={`p-1.5 rounded-lg ${isAveriguado ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#facc15]/10 text-[#facc15]'}`}>
                         <User className="w-4 h-4" />
                       </div>
@@ -786,7 +786,7 @@ export default function PaginaAdmissoes() {
                     </div>
 
                     {/* Miniatura Visual do Documento PDF */}
-                    <div className="relative bg-[#0d0d0d] border border-[#242424] rounded-xl p-3.5 mb-4">
+                    <div className="relative bg-sigma-surface border border-[#242424] rounded-xl p-3.5 mb-4">
                       <div className="flex items-center gap-3">
                         
                         {/* Mockup Miniatura Folha PDF */}
@@ -828,10 +828,10 @@ export default function PaginaAdmissoes() {
                       </div>
 
                       {/* Ações Rápidas do PDF */}
-                      <div className="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-[#222]">
+                      <div className="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-sigma-border">
                         <button
                           onClick={() => setPdfPreviewModal(viewPdfUrl)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-gray-300 hover:text-white bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] rounded-lg transition-colors"
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-gray-300 hover:text-white bg-sigma-elevated hover:bg-sigma-elevated border border-sigma-border rounded-lg transition-colors"
                         >
                           <Eye className="w-3.5 h-3.5 text-[#facc15]" />
                           Visualizar
@@ -840,7 +840,7 @@ export default function PaginaAdmissoes() {
                           href={downloadPdfUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-gray-300 hover:text-white bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] rounded-lg transition-colors"
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-gray-300 hover:text-white bg-sigma-elevated hover:bg-sigma-elevated border border-sigma-border rounded-lg transition-colors"
                         >
                           <Download className="w-3.5 h-3.5 text-gray-400" />
                           Baixar
@@ -850,7 +850,7 @@ export default function PaginaAdmissoes() {
                   </div>
 
                   {/* Rodapé do Card: Contador de Pareceres, Botão de Verificação e Abertura do Modal */}
-                  <div className="pt-3 border-t border-[#222] space-y-2.5">
+                  <div className="pt-3 border-t border-sigma-border space-y-2.5">
                     
                     {/* Botão de Marcação/Verificação Rápida */}
                     <div className="flex items-center justify-between gap-2">
@@ -859,7 +859,7 @@ export default function PaginaAdmissoes() {
                         className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all ${
                           isAveriguado
                             ? 'bg-emerald-500/10 hover:bg-red-500/10 text-emerald-400 hover:text-red-300 border-emerald-500/30 hover:border-red-500/30'
-                            : 'bg-[#1a1a1a] hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-400 border-[#333] hover:border-emerald-500/30'
+                            : 'bg-sigma-elevated hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-400 border-sigma-border hover:border-emerald-500/30'
                         }`}
                         title={isAveriguado ? 'Clique para reabrir averiguação' : 'Clique para marcar como averiguado'}
                       >
@@ -895,7 +895,7 @@ export default function PaginaAdmissoes() {
 
                       <button
                         onClick={() => abrirModalConsideracoes(previa)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-[#facc15] text-gray-200 hover:text-black font-bold text-xs rounded-xl border border-[#333] hover:border-[#facc15] transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-[#facc15] text-gray-200 hover:text-black font-bold text-xs rounded-xl border border-sigma-border hover:border-[#facc15] transition-all"
                       >
                         <span>Abrir Considerações</span>
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -911,7 +911,7 @@ export default function PaginaAdmissoes() {
 
         {/* Controles de Paginação */}
         {previasOrdenadas.length > 0 && totalPaginas > 1 && (
-          <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
             <span className="text-xs text-gray-400">
               Exibindo <b>{indexInicio + 1}</b> a <b>{Math.min(indexFim, previasOrdenadas.length)}</b> de <b>{previasOrdenadas.length}</b> documentos
             </span>
@@ -920,7 +920,7 @@ export default function PaginaAdmissoes() {
               <button
                 onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
                 disabled={paginaAtual === 1}
-                className="p-1.5 rounded-lg border border-[#333] bg-[#171717] hover:bg-[#222] disabled:opacity-40 disabled:hover:bg-[#171717] text-gray-300 transition-colors"
+                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
                 title="Página anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -933,7 +933,7 @@ export default function PaginaAdmissoes() {
                   className={`w-8 h-8 rounded-lg text-xs font-bold border transition-all ${
                     paginaAtual === num
                       ? 'bg-[#facc15] text-black border-[#facc15] shadow-md shadow-[#facc15]/10'
-                      : 'bg-[#171717] text-gray-300 border-[#333] hover:border-[#444] hover:bg-[#222]'
+                      : 'bg-sigma-elevated text-gray-300 border-sigma-border hover:border-[#444] hover:bg-sigma-elevated'
                   }`}
                 >
                   {num}
@@ -943,7 +943,7 @@ export default function PaginaAdmissoes() {
               <button
                 onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
                 disabled={paginaAtual === totalPaginas}
-                className="p-1.5 rounded-lg border border-[#333] bg-[#171717] hover:bg-[#222] disabled:opacity-40 disabled:hover:bg-[#171717] text-gray-300 transition-colors"
+                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
                 title="Próxima página"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -958,14 +958,14 @@ export default function PaginaAdmissoes() {
         <div className="fixed inset-0 z-50 flex justify-end">
           {/* Overlay escuro */}
           <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" 
+            className="absolute inset-0 bg-sigma-bg/80 backdrop-blur-sm animate-in fade-in duration-200" 
             onClick={() => setPreviaSelecionada(null)} 
           />
           
           {/* Painel lateral (Drawer) */}
-          <div className="relative w-full sm:w-[500px] md:w-[600px] lg:w-[700px] max-w-full h-full bg-[#121212] border-l border-[#2b2b2b] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+          <div className="relative w-full sm:w-[500px] md:w-[600px] lg:w-[700px] max-w-full h-full bg-sigma-surface border-l border-sigma-border flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
             
-            <div className="px-6 py-4 bg-[#181818] border-b border-[#292929] flex items-start justify-between gap-4">
+            <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${getTipoBadgeColor(previaSelecionada.tipo)}`}>
@@ -1006,7 +1006,7 @@ export default function PaginaAdmissoes() {
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setPreviaSelecionada(null)}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors"
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1016,7 +1016,7 @@ export default function PaginaAdmissoes() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
               {/* Destaque do PDF */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+              <div className="bg-sigma-elevated border border-sigma-border rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-red-500/10 rounded-xl">
                     <FileText className="w-8 h-8 text-red-500" />
@@ -1031,7 +1031,7 @@ export default function PaginaAdmissoes() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPdfPreviewModal(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf`)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-sigma-elevated hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-sigma-border transition-colors"
                   >
                     <Eye className="w-3.5 h-3.5 text-[#facc15]" />
                     Ler Online
@@ -1040,7 +1040,7 @@ export default function PaginaAdmissoes() {
                     href={`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf?download=true`}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-sigma-elevated hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-sigma-border transition-colors"
                   >
                     <Download className="w-3.5 h-3.5 text-gray-400" />
                     Baixar PDF
@@ -1078,7 +1078,7 @@ export default function PaginaAdmissoes() {
                   onClick={() => handleAlternarStatus(previaSelecionada.id, previaSelecionada.status)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${
                     previaSelecionada.status === 'AVERIGUADO'
-                      ? 'bg-[#181818] hover:bg-[#222] text-gray-300 border-[#383838]'
+                      ? 'bg-sigma-elevated hover:bg-sigma-elevated text-gray-300 border-sigma-border'
                       : 'bg-emerald-500 hover:bg-emerald-600 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
                   }`}
                 >
@@ -1097,10 +1097,10 @@ export default function PaginaAdmissoes() {
               </div>
 
               {/* Accordion de Pareceres e Votos */}
-              <div className="border border-[#222] rounded-xl overflow-hidden bg-[#0a0a0a]">
+              <div className="border border-sigma-border rounded-xl overflow-hidden bg-[#0a0a0a]">
                 <button
                   onClick={() => setPareceresAbertos(!pareceresAbertos)}
-                  className="w-full px-4 py-3 flex items-center justify-between bg-[#111] hover:bg-[#1a1a1a] transition-colors"
+                  className="w-full px-4 py-3 flex items-center justify-between bg-sigma-surface hover:bg-sigma-elevated transition-colors"
                 >
                   <div className="flex items-center gap-2 text-sm font-bold text-white">
                     <MessageSquare className="w-4 h-4 text-[#facc15]" />
@@ -1114,7 +1114,7 @@ export default function PaginaAdmissoes() {
                 </button>
                 
                 {pareceresAbertos && (
-                  <div className="p-4 space-y-6 border-t border-[#222]">
+                  <div className="p-4 space-y-6 border-t border-sigma-border">
                     <div>
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         Pareceres Registrados
@@ -1126,7 +1126,7 @@ export default function PaginaAdmissoes() {
                           Carregando pareceres...
                         </div>
                       ) : consideracoes.length === 0 ? (
-                        <div className="p-6 bg-[#0c0c0c] border border-[#222] rounded-xl text-center text-gray-500 text-xs">
+                        <div className="p-6 bg-sigma-surface border border-sigma-border rounded-xl text-center text-gray-500 text-xs">
                           Nenhum parecer ou consideração foi registrado ainda para esta prévia.<br/>
                           Utilize o formulário abaixo para inserir o primeiro apontamento.
                         </div>
@@ -1135,7 +1135,7 @@ export default function PaginaAdmissoes() {
                           {consideracoes.map((c) => (
                             <div 
                               key={c.id}
-                              className="bg-[#0f0f0f] border border-[#222] rounded-xl p-4 transition-all"
+                              className="bg-sigma-surface border border-sigma-border rounded-xl p-4 transition-all"
                             >
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex items-center gap-2">
@@ -1175,7 +1175,7 @@ export default function PaginaAdmissoes() {
                       )}
                     </div>
 
-                    <form onSubmit={handleEnviarConsideracao} className="bg-[#171717] border border-[#282828] rounded-xl p-4 space-y-3">
+                    <form onSubmit={handleEnviarConsideracao} className="bg-sigma-elevated border border-sigma-border rounded-xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold text-white flex items-center gap-2">
                           <Plus className="w-3.5 h-3.5 text-[#facc15]" />
@@ -1191,7 +1191,7 @@ export default function PaginaAdmissoes() {
                         value={novaConsideracaoTexto}
                         onChange={(e) => setNovaConsideracaoTexto(e.target.value)}
                         placeholder="Insira apontamentos sobre sindicâncias, reputação, idoneidade ou conformidade maçônica..."
-                        className="w-full p-3 bg-[#0d0d0d] border border-[#333] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors resize-none"
+                        className="w-full p-3 bg-sigma-surface border border-sigma-border rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors resize-none"
                         required
                       />
 
@@ -1225,10 +1225,10 @@ export default function PaginaAdmissoes() {
 
       {/* MODAL DE PUBLICAÇÃO DE NOVA PRÉVIA */}
       {showNovaPreviaModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121212] border border-[#2b2b2b] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div className="fixed inset-0 z-50 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
             
-            <div className="px-6 py-4 bg-[#181818] border-b border-[#292929] flex items-center justify-between">
+            <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-[#facc15]/10 text-[#facc15] rounded-lg">
                   <BookOpenCheck className="w-5 h-5" />
@@ -1244,7 +1244,7 @@ export default function PaginaAdmissoes() {
               </div>
               <button 
                 onClick={() => setShowNovaPreviaModal(false)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors"
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1265,7 +1265,7 @@ export default function PaginaAdmissoes() {
                       className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
                         formPrevia.tipo === t 
                           ? 'bg-[#facc15] text-black border-[#facc15]' 
-                          : 'bg-[#0d0d0d] text-gray-400 border-[#2a2a2a] hover:border-[#444]'
+                          : 'bg-sigma-surface text-gray-400 border-[#2a2a2a] hover:border-[#444]'
                       }`}
                     >
                       {t === 'INICIACAO' ? 'Iniciação' : t === 'FILIACAO' ? 'Filiação' : 'Regularização'}
@@ -1291,7 +1291,7 @@ export default function PaginaAdmissoes() {
                       }));
                     }
                   }}
-                  className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15] cursor-pointer"
+                  className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15] cursor-pointer"
                   required
                 >
                   {lojasConselho.map((l) => (
@@ -1311,7 +1311,7 @@ export default function PaginaAdmissoes() {
                   value={formPrevia.candidato_nome}
                   onChange={(e) => setFormPrevia(prev => ({ ...prev, candidato_nome: e.target.value }))}
                   placeholder="Ex: Carlos Eduardo Silva"
-                  className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
+                  className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
                   required
                 />
               </div>
@@ -1323,7 +1323,7 @@ export default function PaginaAdmissoes() {
                 <CampoData
                   value={formPrevia.data_limite}
                   onChange={(v) => setFormPrevia(prev => ({ ...prev, data_limite: v }))}
-                  className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1331,7 +1331,7 @@ export default function PaginaAdmissoes() {
                 <label className="text-xs font-semibold text-gray-300 block mb-1">
                   Documento PDF da Prancha (Opcional)
                 </label>
-                <div className="border-2 border-dashed border-[#333] hover:border-[#444] rounded-xl p-4 text-center bg-[#0a0a0a] transition-colors">
+                <div className="border-2 border-dashed border-sigma-border hover:border-[#444] rounded-xl p-4 text-center bg-[#0a0a0a] transition-colors">
                   <input
                     type="file"
                     accept="application/pdf"
@@ -1357,7 +1357,7 @@ export default function PaginaAdmissoes() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222]">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-sigma-border">
                 <button
                   type="button"
                   onClick={() => setShowNovaPreviaModal(false)}
@@ -1390,9 +1390,9 @@ export default function PaginaAdmissoes() {
 
       {/* MODAL DE VISUALIZAÇÃO DIRETA DO PDF */}
       {pdfPreviewModal && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#121212] border border-[#333] rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-            <div className="px-5 py-3 bg-[#181818] border-b border-[#2a2a2a] flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-sigma-bg/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div className="px-5 py-3 bg-sigma-elevated border-b border-[#2a2a2a] flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-bold text-white">
                 <FileText className="w-4 h-4 text-[#facc15]" />
                 Visualização do Documento Oficial (PDF)
@@ -1402,21 +1402,21 @@ export default function PaginaAdmissoes() {
                   href={`${pdfPreviewModal}?download=true`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1 bg-[#242424] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#383838] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1 bg-sigma-elevated hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-sigma-border transition-colors"
                 >
                   <Download className="w-3.5 h-3.5 text-gray-400" />
                   Baixar Arquivo
                 </a>
                 <button
                   onClick={() => setPdfPreviewModal(null)}
-                  className="p-1 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors"
+                  className="p-1 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 bg-[#1a1a1a] p-1">
+            <div className="flex-1 bg-sigma-elevated p-1">
               <iframe
                 src={pdfPreviewModal}
                 title="Prévia do Documento PDF"

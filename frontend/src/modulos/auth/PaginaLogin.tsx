@@ -127,7 +127,7 @@ export default function PaginaLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#050508] z-0">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-sigma-bg z-0">
       {/* Background Animado de Partículas idêntico ao e-Sigma */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <HeroBackground />
@@ -172,7 +172,7 @@ export default function PaginaLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Insira seu identificador"
-                className="w-full bg-[#0a1428]/60 border border-white/15 focus:border-[#DDB96B] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all shadow-inner focus:ring-1 focus:ring-[#DDB96B]/50"
+                className="w-full bg-sigma-surface/60 border border-white/15 focus:border-[#DDB96B] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all shadow-inner focus:ring-1 focus:ring-[#DDB96B]/50"
               />
             </div>
 
@@ -188,7 +188,7 @@ export default function PaginaLogin() {
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   placeholder="Insira sua senha"
-                  className="w-full bg-[#0a1428]/60 border border-white/15 focus:border-[#DDB96B] rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-slate-500 outline-none transition-all shadow-inner focus:ring-1 focus:ring-[#DDB96B]/50"
+                  className="w-full bg-sigma-surface/60 border border-white/15 focus:border-[#DDB96B] rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-slate-500 outline-none transition-all shadow-inner focus:ring-1 focus:ring-[#DDB96B]/50"
                 />
                 <button
                   type="button"
@@ -208,7 +208,7 @@ export default function PaginaLogin() {
                   type="checkbox"
                   checked={lembrarMe}
                   onChange={(e) => setLembrarMe(e.target.checked)}
-                  className="rounded border-slate-700 text-[#DDB96B] focus:ring-[#DDB96B] bg-[#0a1428]"
+                  className="rounded border-slate-700 text-[#DDB96B] focus:ring-[#DDB96B] bg-sigma-surface"
                 />
                 <span>Lembrar-me</span>
               </label>

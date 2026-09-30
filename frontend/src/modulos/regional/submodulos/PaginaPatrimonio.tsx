@@ -391,15 +391,15 @@ export default function PaginaPatrimonio() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
       
       {/* Sub-Header Contextual */}
-      <div className="bg-[#111] border-b border-[#222]">
+      <div className="bg-sigma-surface border-b border-sigma-border">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               to={`/regiao/${id}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -463,7 +463,7 @@ export default function PaginaPatrimonio() {
 
         {/* 1. DASHBOARD DE ESTATÍSTICAS */}
         <div className="hidden lg:grid lg:grid-cols-4 gap-4 mt-6">
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-[#facc15]" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Acervo Total</span>
@@ -476,7 +476,7 @@ export default function PaginaPatrimonio() {
             <p className="text-[11px] text-[#666] mt-2">Bens catalogados no Conselho Regional</p>
           </div>
 
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Cautelas Ativas</span>
@@ -493,7 +493,7 @@ export default function PaginaPatrimonio() {
             <p className="text-[11px] text-[#666] mt-2">Equipamentos em cessão fraterna</p>
           </div>
 
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Rede Solidária</span>
@@ -506,7 +506,7 @@ export default function PaginaPatrimonio() {
             <p className="text-[11px] text-[#666] mt-2">Disponibilizados por Lojas parceiras</p>
           </div>
 
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Fila de Espera</span>
@@ -524,7 +524,7 @@ export default function PaginaPatrimonio() {
         <div className="mt-8">
           <h2 className="text-lg font-bold text-white mb-4">Catálogo de Ativos</h2>
           {/* Filtros e Busca */}
-          <div className="bg-[#121212] border border-[#242424] rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative min-w-[240px]">
                 <Search className="w-4 h-4 text-[#666] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -533,14 +533,14 @@ export default function PaginaPatrimonio() {
                   placeholder="Buscar cadeira de rodas, muletas..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#666] focus:border-[#facc15] focus:outline-none"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#666] focus:border-[#facc15] focus:outline-none"
                 />
               </div>
 
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
-                className="bg-[#181818] border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none"
+                className="bg-sigma-elevated border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none"
               >
                 <option value="TODAS">Todas as Categorias</option>
                 <option value="HOSPITALAR">🏥 Hospitalar & Beneficência</option>
@@ -552,7 +552,7 @@ export default function PaginaPatrimonio() {
               <select
                 value={propriedadeFiltro}
                 onChange={(e) => setPropriedadeFiltro(e.target.value)}
-                className="bg-[#181818] border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none"
+                className="bg-sigma-elevated border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none"
               >
                 <option value="TODOS">Todas as Origens</option>
                 <option value="CONSELHO">Acervo do Conselho</option>
@@ -564,7 +564,7 @@ export default function PaginaPatrimonio() {
                   type="checkbox"
                   checked={apenasDisponiveis}
                   onChange={(e) => setApenasDisponiveis(e.target.checked)}
-                  className="rounded border-[#333] text-[#facc15] focus:ring-0 bg-[#181818]"
+                  className="rounded border-sigma-border text-[#facc15] focus:ring-0 bg-sigma-elevated"
                 />
                 Apenas com Disponibilidade Imediata
               </label>
@@ -582,7 +582,7 @@ export default function PaginaPatrimonio() {
               <span className="text-xs">Consultando disponibilidade no acervo regional...</span>
             </div>
           ) : itens.length === 0 ? (
-            <div className="bg-[#121212] border border-[#222] rounded-2xl p-12 text-center text-[#777]">
+            <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-12 text-center text-[#777]">
               <Landmark className="w-12 h-12 text-[#444] mx-auto mb-3" />
               <h3 className="text-base font-bold text-white mb-1">Nenhum bem patrimonial localizado</h3>
               <p className="text-xs max-w-md mx-auto">
@@ -600,7 +600,7 @@ export default function PaginaPatrimonio() {
                   <div
                     key={item.id}
                     onClick={() => setItemSelecionado(item)}
-                    className={`bg-[#121212] border rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 hover:border-[#4a4a4a] hover:-translate-y-1 cursor-pointer shadow-xl relative ${
+                    className={`bg-sigma-surface border rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 hover:border-[#4a4a4a] hover:-translate-y-1 cursor-pointer shadow-xl relative ${
                       isLoja ? 'border-emerald-500/20' : 'border-[#242424]'
                     }`}
                   >
@@ -619,7 +619,7 @@ export default function PaginaPatrimonio() {
                           </span>
                         )}
 
-                        <span className="text-[10px] font-mono text-[#777] bg-[#181818] px-2 py-0.5 rounded border border-[#2b2b2b]">
+                        <span className="text-[10px] font-mono text-[#777] bg-sigma-elevated px-2 py-0.5 rounded border border-sigma-border">
                           {item.codigo_tombamento}
                         </span>
                       </div>
@@ -629,7 +629,7 @@ export default function PaginaPatrimonio() {
                         <div className={`p-2 rounded-xl border mt-0.5 shrink-0 ${
                           isLoja 
                             ? 'bg-emerald-950/30 border-emerald-500/20 text-emerald-400' 
-                            : 'bg-[#181818] border-[#2c2c2c] text-[#facc15]'
+                            : 'bg-sigma-elevated border-[#2c2c2c] text-[#facc15]'
                         }`}>
                           <IconeCat className="w-4 h-4" />
                         </div>
@@ -659,7 +659,7 @@ export default function PaginaPatrimonio() {
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-[#222] text-center text-[11px] text-[#888] font-semibold uppercase hover:text-white transition-colors">
+                    <div className="pt-3 border-t border-sigma-border text-center text-[11px] text-[#888] font-semibold uppercase hover:text-white transition-colors">
                       Ver Ficha Completa
                     </div>
                   </div>
@@ -670,20 +670,20 @@ export default function PaginaPatrimonio() {
 
           {/* Paginação */}
           {totalPaginas > 1 && (
-            <div className="flex items-center justify-between mt-8 border-t border-[#222] pt-4 text-xs text-[#888]">
+            <div className="flex items-center justify-between mt-8 border-t border-sigma-border pt-4 text-xs text-[#888]">
               <span>Página {paginaAtual} de {totalPaginas}</span>
               <div className="flex items-center gap-2">
                 <button
                   disabled={paginaAtual <= 1}
                   onClick={() => setPaginaAtual(p => p - 1)}
-                  className="p-2 bg-[#121212] border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
+                  className="p-2 bg-sigma-surface border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   disabled={paginaAtual >= totalPaginas}
                   onClick={() => setPaginaAtual(p => p + 1)}
-                  className="p-2 bg-[#121212] border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
+                  className="p-2 bg-sigma-surface border border-[#242424] rounded-lg disabled:opacity-30 hover:text-white"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -697,16 +697,16 @@ export default function PaginaPatrimonio() {
       {/* 3. DRAWER: FICHA DO ATIVO (MASTER-DETAIL) */}
       {/* ========================================================================= */}
       {itemSelecionado && (
-        <div className="fixed inset-0 z-40 flex items-stretch justify-end bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-40 flex items-stretch justify-end bg-sigma-bg/60 backdrop-blur-sm">
           {/* Overlay click para fechar */}
           <div className="absolute inset-0 cursor-pointer" onClick={() => setItemSelecionado(null)} />
           
-          <div className="bg-[#121212] border-l border-[#242424] w-full max-w-xl h-full shadow-2xl relative z-50 flex flex-col transform transition-transform duration-300 translate-x-0 overflow-hidden">
+          <div className="bg-sigma-surface border-l border-[#242424] w-full max-w-xl h-full shadow-2xl relative z-50 flex flex-col transform transition-transform duration-300 translate-x-0 overflow-hidden">
             {/* Cabecalho Drawer */}
             <div className="p-6 border-b border-[#242424] flex items-start justify-between bg-[#161616]">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-mono text-[#777] bg-[#1a1a1a] px-2 py-0.5 rounded border border-[#333]">
+                  <span className="text-[10px] font-mono text-[#777] bg-sigma-elevated px-2 py-0.5 rounded border border-sigma-border">
                     Cód: {itemSelecionado.codigo_tombamento}
                   </span>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
@@ -719,7 +719,7 @@ export default function PaginaPatrimonio() {
                 </div>
                 <h2 className="text-xl font-bold text-white">{itemSelecionado.nome}</h2>
               </div>
-              <button onClick={() => setItemSelecionado(null)} className="p-2 text-[#888] hover:text-white bg-[#1a1a1a] rounded-lg border border-[#333]">
+              <button onClick={() => setItemSelecionado(null)} className="p-2 text-[#888] hover:text-white bg-sigma-elevated rounded-lg border border-sigma-border">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -801,13 +801,13 @@ export default function PaginaPatrimonio() {
                             <div><span className="text-[#666]">Devolução Prevista:</span> <span className={emp.atrasado ? 'text-red-400' : 'text-[#ddd]'}>{emp.data_prevista_devolucao}</span></div>
                           </div>
 
-                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#222]">
+                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-sigma-border">
                             <button
                               onClick={() => {
                                 setCautelaSelecionadaTermo(emp);
                                 setModalTermoAberto(true);
                               }}
-                              className="px-2 py-1.5 bg-[#1a1a1a] hover:bg-[#222] border border-[#303030] text-[10px] text-[#ddd] rounded-lg transition-all"
+                              className="px-2 py-1.5 bg-sigma-elevated hover:bg-sigma-elevated border border-[#303030] text-[10px] text-[#ddd] rounded-lg transition-all"
                             >
                               Ver Termo
                             </button>
@@ -867,7 +867,7 @@ export default function PaginaPatrimonio() {
                           </div>
                           <button
                             onClick={() => handleCancelarFila(f.id)}
-                            className="px-2 py-1.5 bg-[#1a1a1a] hover:bg-red-950/40 border border-[#303030] hover:text-red-400 text-[10px] text-[#777] rounded-lg transition-all"
+                            className="px-2 py-1.5 bg-sigma-elevated hover:bg-red-950/40 border border-[#303030] hover:text-red-400 text-[10px] text-[#777] rounded-lg transition-all"
                           >
                             Cancelar
                           </button>
@@ -947,8 +947,8 @@ export default function PaginaPatrimonio() {
       {/* MODAL: SOLICITAR EMPRÉSTIMO / CAUTELA */}
       {/* ========================================================================= */}
       {modalEmprestimoAberto && itemParaEmprestimo && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-sigma-bg/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
@@ -965,7 +965,7 @@ export default function PaginaPatrimonio() {
             </div>
 
             <form onSubmit={handleConfirmarEmprestimo} className="p-6 space-y-4">
-              <div className="bg-[#181818] p-3 rounded-xl border border-[#262626] flex items-center justify-between text-xs">
+              <div className="bg-sigma-elevated p-3 rounded-xl border border-[#262626] flex items-center justify-between text-xs">
                 <div>
                   <span className="text-[#777] block text-[10px] uppercase font-bold">Item Selecionado:</span>
                   <strong className="text-white">{itemParaEmprestimo.nome}</strong>
@@ -983,7 +983,7 @@ export default function PaginaPatrimonio() {
                     required
                     value={formEmprestimo.loja_solicitante_nome}
                     onChange={(e) => setFormEmprestimo({...formEmprestimo, loja_solicitante_nome: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
 
@@ -994,7 +994,7 @@ export default function PaginaPatrimonio() {
                     placeholder="Ex: Familiar de Obreiro da Oficina"
                     value={formEmprestimo.beneficiario_final}
                     onChange={(e) => setFormEmprestimo({...formEmprestimo, beneficiario_final: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
               </div>
@@ -1008,7 +1008,7 @@ export default function PaginaPatrimonio() {
                     placeholder="Nome do Irmão"
                     value={formEmprestimo.responsavel_retirada_nome}
                     onChange={(e) => setFormEmprestimo({...formEmprestimo, responsavel_retirada_nome: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
@@ -1017,7 +1017,7 @@ export default function PaginaPatrimonio() {
                     type="text"
                     value={formEmprestimo.responsavel_retirada_cargo}
                     onChange={(e) => setFormEmprestimo({...formEmprestimo, responsavel_retirada_cargo: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
@@ -1028,7 +1028,7 @@ export default function PaginaPatrimonio() {
                     placeholder="(62) 9..."
                     value={formEmprestimo.responsavel_retirada_contato}
                     onChange={(e) => setFormEmprestimo({...formEmprestimo, responsavel_retirada_contato: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
               </div>
@@ -1039,7 +1039,7 @@ export default function PaginaPatrimonio() {
                   <CampoData
                     value={formEmprestimo.data_retirada}
                     onChange={(v) => setFormEmprestimo({...formEmprestimo, data_retirada: v})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
@@ -1047,7 +1047,7 @@ export default function PaginaPatrimonio() {
                   <CampoData
                     value={formEmprestimo.data_prevista_devolucao}
                     onChange={(v) => setFormEmprestimo({...formEmprestimo, data_prevista_devolucao: v})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
               </div>
@@ -1059,7 +1059,7 @@ export default function PaginaPatrimonio() {
                   placeholder="Anotações sobre estado ou instruções de cuidado..."
                   value={formEmprestimo.observacoes}
                   onChange={(e) => setFormEmprestimo({...formEmprestimo, observacoes: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1087,8 +1087,8 @@ export default function PaginaPatrimonio() {
       {/* MODAL: REGISTRAR DEVOLUÇÃO */}
       {/* ========================================================================= */}
       {modalDevolucaoAberto && cautelaParaDevolucao && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-sigma-bg/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
@@ -1105,7 +1105,7 @@ export default function PaginaPatrimonio() {
             </div>
 
             <form onSubmit={handleConfirmarDevolucao} className="p-6 space-y-4">
-              <div className="bg-[#181818] p-3 rounded-xl border border-[#262626] text-xs space-y-1">
+              <div className="bg-sigma-elevated p-3 rounded-xl border border-[#262626] text-xs space-y-1">
                 <div className="flex justify-between">
                   <span className="text-[#777]">Item:</span>
                   <strong className="text-white">{cautelaParaDevolucao.item_nome}</strong>
@@ -1121,7 +1121,7 @@ export default function PaginaPatrimonio() {
                 <CampoData
                   value={formDevolucao.data_efetiva_devolucao}
                   onChange={(v) => setFormDevolucao({...formDevolucao, data_efetiva_devolucao: v})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1130,7 +1130,7 @@ export default function PaginaPatrimonio() {
                 <select
                   value={formDevolucao.estado_conservacao_devolucao}
                   onChange={(e) => setFormDevolucao({...formDevolucao, estado_conservacao_devolucao: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 >
                   <option value="NOVO">Novo / Impecável</option>
                   <option value="OTIMO">Ótimo Estado</option>
@@ -1147,7 +1147,7 @@ export default function PaginaPatrimonio() {
                   placeholder="Relato de higienização ou conferência de acessórios..."
                   value={formDevolucao.observacoes}
                   onChange={(e) => setFormDevolucao({...formDevolucao, observacoes: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1175,8 +1175,8 @@ export default function PaginaPatrimonio() {
       {/* MODAL: ENTRAR NA FILA DE ESPERA */}
       {/* ========================================================================= */}
       {modalFilaAberto && itemParaFila && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-sigma-bg/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
@@ -1193,7 +1193,7 @@ export default function PaginaPatrimonio() {
             </div>
 
             <form onSubmit={handleConfirmarFila} className="p-6 space-y-4">
-              <div className="bg-[#181818] p-3 rounded-xl border border-[#262626] text-xs">
+              <div className="bg-sigma-elevated p-3 rounded-xl border border-[#262626] text-xs">
                 <span className="text-[#777] block text-[10px] uppercase font-bold">Item Solicitado:</span>
                 <strong className="text-white">{itemParaFila.nome}</strong>
               </div>
@@ -1205,7 +1205,7 @@ export default function PaginaPatrimonio() {
                   required
                   value={formFila.loja_solicitante_nome}
                   onChange={(e) => setFormFila({...formFila, loja_solicitante_nome: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1218,7 +1218,7 @@ export default function PaginaPatrimonio() {
                     placeholder="Nome completo"
                     value={formFila.responsavel_nome}
                     onChange={(e) => setFormFila({...formFila, responsavel_nome: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
@@ -1229,7 +1229,7 @@ export default function PaginaPatrimonio() {
                     placeholder="(62) 9..."
                     value={formFila.contato}
                     onChange={(e) => setFormFila({...formFila, contato: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
               </div>
@@ -1239,7 +1239,7 @@ export default function PaginaPatrimonio() {
                 <select
                   value={formFila.grau_urgencia}
                   onChange={(e) => setFormFila({...formFila, grau_urgencia: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 >
                   <option value="NORMAL">Normal (Apoio Planejado)</option>
                   <option value="ALTA">Alta (Pós-operatório Imediato)</option>
@@ -1254,7 +1254,7 @@ export default function PaginaPatrimonio() {
                   placeholder="Explicação da necessidade..."
                   value={formFila.observacoes}
                   onChange={(e) => setFormFila({...formFila, observacoes: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1282,8 +1282,8 @@ export default function PaginaPatrimonio() {
       {/* MODAL: CADASTRO DE NOVO BEM */}
       {/* ========================================================================= */}
       {modalNovoItemAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-sigma-bg/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
@@ -1306,7 +1306,7 @@ export default function PaginaPatrimonio() {
                   <select
                     value={formNovoItem.tipo_propriedade}
                     onChange={(e) => setFormNovoItem({...formNovoItem, tipo_propriedade: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   >
                     <option value="CONSELHO">Acervo do Conselho Regional</option>
                     <option value="LOJA">Rede Solidária (Disponibilizado por Loja)</option>
@@ -1318,7 +1318,7 @@ export default function PaginaPatrimonio() {
                   <select
                     value={formNovoItem.categoria}
                     onChange={(e) => setFormNovoItem({...formNovoItem, categoria: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   >
                     <option value="HOSPITALAR">🏥 Hospitalar & Beneficência</option>
                     <option value="MOBILIARIO">🪑 Mobiliário & Banquetes</option>
@@ -1339,7 +1339,7 @@ export default function PaginaPatrimonio() {
                       placeholder="Ex: ARLS Firmeza e Lealdade"
                       value={formNovoItem.loja_proprietaria_nome}
                       onChange={(e) => setFormNovoItem({...formNovoItem, loja_proprietaria_nome: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
                     />
                   </div>
                   <div>
@@ -1350,7 +1350,7 @@ export default function PaginaPatrimonio() {
                       placeholder="Ex: 55"
                       value={formNovoItem.loja_proprietaria_numero}
                       onChange={(e) => setFormNovoItem({...formNovoItem, loja_proprietaria_numero: e.target.value})}
-                      className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
+                      className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
                     />
                   </div>
                 </div>
@@ -1364,7 +1364,7 @@ export default function PaginaPatrimonio() {
                   placeholder="Ex: Cadeira de Rodas Dobrável Alumínio Ortobrás"
                   value={formNovoItem.nome}
                   onChange={(e) => setFormNovoItem({...formNovoItem, nome: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1377,7 +1377,7 @@ export default function PaginaPatrimonio() {
                     required
                     value={formNovoItem.quantidade_total}
                     onChange={(e) => setFormNovoItem({...formNovoItem, quantidade_total: parseInt(e.target.value) || 1})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
                 <div>
@@ -1385,7 +1385,7 @@ export default function PaginaPatrimonio() {
                   <select
                     value={formNovoItem.estado_conservacao}
                     onChange={(e) => setFormNovoItem({...formNovoItem, estado_conservacao: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   >
                     <option value="NOVO">Novo</option>
                     <option value="OTIMO">Ótimo</option>
@@ -1400,7 +1400,7 @@ export default function PaginaPatrimonio() {
                     placeholder="Auto gerado se vazio"
                     value={formNovoItem.codigo_tombamento}
                     onChange={(e) => setFormNovoItem({...formNovoItem, codigo_tombamento: e.target.value})}
-                    className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
               </div>
@@ -1412,7 +1412,7 @@ export default function PaginaPatrimonio() {
                   placeholder="Ex: Sala de Hospitalaria - Sede Regional ou Sede da Loja"
                   value={formNovoItem.localizacao_fisica}
                   onChange={(e) => setFormNovoItem({...formNovoItem, localizacao_fisica: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1423,7 +1423,7 @@ export default function PaginaPatrimonio() {
                   placeholder="Especificações técnicas, restrições ou termos de uso..."
                   value={formNovoItem.descricao}
                   onChange={(e) => setFormNovoItem({...formNovoItem, descricao: e.target.value})}
-                  className="w-full bg-[#181818] border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
+                  className="w-full bg-sigma-elevated border border-[#303030] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#facc15]"
                 />
               </div>
 
@@ -1451,8 +1451,8 @@ export default function PaginaPatrimonio() {
       {/* MODAL: VISUALIZAR TERMO DE CAUTELA */}
       {/* ========================================================================= */}
       {modalTermoAberto && cautelaSelecionadaTermo && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-sigma-bg/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
@@ -1469,7 +1469,7 @@ export default function PaginaPatrimonio() {
             </div>
 
             <div className="p-6 space-y-4 text-xs text-[#ccc] max-h-[70vh] overflow-y-auto">
-              <div className="text-center pb-3 border-b border-[#222]">
+              <div className="text-center pb-3 border-b border-sigma-border">
                 <span className="text-[10px] tracking-widest text-[#facc15] uppercase font-bold block mb-1">
                   A.'.G.'.D.'.G.'.A.'.D.'.U.'.
                 </span>
@@ -1477,13 +1477,13 @@ export default function PaginaPatrimonio() {
                 <span className="text-[11px] text-[#888]">Termo de Empréstimo e Cautela de Ativo Fraterno</span>
               </div>
 
-              <div className="bg-[#181818] p-4 rounded-xl border border-[#262626] space-y-2">
+              <div className="bg-sigma-elevated p-4 rounded-xl border border-[#262626] space-y-2">
                 <div>
                   <span className="text-[#777] block text-[10px] uppercase font-bold">Ativo Cedido:</span>
                   <strong className="text-white text-sm">{cautelaSelecionadaTermo.item_nome}</strong>
                   <span className="text-[11px] font-mono text-[#facc15] ml-2">({cautelaSelecionadaTermo.item_codigo})</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#222]">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sigma-border">
                   <div>
                     <span className="text-[#666] block text-[10px]">Loja Solicitante:</span>
                     <span className="text-white font-medium">{cautelaSelecionadaTermo.loja_solicitante_nome}</span>
@@ -1496,14 +1496,14 @@ export default function PaginaPatrimonio() {
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="bg-[#181818] p-3 rounded-xl border border-[#222]">
+                <div className="bg-sigma-elevated p-3 rounded-xl border border-sigma-border">
                   <span className="text-[#777] block text-[10px] uppercase font-bold mb-1">Responsável pela Retirada</span>
                   <strong className="text-white block">{cautelaSelecionadaTermo.responsavel_retirada_nome}</strong>
                   <span className="text-[11px] text-[#888] block">{cautelaSelecionadaTermo.responsavel_retirada_cargo || 'Representante'}</span>
                   <span className="text-[11px] text-[#888] block">Tel: {cautelaSelecionadaTermo.responsavel_retirada_contato || 'Não informado'}</span>
                 </div>
 
-                <div className="bg-[#181818] p-3 rounded-xl border border-[#222]">
+                <div className="bg-sigma-elevated p-3 rounded-xl border border-sigma-border">
                   <span className="text-[#777] block text-[10px] uppercase font-bold mb-1">Responsável pela Entrega</span>
                   <strong className="text-white block">{cautelaSelecionadaTermo.responsavel_entrega_nome}</strong>
                   <span className="text-[11px] text-[#888] block">{cautelaSelecionadaTermo.responsavel_entrega_cargo || 'Conselho'}</span>
@@ -1511,7 +1511,7 @@ export default function PaginaPatrimonio() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center bg-[#181818] p-3 rounded-xl border border-[#222]">
+              <div className="flex justify-between items-center bg-sigma-elevated p-3 rounded-xl border border-sigma-border">
                 <div>
                   <span className="text-[#777] block text-[10px]">Data de Retirada:</span>
                   <strong className="text-white">{cautelaSelecionadaTermo.data_retirada}</strong>
@@ -1534,7 +1534,7 @@ export default function PaginaPatrimonio() {
               </div>
 
               {cautelaSelecionadaTermo.observacoes && (
-                <div className="text-[11px] text-[#888] italic bg-[#161616] p-2.5 rounded-lg border border-[#222]">
+                <div className="text-[11px] text-[#888] italic bg-[#161616] p-2.5 rounded-lg border border-sigma-border">
                   Obs: {cautelaSelecionadaTermo.observacoes}
                 </div>
               )}
@@ -1542,7 +1542,7 @@ export default function PaginaPatrimonio() {
               <div className="pt-4 border-t border-[#242424] flex items-center justify-end">
                 <button
                   onClick={() => setModalTermoAberto(false)}
-                  className="px-5 py-2 bg-[#222] hover:bg-[#333] text-white text-xs font-bold rounded-xl transition-all"
+                  className="px-5 py-2 bg-sigma-elevated hover:bg-[#333] text-white text-xs font-bold rounded-xl transition-all"
                 >
                   Fechar
                 </button>

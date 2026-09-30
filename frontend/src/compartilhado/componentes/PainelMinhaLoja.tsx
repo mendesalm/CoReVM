@@ -232,7 +232,7 @@ export default function PainelMinhaLoja({
   if (!loja) {
     return (
       <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-[#141414] border border-[#262626] rounded-2xl p-10 text-center text-gray-400">
+        <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-10 text-center text-gray-400">
           <Loader2 className="w-8 h-8 mx-auto mb-3 text-[#facc15] animate-spin" />
           Carregando os dados da sua Loja...
         </div>
@@ -276,14 +276,14 @@ export default function PainelMinhaLoja({
 
         <Link
           to={`/regiao/${regiaoId}/lojas`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-white bg-[#141414] hover:bg-[#1c1c1c] border border-[#262626] px-3.5 py-2 rounded-xl transition-all"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-white bg-sigma-surface hover:bg-[#1c1c1c] border border-[#262626] px-3.5 py-2 rounded-xl transition-all"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Ver todas as Lojas da Região
         </Link>
       </div>
 
       {/* Cartão: Dados Cadastrais da Loja -- largura total, todos os campos */}
-      <div className="bg-[#141414] border border-[#262626] rounded-2xl p-5 space-y-4">
+      <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
             <Building2 className="w-4 h-4 text-[#facc15]" /> Dados da Loja
@@ -353,7 +353,7 @@ export default function PainelMinhaLoja({
           Conselho em um único cartão, com 2 seções internas (2026-09-21, a
           pedido do usuário: "o widget venerável mestre pode englobar os
           dados do suplente"). */}
-      <div className="bg-[#141414] border border-[#262626] rounded-2xl p-5">
+      <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
           {/* Seção: Venerável Mestre */}
@@ -483,12 +483,12 @@ export default function PainelMinhaLoja({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {/* Cartão: Próximos Eventos da Loja */}
-        <div className="bg-[#141414] border border-[#262626] rounded-2xl p-5 space-y-3">
+        <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-bold text-sm">
               <Calendar className="w-4 h-4 text-[#facc15]" /> Eventos da Loja
             </div>
-            <span className="text-[11px] font-bold text-gray-400 bg-[#0d0d0d] border border-[#262626] px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-bold text-gray-400 bg-sigma-surface border border-[#262626] px-2 py-0.5 rounded-full">
               {eventosVigentesWidget.length}
             </span>
           </div>
@@ -527,12 +527,12 @@ export default function PainelMinhaLoja({
         </div>
 
         {/* Cartão: Documentos e Convites da Loja */}
-        <div className="bg-[#141414] border border-[#262626] rounded-2xl p-5 space-y-3">
+        <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-bold text-sm">
               <FileText className="w-4 h-4 text-[#facc15]" /> Documentos e Convites
             </div>
-            <span className="text-[11px] font-bold text-gray-400 bg-[#0d0d0d] border border-[#262626] px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-bold text-gray-400 bg-sigma-surface border border-[#262626] px-2 py-0.5 rounded-full">
               {documentosVigentesWidget.length}
             </span>
           </div>
@@ -573,12 +573,12 @@ export default function PainelMinhaLoja({
         </div>
 
         {/* Cartão: Editais de Admissão (Mural de Admissão) */}
-        <div className="bg-[#141414] border border-[#262626] rounded-2xl p-5 space-y-3">
+        <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-bold text-sm">
               <BookOpenCheck className="w-4 h-4 text-[#facc15]" /> Editais de Admissão
             </div>
-            <span className="text-[11px] font-bold text-gray-400 bg-[#0d0d0d] border border-[#262626] px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-bold text-gray-400 bg-sigma-surface border border-[#262626] px-2 py-0.5 rounded-full">
               {previas.length}
             </span>
           </div>
@@ -674,8 +674,8 @@ export default function PainelMinhaLoja({
 
 function EnvelopeModal({ titulo, icone: Icone, onFechar, children }: { titulo: string; icone: any; onFechar: () => void; children: ReactNode }) {
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
-      <div className="bg-[#141414] border border-[#262626] rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto space-y-5">
+    <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+      <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-white font-bold text-base">
             <Icone className="w-5 h-5 text-[#facc15]" /> {titulo}
@@ -702,7 +702,7 @@ function BotaoAlternarForm({ mostrando, onClick, label }: { mostrando: boolean; 
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer ${
         mostrando
-          ? 'text-gray-300 bg-[#1c1c1c] border border-[#333] hover:bg-[#232323]'
+          ? 'text-gray-300 bg-[#1c1c1c] border border-sigma-border hover:bg-[#232323]'
           : 'text-black bg-[#facc15] hover:bg-[#eab308]'
       }`}
     >
@@ -712,7 +712,7 @@ function BotaoAlternarForm({ mostrando, onClick, label }: { mostrando: boolean; 
   );
 }
 
-const campoClasse = "w-full bg-[#080808] border border-[#333] rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none";
+const campoClasse = "w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-white focus:border-[#facc15] focus:outline-none";
 const rotuloClasse = "block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1";
 
 // ---------------------------------------------------------------------
@@ -911,7 +911,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
           type="checkbox"
           checked={mostrarEncerrados}
           onChange={(e) => setMostrarEncerrados(e.target.checked)}
-          className="w-3.5 h-3.5 accent-[#facc15] bg-[#080808] border-[#333] rounded"
+          className="w-3.5 h-3.5 accent-[#facc15] bg-sigma-bg border-sigma-border rounded"
         />
         Mostrar cancelados / encerrados
       </label>
@@ -921,7 +921,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
       {erro && !mostrarForm && <p className="text-xs text-red-400">{erro}</p>}
 
       {mostrarForm && (
-        <div className="bg-[#0d0d0d] border border-[#262626] rounded-xl p-4 space-y-3">
+        <div className="bg-sigma-surface border border-[#262626] rounded-xl p-4 space-y-3">
           {erro && <p className="text-xs text-red-400">{erro}</p>}
           <div>
             <label className={rotuloClasse}>Título</label>
@@ -972,7 +972,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
                 id="gerar-aviso-minha-loja"
                 checked={gerarAviso}
                 onChange={(e) => setGerarAviso(e.target.checked)}
-                className="w-4 h-4 accent-[#facc15] bg-[#080808] border-[#333] rounded"
+                className="w-4 h-4 accent-[#facc15] bg-sigma-bg border-sigma-border rounded"
               />
               <label htmlFor="gerar-aviso-minha-loja" className="text-xs font-medium text-gray-300 cursor-pointer">
                 Publicar também um Aviso de lembrete no Mural
@@ -1018,7 +1018,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
       ) : (
         <ul className="space-y-2">
           {eventosVisiveis.map((e: any) => (
-            <li key={e.id} className={`text-xs text-gray-300 flex items-start gap-2 bg-[#0d0d0d] border border-[#232323] rounded-xl p-3 ${e.status === 'CANCELADO' ? 'opacity-60' : ''}`}>
+            <li key={e.id} className={`text-xs text-gray-300 flex items-start gap-2 bg-sigma-surface border border-[#232323] rounded-xl p-3 ${e.status === 'CANCELADO' ? 'opacity-60' : ''}`}>
               <Calendar className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
                 <span className="font-semibold text-gray-200 block">{e.titulo}</span>
@@ -1031,7 +1031,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
                     type="button"
                     title="Clonar evento (nova data)"
                     onClick={() => handleClonarEvento(e)}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-sigma-elevated transition-colors cursor-pointer"
                   >
                     <Copy className="w-3.5 h-3.5" />
                   </button>
@@ -1042,7 +1042,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
                       type="button"
                       title="Editar evento"
                       onClick={() => handleEditarEvento(e)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-sigma-elevated transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
@@ -1051,7 +1051,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
                       title="Cancelar evento"
                       onClick={() => handleExcluirEvento(e.id)}
                       disabled={salvando}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-500 hover:bg-[#1a1a1a] disabled:opacity-50 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-500 hover:bg-sigma-elevated disabled:opacity-50 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -1166,13 +1166,13 @@ function ModalDocumentos({ regiaoId, loja, documentos, carregando, onFechar, onC
           type="checkbox"
           checked={mostrarArquivados}
           onChange={(e) => setMostrarArquivados(e.target.checked)}
-          className="w-3.5 h-3.5 accent-[#facc15] bg-[#080808] border-[#333] rounded"
+          className="w-3.5 h-3.5 accent-[#facc15] bg-sigma-bg border-sigma-border rounded"
         />
         Mostrar arquivados
       </label>
 
       {mostrarForm && (
-        <div className="bg-[#0d0d0d] border border-[#262626] rounded-xl p-4 space-y-3">
+        <div className="bg-sigma-surface border border-[#262626] rounded-xl p-4 space-y-3">
           {erro && <p className="text-xs text-red-400">{erro}</p>}
           <div>
             <label className={rotuloClasse}>Título</label>
@@ -1199,7 +1199,7 @@ function ModalDocumentos({ regiaoId, loja, documentos, carregando, onFechar, onC
               id="tem-expiracao-doc-minha-loja"
               checked={temExpiracao}
               onChange={(e) => { setTemExpiracao(e.target.checked); if (!e.target.checked) setDataExpiracao(''); }}
-              className="w-4 h-4 accent-[#facc15] bg-[#080808] border-[#333] rounded"
+              className="w-4 h-4 accent-[#facc15] bg-sigma-bg border-sigma-border rounded"
             />
             <label htmlFor="tem-expiracao-doc-minha-loja" className="text-xs font-medium text-gray-300 cursor-pointer">
               Expira automaticamente numa data
@@ -1248,7 +1248,7 @@ function ModalDocumentos({ regiaoId, loja, documentos, carregando, onFechar, onC
       ) : (
         <ul className="space-y-2">
           {documentosVisiveis.map((d: any) => (
-            <li key={d.id} className={`text-xs text-gray-300 flex items-start gap-2 bg-[#0d0d0d] border border-[#232323] rounded-xl p-3 ${d.arquivado ? 'opacity-60' : ''}`}>
+            <li key={d.id} className={`text-xs text-gray-300 flex items-start gap-2 bg-sigma-surface border border-[#232323] rounded-xl p-3 ${d.arquivado ? 'opacity-60' : ''}`}>
               <FileText className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
                 <span className="font-semibold text-gray-200 block">{d.titulo}</span>
@@ -1266,7 +1266,7 @@ function ModalDocumentos({ regiaoId, loja, documentos, carregando, onFechar, onC
                     title="Reativar documento"
                     onClick={() => handleReativarDocumento(d.id)}
                     disabled={salvando}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-[#1a1a1a] disabled:opacity-50 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-sigma-elevated disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
@@ -1364,7 +1364,7 @@ function ModalAdmissoes({ regiaoId, loja, previas, carregando, onFechar, onCriad
       </div>
 
       {mostrarForm && (
-        <div className="bg-[#0d0d0d] border border-[#262626] rounded-xl p-4 space-y-3">
+        <div className="bg-sigma-surface border border-[#262626] rounded-xl p-4 space-y-3">
           {erro && <p className="text-xs text-red-400">{erro}</p>}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -1412,7 +1412,7 @@ function ModalAdmissoes({ regiaoId, loja, previas, carregando, onFechar, onCriad
       ) : (
         <ul className="space-y-2">
           {previas.map((p: any) => (
-            <li key={p.id} className="text-xs text-gray-300 flex items-center justify-between gap-2 bg-[#0d0d0d] border border-[#232323] rounded-xl p-3">
+            <li key={p.id} className="text-xs text-gray-300 flex items-center justify-between gap-2 bg-sigma-surface border border-[#232323] rounded-xl p-3">
               <div className="min-w-0 flex items-start gap-2">
                 <BookOpenCheck className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
                 <div className="min-w-0">

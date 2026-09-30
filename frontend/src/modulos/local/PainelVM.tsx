@@ -7,8 +7,8 @@ export default function PainelVM() {
   const [activeTab, setActiveTab] = useState<'perfil'|'familia'|'suplentes'>('suplentes');
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
-      <div className="bg-[#111] border-b border-[#333] sticky top-0 z-50">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
+      <div className="bg-sigma-surface border-b border-sigma-border sticky top-0 z-50">
         <div className="max-w-4xl mx-auto p-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-[#facc15] uppercase tracking-widest">Painel do Venerável Mestre</h1>
@@ -34,7 +34,7 @@ export default function PainelVM() {
         
         {activeTab === 'perfil' && (
           <div className="space-y-6">
-            <div className="bg-[#151515] p-6 rounded-xl border border-[#333] flex gap-6 items-start">
+            <div className="bg-[#151515] p-6 rounded-xl border border-sigma-border flex gap-6 items-start">
               <UserCircle className="w-20 h-20 text-gray-600" />
               <div className="space-y-2 flex-1">
                 <h2 className="text-2xl font-bold text-white">João da Silva</h2>
@@ -43,11 +43,11 @@ export default function PainelVM() {
                 <div className="pt-4 grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs text-gray-500">E-mail</label>
-                    <input type="email" defaultValue="joao@email.com" className="w-full bg-[#080808] border border-[#333] rounded p-2 text-white" />
+                    <input type="email" defaultValue="joao@email.com" className="w-full bg-sigma-bg border border-sigma-border rounded p-2 text-white" />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Telefone</label>
-                    <input type="text" defaultValue="556299999999" className="w-full bg-[#080808] border border-[#333] rounded p-2 text-white" />
+                    <input type="text" defaultValue="556299999999" className="w-full bg-sigma-bg border border-sigma-border rounded p-2 text-white" />
                   </div>
                 </div>
                 <button className="mt-4 bg-[#facc15] text-black px-4 py-2 rounded-lg font-bold">Salvar Perfil</button>

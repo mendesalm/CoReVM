@@ -57,7 +57,7 @@ export default function BuscadorObreiro({ cargo, lojasConselho, defaultCim, onSu
   }
 
   return (
-    <div className="p-5 bg-[#151515] border border-[#333] rounded-xl space-y-4">
+    <div className="p-5 bg-[#151515] border border-sigma-border rounded-xl space-y-4">
       <h3 className="text-[#facc15] font-semibold flex items-center gap-2">
         <Search className="w-4 h-4" /> Buscar {cargo}
       </h3>
@@ -71,7 +71,7 @@ export default function BuscadorObreiro({ cargo, lojasConselho, defaultCim, onSu
             onChange={e => setCim(e.target.value)}
             onBlur={buscarCim}
             onKeyDown={e => e.key === 'Enter' && buscarCim()}
-            className="w-full bg-[#080808] border border-[#333] rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none"
+            className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-3 text-white focus:border-[#facc15] focus:outline-none"
           />
         </div>
         {buscando && <div className="p-3"><Loader2 className="w-5 h-5 animate-spin text-gray-500" /></div>}

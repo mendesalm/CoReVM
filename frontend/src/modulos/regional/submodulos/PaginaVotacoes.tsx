@@ -373,8 +373,8 @@ export default function PaginaVotacoes() {
 
   if (erro && votacoes.length === 0) {
     return (
-      <div className="min-h-screen bg-[#080808] flex items-center justify-center p-6 text-gray-200">
-        <div className="max-w-md w-full p-8 text-center bg-[#141414] border border-[#2b2b2b] rounded-2xl shadow-2xl space-y-4">
+      <div className="min-h-screen bg-sigma-bg flex items-center justify-center p-6 text-gray-200">
+        <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
           <div className="w-16 h-16 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
             <ShieldCheck className="w-8 h-8" />
           </div>
@@ -395,15 +395,15 @@ export default function PaginaVotacoes() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
       
       {/* Sub-Header Contextual */}
-      <div className="bg-[#111] border-b border-[#222]">
+      <div className="bg-sigma-surface border-b border-sigma-border">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               to={`/regiao/${id}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors mr-1"
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -446,7 +446,7 @@ export default function PaginaVotacoes() {
         
         {/* Painel de Métricas Rápidas */}
         <div className="hidden lg:grid lg:grid-cols-4 gap-3">
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Consultas</span>
               <span className="text-xl font-black text-white">{votacoes.length}</span>
@@ -456,7 +456,7 @@ export default function PaginaVotacoes() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Em Votação (Ativas)</span>
               <span className="text-xl font-black text-emerald-400">{totalEmAndamento}</span>
@@ -466,7 +466,7 @@ export default function PaginaVotacoes() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Encerradas / Apuradas</span>
               <span className="text-xl font-black text-blue-400">{totalEncerradas}</span>
@@ -476,7 +476,7 @@ export default function PaginaVotacoes() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Votos da Minha Loja</span>
               <div className="flex items-baseline gap-1">
@@ -491,7 +491,7 @@ export default function PaginaVotacoes() {
         </div>
 
         {/* Barra de Filtros Unificada */}
-        <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             <div className="relative min-w-[260px] flex-1 sm:flex-initial">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -500,7 +500,7 @@ export default function PaginaVotacoes() {
                 placeholder="Buscar deliberação por título ou tema..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[#0c0c0c] border border-[#2b2b2b] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-sigma-surface border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
               />
             </div>
 
@@ -566,7 +566,7 @@ export default function PaginaVotacoes() {
 
         {/* Grid de Cards de Votação */}
         {votacoesOrdenadas.length === 0 ? (
-          <div className="bg-[#121212] border border-[#222] rounded-2xl p-12 text-center text-gray-400">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-12 text-center text-gray-400">
             <Vote className="w-12 h-12 mx-auto mb-3 text-gray-600 stroke-[1.5]" />
             <h3 className="text-base font-bold text-gray-300 mb-1">Nenhuma deliberação encontrada</h3>
             <p className="text-xs text-gray-500 max-w-md mx-auto">
@@ -587,8 +587,8 @@ export default function PaginaVotacoes() {
                     minhaLojaVotou
                       ? 'bg-gradient-to-b from-emerald-950/15 via-[#131414] to-[#141414] border-emerald-500/30 hover:border-emerald-500/50'
                       : isAberta
-                      ? 'bg-[#141414] border-[#292929] hover:border-[#3d3d3d]'
-                      : 'bg-[#101010] border-[#222] opacity-90'
+                      ? 'bg-sigma-surface border-sigma-border hover:border-sigma-border'
+                      : 'bg-[#101010] border-sigma-border opacity-90'
                   }`}
                 >
                   <div>
@@ -664,7 +664,7 @@ export default function PaginaVotacoes() {
                           </div>
                         </div>
                       ) : (
-                        <div className="p-2 bg-[#171717] border border-[#282828] rounded-xl text-center text-[11px] text-gray-400">
+                        <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-xl text-center text-[11px] text-gray-400">
                           Votação finalizada
                         </div>
                       )}
@@ -704,7 +704,7 @@ export default function PaginaVotacoes() {
                   </div>
 
                   {/* Rodapé do Card */}
-                  <div className="pt-3 border-t border-[#222] space-y-2">
+                  <div className="pt-3 border-t border-sigma-border space-y-2">
                     
                     {/* Botões de Ação */}
                     <div className="flex items-center justify-between gap-2">
@@ -722,7 +722,7 @@ export default function PaginaVotacoes() {
                         className={`flex items-center gap-1.5 px-3.5 py-1.5 font-bold text-xs rounded-xl border transition-all ml-auto ${
                           !minhaLojaVotou && isAberta
                             ? 'bg-[#facc15] hover:bg-[#eab308] text-black border-[#facc15] shadow-md shadow-[#facc15]/10'
-                            : 'bg-[#1c1c1c] hover:bg-[#252525] text-gray-200 border-[#333]'
+                            : 'bg-[#1c1c1c] hover:bg-sigma-elevated text-gray-200 border-sigma-border'
                         }`}
                       >
                         <BarChart3 className="w-3.5 h-3.5" />
@@ -738,7 +738,7 @@ export default function PaginaVotacoes() {
 
         {/* Controles de Paginação */}
         {votacoesOrdenadas.length > 0 && totalPaginas > 1 && (
-          <div className="bg-[#121212] border border-[#222] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
             <span className="text-xs text-gray-400">
               Exibindo <b>{indexInicio + 1}</b> a <b>{Math.min(indexFim, votacoesOrdenadas.length)}</b> de <b>{votacoesOrdenadas.length}</b> consultas
             </span>
@@ -747,7 +747,7 @@ export default function PaginaVotacoes() {
               <button
                 onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
                 disabled={paginaAtual === 1}
-                className="p-1.5 rounded-lg border border-[#333] bg-[#171717] hover:bg-[#222] disabled:opacity-40 disabled:hover:bg-[#171717] text-gray-300 transition-colors"
+                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -759,7 +759,7 @@ export default function PaginaVotacoes() {
                   className={`w-8 h-8 rounded-lg text-xs font-bold border transition-all ${
                     paginaAtual === num
                       ? 'bg-[#facc15] text-black border-[#facc15] shadow-md shadow-[#facc15]/10'
-                      : 'bg-[#171717] text-gray-300 border-[#333] hover:border-[#444] hover:bg-[#222]'
+                      : 'bg-sigma-elevated text-gray-300 border-sigma-border hover:border-[#444] hover:bg-sigma-elevated'
                   }`}
                 >
                   {num}
@@ -769,7 +769,7 @@ export default function PaginaVotacoes() {
               <button
                 onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
                 disabled={paginaAtual === totalPaginas}
-                className="p-1.5 rounded-lg border border-[#333] bg-[#171717] hover:bg-[#222] disabled:opacity-40 disabled:hover:bg-[#171717] text-gray-300 transition-colors"
+                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -782,12 +782,12 @@ export default function PaginaVotacoes() {
       {/* MODAL DE VOTAÇÃO INTERATIVA & APURAÇÃO EM TEMPO REAL      */}
       {/* ========================================================= */}
       {votacaoSelecionada && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
+        <div className="fixed inset-0 z-50 bg-sigma-bg/60 backdrop-blur-sm flex justify-end">
           <div className="absolute inset-0" onClick={() => setVotacaoSelecionada(null)}></div>
-          <div className="relative w-full max-w-md bg-[#121212] h-full shadow-2xl flex flex-col border-l border-[#2b2b2b] animate-in slide-in-from-right duration-300 overflow-hidden">
+          <div className="relative w-full max-w-md bg-sigma-surface h-full shadow-2xl flex flex-col border-l border-sigma-border animate-in slide-in-from-right duration-300 overflow-hidden">
             
             {/* Header do Drawer */}
-            <div className="px-6 py-4 bg-[#181818] border-b border-[#292929] flex items-start justify-between gap-4">
+            <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
@@ -821,7 +821,7 @@ export default function PaginaVotacoes() {
 
               <button 
                 onClick={() => setVotacaoSelecionada(null)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors"
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -831,14 +831,14 @@ export default function PaginaVotacoes() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
               {/* Descrição e Fundamentação */}
-              <div className="p-4 bg-[#171717] border border-[#262626] rounded-xl text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
+              <div className="p-4 bg-sigma-elevated border border-[#262626] rounded-xl text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
                 <span className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Fundamentação da Consulta</span>
                 {votacaoSelecionada.descricao}
               </div>
 
               {/* Seção 1: Formulário de Votação (Se aberta) */}
               {votacaoSelecionada.status === 'EM_ANDAMENTO' && (
-                <form onSubmit={handleVotar} className="bg-[#141414] border border-[#2b2b2b] rounded-xl p-5 space-y-4">
+                <form onSubmit={handleVotar} className="bg-sigma-surface border border-sigma-border rounded-xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-2">
                       <Vote className="w-4 h-4 text-[#facc15]" />
@@ -861,7 +861,7 @@ export default function PaginaVotacoes() {
                           className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between gap-2 text-left ${
                             selecionada
                               ? 'bg-[#facc15] text-black border-[#facc15] shadow-lg shadow-[#facc15]/20'
-                              : 'bg-[#0d0d0d] text-gray-200 border-[#2f2f2f] hover:border-[#444] hover:bg-[#161616]'
+                              : 'bg-sigma-surface text-gray-200 border-[#2f2f2f] hover:border-[#444] hover:bg-[#161616]'
                           }`}
                         >
                           <span>{opcao}</span>
@@ -881,7 +881,7 @@ export default function PaginaVotacoes() {
                       value={justificativaVoto}
                       onChange={(e) => setJustificativaVoto(e.target.value)}
                       placeholder="Manifestação resumida do quadro sobre a decisão..."
-                      className="w-full p-2.5 bg-[#0a0a0a] border border-[#2b2b2b] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors resize-none"
+                      className="w-full p-2.5 bg-[#0a0a0a] border border-sigma-border rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors resize-none"
                     />
                   </div>
 
@@ -912,7 +912,7 @@ export default function PaginaVotacoes() {
               )}
 
               {/* Seção 2: Apuração em Tempo Real */}
-              <div className="bg-[#141414] border border-[#262626] rounded-xl p-5 space-y-4">
+              <div className="bg-sigma-surface border border-[#262626] rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-emerald-400" />
@@ -932,7 +932,7 @@ export default function PaginaVotacoes() {
                           {ap.percentual}% <span className="text-gray-500 font-normal">({ap.votos} voto{ap.votos !== 1 ? 's' : ''})</span>
                         </span>
                       </div>
-                      <div className="w-full bg-[#0a0a0a] h-3 rounded-full overflow-hidden border border-[#222]">
+                      <div className="w-full bg-[#0a0a0a] h-3 rounded-full overflow-hidden border border-sigma-border">
                         <div 
                           className="bg-gradient-to-r from-amber-500 to-[#facc15] h-full rounded-full transition-all duration-500"
                           style={{ width: `${ap.percentual}%` }}
@@ -951,7 +951,7 @@ export default function PaginaVotacoes() {
                 </h4>
 
                 {votacaoSelecionada.votos_detalhados.length === 0 ? (
-                  <div className="p-6 bg-[#0a0a0a] border border-[#222] rounded-xl text-center text-gray-500 text-xs">
+                  <div className="p-6 bg-[#0a0a0a] border border-sigma-border rounded-xl text-center text-gray-500 text-xs">
                     Nenhuma Loja registrou voto ainda nesta deliberação.
                   </div>
                 ) : (
@@ -959,7 +959,7 @@ export default function PaginaVotacoes() {
                     {votacaoSelecionada.votos_detalhados.map((v) => (
                       <div 
                         key={v.id}
-                        className="bg-[#0e0e0e] border border-[#222] rounded-xl p-3 flex items-start justify-between gap-3 text-xs"
+                        className="bg-[#0e0e0e] border border-sigma-border rounded-xl p-3 flex items-start justify-between gap-3 text-xs"
                       >
                         <div className="space-y-0.5">
                           <span className="font-bold text-white block">
@@ -993,10 +993,10 @@ export default function PaginaVotacoes() {
       {/* MODAL DE CRIAÇÃO DE NOVA VOTAÇÃO                          */}
       {/* ========================================================= */}
       {showNovaVotacaoModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121212] border border-[#2b2b2b] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div className="fixed inset-0 z-50 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
             
-            <div className="px-6 py-4 bg-[#181818] border-b border-[#292929] flex items-center justify-between">
+            <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-[#facc15]/10 text-[#facc15] rounded-lg">
                   <Vote className="w-5 h-5" />
@@ -1012,7 +1012,7 @@ export default function PaginaVotacoes() {
               </div>
               <button 
                 onClick={() => setShowNovaVotacaoModal(false)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors"
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1032,7 +1032,7 @@ export default function PaginaVotacoes() {
                     className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
                       formVotacao.tipo === 'DELIBERACAO'
                         ? 'bg-[#facc15] text-black border-[#facc15]'
-                        : 'bg-[#0d0d0d] text-gray-400 border-[#2a2a2a] hover:border-[#444]'
+                        : 'bg-sigma-surface text-gray-400 border-[#2a2a2a] hover:border-[#444]'
                     }`}
                   >
                     Deliberação Formal (Oficial)
@@ -1043,7 +1043,7 @@ export default function PaginaVotacoes() {
                     className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
                       formVotacao.tipo === 'CONSULTA'
                         ? 'bg-[#facc15] text-black border-[#facc15]'
-                        : 'bg-[#0d0d0d] text-gray-400 border-[#2a2a2a] hover:border-[#444]'
+                        : 'bg-sigma-surface text-gray-400 border-[#2a2a2a] hover:border-[#444]'
                     }`}
                   >
                     Consulta Regional (Sondagem)
@@ -1061,7 +1061,7 @@ export default function PaginaVotacoes() {
                   value={formVotacao.titulo}
                   onChange={(e) => setFormVotacao(prev => ({ ...prev, titulo: e.target.value }))}
                   placeholder="Ex: Aprovação do Calendário de Eventos Conjuntos"
-                  className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
+                  className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
                   required
                 />
               </div>
@@ -1076,7 +1076,7 @@ export default function PaginaVotacoes() {
                   value={formVotacao.descricao}
                   onChange={(e) => setFormVotacao(prev => ({ ...prev, descricao: e.target.value }))}
                   placeholder="Explique detalhadamente o objetivo, antecedentes e o que está sendo deliberado..."
-                  className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] resize-none"
+                  className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] resize-none"
                   required
                 />
               </div>
@@ -1111,7 +1111,7 @@ export default function PaginaVotacoes() {
                     value={novaOpcaoTexto}
                     onChange={(e) => setNovaOpcaoTexto(e.target.value)}
                     placeholder="Digitar nova opção..."
-                    className="flex-1 px-3 py-1.5 bg-[#0d0d0d] border border-[#2e2e2e] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
+                    className="flex-1 px-3 py-1.5 bg-sigma-surface border border-[#2e2e2e] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -1122,7 +1122,7 @@ export default function PaginaVotacoes() {
                   <button
                     type="button"
                     onClick={handleAdicionarOpcao}
-                    className="px-3 py-1.5 bg-[#222] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#383838] transition-colors"
+                    className="px-3 py-1.5 bg-sigma-elevated hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-sigma-border transition-colors"
                   >
                     + Adicionar
                   </button>
@@ -1138,7 +1138,7 @@ export default function PaginaVotacoes() {
                   <CampoData
                     value={formVotacao.data_encerramento}
                     onChange={(v) => setFormVotacao(prev => ({ ...prev, data_encerramento: v }))}
-                    className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15]"
+                    className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15]"
                   />
                 </div>
 
@@ -1149,7 +1149,7 @@ export default function PaginaVotacoes() {
                   <select
                     value={formVotacao.quorum_minimo}
                     onChange={(e) => setFormVotacao(prev => ({ ...prev, quorum_minimo: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[#0d0d0d] border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15] cursor-pointer"
+                    className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15] cursor-pointer"
                   >
                     <option value="MAIORIA_SIMPLES">Maioria Simples (50% + 1)</option>
                     <option value="MAIORIA_QUALIFICADA_2_3">Maioria Qualificada (2/3)</option>
@@ -1159,7 +1159,7 @@ export default function PaginaVotacoes() {
               </div>
 
               {/* Botões */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222]">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-sigma-border">
                 <button
                   type="button"
                   onClick={() => setShowNovaVotacaoModal(false)}

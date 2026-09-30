@@ -291,11 +291,11 @@ export const PaginaRelatorios: React.FC = () => {
   return (
     <div className="space-y-6 pb-16">
       {/* 1. TOPO: Identificação e Simulação de Usuário */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[#121212] border border-[#222] p-4 rounded-lg">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-sigma-surface border border-sigma-border p-4 rounded-lg">
         <div className="flex items-center space-x-3">
           <Link 
             to={`/regiao/${regiaoId}`}
-            className="p-2 hover:bg-[#1a1a1a] rounded-lg text-gray-400 hover:text-white transition-colors"
+            className="p-2 hover:bg-sigma-elevated rounded-lg text-gray-400 hover:text-white transition-colors"
             title="Voltar ao Painel Regional"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -363,7 +363,7 @@ export const PaginaRelatorios: React.FC = () => {
           <button
             onClick={() => handleExportarPdf('executivo')}
             disabled={baixandoPdf !== null}
-            className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-2 bg-[#222] hover:bg-[#2a2a2a] border border-[#333] hover:border-amber-500/40 text-xs font-semibold text-gray-200 rounded transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-2 bg-sigma-elevated hover:bg-[#2a2a2a] border border-sigma-border hover:border-amber-500/40 text-xs font-semibold text-gray-200 rounded transition-colors disabled:opacity-50"
             title="Exportar Relatório Executivo Geral em PDF"
           >
             {baixandoPdf === 'executivo' ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Download className="w-4 h-4 text-amber-400" />}
@@ -373,7 +373,7 @@ export const PaginaRelatorios: React.FC = () => {
           <button
             onClick={() => handleExportarPdf('integrantes')}
             disabled={baixandoPdf !== null}
-            className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-2 bg-[#222] hover:bg-[#2a2a2a] border border-[#333] hover:border-amber-500/40 text-xs font-semibold text-gray-200 rounded transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-2 bg-sigma-elevated hover:bg-[#2a2a2a] border border-sigma-border hover:border-amber-500/40 text-xs font-semibold text-gray-200 rounded transition-colors disabled:opacity-50"
             title="Exportar Livro de Matrícula e Relação de VMs em PDF"
           >
             {baixandoPdf === 'integrantes' ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Users className="w-4 h-4 text-amber-400" />}
@@ -383,7 +383,7 @@ export const PaginaRelatorios: React.FC = () => {
           <button
             onClick={() => handleExportarPdf('patrimonio')}
             disabled={baixandoPdf !== null}
-            className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-2 bg-[#222] hover:bg-[#2a2a2a] border border-[#333] hover:border-amber-500/40 text-xs font-semibold text-gray-200 rounded transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-2 bg-sigma-elevated hover:bg-[#2a2a2a] border border-sigma-border hover:border-amber-500/40 text-xs font-semibold text-gray-200 rounded transition-colors disabled:opacity-50"
             title="Exportar Balanço Patrimonial e Cautelas em PDF"
           >
             {baixandoPdf === 'patrimonio' ? <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> : <Landmark className="w-4 h-4 text-amber-400" />}
@@ -393,7 +393,7 @@ export const PaginaRelatorios: React.FC = () => {
       </div>
 
       {/* 3. NAVEGAÇÃO POR ABAS */}
-      <div className="flex border-b border-[#222] space-x-1 overflow-x-auto scrollbar-none">
+      <div className="flex border-b border-sigma-border space-x-1 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setAbaAtiva('visao-geral')}
           className={`flex items-center space-x-2 px-4 py-3 border-b-2 text-sm font-semibold whitespace-nowrap transition-colors ${
@@ -456,7 +456,7 @@ export const PaginaRelatorios: React.FC = () => {
           {abaAtiva === 'visao-geral' && kpis && (
             <div className="space-y-6">
               {/* Card Destaque: Índice de Engajamento Regional (IER) */}
-              <div className="bg-[#121212] border border-[#222] p-6 rounded-lg relative overflow-hidden">
+              <div className="bg-sigma-surface border border-sigma-border p-6 rounded-lg relative overflow-hidden">
                 <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
                   <div className="lg:col-span-2 space-y-2">
@@ -488,7 +488,7 @@ export const PaginaRelatorios: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="bg-[#181818] border border-[#2a2a2a] p-5 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
+                  <div className="bg-sigma-elevated border border-[#2a2a2a] p-5 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">IER Consolidado</div>
                     <div className="text-4xl font-black text-amber-400 flex items-baseline">
                       {kpis.indice_engajamento_regional}
@@ -509,7 +509,7 @@ export const PaginaRelatorios: React.FC = () => {
 
               {/* Grid de 6 KPIs Globais */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-gray-400 text-xs">
                     <span>Lojas Jurisdicionadas</span>
                     <Building className="w-4 h-4 text-amber-400" />
@@ -518,7 +518,7 @@ export const PaginaRelatorios: React.FC = () => {
                   <div className="text-[10px] text-emerald-400">100% Federadas</div>
                 </div>
 
-                <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-gray-400 text-xs">
                     <span>Quórum Médio</span>
                     <Vote className="w-4 h-4 text-blue-400" />
@@ -527,7 +527,7 @@ export const PaginaRelatorios: React.FC = () => {
                   <div className="text-[10px] text-gray-400">{kpis.total_votacoes} deliberações</div>
                 </div>
 
-                <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-gray-400 text-xs">
                     <span>Prévias de Admissão</span>
                     <UserCheck className="w-4 h-4 text-purple-400" />
@@ -536,7 +536,7 @@ export const PaginaRelatorios: React.FC = () => {
                   <div className="text-[10px] text-purple-400">{kpis.total_consideracoes} pareceres</div>
                 </div>
 
-                <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-gray-400 text-xs">
                     <span>Acervo Patrimonial</span>
                     <Landmark className="w-4 h-4 text-amber-400" />
@@ -545,7 +545,7 @@ export const PaginaRelatorios: React.FC = () => {
                   <div className="text-[10px] text-gray-400">{kpis.total_ativos_disponiveis} em sede</div>
                 </div>
 
-                <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-gray-400 text-xs">
                     <span>Cautelas Ativas</span>
                     <Clock className="w-4 h-4 text-yellow-400" />
@@ -556,7 +556,7 @@ export const PaginaRelatorios: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-gray-400 text-xs">
                     <span>Atas e Decretos</span>
                     <BookOpen className="w-4 h-4 text-emerald-400" />
@@ -569,7 +569,7 @@ export const PaginaRelatorios: React.FC = () => {
               {/* Distribuição por Rito & Top 5 Assiduidade */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Distribuição por Rito */}
-                <div className="bg-[#121212] border border-[#222] p-5 rounded-lg space-y-4">
+                <div className="bg-sigma-surface border border-sigma-border p-5 rounded-lg space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-white flex items-center gap-2">
                       <Layers className="w-4 h-4 text-macaonico-dourado" />
@@ -601,7 +601,7 @@ export const PaginaRelatorios: React.FC = () => {
                 </div>
 
                 {/* Resumo de Participação das Lojas */}
-                <div className="bg-[#121212] border border-[#222] p-5 rounded-lg space-y-4">
+                <div className="bg-sigma-surface border border-sigma-border p-5 rounded-lg space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-white flex items-center gap-2">
                       <Award className="w-4 h-4 text-macaonico-dourado" />
@@ -617,12 +617,12 @@ export const PaginaRelatorios: React.FC = () => {
 
                   <div className="space-y-2">
                     {rankingLojas.slice(0, 5).map((l, index) => (
-                      <div key={l.id} className="flex items-center justify-between p-2.5 bg-[#181818] border border-[#242424] rounded-lg">
+                      <div key={l.id} className="flex items-center justify-between p-2.5 bg-sigma-elevated border border-[#242424] rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                             index === 0 ? 'bg-amber-500 text-black' : 
                             index === 1 ? 'bg-gray-300 text-black' : 
-                            index === 2 ? 'bg-amber-700 text-white' : 'bg-[#222] text-gray-400'
+                            index === 2 ? 'bg-amber-700 text-white' : 'bg-sigma-elevated text-gray-400'
                           }`}>
                             {index + 1}
                           </div>
@@ -649,8 +649,8 @@ export const PaginaRelatorios: React.FC = () => {
           {abaAtiva === 'integrantes' && (
             <div className="space-y-6">
               {/* 1. MESA DIRETORA EXECUTIVA */}
-              <div className="bg-[#121212] border border-[#222] p-5 rounded-lg space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#222] pb-3">
+              <div className="bg-sigma-surface border border-sigma-border p-5 rounded-lg space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-sigma-border pb-3">
                   <div>
                     <h2 className="text-base font-bold text-white flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5 text-macaonico-dourado" />
@@ -673,7 +673,7 @@ export const PaginaRelatorios: React.FC = () => {
                         </span>
                       </div>
                       <div className="text-sm font-bold text-white">{m.nome}</div>
-                      <div className="space-y-1 text-xs text-gray-400 pt-1 border-t border-[#222]">
+                      <div className="space-y-1 text-xs text-gray-400 pt-1 border-t border-sigma-border">
                         <div className="flex justify-between">
                           <span>E-mail:</span>
                           <span className="text-gray-300 truncate max-w-[180px]">{m.email}</span>
@@ -693,7 +693,7 @@ export const PaginaRelatorios: React.FC = () => {
               </div>
 
               {/* 2. QUADRO DAS 17 LOJAS JURISDICIONADAS E SEUS VENERÁVEIS MESTRES */}
-              <div className="bg-[#121212] border border-[#222] p-5 rounded-lg space-y-4">
+              <div className="bg-sigma-surface border border-sigma-border p-5 rounded-lg space-y-4">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
                   <div>
                     <h2 className="text-base font-bold text-white flex items-center gap-2">
@@ -712,14 +712,14 @@ export const PaginaRelatorios: React.FC = () => {
                         placeholder="Buscar Loja, VM ou Suplente..."
                         value={buscaIntegrantes}
                         onChange={(e) => setBuscaIntegrantes(e.target.value)}
-                        className="w-full bg-[#080808] border border-[#333] text-xs text-gray-200 rounded pl-9 pr-3 py-2 focus:border-macaonico-dourado focus:outline-none"
+                        className="w-full bg-sigma-bg border border-sigma-border text-xs text-gray-200 rounded pl-9 pr-3 py-2 focus:border-macaonico-dourado focus:outline-none"
                       />
                     </div>
 
                     <select
                       value={filtroRito}
                       onChange={(e) => setFiltroRito(e.target.value)}
-                      className="bg-[#080808] border border-[#333] text-xs text-gray-200 rounded px-3 py-2 focus:border-macaonico-dourado focus:outline-none"
+                      className="bg-sigma-bg border border-sigma-border text-xs text-gray-200 rounded px-3 py-2 focus:border-macaonico-dourado focus:outline-none"
                     >
                       <option value="TODOS">Todos os Ritos</option>
                       <option value="REAA">REAA</option>
@@ -736,7 +736,7 @@ export const PaginaRelatorios: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[#222] bg-[#161616] text-xs text-gray-400">
+                      <tr className="border-b border-sigma-border bg-[#161616] text-xs text-gray-400">
                         <th className="p-3 font-semibold">Loja Jurisdicionada</th>
                         <th className="p-3 font-semibold">Rito / Oriente</th>
                         <th className="p-3 font-semibold">Venerável Mestre (Titular)</th>
@@ -806,25 +806,25 @@ export const PaginaRelatorios: React.FC = () => {
               {/* Resumo de Ativos */}
               {resumoPatrimonio && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                  <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                     <div className="text-xs text-gray-400">Total de Bens Tombados</div>
                     <div className="text-2xl font-bold text-white">{resumoPatrimonio.total_itens_cadastrados} itens</div>
                     <div className="text-[10px] text-amber-400">{resumoPatrimonio.total_unidades_acervo} unidades físicas</div>
                   </div>
 
-                  <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                  <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                     <div className="text-xs text-gray-400">Unidades Disponíveis</div>
                     <div className="text-2xl font-bold text-emerald-400">{resumoPatrimonio.unidades_disponiveis}</div>
                     <div className="text-[10px] text-gray-400">Prontos para retirada imediata</div>
                   </div>
 
-                  <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                  <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                     <div className="text-xs text-gray-400">Unidades em Uso Fraterno</div>
                     <div className="text-2xl font-bold text-blue-400">{resumoPatrimonio.unidades_em_uso}</div>
                     <div className="text-[10px] text-blue-400">Taxa de Ocupação: {resumoPatrimonio.taxa_ocupacao}%</div>
                   </div>
 
-                  <div className="bg-[#121212] border border-[#222] p-4 rounded-lg space-y-1">
+                  <div className="bg-sigma-surface border border-sigma-border p-4 rounded-lg space-y-1">
                     <div className="text-xs text-gray-400">Termos de Cautela Ativos</div>
                     <div className="text-2xl font-bold text-white">{resumoPatrimonio.cautelas_ativas}</div>
                     <div className={`text-[10px] ${resumoPatrimonio.cautelas_atrasadas > 0 ? 'text-red-400 font-bold' : 'text-emerald-400'}`}>
@@ -835,7 +835,7 @@ export const PaginaRelatorios: React.FC = () => {
               )}
 
               {/* Tabela de Bens Tombados */}
-              <div className="bg-[#121212] border border-[#222] p-5 rounded-lg space-y-4">
+              <div className="bg-sigma-surface border border-sigma-border p-5 rounded-lg space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div>
                     <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -854,14 +854,14 @@ export const PaginaRelatorios: React.FC = () => {
                         placeholder="Buscar por placa, nome..."
                         value={buscaPatrimonio}
                         onChange={(e) => setBuscaPatrimonio(e.target.value)}
-                        className="w-full bg-[#080808] border border-[#333] text-xs text-gray-200 rounded pl-9 pr-3 py-2 focus:border-macaonico-dourado focus:outline-none"
+                        className="w-full bg-sigma-bg border border-sigma-border text-xs text-gray-200 rounded pl-9 pr-3 py-2 focus:border-macaonico-dourado focus:outline-none"
                       />
                     </div>
 
                     <select
                       value={filtroCategoriaPatrimonio}
                       onChange={(e) => setFiltroCategoriaPatrimonio(e.target.value)}
-                      className="bg-[#080808] border border-[#333] text-xs text-gray-200 rounded px-3 py-2 focus:border-macaonico-dourado focus:outline-none"
+                      className="bg-sigma-bg border border-sigma-border text-xs text-gray-200 rounded px-3 py-2 focus:border-macaonico-dourado focus:outline-none"
                     >
                       <option value="TODAS">Todas as Categorias</option>
                       <option value="HOSPITALARIA">Hospitalaria / Saúde</option>
@@ -876,7 +876,7 @@ export const PaginaRelatorios: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[#222] bg-[#161616] text-xs text-gray-400">
+                      <tr className="border-b border-sigma-border bg-[#161616] text-xs text-gray-400">
                         <th className="p-3 font-semibold">Plaqueta / Código</th>
                         <th className="p-3 font-semibold">Descrição do Bem</th>
                         <th className="p-3 font-semibold">Categoria</th>
@@ -920,7 +920,7 @@ export const PaginaRelatorios: React.FC = () => {
                               {item.localizacao_fisica}
                             </td>
                             <td className="p-3 text-right">
-                              <span className="px-2 py-0.5 rounded bg-[#222] text-gray-300 text-[10px] font-semibold border border-[#333]">
+                              <span className="px-2 py-0.5 rounded bg-sigma-elevated text-gray-300 text-[10px] font-semibold border border-sigma-border">
                                 {item.estado_conservacao}
                               </span>
                             </td>
@@ -933,7 +933,7 @@ export const PaginaRelatorios: React.FC = () => {
               </div>
 
               {/* Tabela de Cautelas / Empréstimos */}
-              <div className="bg-[#121212] border border-[#222] p-5 rounded-lg space-y-4">
+              <div className="bg-sigma-surface border border-sigma-border p-5 rounded-lg space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
                     <Clock className="w-5 h-5 text-macaonico-dourado" />
@@ -945,7 +945,7 @@ export const PaginaRelatorios: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[#222] bg-[#161616] text-xs text-gray-400">
+                      <tr className="border-b border-sigma-border bg-[#161616] text-xs text-gray-400">
                         <th className="p-3 font-semibold">Ativo Emprestado</th>
                         <th className="p-3 font-semibold">Loja Solicitante</th>
                         <th className="p-3 font-semibold">Responsável / Beneficiário</th>
@@ -1019,8 +1019,8 @@ export const PaginaRelatorios: React.FC = () => {
           {/* ================================================================= */}
           {abaAtiva === 'quorum' && (
             <div className="space-y-6">
-              <div className="bg-[#121212] border border-[#222] p-5 rounded-lg space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-[#222] pb-3">
+              <div className="bg-sigma-surface border border-sigma-border p-5 rounded-lg space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-sigma-border pb-3">
                   <div>
                     <h2 className="text-base font-bold text-white flex items-center gap-2">
                       <Award className="w-5 h-5 text-macaonico-dourado" />
@@ -1040,7 +1040,7 @@ export const PaginaRelatorios: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[#222] bg-[#161616] text-xs text-gray-400">
+                      <tr className="border-b border-sigma-border bg-[#161616] text-xs text-gray-400">
                         <th className="p-3 font-semibold text-center w-16">Posição</th>
                         <th className="p-3 font-semibold">Loja Jurisdicionada</th>
                         <th className="p-3 font-semibold">Rito</th>
@@ -1057,7 +1057,7 @@ export const PaginaRelatorios: React.FC = () => {
                             <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs ${
                               idx === 0 ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30' :
                               idx === 1 ? 'bg-gray-300 text-black' :
-                              idx === 2 ? 'bg-amber-700 text-white' : 'bg-[#222] text-gray-400'
+                              idx === 2 ? 'bg-amber-700 text-white' : 'bg-sigma-elevated text-gray-400'
                             }`}>
                               {idx + 1}º
                             </span>
@@ -1082,7 +1082,7 @@ export const PaginaRelatorios: React.FC = () => {
                               <div className="flex justify-between text-[11px]">
                                 <span className="font-bold text-white">{loja.percentual_participacao}%</span>
                               </div>
-                              <div className="w-full bg-[#222] rounded-full h-1.5 overflow-hidden">
+                              <div className="w-full bg-sigma-elevated rounded-full h-1.5 overflow-hidden">
                                 <div 
                                   className={`h-1.5 rounded-full ${
                                     loja.percentual_participacao >= 80 ? 'bg-emerald-400' :

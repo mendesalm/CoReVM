@@ -16,7 +16,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 registerLocale('pt-BR', ptBR);
 
 const CLASSE_PADRAO =
-  'w-full bg-[#080808] border border-[#333] rounded-lg p-2 text-xs text-white focus:border-[#facc15] focus:outline-none';
+  'w-full bg-sigma-bg border border-sigma-border rounded-lg p-2 text-xs text-white focus:border-[#facc15] focus:outline-none';
 
 /** 'YYYY-MM-DD' (o formato que o backend espera) <-> Date local, sem deslocamento de fuso. */
 function isoParaData(iso: string | null | undefined): Date | null {
