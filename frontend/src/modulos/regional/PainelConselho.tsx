@@ -709,28 +709,26 @@ export default function PainelConselho() {
       {/* Container Principal Mobile-First */}
       <div className="max-w-xl mx-auto w-full flex-1 flex flex-col min-h-0">
         
-        {/* CABEÇALHO (Card Hero) */}
-        <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex items-center justify-between shadow-xl mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-sigma-gold text-[#070F1E] shadow-sm flex items-center justify-center">
-              <AlertOctagon className="w-7 h-7 text-[#070F1E]" />
+        {/* CABEÇALHO (Card Hero) - Clone do Mural de Admissões */}
+          <div className="bg-[#2a303c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-lg shrink-0">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-[#d4b97f] rounded-xl flex items-center justify-center text-[#212836] shrink-0 shadow-inner">
+                <Megaphone className="w-7 h-7" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-sigma-gold leading-tight">Mural de Avisos</h1>
+                <p className="text-[10px] sm:text-xs text-gray-300">Avisos e notificações regionais</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-black text-sigma-accent">Mural</h1>
-              <p className="text-[10px] text-gray-400">Avisos e Notificações Regionais</p>
-            </div>
+            
+            <button
+              onClick={() => { setAvisoForm({...avisoForm, tipo: abaAtiva === 'avisos' ? 'AVISO' : 'NOTIFICACAO'}); setShowNovoAvisoModal(true); }}
+              className="w-12 h-12 bg-[#1f2937] border border-gray-600 rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md shrink-0"
+              title="Novo"
+            >
+              <Plus className="w-8 h-8 font-light" />
+            </button>
           </div>
-          <button
-            onClick={() => { setAvisoForm({...avisoForm, tipo: abaAtiva === 'avisos' ? 'AVISO' : 'NOTIFICACAO'}); setShowNovoAvisoModal(true); }}
-            className="w-14 h-14 bg-[#1f2937] border border-sigma-border rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md"
-            title="Novo"
-          >
-            <div className="relative">
-              <Bell className="w-7 h-7" />
-              <Plus className="w-4 h-4 absolute -top-1 -right-2 bg-sigma-surface rounded-full border border-sigma-border" />
-            </div>
-          </button>
-        </div>
 
         {/* TABS (Folder Style) */}
         <div className="flex px-1 gap-1">
