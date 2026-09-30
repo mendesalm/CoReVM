@@ -4,7 +4,7 @@ import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
   BookOpenCheck, ShieldCheck, Loader2, 
-  Plus, Search, ArrowLeft, FileText, Download, 
+  Plus,  ArrowLeft, FileText, Download, 
   MessageSquare,  Trash2, Send, CheckCircle2,
   Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw, Pin,  
      ChevronDown, ChevronUp
@@ -100,11 +100,7 @@ export default function PaginaAdmissoes() {
   });
 
   // Filtros, Busca, Ordenação e Paginação
-  const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'INICIACAO' | 'FILIACAO' | 'REGULARIZACAO'>('INICIACAO');
-  const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'EM_ANDAMENTO' | 'AVERIGUADO'>(
-    typeof window !== 'undefined' && window.innerWidth < 1024 ? 'EM_ANDAMENTO' : 'TODOS'
-  );
   const [ordenacao, ] = useState<'RECENTES' | 'PRAZO' | 'PARECERES' | 'PENDENTES_PRIMEIRO'>('RECENTES');
   
 
@@ -343,17 +339,10 @@ export default function PaginaAdmissoes() {
   // 1. Filtragem
   const previasFiltradas = previas.filter(p => {
     const atendeFiltroTipo = p.tipo.toUpperCase() === filtroTipo;
-    const atendeFiltroStatus = 
-      filtroStatus === 'TODOS' || 
-      (filtroStatus === 'AVERIGUADO' && p.status === 'AVERIGUADO') ||
-      (filtroStatus === 'EM_ANDAMENTO' && p.status !== 'AVERIGUADO');
-    const termo = busca.toLowerCase();
-    const atendeBusca = 
-      p.candidato_nome.toLowerCase().includes(termo) ||
-      p.loja_nome.toLowerCase().includes(termo) ||
-      p.loja_numero.toLowerCase().includes(termo) ||
-      p.titulo_formatado.toLowerCase().includes(termo);
-    return atendeFiltroTipo && atendeFiltroStatus && atendeBusca;
+    
+    
+    
+    return atendeFiltroTipo;
   });
 
   // 2. Ordenação
@@ -461,17 +450,7 @@ export default function PaginaAdmissoes() {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Busca Desktop */}
-          <div className="hidden sm:block relative w-48 lg:w-56">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input 
-              type="text"
-              placeholder="Buscar candidato..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-[#1f2937] border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
-            />
-          </div>
+          
           <button
             onClick={() => setShowNovaPreviaModal(true)}
             className="w-14 h-14 bg-[#1f2937] border border-sigma-border rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md"
@@ -551,19 +530,7 @@ export default function PaginaAdmissoes() {
       {/* CONTEÚDO PRINCIPAL (Grid e Cards) */}
       <div className="bg-sigma-surface border border-sigma-border rounded-b-xl rounded-tr-xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
         
-        {/* Mobile Search - Só aparece se tela menor que sm */}
-        <div className="sm:hidden p-3 border-b border-sigma-border bg-sigma-elevated shrink-0">
-            <div className="relative w-full">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input 
-                type="text"
-                placeholder="Buscar candidato..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[#1f2937] border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
-              />
-            </div>
-        </div>
+        
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar">
           {/* Grid de Cards de Prévias (Dogear Layout) */}
@@ -645,23 +612,7 @@ export default function PaginaAdmissoes() {
 
         {/* SPLIT FOOTER */}
         <div className="grid grid-cols-2 border-t border-sigma-border bg-sigma-elevated mt-auto shrink-0">
-          <button 
-            onClick={() => setFiltroStatus(s => s === 'TODOS' ? 'EM_ANDAMENTO' : 'TODOS')}
-            className={`flex items-center justify-between p-4 border-r border-sigma-border transition-colors cursor-pointer ${filtroStatus === 'TODOS' ? 'bg-emerald-500/10 hover:bg-emerald-500/20' : 'hover:bg-white/5'}`}
-          >
-            <div className="flex items-center gap-2">
-              <CheckCheck className={`w-5 h-5 ${filtroStatus === 'TODOS' ? 'text-emerald-400' : 'text-gray-400'}`} />
-              <div className="text-left leading-tight">
-                <span className="text-[10px] font-bold block">{filtroStatus === 'TODOS' ? 'Ocultar' : 'Ver'}</span>
-                <span className="text-[11px] font-bold">Averiguadas</span>
-              </div>
-            </div>
-            {filtroStatus === 'TODOS' && (
-              <span className="text-sm font-black text-emerald-400">
-                {totalAveriguadas}
-              </span>
-            )}
-          </button>
+          <div className="border-r border-sigma-border"></div>
           
           <div className="flex items-center justify-between p-4 bg-transparent">
             <div className="flex items-center gap-2">
