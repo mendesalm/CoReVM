@@ -944,10 +944,17 @@ export default function PaginaAdmissoes() {
         )}
       </div>
 
-      {/* MODAL DE CONSIDERAÇÕES INCREMENTAIS */}
+      {/* MODAL DE CONSIDERAÇÕES INCREMENTAIS (Agora como Drawer/Slide-over) */}
       {previaSelecionada && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121212] border border-[#2b2b2b] rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Overlay escuro */}
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" 
+            onClick={() => setPreviaSelecionada(null)} 
+          />
+          
+          {/* Painel lateral (Drawer) */}
+          <div className="relative w-full sm:w-[500px] md:w-[600px] lg:w-[700px] max-w-full h-full bg-[#121212] border-l border-[#2b2b2b] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
             
             <div className="px-6 py-4 bg-[#181818] border-b border-[#292929] flex items-start justify-between gap-4">
               <div>
