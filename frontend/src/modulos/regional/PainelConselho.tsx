@@ -877,6 +877,69 @@ export default function PainelConselho() {
 
 
 
+            {/* Modal de Detalhe do Aviso/Notificacao */}
+      {itemEmFoco && (() => {
+        const cor = corNivel(itemEmFoco.nivel);
+        const isNotif = itemEmFoco.tipo === 'NOTIFICACAO';
+        return (
+          <div
+            className="fixed inset-0 bg-sigma-bg/85 backdrop-blur-md flex items-center justify-center z-[70] p-4 overflow-y-auto"
+            onClick={() => setItemEmFocoId(null)}
+          >
+            <div
+              className="w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-300 bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* CABEÇALHO */}
+              <div className={`flex items-center justify-between p-4 border-b border-sigma-border ${cor.bg}`}>
+                 <div className="flex items-center gap-3">
+                     <div className={`p-2 rounded-xl border ${cor.border} bg-[#1f2937] shadow-sm`}>
+                         {isNotif ? <Bell className={`w-5 h-5 ${cor.text}`} /> : <Megaphone className={`w-5 h-5 ${cor.text}`} />}
+                     </div>
+                     <div>
+                         <h2 className="text-sm font-bold text-white tracking-wide">{itemEmFoco.titulo}</h2>
+                         <p className={`text-[10px] uppercase tracking-wider ${cor.text} font-bold`}>{itemEmFoco.nivel === 'ALTO' ? 'Urgência' : itemEmFoco.nivel === 'MEDIO' ? 'Alerta' : 'Informativo'}</p>
+                     </div>
+                 </div>
+                 <button onClick={() => setItemEmFocoId(null)} className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-xl transition-all"><X className="w-5 h-5" /></button>
+              </div>
+              
+              {/* CORPO */}
+              <div className="p-5 overflow-y-auto max-h-[50vh] custom-scrollbar bg-[#161616]">
+                 <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{itemEmFoco.conteudo}</p>
+                 
+                 {itemEmFoco.arquivado && itemEmFoco.arquivado_em && (
+                    <div className="mt-4 p-3 rounded-xl bg-red-950/20 border border-red-900/30 text-xs text-red-300/80">
+                      <strong>Aviso Arquivado:</strong> {itemEmFoco.arquivado_em.split('T')[0].split('-').reverse().join('/')} por {itemEmFoco.arquivado_por || 'Sistema'}
+                    </div>
+                 )}
+              </div>
+              
+              {/* RODAPÉ */}
+              <div className="p-4 border-t border-sigma-border bg-[#1f2937] flex items-center justify-between gap-3 flex-wrap shadow-inner">
+                 <div className="text-xs text-gray-400">
+                    <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-[#facc15]"/> <strong className="text-gray-300 font-medium">{itemEmFoco.autor_nome || 'Conselho'}</strong> {itemEmFoco.loja_id ? `(Loja ${itemEmFoco.loja_numero || itemEmFoco.loja_id})` : ''}</span>
+                    <span className="flex items-center gap-1 mt-1"><Calendar className="w-3.5 h-3.5"/> {itemEmFoco.data_publicacao ? itemEmFoco.data_publicacao.split('-').reverse().join('/') : ''}</span>
+                 </div>
+                 
+                 <div className="flex items-center gap-2">
+                     {!itemEmFoco.lido && (
+                         <button onClick={() => { handleMarcarLido(itemEmFoco.id); }} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 transition-all flex items-center gap-1 cursor-pointer"><CheckCheck className="w-3.5 h-3.5"/> Marcar Lido</button>
+                     )}
+                     {itemEmFoco.lido && (
+                         <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#161616] text-gray-500 border border-sigma-border flex items-center gap-1"><CheckCheck className="w-3.5 h-3.5"/> Lido</span>
+                     )}
+                     {itemEmFoco.pode_excluir && !itemEmFoco.arquivado && (
+                         <button onClick={() => { handleExcluirAviso(itemEmFoco.id); setItemEmFocoId(null); }} className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 border border-sigma-border hover:border-red-500/30 transition-all cursor-pointer" title="Arquivar / Excluir"><Archive className="w-4 h-4"/></button>
+                     )}
+                 </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+
       {/* Modal: Publicar Novo Comunicado (Aviso ou Notificação) */}
       {showNovoAvisoModal && (() => {
         const numPalavras = avisoForm.conteudo.trim().split(/\s+/).filter(Boolean).length;
