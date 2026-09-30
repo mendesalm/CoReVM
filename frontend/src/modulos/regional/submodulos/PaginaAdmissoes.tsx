@@ -6,7 +6,7 @@ import {
   BookOpenCheck, ShieldCheck, Loader2, Award,
   Plus, Search, ArrowLeft, FileText, Download, ExternalLink,
   MessageSquare, Calendar, Trash2, Send, CheckCircle2,
-  Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw,
+  Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw, AlertTriangle, AlertOctagon,
   SlidersHorizontal, ChevronLeft, ChevronRight, ChevronDown, ChevronUp
 } from 'lucide-react';
 
@@ -542,372 +542,145 @@ export default function PaginaAdmissoes() {
           </div>
         </div>
 
-        {/* Barra de Filtros por Modalidade & Status */}
-        <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 space-y-3">
-          
-          {/* Linha 1: Abas por Natureza do Processo */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              <button
-                onClick={() => setFiltroTipo('TODAS')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  filtroTipo === 'TODAS' 
-                    ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md shadow-[#facc15]/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-                }`}
-              >
-                Todas ({previas.length})
-              </button>
-              <button
-                onClick={() => setFiltroTipo('INICIACAO')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  filtroTipo === 'INICIACAO' 
-                    ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md shadow-amber-500/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-                }`}
-              >
-                Iniciações ({totalIniciacoes})
-              </button>
-              <button
-                onClick={() => setFiltroTipo('FILIACAO')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  filtroTipo === 'FILIACAO' 
-                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-                }`}
-              >
-                Filiações ({totalFiliacoes})
-              </button>
-              <button
-                onClick={() => setFiltroTipo('REGULARIZACAO')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  filtroTipo === 'REGULARIZACAO' 
-                    ? 'bg-purple-500 text-white shadow-md shadow-purple-500/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
-                }`}
-              >
-                Regularizações ({totalRegularizacoes})
-              </button>
-            </div>
-
-            {/* Campo de Busca Rápida */}
-            <div className="relative min-w-[260px] flex-1 sm:flex-initial">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input 
-                type="text"
-                placeholder="Buscar candidato, loja ou número..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-sigma-surface border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Linha 2: Filtro por Verificação + Ordenação + Paginação */}
-          <div className="pt-2 border-t border-[#1e1e1e] flex flex-wrap items-center justify-between gap-3 text-xs">
-            
-            {/* Filtro de Status de Verificação */}
-            <div className="flex items-center gap-1 bg-[#0a0a0a] border border-sigma-border p-1 rounded-xl">
-              <button
-                onClick={() => setFiltroStatus('TODOS')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
-                  filtroStatus === 'TODOS' 
-                    ? 'bg-sigma-elevated text-white shadow' 
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Todos os Status
-              </button>
-              <button
-                onClick={() => setFiltroStatus('EM_ANDAMENTO')}
-                className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
-                  filtroStatus === 'EM_ANDAMENTO' 
-                    ? 'bg-sigma-elevated border border-sigma-border text-amber-300 border border-amber-500/30' 
-                    : 'text-gray-400 hover:text-amber-300'
-                }`}
-              >
-                <Clock className="w-3 h-3 text-amber-400" />
-                Em Aberto ({totalPendentes})
-              </button>
-              <button
-                onClick={() => setFiltroStatus('AVERIGUADO')}
-                className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
-                  filtroStatus === 'AVERIGUADO' 
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                    : 'text-gray-400 hover:text-emerald-300'
-                }`}
-              >
-                <CheckCheck className="w-3 h-3 text-emerald-400" />
-                Averiguados ({totalAveriguadas})
-              </button>
-            </div>
-
-            {/* Ordenação e Seleção de Itens por Página */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
-                <span className="text-gray-400 font-medium">Ordenar por:</span>
-                <select
-                  value={ordenacao}
-                  onChange={(e: any) => setOrdenacao(e.target.value)}
-                  className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
+        {/* Abas Principais de Navegação (Design Dogear/Mural) */}
+          <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+             <div className="flex rounded-2xl bg-[#121212] border border-[#222] p-1 gap-1 w-full xl:w-auto overflow-x-auto custom-scrollbar">
+                <button
+                  onClick={() => setFiltroTipo('TODAS')}
+                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    filtroTipo === 'TODAS'
+                      ? 'bg-[#1f2937] text-white shadow-sm border border-gray-700/50'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
                 >
-                  <option value="RECENTES">Mais Recentes</option>
-                  <option value="PRAZO">Prazo mais Próximo</option>
-                  <option value="PARECERES">Mais Pareceres</option>
-                  <option value="PENDENTES_PRIMEIRO">Pendentes Primeiro</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-gray-400 font-medium">Exibir:</span>
-                <select
-                  value={itensPorPagina}
-                  onChange={(e) => setItensPorPagina(Number(e.target.value))}
-                  className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
+                  <BookOpenCheck className="w-3.5 h-3.5" /> Todas
+                  <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'TODAS' ? 'bg-black/40 text-gray-300' : 'bg-[#1f2937] text-gray-400'}`}>{previas.length}</span>
+                </button>
+                <button
+                  onClick={() => setFiltroTipo('INICIACAO')}
+                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    filtroTipo === 'INICIACAO'
+                      ? 'bg-sigma-gold text-[#070F1E] shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
                 >
-                  <option value={6}>6 por página</option>
-                  <option value={9}>9 por página</option>
-                  <option value={12}>12 por página</option>
-                  <option value={9999}>Todas</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Grid de Cards de Prévias */}
-        {previasOrdenadas.length === 0 ? (
-          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-12 text-center text-gray-400">
-            <BookOpenCheck className="w-12 h-12 mx-auto mb-3 text-gray-600 stroke-[1.5]" />
-            <h3 className="text-base font-bold text-gray-300 mb-1">Nenhuma prévia encontrada</h3>
-            <p className="text-xs text-gray-500 max-w-md mx-auto">
-              Não há pedidos de admissão correspondentes aos filtros selecionados. Clique em "Publicar Nova Prévia" ou redefina os filtros.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {previasPaginadas.map((previa) => {
-              const isAveriguado = previa.status === 'AVERIGUADO';
-              const downloadPdfUrl = `${API_URL}/regional/${id}/admissoes/${previa.id}/pdf?download=true`;
-              const viewPdfUrl = `${API_URL}/regional/${id}/admissoes/${previa.id}/pdf`;
-
-              const corSinalizador = isAveriguado 
-                ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
-                : (previa.total_consideracoes > 0 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]');
-
-              return (
-                <React.Fragment key={previa.id}>
-                  {/* Versão Mobile */}
-                  <div
-                    onClick={() => abrirModalConsideracoes(previa)}
-                    className="lg:hidden flex items-center justify-between p-3 bg-sigma-surface border border-sigma-border rounded-xl active:bg-sigma-elevated transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${corSinalizador}`} title={isAveriguado ? "Averiguada" : (previa.total_consideracoes > 0 ? "Em análise" : "Não aberta / Nova")} />
-                      <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border tracking-wider flex-shrink-0 ${getTipoBadgeColor(previa.tipo)}`}>
-                        {previa.tipo_label}
-                      </span>
-                      <span className="text-xs font-semibold text-gray-200 truncate">
-                        {previa.loja_nome} - {previa.candidato_nome}
-                      </span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                  </div>
-
-                  {/* Versão Desktop */}
-                  <div 
-                    className={`hidden lg:flex border rounded-2xl p-5 shadow-xl transition-all duration-200 flex-col justify-between group relative ${
-                      isAveriguado 
-                        ? 'bg-gradient-to-b from-emerald-950/20 via-[#131414] to-[#141414] border-emerald-500/40 hover:border-emerald-500/60 shadow-emerald-950/20' 
-                        : 'bg-sigma-surface border-sigma-border hover:border-sigma-border'
-                    }`}
-                  >
-                  <div>
-                    {/* Cabeçalho do Card: Badges de Tipo, Status de Verificação e Data */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-md border tracking-wider ${getTipoBadgeColor(previa.tipo)}`}>
-                          {previa.tipo_label}
-                        </span>
-
-                        {/* Selo de Verificação */}
-                        {isAveriguado ? (
-                          <span 
-                            className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-md border tracking-wider bg-emerald-500/10 text-emerald-400 border-emerald-500/30 flex items-center gap-1 shadow-sm shadow-emerald-500/10"
-                            title={previa.verificado_por_nome ? `Averiguado por ${previa.verificado_por_nome}` : 'Averiguado pelo Conselho'}
-                          >
-                            <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
-                            Averiguado
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border tracking-wider bg-sigma-elevated border border-sigma-border text-amber-400 border-amber-500/20 flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-amber-400" />
-                            Em Aberto
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-400 flex-shrink-0">
-                        <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                        <span>{formatarData(previa.data_postagem)}</span>
-                        
-                        {previa.pode_editar && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleExcluirPrevia(previa.id);
-                            }}
-                            className="p-1 text-gray-500 hover:text-red-400 rounded-md hover:bg-red-500/10 transition-colors ml-1"
-                            title="Ocultar esta prévia"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Título do Card Obrigatório */}
-                    <h2 className="text-sm font-bold text-white leading-snug group-hover:text-[#facc15] transition-colors mb-2">
-                      {previa.titulo_formatado}
-                    </h2>
-
-                    {/* Candidato Proposto */}
-                    <div className="flex items-center gap-2 p-2.5 bg-sigma-surface border border-sigma-border rounded-xl mb-3.5">
-                      <div className={`p-1.5 rounded-lg ${isAveriguado ? 'bg-emerald-500/10 text-emerald-400' : 'bg-sigma-elevated border border-sigma-border text-[#facc15]'}`}>
-                        <User className="w-4 h-4" />
-                      </div>
-                      <div className="overflow-hidden">
-                        <span className="text-[10px] font-semibold text-gray-400 block uppercase tracking-wider">Candidato Proposto</span>
-                        <span className="text-xs font-bold text-gray-100 truncate block">
-                          {previa.candidato_nome}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Miniatura Visual do Documento PDF */}
-                    <div className="relative bg-sigma-surface border border-[#242424] rounded-xl p-3.5 mb-4">
-                      <div className="flex items-center gap-3">
-                        
-                        {/* Mockup Miniatura Folha PDF */}
-                        <div className="w-14 h-18 bg-[#f8fafc] border border-gray-300 rounded-md p-1.5 flex flex-col justify-between shadow-md relative overflow-hidden flex-shrink-0">
-                          <div className="w-full text-center text-[5px] font-black text-amber-700 tracking-tighter">
-                            A.'.G.'.D.'.G.'.
-                          </div>
-                          
-                          <div className="space-y-1 my-1">
-                            <div className="h-1 bg-gray-300 rounded-full w-full"></div>
-                            <div className="h-1 bg-gray-300 rounded-full w-4/5"></div>
-                            <div className="h-1 bg-amber-400/80 rounded-full w-3/5"></div>
-                            <div className="h-1 bg-gray-300 rounded-full w-5/6"></div>
-                          </div>
-
-                          <div className="bg-red-600 text-white font-black text-[6px] px-1 py-0.5 rounded text-center uppercase tracking-tighter">
-                            PDF
-                          </div>
-                        </div>
-
-                        {/* Detalhes do Documento */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <FileText className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                            <span className="text-xs font-semibold text-gray-200 truncate">
-                              {previa.pdf_nome_original}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-gray-400 block">
-                            Prancha Oficial de Prévia
-                          </span>
-                          {previa.data_limite && (
-                            <span className="text-[10px] text-amber-400/90 flex items-center gap-1 mt-1 font-medium">
-                              <Clock className="w-3 h-3" />
-                              Prazo: {formatarData(previa.data_limite)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Ações Rápidas do PDF */}
-                      <div className="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-sigma-border">
-                        <button
-                          onClick={() => setPdfPreviewModal(viewPdfUrl)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-gray-300 hover:text-white bg-sigma-elevated hover:bg-sigma-elevated border border-sigma-border rounded-lg transition-colors"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-[#facc15]" />
-                          Visualizar
-                        </button>
-                        <a
-                          href={downloadPdfUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-gray-300 hover:text-white bg-sigma-elevated hover:bg-sigma-elevated border border-sigma-border rounded-lg transition-colors"
-                        >
-                          <Download className="w-3.5 h-3.5 text-gray-400" />
-                          Baixar
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Rodapé do Card: Contador de Pareceres, Botão de Verificação e Abertura do Modal */}
-                  <div className="pt-3 border-t border-sigma-border space-y-2.5">
-                    
-                    {/* Botão de Marcação/Verificação Rápida */}
-                    <div className="flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => handleAlternarStatus(previa.id, previa.status)}
-                        className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all ${
-                          isAveriguado
-                            ? 'bg-emerald-500/10 hover:bg-red-500/10 text-emerald-400 hover:text-red-300 border-emerald-500/30 hover:border-red-500/30'
-                            : 'bg-sigma-elevated hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-400 border-sigma-border hover:border-emerald-500/30'
-                        }`}
-                        title={isAveriguado ? 'Clique para reabrir averiguação' : 'Clique para marcar como averiguado'}
-                      >
-                        {isAveriguado ? (
-                          <>
-                            <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Averiguado</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-400" />
-                            <span>Marcar Averiguado</span>
-                          </>
-                        )}
-                      </button>
-
-                      {isAveriguado && previa.verificado_por_nome && (
-                        <span className="text-[10px] text-emerald-400/80 truncate max-w-[150px] font-medium" title={previa.verificado_por_nome}>
-                          Por {previa.verificado_por_nome}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 pt-1 border-t border-[#1f1f1f]">
-                      <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                        <MessageSquare className={`w-4 h-4 ${previa.total_consideracoes > 0 ? 'text-[#facc15]' : 'text-gray-600'}`} />
-                        <span className={`font-medium ${previa.total_consideracoes > 0 ? 'text-gray-200' : 'text-gray-500'}`}>
-                          {previa.total_consideracoes === 0 
-                            ? 'Sem pareceres' 
-                            : `${previa.total_consideracoes} parecer${previa.total_consideracoes > 1 ? 'es' : ''}`}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => abrirModalConsideracoes(previa)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-sigma-elevated text-gray-200 hover:text-black font-bold text-xs rounded-xl border border-sigma-border hover:border-[#facc15] transition-all"
-                      >
-                        <span>Abrir Considerações</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                  <Sparkles className="w-3.5 h-3.5" /> Iniciação
+                  {totalIniciacoes > 0 && <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'INICIACAO' ? 'bg-black/20 text-black' : 'bg-sigma-gold/20 text-sigma-gold'}`}>{totalIniciacoes}</span>}
+                </button>
+                <button
+                  onClick={() => setFiltroTipo('FILIACAO')}
+                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    filtroTipo === 'FILIACAO'
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" /> Filiação
+                  {totalFiliacoes > 0 && <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'FILIACAO' ? 'bg-black/20 text-white' : 'bg-blue-500/20 text-blue-400'}`}>{totalFiliacoes}</span>}
+                </button>
+                <button
+                  onClick={() => setFiltroTipo('REGULARIZACAO')}
+                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    filtroTipo === 'REGULARIZACAO'
+                      ? 'bg-purple-500 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Regularização
+                  {totalRegularizacoes > 0 && <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'REGULARIZACAO' ? 'bg-black/20 text-white' : 'bg-purple-500/20 text-purple-400'}`}>{totalRegularizacoes}</span>}
+                </button>
+             </div>
+             
+             {/* Busca e Status Compactos */}
+             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full xl:w-auto">
+                <div className="relative flex-1 xl:w-[200px]">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <input 
+                    type="text"
+                    placeholder="Buscar..."
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-[#121212] border border-[#222] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
+                  />
                 </div>
-                </React.Fragment>
-              );
-            })}
+                <select
+                  value={filtroStatus}
+                  onChange={(e: any) => setFiltroStatus(e.target.value)}
+                  className="bg-[#121212] border border-[#222] rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none cursor-pointer h-[34px]"
+                >
+                  <option value="TODOS">Todos Status</option>
+                  <option value="EM_ANDAMENTO">Em Aberto</option>
+                  <option value="AVERIGUADO">Averiguados</option>
+                </select>
+             </div>
           </div>
-        )}
+
+          {/* Grid de Cards de Prévias (Dogear Layout) */}
+          {previasOrdenadas.length === 0 ? (
+            <div className="bg-[#121212] border border-[#222] rounded-2xl p-12 text-center text-gray-400 mt-6">
+              <BookOpenCheck className="w-12 h-12 mx-auto mb-3 text-gray-600 stroke-[1.5]" />
+              <h3 className="text-base font-bold text-gray-300 mb-1">Nenhuma prévia encontrada</h3>
+              <p className="text-xs text-gray-500 max-w-md mx-auto">
+                Não há pedidos de admissão correspondentes aos filtros selecionados.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+              {previasPaginadas.map((previa) => {
+                const isAveriguado = previa.status === 'AVERIGUADO';
+                const hasConsideracoes = previa.total_consideracoes > 0;
+                
+                // Cores baseadas no Status, seguindo a lógica do Mural
+                let cor = { bg: 'bg-red-500/20', border: 'border-red-500/50', hex: 'rgba(239, 68, 68, 0.6)', text: 'text-red-400', Icon: Sparkles, label: 'Nova Prévia' };
+                if (isAveriguado) {
+                    cor = { bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', hex: 'rgba(16, 185, 129, 0.6)', text: 'text-emerald-400', Icon: CheckCheck, label: 'Averiguada' };
+                } else if (hasConsideracoes) {
+                    cor = { bg: 'bg-sigma-elevated', border: 'border-amber-500/50', hex: 'rgba(245, 158, 11, 0.6)', text: 'text-amber-400', Icon: MessageSquare, label: 'Em Análise' };
+                }
+
+                // Cor da tag de tipo
+                const tipoColor = previa.tipo === 'INICIACAO' ? 'text-[#facc15]' : (previa.tipo === 'FILIACAO' ? 'text-blue-400' : 'text-purple-400');
+
+                return (
+                    <div 
+                      key={previa.id}
+                      className="crvm-dogear-wrapper"
+                      style={{ '--dogear-border': cor.hex } as any}
+                    >
+                      <div
+                        onClick={() => abrirModalConsideracoes(previa)}
+                        className={`crvm-dogear-card p-3 min-h-[140px] flex flex-col justify-between cursor-pointer group-hover:brightness-110 transition-all ${isAveriguado ? 'opacity-60 saturate-[0.8]' : ''}`}
+                      >
+                        <div className="crvm-dogear-fold"></div>
+                        <div>
+                            <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider mb-2 ${cor.text}`}>
+                                <cor.Icon className="w-3.5 h-3.5" />
+                                {cor.label}
+                            </div>
+                            <h4 className="text-xs sm:text-sm font-bold text-white leading-tight pr-5 mb-1 line-clamp-2" title={previa.candidato_nome}>
+                                {previa.candidato_nome}
+                            </h4>
+                            <p className="text-[10px] text-gray-400 truncate mt-0.5" title={previa.loja_nome}>
+                                Loja: {previa.loja_nome}
+                            </p>
+                        </div>
+                        
+                        <div className="self-end mt-3 flex items-center gap-1.5 flex-wrap justify-end">
+                            {hasConsideracoes && !isAveriguado && (
+                                <div className="flex items-center gap-1 text-gray-300 bg-black/40 px-1.5 py-0.5 rounded text-[9px] font-bold border border-white/10" title="Pareceres enviados">
+                                    <MessageSquare className="w-3 h-3" /> {previa.total_consideracoes}
+                                </div>
+                            )}
+                            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border border-white/5 bg-black/20 ${tipoColor}`}>
+                                {previa.tipo_label}
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                );
+              })}
+            </div>
+          )}
 
         {/* Controles de Paginação */}
         {previasOrdenadas.length > 0 && totalPaginas > 1 && (
