@@ -6,7 +6,7 @@ import {
   BookOpenCheck, ShieldCheck, Loader2, 
   Plus,  FileText, Download, 
   MessageSquare,  Trash2, Send, CheckCircle2,
-  Clock, Sparkles, X, Eye, EyeOff, UserSearch, CheckCheck, RotateCcw, Pin,  
+  Clock, X, Eye, EyeOff, UserSearch, CheckCheck, RotateCcw, Pin,  
      ChevronDown, ChevronUp
 } from 'lucide-react';
 
