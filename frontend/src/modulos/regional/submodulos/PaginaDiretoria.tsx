@@ -390,7 +390,7 @@ function formatarLojaMembro(membro: any): string {
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Contato Oficial:</span>
                   <span className="text-gray-200 truncate max-w-[160px] font-medium" title={presidente?.email}>
-                    {presidente?.email || 'contato@corevm.org'}
+                    {presidente?.email || 'contato@core.org'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-gray-400">
@@ -449,7 +449,7 @@ function formatarLojaMembro(membro: any): string {
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Contato Oficial:</span>
                   <span className="text-gray-200 truncate max-w-[160px] font-medium" title={vicePresidente?.email}>
-                    {vicePresidente?.email || 'contato@corevm.org'}
+                    {vicePresidente?.email || 'contato@core.org'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-gray-400">
@@ -508,7 +508,7 @@ function formatarLojaMembro(membro: any): string {
                 <div className="flex items-center justify-between text-gray-400">
                   <span>Contato Oficial:</span>
                   <span className="text-gray-200 truncate max-w-[160px] font-medium" title={secretario?.email}>
-                    {secretario?.email || 'contato@corevm.org'}
+                    {secretario?.email || 'contato@core.org'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-gray-400">
@@ -609,7 +609,7 @@ function formatarLojaMembro(membro: any): string {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-500">Email:</span>
-                          <span className="text-gray-200">{selectedRole.membro.email || 'contato@corevm.org'}</span>
+                          <span className="text-gray-200">{selectedRole.membro.email || 'contato@core.org'}</span>
                         </div>
                       </div>
                     </div>

@@ -5,7 +5,7 @@ import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthConte
 import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import {
   Landmark, Loader2, Plus, Search, ArrowLeft,
-  CheckCircle2, Clock, X, HeartHandshake, Eye,
+  CheckCircle2, Clock, X, HeartHandshake,
   FileCheck, AlertCircle,
   ChevronLeft, ChevronRight, Check,
   Armchair, Activity, Radio

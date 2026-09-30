@@ -219,7 +219,7 @@ export default function Layout() {
     {
       // Adicionado em 2026-09-17. Nao fica sob /regiao/${id} porque a
       // Solicitacao de Cadastro e' um conceito do e-Sigma (Loja), nao da
-      // Regiao do CoReVM -- por isso o "to" e' um caminho absoluto fixo,
+      // Regiao do Core -- por isso o "to" e' um caminho absoluto fixo,
       // nao interpolado com o id da regiao atual. O proprio backend do
       // e-Sigma decide quem ve/decide o que; quem nao for elegivel para
       // nenhuma Loja simplesmente ve a lista vazia nesta tela.

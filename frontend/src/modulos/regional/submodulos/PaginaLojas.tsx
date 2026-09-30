@@ -201,7 +201,7 @@ export default function PaginaLojas() {
       const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
       setUserContext(userRes.data);
 
-      // Busca oficial das Lojas Jurisdicionadas pertencentes a este Conselho no CoReVM
+      // Busca oficial das Lojas Jurisdicionadas pertencentes a este Conselho no Core
       const resLojas = await clienteHttp.get(`${API_URL}/regional/${id}/lojas`);
       const lojasBase = resLojas.data?.lojas || [];
 
@@ -235,7 +235,7 @@ export default function PaginaLojas() {
               nomeVmAtivo = vmStatusRes.data[targetId] || vmStatusRes.data[String(targetId)] || nomeVmAtivo;
             }
           } catch {
-            // Degradação suave: CoReVM mantém exibição mesmo sem o módulo Lojas
+            // Degradação suave: Core mantém exibição mesmo sem o módulo Lojas
           }
         }
 
@@ -281,7 +281,7 @@ export default function PaginaLojas() {
             vmStatusMap = vmStatusRes.data;
           }
         } catch {
-          // Degradação suave: se a integração externa falhar, CoReVM exibe os dados locais sem travar a tela
+          // Degradação suave: se a integração externa falhar, Core exibe os dados locais sem travar a tela
         }
       }
 

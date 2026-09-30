@@ -51,7 +51,7 @@ function isTokenValido(token?: string | null): boolean {
 }
 
 /**
- * Recupera o token de sessão ativo do ecossistema, priorizando o token do CoReVM,
+ * Recupera o token de sessão ativo do ecossistema, priorizando o token do Core,
  * com fallback para Lojas e e-Sigma (SSO local).
  */
 export function obterTokenSessaoValido(): string | null {

@@ -247,7 +247,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
 
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex gap-3 text-xs text-blue-400 mt-4">
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <p>Ao salvar, o vínculo da loja e o mandato serão registrados imediatamente, gerando acesso ao CoReVM.</p>
+            <p>Ao salvar, o vínculo da loja e o mandato serão registrados imediatamente, gerando acesso ao Core.</p>
           </div>
           
           <div className="flex justify-end gap-3 mt-6">

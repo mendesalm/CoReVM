@@ -28,7 +28,7 @@ import { AuthProvider, useAuth } from './compartilhado/contextos/AuthContext';
 function RotaProtegida({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { token, usuario, carregando } = useAuth();
   
-  if (carregando) return <div className="h-screen w-screen flex items-center justify-center bg-black text-macaonico-dourado">Carregando CoReVM...</div>;
+  if (carregando) return <div className="h-screen w-screen flex items-center justify-center bg-black text-macaonico-dourado">Carregando Core...</div>;
   if (!token || !usuario) return <Navigate to="/login" replace />;
   if (allowedRoles && !usuario.roles.some(r => allowedRoles.includes(r))) {
     return <div className="p-8 text-red-500">Acesso negado. Nível de permissão insuficiente.</div>;
@@ -80,7 +80,7 @@ function AppRotas() {
       {/* Aprovacao da Solicitacao de Cadastro (2026-09-17) -- tela nova,
           fecha a lacuna que so existia via Swagger. Nao fica sob /regiao/:id
           porque a Solicitacao de Cadastro e' um conceito do e-Sigma (Loja),
-          nao uma Regiao do CoReVM -- quem pode ver/decidir e' o proprio
+          nao uma Regiao do Core -- quem pode ver/decidir e' o proprio
           backend do e-Sigma que resolve (SuperAdmin/webmaster ou VM/Suplente
           da Loja da solicitacao). */}
       <Route path="/solicitacoes-cadastro" element={
@@ -92,7 +92,7 @@ function AppRotas() {
       <Route path="/superadmin" element={
         // CORREÇÃO (2026-09-12): o papel emitido pelo e-Sigma no JWT é
         // "super_admin" (com underscore, minúsculo), tanto no backend do
-        // e-Sigma (role_primaria) quanto na navegação pós-login do CoReVM
+        // e-Sigma (role_primaria) quanto na navegação pós-login do Core
         // (PaginaLogin.tsx, navegarAposLogin). Antes esta rota exigia
         // "superadmin" (sem underscore), o que bloqueava QUALQUER login de
         // superadmin real com "Acesso negado" mesmo com token válido.

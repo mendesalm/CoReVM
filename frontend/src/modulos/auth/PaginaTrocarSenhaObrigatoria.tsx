@@ -24,7 +24,7 @@ function navegarAposLogin(regioes: RegiaoVinculada[], role: string | undefined, 
     return;
   }
   if (regioes.length === 0) {
-    throw new Error('Senha trocada, mas este usuário não possui vínculo com nenhum Conselho Regional cadastrado no CoReVM.');
+    throw new Error('Senha trocada, mas este usuário não possui vínculo com nenhum Conselho Regional cadastrado no Core.');
   }
   navigate(`/regiao/${regioes[0].regiao_id}`, { replace: true });
 }

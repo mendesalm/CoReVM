@@ -1,5 +1,5 @@
 // Campos de Data e Hora reutilizáveis, com o mesmo picker (react-datepicker) em toda a aplicação,
-// estilizados para combinar com o tema escuro do CoReVM (fundo #080808, borda #333, destaque #facc15).
+// estilizados para combinar com o tema escuro do Core (fundo #080808, borda #333, destaque #facc15).
 // Substituem os antigos <input type="date"> / <input type="time"> nativos, cujo visual varia entre
 // navegadores/SO — aqui o calendário/relógio é sempre o mesmo, com locale pt-BR.
 import { forwardRef } from 'react';

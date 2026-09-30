@@ -1,6 +1,6 @@
 {
-  "name": "CoReVM - Conselho Regional de Veneráveis Mestres",
-  "short_name": "CoReVM",
+  "name": "Core - Conselho Regional de Veneráveis Mestres",
+  "short_name": "Core",
   "description": "Painel de Gestão e Deliberações do Conselho Regional de Veneráveis Mestres",
   "start_url": "/",
   "scope": "/",
