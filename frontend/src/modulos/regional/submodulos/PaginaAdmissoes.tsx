@@ -101,7 +101,7 @@ export default function PaginaAdmissoes() {
 
   // Filtros, Busca, Ordenação e Paginação
   const [busca, setBusca] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState<'TODAS' | 'INICIACAO' | 'FILIACAO' | 'REGULARIZACAO'>('TODAS');
+  const [filtroTipo, setFiltroTipo] = useState<'INICIACAO' | 'FILIACAO' | 'REGULARIZACAO'>('INICIACAO');
   const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'EM_ANDAMENTO' | 'AVERIGUADO'>(
     typeof window !== 'undefined' && window.innerWidth < 1024 ? 'EM_ANDAMENTO' : 'TODOS'
   );
@@ -348,7 +348,7 @@ export default function PaginaAdmissoes() {
 
   // 1. Filtragem
   const previasFiltradas = previas.filter(p => {
-    const atendeFiltroTipo = filtroTipo === 'TODAS' || p.tipo.toUpperCase() === filtroTipo;
+    const atendeFiltroTipo = p.tipo.toUpperCase() === filtroTipo;
     const atendeFiltroStatus = 
       filtroStatus === 'TODOS' || 
       (filtroStatus === 'AVERIGUADO' && p.status === 'AVERIGUADO') ||
@@ -546,17 +546,7 @@ export default function PaginaAdmissoes() {
         {/* Abas Principais de Navegação (Design Dogear/Mural) */}
           <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
              <div className="flex rounded-2xl bg-[#121212] border border-[#222] p-1 gap-1 w-full xl:w-auto overflow-x-auto custom-scrollbar">
-                <button
-                  onClick={() => setFiltroTipo('TODAS')}
-                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                    filtroTipo === 'TODAS'
-                      ? 'bg-[#1f2937] text-white shadow-sm border border-gray-700/50'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <BookOpenCheck className="w-3.5 h-3.5" /> Todas
-                  <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'TODAS' ? 'bg-black/40 text-gray-300' : 'bg-[#1f2937] text-gray-400'}`}>{previas.length}</span>
-                </button>
+                
                 <button
                   onClick={() => setFiltroTipo('INICIACAO')}
                   className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
