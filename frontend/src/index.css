@@ -249,3 +249,7 @@ button, a, input, select, textarea, [role="button"] {
 .bg-sigma-gold { background: linear-gradient(to right, #C6AB6A, #D1A958, #EBCD79) !important; color: #070F1E !important; }
 .text-sigma-gold { color: #D1A958 !important; }
 
+
+.crvm-dogear-card { position: relative; background: linear-gradient(225deg, transparent 17px, #1f2937 0); }
+.crvm-dogear-fold { content: ''; position: absolute; top: 0; right: 0; width: 24px; height: 24px; background: linear-gradient(to bottom left, transparent 50%, rgba(255,255,255,0.08) 50%); box-shadow: -2px 2px 4px rgba(0,0,0,0.3); border-bottom-left-radius: 2px; border-left: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
+

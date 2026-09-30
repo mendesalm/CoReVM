@@ -17,7 +17,7 @@ export default function Layout() {
   const location = useLocation();
   const { usuario, logout } = useAuth();
   const [regiaoNome, setRegiaoNome] = useState('Carregando...');
-  const [loading, setLoading] = useState(true);
+  
   
   // Menu colapsável: suporta fixação via botão sandwich e expansão automática on hover
   const [sidebarPinned, setSidebarPinned] = useState(false);
@@ -83,7 +83,7 @@ export default function Layout() {
       } catch (err) {
         setRegiaoNome('Conselho Regional de Veneráveis Mestres de Anápolis e Região');
       } finally {
-        setLoading(false);
+        
       }
     };
     if (id) fetchRegiao();
@@ -257,97 +257,58 @@ export default function Layout() {
     <div className="flex flex-col h-screen bg-sigma-bg text-gray-200 overflow-hidden font-sans">
       
       {/* HEADER FULL-WIDTH (Deep Blue Glass) */}
-      <header className="w-full h-16 bg-[#070e1c]/95 backdrop-blur-md border-b border-[rgba(221,185,107,0.2)] px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 shadow-lg select-none">
-        
-        {/* Esquerda: Botão Toggle Sidebar (Sandwich) + Ícone CoRe + Nome do Conselho */}
-        <div className="flex items-center gap-3.5 min-w-0">
-          <button
-            type="button"
-            onClick={() => {
-              if (window.innerWidth < 768) {
-                setMobileDrawerOpen(prev => !prev);
-              } else {
-                setSidebarPinned(!sidebarPinned);
-              }
-            }}
-            className={`p-2 rounded-xl transition-all cursor-pointer border shrink-0 ${
-              sidebarPinned || mobileDrawerOpen
-                ? 'text-[#FDE68A] bg-[#0e1c36] border-[rgba(221,185,107,0.4)]' 
-                : 'text-gray-400 hover:text-[#FDE68A] hover:bg-[#0e1c36] border-transparent hover:border-[rgba(221,185,107,0.3)]'
-            }`}
-            title="Menu de Navegação"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-
-          {/* Logo Animada do CoRe (Somente o Ícone) */}
-          <Link 
-            to={id ? `/regiao/${id}` : '/'} 
-            className="flex items-center shrink-0 hover:opacity-90 transition-opacity" 
-            title="Início do Conselho Regional"
-          >
-            <LogoAnimadaCore theme="ouro" width={38} height={34} animated={true} />
-          </Link>
-
-          <div className="h-6 w-[1px] bg-[#262626] mx-0.5 shrink-0 hidden sm:block"></div>
-
-          {/* Nome do Conselho */}
-          <h1 className="text-xs sm:text-sm font-bold text-gray-200 tracking-wide truncate max-w-[280px] sm:max-w-[450px] md:max-w-[700px]">
-            {loading ? 'Carregando...' : (regiaoNome || "Conselho Regional de Veneráveis Mestres de Anápolis e Região")}
-          </h1>
-        </div>
-
-        {/* Direita: Usuário Ativo, Role Maçônica, Botão Instalar e Logout */}
-        <div className="flex items-center gap-3.5">
-          {isSuperAdmin && (
-            <Link
-              to="/superadmin"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-400 text-xs font-semibold transition-all shadow-sm cursor-pointer"
-              title="Voltar ao Painel Geral (SuperAdmin)"
-            >
-              <Home className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Painel Geral</span>
-            </Link>
-          )}
-
-          {podeInstalar && (
+      <header className="w-full h-16 bg-[#070e1c] border-b border-[rgba(221,185,107,0.2)] px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 select-none">
+          
+          <div className="flex items-center gap-3.5 min-w-0">
             <button
               type="button"
-              onClick={dispararInstalacao}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[rgba(221,185,107,0.15)] hover:bg-[rgba(221,185,107,0.25)] border border-[rgba(221,185,107,0.4)] text-[#FDE68A] text-xs font-semibold transition-all shadow-sm cursor-pointer"
-              title="Instalar Aplicativo no dispositivo"
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setMobileDrawerOpen(prev => !prev);
+                } else {
+                  setSidebarPinned(!sidebarPinned);
+                }
+              }}
+              className="text-[#DDB96B] hover:text-[#FDE68A] transition-colors"
             >
-              <Download className="w-3.5 h-3.5 animate-bounce" />
-              <span className="hidden sm:inline">Instalar App</span>
+              <Menu className="w-6 h-6" />
             </button>
-          )}
-
-          <div className="flex items-center gap-3 pl-3 border-l border-sigma-border">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#854d0e] to-[#facc15] flex items-center justify-center font-bold text-black text-xs shadow-md">
-              {usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'C'}
-            </div>
-            <div className="hidden md:block text-left leading-tight">
-              <p className="text-xs font-bold text-white truncate max-w-[150px]">
-                {usuario?.nome || 'SuperAdmin'}
-              </p>
-              <p className="text-[10px] text-[#facc15]/80 font-medium uppercase tracking-wider">
-                {usuario?.roles?.[0] || 'Diretoria Regional'}
-              </p>
+  
+            <Link to={id ? `/regiao/${id}` : '/'} className="flex items-center shrink-0">
+              <LogoAnimadaCore theme="ouro" width={34} height={30} animated={false} />
+            </Link>
+  
+            <div className="flex flex-col justify-center leading-tight ml-1">
+              <span className="text-[12px] font-black text-white uppercase tracking-wide">Conselho Regional</span>
+              <span className="text-[14px] font-black text-white">Anápolis</span>
             </div>
           </div>
-
-          {/* Botão Logout */}
-          <button
-            type="button"
-            onClick={logout}
-            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
-            title="Encerrar Sessão"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-
-      </header>
+  
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Link
+                to="/superadmin"
+                className="w-10 h-10 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500 hover:bg-blue-600/30 transition-all"
+                title="Painel Geral"
+              >
+                <Home className="w-5 h-5" />
+              </Link>
+            )}
+            
+            <div className="w-10 h-10 rounded-full bg-sigma-gold text-[#070F1E] flex items-center justify-center font-black text-lg shadow-md cursor-default">
+              {usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'S'}
+            </div>
+            
+            <button
+              type="button"
+              onClick={logout}
+              className="w-10 h-10 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500 hover:bg-blue-600/30 transition-all"
+              title="Sair"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        </header>
 
       {/* ÁREA INFERIOR: SIDEBAR COLAPSÁVEL + CONTEÚDO PRINCIPAL */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -697,6 +658,30 @@ export default function Layout() {
           </p>
         </div>
       )}
+
+        {/* MOBILE BOTTOM NAVIGATION */}
+        <nav className="md:hidden w-full bg-[#070e1c] border-t border-[rgba(221,185,107,0.2)] flex items-center justify-around pb-safe pt-2 px-1 h-[60px] shrink-0 z-30">
+          <NavLink to={id ? `/regiao/${id}` : '/'} end className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
+            <Bell className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Avisos</span>
+          </NavLink>
+          <NavLink to={id ? `/regiao/${id}/lojas` : '/lojas'} className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
+            <Building2 className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Lojas</span>
+          </NavLink>
+          <NavLink to={id ? `/regiao/${id}/admissoes` : '/admissoes'} className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
+            <BookOpenCheck className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Prévias</span>
+          </NavLink>
+          <NavLink to={id ? `/regiao/${id}/votacoes` : '/votacoes'} className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
+            <Vote className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Votações</span>
+          </NavLink>
+          <button onClick={() => setMobileDrawerOpen(true)} className="flex flex-col items-center gap-1 flex-1 text-gray-500 hover:text-gray-400">
+            <Menu className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Mais</span>
+          </button>
+        </nav>
 
     </div>
   );
