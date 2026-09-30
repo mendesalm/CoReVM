@@ -484,7 +484,7 @@ export default function PaginaAdmissoes() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pb-12 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-12 space-y-6">
         
         {/* Painel de Métricas Rápidas */}
         <div className="hidden lg:grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -694,7 +694,7 @@ export default function PaginaAdmissoes() {
 
               const corSinalizador = isAveriguado 
                 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
-                : (previa.total_consideracoes > 0 ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]');
+                : (previa.total_consideracoes > 0 ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]');
 
               return (
                 <React.Fragment key={previa.id}>

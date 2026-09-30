@@ -289,53 +289,53 @@ export const PaginaRelatorios: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 pb-16">
-      {/* 1. TOPO: Identificação e Simulação de Usuário */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-sigma-surface border border-sigma-border p-4 rounded-lg">
-        <div className="flex items-center space-x-3">
-          <Link 
-            to={`/regiao/${regiaoId}`}
-            className="p-2 hover:bg-sigma-elevated rounded-lg text-gray-400 hover:text-white transition-colors"
-            title="Voltar ao Painel Regional"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20">
-                MÓDULO DE GESTÃO & GOVERNANÇA
-              </span>
-              <span className="text-xs text-gray-500">•</span>
-              <span className="text-xs text-gray-400">{conselhoNome}</span>
+    <div className="min-h-screen bg-sigma-bg text-gray-200">
+      {/* Sub-Header Contextual */}
+      <div className="bg-sigma-surface border-b border-sigma-border">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/regiao/${regiaoId}`}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
+              title="Voltar ao Painel Geral"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div className="p-2 bg-sigma-elevated rounded-lg text-sigma-accent border border-sigma-border">
+              <BarChart3 className="w-5 h-5"/>
             </div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2 mt-0.5">
-              <BarChart3 className="w-5 h-5 text-macaonico-dourado" />
-              Relatórios de Gestão e Inteligência Regional
-            </h1>
+            <div>
+              <h1 className="text-sm font-bold text-white tracking-wide uppercase">Relatórios de Gestão e Inteligência</h1>
+              <p className="text-xs text-gray-400 mt-0.5">{conselhoNome || 'Conselho Regional'} — Auditoria e Estatísticas</p>
+            </div>
           </div>
-        </div>
-
-        {/* Perfil do usuário autenticado */}
-        <div className="flex items-center space-x-3 w-full lg:w-auto justify-end">
-          <div className="text-right">
-            <div className="text-xs text-gray-400">Perfil:</div>
-            <div className="text-xs font-semibold text-macaonico-dourado">
-              {userContext.role} {userContext.loja_id ? `(Loja ${userContext.loja_id})` : ''}
+          
+          {/* Perfil do usuário autenticado */}
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Perfil Ativo</div>
+              <div className="text-xs font-bold text-sigma-accent">
+                {userContext.role} {userContext.loja_id ? `(Loja ${userContext.loja_id})` : ''}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Alertas de Notificação */}
-      {erro && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">{erro}</span>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-12 space-y-6">
+
+        {/* Alertas de Notificação */}
+        {erro && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl shadow-lg flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">{erro}</span>
+            </div>
+            <button onClick={() => setErro('')} className="text-red-400 hover:text-red-300 transition-colors p-1">
+              ✕
+            </button>
           </div>
-          <button onClick={() => setErro('')} className="text-gray-400 hover:text-white text-sm">✕</button>
-        </div>
-      )}
+        )}
 
       {sucesso && (
         <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-lg flex items-center justify-between">
@@ -1121,6 +1121,7 @@ export const PaginaRelatorios: React.FC = () => {
           )}
         </>
       )}
+    </div>
     </div>
   );
 };
