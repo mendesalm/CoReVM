@@ -57,11 +57,11 @@ function corNivel(nivel: string) {
 function rotacaoEstavel(id: string): number {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (Math.abs(hash) % 7) - 3; // intervalo: -3deg a 3deg
 }
 
 export default function PainelConselho() {
+  const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
@@ -250,7 +250,6 @@ export default function PainelConselho() {
         ? 'border-2 border-yellow-400 shadow-md shadow-amber-950/20'
         : 'border-2 border-green-500 shadow-md shadow-emerald-950/20';
 
-    const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
       <div
         key={`${a.id}${keySuffix}`}
@@ -402,7 +401,6 @@ export default function PainelConselho() {
         ? 'bg-sigma-elevated border border-sigma-border text-amber-400 border-amber-500/40'
         : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
 
-    const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
       <div
         key={`${n.id}${keySuffix}`}
@@ -519,7 +517,6 @@ export default function PainelConselho() {
     // baixo, uma pequena dobra em SVG com gradiente + sombra (defs globais
     // no topo do componente), simulando o canto do papel se curvando pra
     // cima, como um post-it de verdade.
-    const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
       <button
         key={n.id}
@@ -567,7 +564,6 @@ export default function PainelConselho() {
     const cor = corNivel(a.nivel);
     const IconeNivel = cor.icone;
     const rot = rotacaoEstavel(a.id);
-    const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
       <button
         key={a.id}
@@ -614,7 +610,6 @@ export default function PainelConselho() {
   if (loading) {
     // Skeleton elegante — simula a estrutura real do painel (stat-bar + 2 colunas)
     // para reduzir a percepção de lentidão e preparar o olho do usuário.
-    const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
       <div className="min-h-screen bg-sigma-bg p-6 sm:p-8 animate-pulse">
         {/* Stat-bar skeleton */}
@@ -650,7 +645,6 @@ export default function PainelConselho() {
   }
 
   if (erro) {
-    const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
       <div className="h-screen bg-sigma-bg flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
         <ShieldCheck className="w-16 h-16"/> {erro}
@@ -710,7 +704,6 @@ export default function PainelConselho() {
           </defs>
         </svg>
 
-  const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
     <div className="min-h-screen bg-sigma-bg text-gray-200 p-4 sm:p-6 flex flex-col">
       {/* Container Principal Mobile-First */}
@@ -813,7 +806,6 @@ export default function PainelConselho() {
           </defs>
         </svg>
 
-  const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
                   <div
                     key={item.id}
@@ -889,7 +881,6 @@ export default function PainelConselho() {
         const numPalavras = avisoForm.conteudo.trim().split(/\s+/).filter(Boolean).length;
         const excedeuLimite = numPalavras > 200;
 
-        const [abaAtiva, setAbaAtiva] = useState<'avisos' | 'notificacoes'>('avisos');
   return (
           <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
             <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
