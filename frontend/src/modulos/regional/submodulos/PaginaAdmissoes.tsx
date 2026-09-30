@@ -3,11 +3,11 @@ import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthConte
 import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
-  BookOpenCheck, ShieldCheck, Loader2, Award,
+  BookOpenCheck, ShieldCheck, Loader2, 
   Plus, Search, ArrowLeft, FileText, Download, 
   MessageSquare,  Trash2, Send, CheckCircle2,
   Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw, Pin,  
-   ChevronLeft, ChevronRight, ChevronDown, ChevronUp
+     ChevronDown, ChevronUp
 } from 'lucide-react';
 
 // CORREÇÃO (2026-09-18): esta página ainda usava axios puro + um seletor
@@ -376,7 +376,7 @@ export default function PaginaAdmissoes() {
   });
 
   // 3. Paginação
-  const totalPaginas = Math.ceil(previasOrdenadas.length / itensPorPagina) || 1;
+  
   // Métricas
   const totalIniciacoes = previas.filter(p => p.tipo.toUpperCase() === 'INICIACAO').length;
   const totalFiliacoes = previas.filter(p => p.tipo.toUpperCase() === 'FILIACAO').length;
