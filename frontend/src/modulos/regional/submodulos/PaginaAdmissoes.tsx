@@ -106,7 +106,7 @@ export default function PaginaAdmissoes() {
     typeof window !== 'undefined' && window.innerWidth < 1024 ? 'EM_ANDAMENTO' : 'TODOS'
   );
   const [ordenacao, ] = useState<'RECENTES' | 'PRAZO' | 'PARECERES' | 'PENDENTES_PRIMEIRO'>('RECENTES');
-  const [itensPorPagina, ] = useState(6);
+  
 
   // Modal de Considerações
   const [previaSelecionada, setPreviaSelecionada] = useState<PreviaAdmissaoItem | null>(null);
