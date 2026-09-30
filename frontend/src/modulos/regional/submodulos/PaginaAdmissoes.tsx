@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { clienteHttp, API_URL } from '../../../compartilhado/contextos/AuthContext';
 import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   BookOpenCheck, ShieldCheck, Loader2, 
-  Plus,  ArrowLeft, FileText, Download, 
+  Plus,  FileText, Download, 
   MessageSquare,  Trash2, Send, CheckCircle2,
-  Clock, Sparkles, User, X, Eye, EyeOff, UserSearch, CheckCheck, RotateCcw, Pin,  
+  Clock, Sparkles, X, Eye, EyeOff, UserSearch, CheckCheck, RotateCcw, Pin,  
      ChevronDown, ChevronUp
 } from 'lucide-react';
 
@@ -514,28 +514,28 @@ export default function PaginaAdmissoes() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
               {previasOrdenadas.map((previa) => {
-                // Rotação sutil e aleatória para simular fixação real no mural
-                const rot = (previa.id.charCodeAt(0) % 5) - 2; // -2 a +2 graus
+                  const isAveriguado = previa.status === 'AVERIGUADO';
+                  const rot = (previa.id.charCodeAt(0) % 5) - 2; // Rotação orgânica
 
-                const isAveriguado = previa.status === 'AVERIGUADO';
-                const hasConsideracoes = previa.total_consideracoes > 0;
-                
-                // Cores baseadas no Status, seguindo a lógica do Mural
-                let cor = { bg: 'bg-red-500/20', border: 'border-red-500/50', hex: 'rgba(239, 68, 68, 0.6)', text: 'text-red-400', Icon: Sparkles, label: 'Nova Prévia' };
-                if (isAveriguado) {
-                    cor = { bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', hex: 'rgba(16, 185, 129, 0.6)', text: 'text-emerald-400', Icon: CheckCheck, label: 'Averiguada' };
-                } else if (hasConsideracoes) {
-                    cor = { bg: 'bg-sigma-elevated', border: 'border-amber-500/50', hex: 'rgba(245, 158, 11, 0.6)', text: 'text-amber-400', Icon: MessageSquare, label: 'Em Análise' };
-                }
+                  // Determinar cor da borda pela aba
+                  let corHex = '#10b981'; // Default
+                  let corText = 'text-emerald-400';
+                  if (previa.tipo === 'INICIACAO') {
+                     corHex = '#facc15';
+                     corText = 'text-sigma-gold';
+                  } else if (previa.tipo === 'FILIACAO') {
+                     corHex = '#3b82f6';
+                     corText = 'text-blue-400';
+                  } else if (previa.tipo === 'REGULARIZACAO') {
+                     corHex = '#a855f7';
+                     corText = 'text-purple-400';
+                  }
 
-                // Cor da tag de tipo
-                const tipoColor = previa.tipo === 'INICIACAO' ? 'text-[#facc15]' : (previa.tipo === 'FILIACAO' ? 'text-blue-400' : 'text-purple-400');
-
-                return (
+                  return (
                       <div 
                         key={previa.id}
                         className="crvm-dogear-wrapper relative"
-                        style={{ '--dogear-border': '#10b981' } as any}
+                        style={{ '--dogear-border': corHex, transform: `rotate(${rot}deg)` } as any}
                       >
                         <div
                           onClick={() => abrirModalConsideracoes(previa)}
@@ -543,15 +543,31 @@ export default function PaginaAdmissoes() {
                         >
                           <div className="crvm-dogear-fold"></div>
                           
-                          <h4 className="text-sm font-bold text-emerald-400 leading-tight mb-2 pr-5">
-                             Loja {previa.loja_numero || previa.loja_nome}
+                          <h4 className={`text-[11px] font-extrabold uppercase tracking-wider mb-2 pr-5 ${corText}`}>
+                             {previa.tipo_label}
                           </h4>
-                          <p className="text-[11px] text-gray-400 leading-tight pr-4">
-                             Clique para ler a mensagem
+                          
+                          <p className="text-sm font-bold text-white leading-tight mb-1 line-clamp-2">
+                             {previa.candidato_nome}
+                          </p>
+
+                          <p className="text-[10px] text-gray-400 leading-tight mb-3">
+                             Loja {previa.loja_numero || previa.loja_nome}
                           </p>
                           
-                          <div className="absolute bottom-3 right-3">
-                             <Pin className="w-5 h-5 text-sigma-gold" style={{ fill: 'transparent', transform: 'rotate(45deg)' }} />
+                          <div className="mt-auto flex items-center justify-between">
+                            {isAveriguado ? (
+                               <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                                 Verificado
+                               </span>
+                            ) : (
+                               <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border border-amber-500/30 text-amber-400 bg-amber-500/10">
+                                 Pendente
+                               </span>
+                            )}
+                            <div className="relative">
+                              <Pin className="w-5 h-5 text-sigma-gold opacity-80 drop-shadow-md" style={{ fill: 'transparent', transform: 'rotate(45deg)' }} />
+                            </div>
                           </div>
                         </div>
                       </div>
