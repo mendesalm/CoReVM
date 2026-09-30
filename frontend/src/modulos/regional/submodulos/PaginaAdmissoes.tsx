@@ -4,10 +4,10 @@ import { CampoData } from '../../../compartilhado/componentes/SeletorDataHora';
 import { useParams, Link } from 'react-router-dom';
 import {
   BookOpenCheck, ShieldCheck, Loader2, Award,
-  Plus, Search, ArrowLeft, FileText, Download, ExternalLink,
-  MessageSquare, Calendar, Trash2, Send, CheckCircle2,
-  Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw, AlertTriangle, AlertOctagon,
-  SlidersHorizontal, ChevronLeft, ChevronRight, ChevronDown, ChevronUp
+  Plus, Search, ArrowLeft, FileText, Download, 
+  MessageSquare,  Trash2, Send, CheckCircle2,
+  Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw, Pin,  
+   ChevronLeft, ChevronRight, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 // CORREÇÃO (2026-09-18): esta página ainda usava axios puro + um seletor
@@ -105,9 +105,9 @@ export default function PaginaAdmissoes() {
   const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'EM_ANDAMENTO' | 'AVERIGUADO'>(
     typeof window !== 'undefined' && window.innerWidth < 1024 ? 'EM_ANDAMENTO' : 'TODOS'
   );
-  const [ordenacao, setOrdenacao] = useState<'RECENTES' | 'PRAZO' | 'PARECERES' | 'PENDENTES_PRIMEIRO'>('RECENTES');
+  const [ordenacao, ] = useState<'RECENTES' | 'PRAZO' | 'PARECERES' | 'PENDENTES_PRIMEIRO'>('RECENTES');
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const [itensPorPagina, setItensPorPagina] = useState(6);
+  const [itensPorPagina, ] = useState(6);
 
   // Modal de Considerações
   const [previaSelecionada, setPreviaSelecionada] = useState<PreviaAdmissaoItem | null>(null);
@@ -287,7 +287,8 @@ export default function PaginaAdmissoes() {
   };
 
   // Excluir Prévia (Deleção Visual)
-  const handleExcluirPrevia = async (previaId: string) => {
+  // @ts-ignore
+    const handleExcluirPrevia = async (previaId: string) => {
     if (!confirm('Deseja realmente ocultar esta prévia do Mural de Admissão?')) return;
     try {
       await clienteHttp.delete(`${API_URL}/regional/${id}/admissoes/${previaId}`);
@@ -627,6 +628,9 @@ export default function PaginaAdmissoes() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
               {previasPaginadas.map((previa) => {
+                // Rotação sutil e aleatória para simular fixação real no mural
+                const rot = (previa.id.charCodeAt(0) % 5) - 2; // -2 a +2 graus
+
                 const isAveriguado = previa.status === 'AVERIGUADO';
                 const hasConsideracoes = previa.total_consideracoes > 0;
                 
@@ -644,9 +648,13 @@ export default function PaginaAdmissoes() {
                 return (
                     <div 
                       key={previa.id}
-                      className="crvm-dogear-wrapper"
-                      style={{ '--dogear-border': cor.hex } as any}
+                      className="crvm-dogear-wrapper relative"
+                      style={{ '--dogear-border': cor.hex, transform: `rotate(${rot}deg)` } as any}
                     >
+                      {/* Simulação de alfinete (Pin) fixando o documento no topo */}
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 drop-shadow-md">
+                        <Pin className="w-5 h-5 text-sigma-accent fill-sigma-accent/30" />
+                      </div>
                       <div
                         onClick={() => abrirModalConsideracoes(previa)}
                         className={`crvm-dogear-card p-3 min-h-[140px] flex flex-col justify-between cursor-pointer group-hover:brightness-110 transition-all ${isAveriguado ? 'opacity-60 saturate-[0.8]' : ''}`}

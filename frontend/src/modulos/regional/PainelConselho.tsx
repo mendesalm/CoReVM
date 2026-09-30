@@ -780,6 +780,7 @@ export default function PainelConselho() {
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <div className="grid grid-cols-2 gap-3">
               {(abaAtiva === 'avisos' ? avisosOrdenados : notifOrdenadas).map((item: any) => {
+                  const rot = (item.id.charCodeAt(0) % 5) - 2; // Rotação para simular mural físico
                 const cor = corNivel(item.nivel);
                 
         {/* ALTERAÇÃO (2026-09-19): defs SVG globais */}
@@ -808,10 +809,14 @@ export default function PainelConselho() {
 
   return (
                   <div 
-                      key={item.id}
-                      className="crvm-dogear-wrapper"
-                      style={{ '--dogear-border': cor.hex } as any}
-                    >
+                        key={item.id}
+                        className="crvm-dogear-wrapper relative"
+                        style={{ '--dogear-border': cor.hex, transform: `rotate(${rot}deg)` } as any}
+                      >
+                        {/* Simulação de alfinete (Pin) no topo do documento */}
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 drop-shadow-md">
+                          <Pin className={`w-5 h-5 ${item.fixado ? 'text-sigma-accent fill-sigma-accent/50 scale-110' : 'text-gray-500 fill-gray-500/20'}`} />
+                        </div>
                       <div
                         onClick={() => { setItemEmFocoId(item.id); }}
                         className="crvm-dogear-card p-3 min-h-[100px] flex flex-col justify-between cursor-pointer group-hover:brightness-110 transition-all"
@@ -838,9 +843,7 @@ export default function PainelConselho() {
                             <Archive className="w-3 h-3" /> ARQ
                           </div>
                         )}
-                        {item.fixado && !item.arquivado && (
-                          <Pin className="w-3.5 h-3.5 text-sigma-accent fill-sigma-accent/20 rotate-45" />
-                        )}
+
                       </div>
                   </div>
                     </div>
