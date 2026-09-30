@@ -6,7 +6,7 @@ import {
   BookOpenCheck, ShieldCheck, Loader2, 
   Plus,  ArrowLeft, FileText, Download, 
   MessageSquare,  Trash2, Send, CheckCircle2,
-  Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw, Pin,  
+  Clock, Sparkles, User, X, Eye, EyeOff, UserSearch, CheckCheck, RotateCcw, Pin,  
      ChevronDown, ChevronUp
 } from 'lucide-react';
 
@@ -434,32 +434,24 @@ export default function PaginaAdmissoes() {
     <div className="h-full flex flex-col p-4 sm:p-6 lg:p-8 min-h-0 bg-[#080808]">
       
       {/* HEADER DO PAINEL */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6 shrink-0">
+      <div className="bg-[#2a303c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shrink-0 shadow-lg">
         <div className="flex items-center gap-4">
-          <Link
-            to={`/regiao/${id}`}
-            className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-            title="Voltar ao Painel Geral"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
+          <div className="w-12 h-12 bg-[#d4b97f] rounded-xl flex items-center justify-center text-[#212836] shrink-0 shadow-inner">
+            <UserSearch className="w-7 h-7" />
+          </div>
           <div>
-            <h1 className="text-xl font-black text-sigma-accent">Mural de Admissões</h1>
-            <p className="text-[10px] text-gray-400">Propostas de Iniciação, Filiação e Regularização</p>
+            <h1 className="text-xl font-bold text-sigma-gold leading-tight">Mural de Admissões</h1>
+            <p className="text-[10px] sm:text-xs text-gray-300">Propostas de iniciação, filiação ou regularização</p>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          
           <button
             onClick={() => setShowNovaPreviaModal(true)}
-            className="w-14 h-14 bg-[#1f2937] border border-sigma-border rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md"
+            className="w-12 h-12 bg-[#1f2937] border border-gray-600 rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md shrink-0"
             title="Nova Admissão"
           >
-            <div className="relative">
-              <BookOpenCheck className="w-7 h-7" />
-              <Plus className="w-4 h-4 absolute -top-1 -right-2 bg-sigma-surface rounded-full border border-sigma-border" />
-            </div>
+            <Plus className="w-8 h-8 font-light" />
           </button>
         </div>
       </div>
@@ -469,66 +461,42 @@ export default function PaginaAdmissoes() {
         <button
           type="button"
           onClick={() => setFiltroTipo('INICIACAO')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-3 rounded-t-xl text-[13px] font-bold transition-all ${
             filtroTipo === 'INICIACAO'
-              ? 'bg-sigma-gold text-[#070F1E]'
-              : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+              ? 'bg-[#d4b97f] text-[#212836]'
+              : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">Iniciação</span>
-          {totalIniciacoes > 0 && (
-            <span className={`min-w-[20px] h-[20px] px-1 rounded-full text-[11px] font-black flex items-center justify-center ml-1 ${
-              filtroTipo === 'INICIACAO' ? 'bg-[#070F1E] text-sigma-accent' : 'bg-sigma-elevated text-white'
-            }`}>
-              {totalIniciacoes}
-            </span>
-          )}
+          Iniciação {totalIniciacoes}
         </button>
         
         <button
           type="button"
           onClick={() => setFiltroTipo('FILIACAO')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-3 rounded-t-xl text-[13px] font-bold transition-all ${
             filtroTipo === 'FILIACAO'
-              ? 'bg-blue-500 text-[#070F1E]'
-              : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+              ? 'bg-[#d4b97f] text-[#212836]'
+              : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          <User className="w-4 h-4" />
-          <span className="hidden sm:inline">Filiação</span>
-          {totalFiliacoes > 0 && (
-            <span className={`min-w-[20px] h-[20px] px-1 rounded-full text-[11px] font-black flex items-center justify-center ml-1 ${
-              filtroTipo === 'FILIACAO' ? 'bg-[#070F1E] text-blue-400' : 'bg-sigma-elevated text-white'
-            }`}>
-              {totalFiliacoes}
-            </span>
-          )}
+          Filiação {totalFiliacoes}
         </button>
 
         <button
           type="button"
           onClick={() => setFiltroTipo('REGULARIZACAO')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-3 rounded-t-xl text-[13px] font-bold transition-all ${
             filtroTipo === 'REGULARIZACAO'
-              ? 'bg-purple-500 text-white'
-              : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+              ? 'bg-[#d4b97f] text-[#212836]'
+              : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          <RotateCcw className="w-4 h-4" />
-          <span className="hidden sm:inline">Regularização</span>
-          {totalRegularizacoes > 0 && (
-            <span className={`min-w-[20px] h-[20px] px-1 rounded-full text-[11px] font-black flex items-center justify-center ml-1 ${
-              filtroTipo === 'REGULARIZACAO' ? 'bg-[#070F1E] text-purple-400' : 'bg-sigma-elevated text-white'
-            }`}>
-              {totalRegularizacoes}
-            </span>
-          )}
+          Regularização {totalRegularizacoes}
         </button>
       </div>
 
       {/* CONTEÚDO PRINCIPAL (Grid e Cards) */}
-      <div className="bg-sigma-surface border border-sigma-border rounded-b-xl rounded-tr-xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
+      <div className="bg-[#2a303c] border border-gray-700/50 rounded-b-2xl rounded-tr-2xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
         
         
 
@@ -564,72 +532,61 @@ export default function PaginaAdmissoes() {
                 const tipoColor = previa.tipo === 'INICIACAO' ? 'text-[#facc15]' : (previa.tipo === 'FILIACAO' ? 'text-blue-400' : 'text-purple-400');
 
                 return (
-                    <div 
-                      key={previa.id}
-                      className="crvm-dogear-wrapper relative"
-                      style={{ '--dogear-border': cor.hex, transform: `rotate(${rot}deg)` } as any}
-                    >
-                      {/* Simulação de alfinete (Pin) fixando o documento no topo */}
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 drop-shadow-md">
-                        <Pin className="w-5 h-5 text-sigma-accent fill-sigma-accent/30" />
-                      </div>
-                      <div
-                        onClick={() => abrirModalConsideracoes(previa)}
-                        className={`crvm-dogear-card p-3 min-h-[140px] flex flex-col justify-between cursor-pointer group-hover:brightness-110 transition-all ${isAveriguado ? 'opacity-60 saturate-[0.8]' : ''}`}
+                      <div 
+                        key={previa.id}
+                        className="crvm-dogear-wrapper relative"
+                        style={{ '--dogear-border': '#10b981' } as any}
                       >
-                        <div className="crvm-dogear-fold"></div>
-                        <div>
-                            <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider mb-2 ${cor.text}`}>
-                                <cor.Icon className="w-3.5 h-3.5" />
-                                {cor.label}
-                            </div>
-                            <h4 className="text-xs sm:text-sm font-bold text-white leading-tight pr-5 mb-1 line-clamp-2" title={previa.candidato_nome}>
-                                {previa.candidato_nome}
-                            </h4>
-                            <p className="text-[10px] text-gray-400 truncate mt-0.5" title={previa.loja_nome}>
-                                Loja: {previa.loja_nome}
-                            </p>
-                        </div>
-                        
-                        <div className="self-end mt-3 flex items-center gap-1.5 flex-wrap justify-end">
-                            {hasConsideracoes && !isAveriguado && (
-                                <div className="flex items-center gap-1 text-gray-300 bg-black/40 px-1.5 py-0.5 rounded text-[9px] font-bold border border-white/10" title="Pareceres enviados">
-                                    <MessageSquare className="w-3 h-3" /> {previa.total_consideracoes}
-                                </div>
-                            )}
-                            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border border-white/5 bg-black/20 ${tipoColor}`}>
-                                {previa.tipo_label}
-                            </div>
+                        <div
+                          onClick={() => abrirModalConsideracoes(previa)}
+                          className={`crvm-dogear-card p-4 min-h-[120px] flex flex-col cursor-pointer hover:brightness-110 transition-all bg-[#212836] ${isAveriguado ? 'opacity-60 saturate-[0.8]' : ''}`}
+                        >
+                          <div className="crvm-dogear-fold"></div>
+                          
+                          <h4 className="text-sm font-bold text-emerald-400 leading-tight mb-2 pr-5">
+                             Loja {previa.loja_numero || previa.loja_nome}
+                          </h4>
+                          <p className="text-[11px] text-gray-400 leading-tight pr-4">
+                             Clique para ler a mensagem
+                          </p>
+                          
+                          <div className="absolute bottom-3 right-3">
+                             <Pin className="w-5 h-5 text-sigma-gold" style={{ fill: 'transparent', transform: 'rotate(45deg)' }} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )
           }
         </div>
 
         {/* SPLIT FOOTER */}
-        <div className="grid grid-cols-2 border-t border-sigma-border bg-sigma-elevated mt-auto shrink-0">
-          <div className="border-r border-sigma-border"></div>
-          
-          <div className="flex items-center justify-between p-4 bg-transparent">
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-gray-400" />
-              <div className="text-left leading-tight">
-                <span className="text-[10px] font-bold block">Em</span>
-                <span className="text-[11px] font-bold">Análise</span>
+          <div className="grid grid-cols-2 border-t border-gray-700/50 bg-[#2a303c] mt-auto shrink-0">
+            <div className="flex items-center justify-between p-4 border-r border-gray-700/50">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-white" />
+                <span className="text-xs font-bold text-white">Verificados</span>
               </div>
+              <span className="text-sm font-bold text-white">
+                {totalAveriguadas}
+              </span>
             </div>
-            <span className="text-sm font-black text-white">
-              {totalPendentes}
-            </span>
+            
+            <div className="flex items-center justify-between p-4 bg-transparent">
+              <div className="flex items-center gap-2">
+                <EyeOff className="w-5 h-5 text-white" />
+                <span className="text-xs font-bold text-white">Não Verificados</span>
+              </div>
+              <span className="text-sm font-bold text-white">
+                {totalPendentes}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* MODAL DE CONSIDERAÇÕES INCREMENTAIS (Agora como Drawer/Slide-over) */}
+        {/* MODAL DE CONSIDERAÇÕES INCREMENTAIS (Agora como Drawer/Slide-over) */}
       {previaSelecionada && (
         <div className="fixed inset-0 z-50 flex justify-end">
           {/* Overlay escuro */}
