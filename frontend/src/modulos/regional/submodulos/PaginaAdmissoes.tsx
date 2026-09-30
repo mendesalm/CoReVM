@@ -102,7 +102,9 @@ export default function PaginaAdmissoes() {
   // Filtros, Busca, Ordenação e Paginação
   const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODAS' | 'INICIACAO' | 'FILIACAO' | 'REGULARIZACAO'>('TODAS');
-  const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'EM_ANDAMENTO' | 'AVERIGUADO'>('TODOS');
+  const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'EM_ANDAMENTO' | 'AVERIGUADO'>(
+    typeof window !== 'undefined' && window.innerWidth < 1024 ? 'EM_ANDAMENTO' : 'TODOS'
+  );
   const [ordenacao, setOrdenacao] = useState<'RECENTES' | 'PRAZO' | 'PARECERES' | 'PENDENTES_PRIMEIRO'>('RECENTES');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [itensPorPagina, setItensPorPagina] = useState(6);
@@ -690,6 +692,10 @@ export default function PaginaAdmissoes() {
               const downloadPdfUrl = `${API_URL}/regional/${id}/admissoes/${previa.id}/pdf?download=true`;
               const viewPdfUrl = `${API_URL}/regional/${id}/admissoes/${previa.id}/pdf`;
 
+              const corSinalizador = isAveriguado 
+                ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
+                : (previa.total_consideracoes > 0 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]');
+
               return (
                 <React.Fragment key={previa.id}>
                   {/* Versão Mobile */}
@@ -698,6 +704,7 @@ export default function PaginaAdmissoes() {
                     className="lg:hidden flex items-center justify-between p-3 bg-[#141414] border border-[#252525] rounded-xl active:bg-[#1a1a1a] transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2 overflow-hidden">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${corSinalizador}`} title={isAveriguado ? "Averiguada" : (previa.total_consideracoes > 0 ? "Em análise" : "Não aberta / Nova")} />
                       <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border tracking-wider flex-shrink-0 ${getTipoBadgeColor(previa.tipo)}`}>
                         {previa.tipo_label}
                       </span>
