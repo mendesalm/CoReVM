@@ -106,7 +106,6 @@ export default function PaginaAdmissoes() {
     typeof window !== 'undefined' && window.innerWidth < 1024 ? 'EM_ANDAMENTO' : 'TODOS'
   );
   const [ordenacao, ] = useState<'RECENTES' | 'PRAZO' | 'PARECERES' | 'PENDENTES_PRIMEIRO'>('RECENTES');
-  const [paginaAtual, setPaginaAtual] = useState(1);
   const [itensPorPagina, ] = useState(6);
 
   // Modal de Considerações
@@ -181,11 +180,6 @@ export default function PaginaAdmissoes() {
   useEffect(() => {
     if (id) carregarDados();
   }, [id]);
-
-  // Resetar paginação ao filtrar ou buscar
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [busca, filtroTipo, filtroStatus, ordenacao, itensPorPagina]);
 
   // Alternar Status de Verificação (Marcar como Averiguado / Em Aberto)
   const handleAlternarStatus = async (previaId: string, statusAtual: string) => {
@@ -383,10 +377,6 @@ export default function PaginaAdmissoes() {
 
   // 3. Paginação
   const totalPaginas = Math.ceil(previasOrdenadas.length / itensPorPagina) || 1;
-  const indexInicio = (paginaAtual - 1) * itensPorPagina;
-  const indexFim = itensPorPagina === 9999 ? previasOrdenadas.length : indexInicio + itensPorPagina;
-  const previasPaginadas = itensPorPagina === 9999 ? previasOrdenadas : previasOrdenadas.slice(indexInicio, indexFim);
-
   // Métricas
   const totalIniciacoes = previas.filter(p => p.tipo.toUpperCase() === 'INICIACAO').length;
   const totalFiliacoes = previas.filter(p => p.tipo.toUpperCase() === 'FILIACAO').length;
@@ -452,161 +442,132 @@ export default function PaginaAdmissoes() {
   }
 
   return (
-    <div className="min-h-screen bg-sigma-bg text-gray-200">
+    <div className="h-full flex flex-col p-4 sm:p-6 lg:p-8 min-h-0 bg-[#080808]">
       
-      {/* Sub-Header Contextual */}
-      <div className="bg-sigma-surface border-b border-sigma-border">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              to={`/regiao/${id}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
-              title="Voltar ao Painel Geral"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
-              <BookOpenCheck className="w-5 h-5"/>
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-white tracking-wide uppercase">Mural de Admissão</h1>
-              <p className="text-xs text-gray-400 mt-0.5">Propostas de Iniciação, Filiação ou Regularização</p>
-            </div>
+      {/* HEADER DO PAINEL */}
+      <div className="flex items-center justify-between mb-4 sm:mb-6 shrink-0">
+        <div className="flex items-center gap-4">
+          <Link
+            to={`/regiao/${id}`}
+            className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+            title="Voltar ao Painel Geral"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-xl font-black text-sigma-accent">Mural de Admissões</h1>
+            <p className="text-[10px] text-gray-400">Propostas de Iniciação, Filiação e Regularização</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowNovaPreviaModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs rounded-xl shadow-lg shadow-[#facc15]/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              Publicar Nova Prévia
-            </button>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Busca Desktop */}
+          <div className="hidden sm:block relative w-48 lg:w-56">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input 
+              type="text"
+              placeholder="Buscar candidato..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-[#1f2937] border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
+            />
           </div>
+          <button
+            onClick={() => setShowNovaPreviaModal(true)}
+            className="w-14 h-14 bg-[#1f2937] border border-sigma-border rounded-xl flex items-center justify-center text-white hover:bg-[#2d3748] transition-colors shadow-md"
+            title="Nova Admissão"
+          >
+            <div className="relative">
+              <BookOpenCheck className="w-7 h-7" />
+              <Plus className="w-4 h-4 absolute -top-1 -right-2 bg-sigma-surface rounded-full border border-sigma-border" />
+            </div>
+          </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-12 space-y-6">
+      {/* TABS (Folder Style) */}
+      <div className="flex px-1 gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => setFiltroTipo('INICIACAO')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
+            filtroTipo === 'INICIACAO'
+              ? 'bg-sigma-gold text-[#070F1E]'
+              : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Iniciação</span>
+          {totalIniciacoes > 0 && (
+            <span className={`min-w-[20px] h-[20px] px-1 rounded-full text-[11px] font-black flex items-center justify-center ml-1 ${
+              filtroTipo === 'INICIACAO' ? 'bg-[#070F1E] text-sigma-accent' : 'bg-sigma-elevated text-white'
+            }`}>
+              {totalIniciacoes}
+            </span>
+          )}
+        </button>
         
-        {/* Painel de Métricas Rápidas */}
-        <div className="hidden lg:grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Prévias</span>
-              <span className="text-xl font-black text-white">{previas.length}</span>
-            </div>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
-              <FileText className="w-5 h-5" />
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={() => setFiltroTipo('FILIACAO')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
+            filtroTipo === 'FILIACAO'
+              ? 'bg-blue-500 text-[#070F1E]'
+              : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          <span className="hidden sm:inline">Filiação</span>
+          {totalFiliacoes > 0 && (
+            <span className={`min-w-[20px] h-[20px] px-1 rounded-full text-[11px] font-black flex items-center justify-center ml-1 ${
+              filtroTipo === 'FILIACAO' ? 'bg-[#070F1E] text-blue-400' : 'bg-sigma-elevated text-white'
+            }`}>
+              {totalFiliacoes}
+            </span>
+          )}
+        </button>
 
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Iniciações</span>
-              <span className="text-xl font-black text-amber-400">{totalIniciacoes}</span>
-            </div>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border text-amber-400 rounded-lg">
-              <Sparkles className="w-5 h-5" />
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={() => setFiltroTipo('REGULARIZACAO')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-t-xl text-sm font-bold transition-all ${
+            filtroTipo === 'REGULARIZACAO'
+              ? 'bg-purple-500 text-white'
+              : 'bg-sigma-surface text-white hover:bg-[#2d3748]'
+          }`}
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span className="hidden sm:inline">Regularização</span>
+          {totalRegularizacoes > 0 && (
+            <span className={`min-w-[20px] h-[20px] px-1 rounded-full text-[11px] font-black flex items-center justify-center ml-1 ${
+              filtroTipo === 'REGULARIZACAO' ? 'bg-[#070F1E] text-purple-400' : 'bg-sigma-elevated text-white'
+            }`}>
+              {totalRegularizacoes}
+            </span>
+          )}
+        </button>
+      </div>
 
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Filiações</span>
-              <span className="text-xl font-black text-blue-400">{totalFiliacoes}</span>
+      {/* CONTEÚDO PRINCIPAL (Grid e Cards) */}
+      <div className="bg-sigma-surface border border-sigma-border rounded-b-xl rounded-tr-xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
+        
+        {/* Mobile Search - Só aparece se tela menor que sm */}
+        <div className="sm:hidden p-3 border-b border-sigma-border bg-sigma-elevated shrink-0">
+            <div className="relative w-full">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input 
+                type="text"
+                placeholder="Buscar candidato..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-[#1f2937] border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
+              />
             </div>
-            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
-              <Award className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Regularizações</span>
-              <span className="text-xl font-black text-purple-400">{totalRegularizacoes}</span>
-            </div>
-            <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between col-span-2 sm:col-span-1">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Averiguadas</span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-black text-emerald-400">{totalAveriguadas}</span>
-                <span className="text-[11px] text-gray-500 font-semibold">/ {totalPendentes} pendentes</span>
-              </div>
-            </div>
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <CheckCheck className="w-5 h-5" />
-            </div>
-          </div>
         </div>
 
-        {/* Abas Principais de Navegação (Design Dogear/Mural) */}
-          <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
-             <div className="flex rounded-2xl bg-[#121212] border border-[#222] p-1 gap-1 w-full xl:w-auto overflow-x-auto custom-scrollbar">
-                
-                <button
-                  onClick={() => setFiltroTipo('INICIACAO')}
-                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                    filtroTipo === 'INICIACAO'
-                      ? 'bg-sigma-gold text-[#070F1E] shadow-sm'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" /> Iniciação
-                  {totalIniciacoes > 0 && <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'INICIACAO' ? 'bg-black/20 text-black' : 'bg-sigma-gold/20 text-sigma-gold'}`}>{totalIniciacoes}</span>}
-                </button>
-                <button
-                  onClick={() => setFiltroTipo('FILIACAO')}
-                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                    filtroTipo === 'FILIACAO'
-                      ? 'bg-blue-500 text-white shadow-sm'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <User className="w-3.5 h-3.5" /> Filiação
-                  {totalFiliacoes > 0 && <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'FILIACAO' ? 'bg-black/20 text-white' : 'bg-blue-500/20 text-blue-400'}`}>{totalFiliacoes}</span>}
-                </button>
-                <button
-                  onClick={() => setFiltroTipo('REGULARIZACAO')}
-                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                    filtroTipo === 'REGULARIZACAO'
-                      ? 'bg-purple-500 text-white shadow-sm'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" /> Regularização
-                  {totalRegularizacoes > 0 && <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${filtroTipo === 'REGULARIZACAO' ? 'bg-black/20 text-white' : 'bg-purple-500/20 text-purple-400'}`}>{totalRegularizacoes}</span>}
-                </button>
-             </div>
-             
-             {/* Busca e Status Compactos */}
-             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full xl:w-auto">
-                <div className="relative flex-1 xl:w-[200px]">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                  <input 
-                    type="text"
-                    placeholder="Buscar..."
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-[#121212] border border-[#222] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
-                  />
-                </div>
-                <select
-                  value={filtroStatus}
-                  onChange={(e: any) => setFiltroStatus(e.target.value)}
-                  className="bg-[#121212] border border-[#222] rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none cursor-pointer h-[34px]"
-                >
-                  <option value="TODOS">Todos Status</option>
-                  <option value="EM_ANDAMENTO">Em Aberto</option>
-                  <option value="AVERIGUADO">Averiguados</option>
-                </select>
-             </div>
-          </div>
-
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar">
           {/* Grid de Cards de Prévias (Dogear Layout) */}
+
           {previasOrdenadas.length === 0 ? (
             <div className="bg-[#121212] border border-[#222] rounded-2xl p-12 text-center text-gray-400 mt-6">
               <BookOpenCheck className="w-12 h-12 mx-auto mb-3 text-gray-600 stroke-[1.5]" />
@@ -617,7 +578,7 @@ export default function PaginaAdmissoes() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-              {previasPaginadas.map((previa) => {
+              {previasOrdenadas.map((previa) => {
                 // Rotação sutil e aleatória para simular fixação real no mural
                 const rot = (previa.id.charCodeAt(0) % 5) - 2; // -2 a +2 graus
 
@@ -678,50 +639,43 @@ export default function PaginaAdmissoes() {
                 );
               })}
             </div>
-          )}
+          )
+          }
+        </div>
 
-        {/* Controles de Paginação */}
-        {previasOrdenadas.length > 0 && totalPaginas > 1 && (
-          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-            <span className="text-xs text-gray-400">
-              Exibindo <b>{indexInicio + 1}</b> a <b>{Math.min(indexFim, previasOrdenadas.length)}</b> de <b>{previasOrdenadas.length}</b> documentos
-            </span>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
-                disabled={paginaAtual === 1}
-                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
-                title="Página anterior"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
-                <button
-                  key={num}
-                  onClick={() => setPaginaAtual(num)}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold border transition-all ${
-                    paginaAtual === num
-                      ? 'bg-sigma-gold text-[#070F1E] shadow-md border-[#facc15] shadow-md shadow-[#facc15]/10'
-                      : 'bg-sigma-elevated text-gray-300 border-sigma-border hover:border-[#444] hover:bg-sigma-elevated'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
-                disabled={paginaAtual === totalPaginas}
-                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
-                title="Próxima página"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+        {/* SPLIT FOOTER */}
+        <div className="grid grid-cols-2 border-t border-sigma-border bg-sigma-elevated mt-auto shrink-0">
+          <button 
+            onClick={() => setFiltroStatus(s => s === 'TODOS' ? 'EM_ANDAMENTO' : 'TODOS')}
+            className={`flex items-center justify-between p-4 border-r border-sigma-border transition-colors cursor-pointer ${filtroStatus === 'TODOS' ? 'bg-emerald-500/10 hover:bg-emerald-500/20' : 'hover:bg-white/5'}`}
+          >
+            <div className="flex items-center gap-2">
+              <CheckCheck className={`w-5 h-5 ${filtroStatus === 'TODOS' ? 'text-emerald-400' : 'text-gray-400'}`} />
+              <div className="text-left leading-tight">
+                <span className="text-[10px] font-bold block">{filtroStatus === 'TODOS' ? 'Ocultar' : 'Ver'}</span>
+                <span className="text-[11px] font-bold">Averiguadas</span>
+              </div>
             </div>
+            {filtroStatus === 'TODOS' && (
+              <span className="text-sm font-black text-emerald-400">
+                {totalAveriguadas}
+              </span>
+            )}
+          </button>
+          
+          <div className="flex items-center justify-between p-4 bg-transparent">
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-gray-400" />
+              <div className="text-left leading-tight">
+                <span className="text-[10px] font-bold block">Em</span>
+                <span className="text-[11px] font-bold">Análise</span>
+              </div>
+            </div>
+            <span className="text-sm font-black text-white">
+              {totalPendentes}
+            </span>
           </div>
-        )}
+        </div>
       </div>
 
       {/* MODAL DE CONSIDERAÇÕES INCREMENTAIS (Agora como Drawer/Slide-over) */}
