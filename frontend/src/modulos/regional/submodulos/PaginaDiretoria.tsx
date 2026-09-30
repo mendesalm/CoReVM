@@ -306,7 +306,7 @@ function formatarLojaMembro(membro: any): string {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
               <Award className="w-5 h-5"/>
             </div>
             <div>
@@ -346,7 +346,7 @@ function formatarLojaMembro(membro: any): string {
             <button
               type="button"
               onClick={() => setShowDiretoriaModal(true)}
-              className="inline-flex items-center gap-2 text-xs font-bold text-black bg-[#facc15] hover:bg-[#eab308] px-5 py-3 rounded-xl transition-all shadow-lg hover:shadow-[#facc15]/20 cursor-pointer shrink-0"
+              className="inline-flex items-center gap-2 text-xs font-bold text-black bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] px-5 py-3 rounded-xl transition-all shadow-lg hover:shadow-[#facc15]/20 cursor-pointer shrink-0"
             >
               <Edit3 className="w-4 h-4" /> Gerenciar Mesa Diretora
             </button>
@@ -360,7 +360,7 @@ function formatarLojaMembro(membro: any): string {
           <div onClick={() => openDrawer(presidente, 'Presidente', <Shield className="w-5 h-5 text-[#facc15]" />, 'Presidência executiva, convocação de plenárias e representação institucional.', 'presidente')} className="bg-sigma-surface border border-sigma-border hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30">
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/15 text-[#facc15] border border-[#facc15]/30">
                   Presidente
                 </span>
                 <Shield className="w-5 h-5 text-[#facc15] opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -674,7 +674,7 @@ function formatarLojaMembro(membro: any): string {
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-[#facc15]/10 rounded-xl text-[#facc15] border border-[#facc15]/30">
+              <div className="p-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 rounded-xl text-[#facc15] border border-[#facc15]/30">
                 <Award className="w-6 h-6" />
               </div>
               <div>
@@ -809,7 +809,7 @@ function formatarLojaMembro(membro: any): string {
                 <button 
                   type="submit"
                   disabled={salvandoDiretoria}
-                  className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-xl font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer"
+                  className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-5 py-2 rounded-xl font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {salvandoDiretoria ? 'Gravando...' : 'Salvar Mandato'}
                 </button>

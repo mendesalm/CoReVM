@@ -170,7 +170,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
               <button
                 type="submit"
                 disabled={enviando || !titulo.trim() || !descricao.trim()}
-                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-black bg-[#facc15] hover:bg-[#eab308] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-lg transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-black bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-lg transition-all"
               >
                 {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 {enviando ? 'Enviando...' : 'Enviar Reporte'}

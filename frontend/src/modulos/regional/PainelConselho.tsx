@@ -45,7 +45,7 @@ function corNivel(nivel: string) {
     return { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-300', dot: 'bg-red-400', icone: AlertOctagon, chave: 'alto' };
   }
   if (nivel === 'MEDIO') {
-    return { bg: 'bg-amber-500/20', border: 'border-amber-500/50', text: 'text-amber-300', dot: 'bg-amber-400', icone: AlertTriangle, chave: 'medio' };
+    return { bg: 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20', border: 'border-amber-500/50', text: 'text-amber-300', dot: 'bg-amber-400', icone: AlertTriangle, chave: 'medio' };
   }
   return { bg: 'bg-green-500/20', border: 'border-green-500/50', text: 'text-green-300', dot: 'bg-green-400', icone: Sparkles, chave: 'baixo' };
 }
@@ -270,7 +270,7 @@ export default function PainelConselho() {
                   mostrar também a tag "FIXADO" seria redundante,
                   então ela só aparece para MEDIO/BAIXO fixados. */}
               {a.fixado && !isUrgente && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-[#facc15] border border-[#facc15]/30">
                   <Pin className="w-3 h-3" /> FIXADO
                 </span>
               )}
@@ -280,7 +280,7 @@ export default function PainelConselho() {
                 isUrgente
                   ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
                   : isAlerta
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                    ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-amber-400 border border-amber-500/40'
                     : 'bg-green-500/20 text-green-400 border border-green-500/40'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${
@@ -390,13 +390,13 @@ export default function PainelConselho() {
     const badgeColor = isUrgente
       ? 'text-red-400 bg-red-500/10 border-red-500/30'
       : isAlerta
-        ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+        ? 'text-amber-400 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border-amber-500/30'
         : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
 
     const iconBg = isUrgente
       ? 'bg-red-500/20 text-red-400 border-red-500/40 animate-pulse'
       : isAlerta
-        ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+        ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-amber-400 border-amber-500/40'
         : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
 
     return (
@@ -536,7 +536,7 @@ export default function PainelConselho() {
           <line x1="15" y1="3.5" x2="3.5" y2="15" stroke="rgba(255,255,255,0.35)" strokeWidth="0.5" />
         </svg>
         {n.fixado && (
-          <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#facc15] flex items-center justify-center shadow-lg border border-black/10">
+          <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 flex items-center justify-center shadow-lg border border-black/10">
             <Pin className="w-3.5 h-3.5 text-black" />
           </span>
         )}
@@ -588,7 +588,7 @@ export default function PainelConselho() {
         {/* Pino de fixado no canto oposto ao da dobra do "documento", para
             não sobrepor a decoração de canto dobrado. */}
         {a.fixado && (
-          <span className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-[#facc15] flex items-center justify-center shadow-lg border border-black/10">
+          <span className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 flex items-center justify-center shadow-lg border border-black/10">
             <Pin className="w-3.5 h-3.5 text-black" />
           </span>
         )}
@@ -742,7 +742,7 @@ export default function PainelConselho() {
             {/* Métrica: Alertas */}
             <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
               totalAlertas > 0
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border-amber-500/30 text-amber-400'
                 : 'bg-sigma-surface border-sigma-border text-gray-600'
             }`}>
               <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -768,7 +768,7 @@ export default function PainelConselho() {
             {/* Métrica: Fixados */}
             <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors ${
               totalFixados > 0
-                ? 'bg-[#facc15]/10 border-[#facc15]/30 text-[#facc15]'
+                ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border-[#facc15]/30 text-[#facc15]'
                 : 'bg-sigma-surface border-sigma-border text-gray-600'
             }`}>
               <Pin className="w-4 h-4 shrink-0" />
@@ -788,7 +788,7 @@ export default function PainelConselho() {
               onClick={() => setMostrarArquivados(v => !v)}
               className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer border ${
                 mostrarArquivados
-                  ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/40'
+                  ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-[#facc15] border-[#facc15]/40'
                   : 'bg-sigma-elevated text-gray-400 border-sigma-border hover:text-white'
               }`}
             >
@@ -811,7 +811,7 @@ export default function PainelConselho() {
               onClick={() => setAbaAtiva('avisos')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
                 abaAtiva === 'avisos'
-                  ? 'bg-[#facc15] text-black shadow-sm'
+                  ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-sm'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -820,7 +820,7 @@ export default function PainelConselho() {
               {/* Badge de não-lidos em avisos */}
               {itensAvisos.filter((a: any) => !a.lido && !a.arquivado).length > 0 && (
                 <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center ${
-                  abaAtiva === 'avisos' ? 'bg-sigma-bg/20 text-black' : 'bg-[#facc15]/20 text-[#facc15]'
+                  abaAtiva === 'avisos' ? 'bg-sigma-bg/20 text-black' : 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-[#facc15]'
                 }`}>
                   {itensAvisos.filter((a: any) => !a.lido && !a.arquivado).length}
                 </span>
@@ -858,7 +858,7 @@ export default function PainelConselho() {
 
             <div className="flex items-center justify-between pb-4 border-b border-sigma-border gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 shrink-0">
+                <div className="p-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/20 rounded-xl text-amber-400 shrink-0">
                   <Megaphone className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
@@ -877,7 +877,7 @@ export default function PainelConselho() {
                         </span>
                       )}
                       {itensAvisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-amber-400 border border-amber-500/30">
                           <AlertTriangle className="w-2.5 h-2.5" />
                           {itensAvisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length}
                         </span>
@@ -897,7 +897,7 @@ export default function PainelConselho() {
               <button
                 type="button"
                 onClick={() => abrirModalNovo('AVISO')}
-                className="group relative inline-flex items-center gap-1.5 text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black px-3.5 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0 overflow-hidden"
+                className="group relative inline-flex items-center gap-1.5 text-xs font-bold bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-3.5 py-2 rounded-xl transition-all shadow-md cursor-pointer shrink-0 overflow-hidden"
               >
                 {/* Brilho deslizante ao hover */}
                 <span className="absolute inset-0 w-full h-full translate-x-[-110%] group-hover:translate-x-[110%] bg-white/20 skew-x-[-15deg] transition-transform duration-500 pointer-events-none" />
@@ -967,7 +967,7 @@ export default function PainelConselho() {
                         </span>
                       )}
                       {itensNotificacoes.filter((n: any) => n.nivel === 'MEDIO' && !n.arquivado).length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-amber-400 border border-amber-500/30">
                           <AlertTriangle className="w-2.5 h-2.5" />
                           {itensNotificacoes.filter((n: any) => n.nivel === 'MEDIO' && !n.arquivado).length}
                         </span>
@@ -1090,7 +1090,7 @@ export default function PainelConselho() {
                 <div className={`p-2.5 rounded-xl border ${
                   avisoForm.tipo === 'NOTIFICACAO'
                     ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                    : 'bg-[#facc15]/10 text-[#facc15] border-[#facc15]/30'
+                    : 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-[#facc15] border-[#facc15]/30'
                 }`}>
                   {avisoForm.tipo === 'NOTIFICACAO' ? <Bell className="w-6 h-6" /> : <Megaphone className="w-6 h-6" />}
                 </div>
@@ -1113,7 +1113,7 @@ export default function PainelConselho() {
                     onClick={() => setAvisoForm({...avisoForm, tipo: 'AVISO'})}
                     className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                       avisoForm.tipo === 'AVISO'
-                        ? 'bg-[#facc15] text-black border-[#facc15]'
+                        ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black border-[#facc15]'
                         : 'bg-sigma-elevated text-gray-400 border-sigma-border hover:text-white'
                     }`}
                   >
@@ -1225,7 +1225,7 @@ export default function PainelConselho() {
                   <button
                     type="submit"
                     disabled={salvandoAviso || excedeuLimite}
-                    className="bg-[#facc15] hover:bg-[#eab308] text-black px-5 py-2 rounded-xl font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer"
+                    className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-5 py-2 rounded-xl font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     {salvandoAviso ? 'Publicando...' : 'Publicar'}
                   </button>

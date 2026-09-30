@@ -30,12 +30,12 @@ export const ModuloGenericoConselho: React.FC<ModuloGenericoConselhoProps> = ({
       {/* Cabeçalho do Módulo */}
       <div className="bg-[#151515] border border-sigma-border rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-[#facc15]/10 border border-[#facc15]/20 rounded-2xl text-[#facc15] shadow-inner">
+          <div className="p-3.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-[#facc15]/20 rounded-2xl text-[#facc15] shadow-inner">
             <Icone className="w-7 h-7" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="text-[11px] font-extrabold px-2 py-0.5 rounded bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/30">
+              <span className="text-[11px] font-extrabold px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-[#facc15] border border-[#facc15]/30">
                 MÓDULO {numero}
               </span>
               <h2 className="text-xl font-bold text-white tracking-wide">{titulo}</h2>

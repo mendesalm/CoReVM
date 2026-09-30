@@ -83,7 +83,7 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
                 type="button" 
                 disabled={selectedIds.length === 0}
                 onClick={confirmarSelecao} 
-                className="bg-[#facc15] text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 <Check className="w-4 h-4" /> 
                 {selectedIds.length > 1 ? `Adicionar ${selectedIds.length} Lojas` : 'Adicionar Loja Selecionada'}
