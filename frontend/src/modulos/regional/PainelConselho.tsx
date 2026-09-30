@@ -710,7 +710,7 @@ export default function PainelConselho() {
       <div className="max-w-xl mx-auto w-full flex-1 flex flex-col min-h-0">
         
         {/* CABEÇALHO (Card Hero) - Clone do Mural de Admissões */}
-          <div className="bg-[#2a303c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-lg shrink-0">
+          <div className="bg-[#070e1c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-lg shrink-0">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-[#d4b97f] rounded-xl flex items-center justify-center text-[#212836] shrink-0 shadow-inner">
                 <Megaphone className="w-7 h-7" />

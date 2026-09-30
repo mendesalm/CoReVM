@@ -434,7 +434,7 @@ export default function PaginaAdmissoes() {
     <div className="h-full flex flex-col p-4 sm:p-6 lg:p-8 min-h-0 bg-[#080808]">
       
       {/* HEADER DO PAINEL */}
-      <div className="bg-[#2a303c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shrink-0 shadow-lg">
+      <div className="bg-[#070e1c] border border-gray-700/50 rounded-2xl p-4 flex items-center justify-between mb-4 shrink-0 shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-[#d4b97f] rounded-xl flex items-center justify-center text-[#212836] shrink-0 shadow-inner">
             <UserSearch className="w-7 h-7" />
@@ -464,7 +464,7 @@ export default function PaginaAdmissoes() {
           className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'INICIACAO'
               ? 'bg-[#d4b97f] text-[#212836]'
-              : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
+              : 'bg-[#070e1c] text-white hover:bg-[#3b4354]'
           }`}
         >
           <span>INICIAÇÃO</span>
@@ -477,7 +477,7 @@ export default function PaginaAdmissoes() {
           className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'FILIACAO'
               ? 'bg-[#d4b97f] text-[#212836]'
-              : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
+              : 'bg-[#070e1c] text-white hover:bg-[#3b4354]'
           }`}
         >
           <span>FILIAÇÃO</span>
@@ -490,7 +490,7 @@ export default function PaginaAdmissoes() {
           className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-t-xl text-[12px] font-bold transition-all ${
             filtroTipo === 'REGULARIZACAO'
               ? 'bg-[#d4b97f] text-[#212836]'
-              : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
+              : 'bg-[#070e1c] text-white hover:bg-[#3b4354]'
           }`}
         >
           <span>REGULARIZAÇÃO</span>
@@ -499,7 +499,7 @@ export default function PaginaAdmissoes() {
       </div>
 
       {/* CONTEÚDO PRINCIPAL (Grid e Cards) */}
-      <div className="bg-[#2a303c] border border-gray-700/50 rounded-b-2xl rounded-tr-2xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
+      <div className="bg-[#070e1c] border border-gray-700/50 rounded-b-2xl rounded-tr-2xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-0">
         
         
 
@@ -582,7 +582,7 @@ export default function PaginaAdmissoes() {
         </div>
 
         {/* SPLIT FOOTER */}
-          <div className="grid grid-cols-2 border-t border-gray-700/50 bg-[#2a303c] mt-auto shrink-0">
+          <div className="grid grid-cols-2 border-t border-gray-700/50 bg-[#070e1c] mt-auto shrink-0">
             <div className="flex items-center justify-between p-4 border-r border-gray-700/50">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-white" />
