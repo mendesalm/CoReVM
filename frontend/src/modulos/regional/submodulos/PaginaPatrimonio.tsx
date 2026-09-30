@@ -404,7 +404,7 @@ export default function PaginaPatrimonio() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
               <Landmark className="w-5 h-5"/>
             </div>
             <div>
@@ -613,7 +613,7 @@ export default function PaginaPatrimonio() {
                             Loja {item.loja_proprietaria_numero}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 text-[#facc15] rounded-full text-[10px] font-extrabold uppercase tracking-wide">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 text-[#facc15] rounded-full text-[10px] font-extrabold uppercase tracking-wide">
                             <Landmark className="w-3 h-3" />
                             Conselho Regional
                           </span>
@@ -857,7 +857,7 @@ export default function PaginaPatrimonio() {
                       {filaItem.map(f => (
                         <div key={f.id} className="bg-[#161616] border border-[#2a2a2a] p-4 rounded-xl flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 font-bold flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-sigma-elevated border border-sigma-border text-amber-400 font-bold flex items-center justify-center shrink-0">
                               {f.posicao}º
                             </div>
                             <div>
@@ -1179,7 +1179,7 @@ export default function PaginaPatrimonio() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 rounded-xl text-amber-400">
+                <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-xl text-amber-400">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
@@ -1286,7 +1286,7 @@ export default function PaginaPatrimonio() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 rounded-xl text-[#facc15]">
+                <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 rounded-xl text-[#facc15]">
                   <Plus className="w-5 h-5" />
                 </div>
                 <div>
@@ -1455,7 +1455,7 @@ export default function PaginaPatrimonio() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 rounded-xl text-[#facc15]">
+                <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 rounded-xl text-[#facc15]">
                   <FileCheck className="w-5 h-5" />
                 </div>
                 <div>

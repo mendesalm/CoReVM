@@ -401,7 +401,7 @@ export default function PaginaCalendario() {
     return (
       <div className="p-8 h-full flex items-center justify-center">
         <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
-          <div className="w-16 h-16 mx-auto bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+          <div className="w-16 h-16 mx-auto bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
@@ -541,7 +541,7 @@ export default function PaginaCalendario() {
               <button
                 type="button"
                 onClick={() => setMostrarLegenda(!mostrarLegenda)}
-                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-sigma-elevated'}`}
+                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-sigma-elevated border border-sigma-border text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-sigma-elevated'}`}
               >
                 <Palette className="w-3.5 h-3.5" />
                 Legenda
@@ -637,7 +637,7 @@ export default function PaginaCalendario() {
                           {tiposEvento.find(t => t.tipo === evento.tipo)?.rotulo || evento.tipo}
                         </span>
                         {evento.subtipo && (
-                          <span className="text-[10px] font-medium text-amber-300/80 bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-medium text-amber-300/80 bg-sigma-elevated border border-sigma-border border border-amber-500/20 px-1.5 py-0.5 rounded">
                             {SUBTIPO_ROTULOS[evento.subtipo] || evento.subtipo}
                           </span>
                         )}

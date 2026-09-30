@@ -259,7 +259,7 @@ export default function PainelSuperAdmin() {
               <p className="text-gray-400 mb-1">Status do Sistema</p>
               <h3 className="text-3xl font-bold text-green-500">Online</h3>
             </div>
-            <div className="w-12 h-12 bg-sigma-gold text-[#070F1E] shadow-sm rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-sigma-elevated border border-sigma-border rounded-full flex items-center justify-center">
               <Activity className="text-[#facc15] w-6 h-6" />
             </div>
           </div>
@@ -440,7 +440,7 @@ export default function PainelSuperAdmin() {
                   setMenuOpcoesRegiao(null);
                   navigate(`/regiao/${regId}`);
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/30 text-[#facc15] font-bold text-sm hover:bg-sigma-gold text-[#070F1E] shadow-sm transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 text-[#facc15] font-bold text-sm hover:bg-sigma-elevated border border-sigma-border transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2.5">
                   <Activity className="w-4 h-4" /> Acessar Painel do Conselho

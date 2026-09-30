@@ -104,7 +104,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
     <div className="fixed inset-0 bg-sigma-bg/80 flex items-center justify-center z-[60] p-4 overflow-y-auto">
       <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl my-auto shadow-2xl">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15]">
+          <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15]">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>

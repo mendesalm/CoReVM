@@ -393,7 +393,7 @@ export const PaginaComunicacao: React.FC = () => {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
               <MessageSquare className="w-5 h-5"/>
             </div>
             <div>
@@ -639,7 +639,7 @@ export const PaginaComunicacao: React.FC = () => {
                       <span className={`px-1.5 py-0.5 rounded font-semibold ${
                         topico.status === 'CONCLUIDA' ? 'bg-emerald-500/10 text-emerald-400' :
                         topico.status === 'RESPONDIDA' ? 'bg-blue-500/10 text-blue-400' :
-                        'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400'
+                        'bg-sigma-elevated border border-sigma-border text-amber-400'
                       }`}>
                         {topico.status}
                       </span>
@@ -668,7 +668,7 @@ export const PaginaComunicacao: React.FC = () => {
                         <Radio className="w-3 h-3" /> PRANCHA CIRCULAR GERAL
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sigma-elevated border border-sigma-border text-amber-400 border border-amber-500/20 flex items-center gap-1">
                         <Building className="w-3 h-3" /> CONSELHO ↔ LOJA
                       </span>
                     )}
@@ -890,7 +890,7 @@ export const PaginaComunicacao: React.FC = () => {
                     onClick={() => setFormNovo({ ...formNovo, tipo_alcance: 'CONSELHO_LOJA' })}
                     className={`p-2 rounded border text-left flex flex-col justify-between ${
                       formNovo.tipo_alcance === 'CONSELHO_LOJA' 
-                        ? 'border-amber-500 bg-sigma-gold text-[#070F1E] shadow-sm text-white font-bold' 
+                        ? 'border-amber-500 bg-sigma-elevated border border-sigma-border text-white font-bold' 
                         : 'border-sigma-border bg-sigma-surface text-gray-400'
                     }`}
                   >

@@ -549,7 +549,7 @@ export default function PaginaLojas() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
               <Building2 className="w-5 h-5"/>
             </div>
             <div>
@@ -575,7 +575,7 @@ export default function PaginaLojas() {
             onClick={() => setFiltroStatus('TODAS')}
             className={`p-2.5 rounded-xl border text-left transition-all ${
               filtroStatus === 'TODAS'
-                ? 'bg-sigma-gold text-[#070F1E] shadow-sm border-[#facc15] ring-1 ring-[#facc15]/30'
+                ? 'bg-sigma-elevated border border-sigma-border border-[#facc15] ring-1 ring-[#facc15]/30'
                 : 'bg-sigma-surface border-[#262626] text-gray-400'
             }`}
           >
@@ -603,7 +603,7 @@ export default function PaginaLojas() {
             onClick={() => setFiltroStatus(filtroStatus === 'PENDENTES' ? 'TODAS' : 'PENDENTES')}
             className={`p-2.5 rounded-xl border text-left transition-all ${
               filtroStatus === 'PENDENTES'
-                ? 'bg-sigma-gold text-[#070F1E] shadow-sm border-amber-500 ring-1 ring-amber-500/30'
+                ? 'bg-sigma-elevated border border-sigma-border border-amber-500 ring-1 ring-amber-500/30'
                 : 'bg-sigma-surface border-[#262626] text-gray-400'
             }`}
           >
@@ -621,7 +621,7 @@ export default function PaginaLojas() {
               <div className="text-2xl font-black text-white">{totalLojas}</div>
               <span className="text-[11px] text-gray-500">Total integradas ao conselho</span>
             </div>
-            <div className="p-3 rounded-xl bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] border border-[#facc15]/20">
+            <div className="p-3 rounded-xl bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/20">
               <Building2 className="w-6 h-6" />
             </div>
           </div>
@@ -643,7 +643,7 @@ export default function PaginaLojas() {
               <div className="text-2xl font-black text-amber-400">{lojasPendentes}</div>
               <span className="text-[11px] text-amber-500/80">Aguardando registro ou posse</span>
             </div>
-            <div className="p-3 rounded-xl bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20">
+            <div className="p-3 rounded-xl bg-sigma-elevated border border-sigma-border text-amber-400 border border-amber-500/20">
               <AlertTriangle className="w-6 h-6" />
             </div>
           </div>
@@ -706,7 +706,7 @@ export default function PaginaLojas() {
                 <button
                   type="button"
                   onClick={() => setFiltroStatus('PENDENTES')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${filtroStatus === 'PENDENTES' ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 font-bold border border-amber-500/30' : 'text-gray-400 hover:text-white'}`}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${filtroStatus === 'PENDENTES' ? 'bg-sigma-elevated border border-sigma-border text-amber-400 font-bold border border-amber-500/30' : 'text-gray-400 hover:text-white'}`}
                 >
                   Pendentes ({lojasPendentes})
                 </button>
@@ -765,7 +765,7 @@ export default function PaginaLojas() {
                           </span>
                         )}
                         {ehMeuSuplente && !ehMinhaLoja && (
-                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-sigma-gold text-[#070F1E] shadow-sm text-amber-300 border border-amber-500/30">
+                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-sigma-elevated border border-sigma-border text-amber-300 border border-amber-500/30">
                             Seu Assento
                           </span>
                         )}
@@ -859,7 +859,7 @@ export default function PaginaLojas() {
                           )}
                           {ehMeuSuplente && !ehMinhaLoja && (
                             <span
-                              className="ml-2 shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-sigma-gold text-[#070F1E] shadow-sm text-amber-300 border border-amber-500/30"
+                              className="ml-2 shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-sigma-elevated border border-sigma-border text-amber-300 border border-amber-500/30"
                               title="Você é o Suplente do Conselho desta Loja"
                             >
                               Seu Assento
@@ -1019,7 +1019,7 @@ export default function PaginaLojas() {
               <button
                 type="button"
                 onClick={() => setShowAddLojaModal(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-gold text-[#070F1E] shadow-sm hover:bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/30 px-3.5 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-3.5 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Não encontrou a loja? Clique aqui para vincular
               </button>
@@ -1036,7 +1036,7 @@ export default function PaginaLojas() {
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-xl shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm rounded-xl text-[#facc15] border border-[#facc15]/30">
+              <div className="p-2.5 bg-sigma-elevated border border-sigma-border rounded-xl text-[#facc15] border border-[#facc15]/30">
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
@@ -1795,7 +1795,7 @@ export default function PaginaLojas() {
                       setLojaDetalhesModal(null);
                       setGestaoVmModal(l);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] hover:bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/30 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sigma-elevated border border-sigma-border text-[#facc15] hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 transition-colors"
                   >
                     <Award className="w-3.5 h-3.5" /> Gerenciar VM
                   </button>

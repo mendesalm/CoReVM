@@ -45,7 +45,7 @@ function corNivel(nivel: string) {
     return { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-300', dot: 'bg-red-400', icone: AlertOctagon, chave: 'alto' };
   }
   if (nivel === 'MEDIO') {
-    return { bg: 'bg-sigma-gold text-[#070F1E] shadow-sm', border: 'border-amber-500/50', text: 'text-amber-300', dot: 'bg-amber-400', icone: AlertTriangle, chave: 'medio' };
+    return { bg: 'bg-sigma-elevated border border-sigma-border', border: 'border-amber-500/50', text: 'text-amber-300', dot: 'bg-amber-400', icone: AlertTriangle, chave: 'medio' };
   }
   return { bg: 'bg-green-500/20', border: 'border-green-500/50', text: 'text-green-300', dot: 'bg-green-400', icone: Sparkles, chave: 'baixo' };
 }
@@ -270,7 +270,7 @@ export default function PainelConselho() {
                   mostrar também a tag "FIXADO" seria redundante,
                   então ela só aparece para MEDIO/BAIXO fixados. */}
               {a.fixado && !isUrgente && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] border border-[#facc15]/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/30">
                   <Pin className="w-3 h-3" /> FIXADO
                 </span>
               )}
@@ -280,7 +280,7 @@ export default function PainelConselho() {
                 isUrgente
                   ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
                   : isAlerta
-                    ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/40'
+                    ? 'bg-sigma-elevated border border-sigma-border text-amber-400 border border-amber-500/40'
                     : 'bg-green-500/20 text-green-400 border border-green-500/40'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${
@@ -396,7 +396,7 @@ export default function PainelConselho() {
     const iconBg = isUrgente
       ? 'bg-red-500/20 text-red-400 border-red-500/40 animate-pulse'
       : isAlerta
-        ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border-amber-500/40'
+        ? 'bg-sigma-elevated border border-sigma-border text-amber-400 border-amber-500/40'
         : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
 
     return (
@@ -788,7 +788,7 @@ export default function PainelConselho() {
               onClick={() => setMostrarArquivados(v => !v)}
               className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer border ${
                 mostrarArquivados
-                  ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] border-[#facc15]/40'
+                  ? 'bg-sigma-elevated border border-sigma-border text-[#facc15] border-[#facc15]/40'
                   : 'bg-sigma-elevated text-gray-400 border-sigma-border hover:text-white'
               }`}
             >
@@ -811,7 +811,7 @@ export default function PainelConselho() {
               onClick={() => setAbaAtiva('avisos')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
                 abaAtiva === 'avisos'
-                  ? 'bg-sigma-gold text-[#070F1E] shadow-sm'
+                  ? 'bg-sigma-elevated border border-sigma-border'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -877,7 +877,7 @@ export default function PainelConselho() {
                         </span>
                       )}
                       {itensAvisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/30">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-sigma-elevated border border-sigma-border text-amber-400 border border-amber-500/30">
                           <AlertTriangle className="w-2.5 h-2.5" />
                           {itensAvisos.filter((a: any) => a.nivel === 'MEDIO' && !a.arquivado).length}
                         </span>
@@ -967,7 +967,7 @@ export default function PainelConselho() {
                         </span>
                       )}
                       {itensNotificacoes.filter((n: any) => n.nivel === 'MEDIO' && !n.arquivado).length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/30">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-sigma-elevated border border-sigma-border text-amber-400 border border-amber-500/30">
                           <AlertTriangle className="w-2.5 h-2.5" />
                           {itensNotificacoes.filter((n: any) => n.nivel === 'MEDIO' && !n.arquivado).length}
                         </span>

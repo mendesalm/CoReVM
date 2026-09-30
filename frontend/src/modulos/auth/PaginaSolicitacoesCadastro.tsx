@@ -199,7 +199,7 @@ export default function PaginaSolicitacoesCadastro() {
             onClick={() => setStatusFiltro(f.valor)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               statusFiltro === f.valor
-                ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] border-[#facc15]/40'
+                ? 'bg-sigma-elevated border border-sigma-border text-[#facc15] border-[#facc15]/40'
                 : 'text-gray-400 border-sigma-border hover:text-white hover:border-[#555]'
             }`}
           >

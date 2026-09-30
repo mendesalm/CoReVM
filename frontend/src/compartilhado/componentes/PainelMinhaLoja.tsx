@@ -258,7 +258,7 @@ export default function PainelMinhaLoja({
       {/* Cabeçalho do Painel */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-sigma-gold text-[#070F1E] shadow-sm rounded-xl text-[#facc15] border border-[#facc15]/20">
+          <div className="p-3 bg-sigma-elevated border border-sigma-border rounded-xl text-[#facc15] border border-[#facc15]/20">
             <Building2 className="w-6 h-6" />
           </div>
           <div>
@@ -291,7 +291,7 @@ export default function PainelMinhaLoja({
           <button
             type="button"
             onClick={onAbrirEdicaoLoja}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-gold text-[#070F1E] shadow-sm hover:bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
             title="Editar cadastro da Loja"
           >
             <Edit3 className="w-3.5 h-3.5" /> Editar
@@ -366,7 +366,7 @@ export default function PainelMinhaLoja({
                 <button
                   type="button"
                   onClick={onAbrirGestaoVM}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-gold text-[#070F1E] shadow-sm hover:bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
                   title="Gerenciar Venerável Mestre"
                 >
                   <UserCog className="w-3.5 h-3.5" /> Gerenciar
@@ -608,7 +608,7 @@ export default function PainelMinhaLoja({
                         ? 'bg-green-500/15 text-green-300 border-green-500/30'
                         : p.status === 'AVERIGUADO'
                           ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
-                          : 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-300 border-amber-500/30'
+                          : 'bg-sigma-elevated border border-sigma-border text-amber-300 border-amber-500/30'
                     }`}
                   >
                     {p.status === 'EM_ANDAMENTO' ? 'Em andamento' : p.status}
@@ -1428,7 +1428,7 @@ function ModalAdmissoes({ regiaoId, loja, previas, carregando, onFechar, onCriad
                     ? 'bg-green-500/15 text-green-300 border-green-500/30'
                     : p.status === 'AVERIGUADO'
                       ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
-                      : 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-300 border-amber-500/30'
+                      : 'bg-sigma-elevated border border-sigma-border text-amber-300 border-amber-500/30'
                 }`}
               >
                 {p.status === 'EM_ANDAMENTO' ? 'Em andamento' : p.status}

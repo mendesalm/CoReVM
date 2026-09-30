@@ -575,7 +575,7 @@ export default function Layout() {
                   setMobileDrawerOpen(false);
                   dispararInstalacao();
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-[#DDB96B]/50 text-[#FDE68A] hover:bg-sigma-gold text-[#070F1E] shadow-sm transition-all font-semibold shadow-lg mb-2"
+                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-[#DDB96B]/50 text-[#FDE68A] hover:bg-sigma-elevated border border-sigma-border transition-all font-semibold shadow-lg mb-2"
               >
                 <Download className="w-5 h-5 shrink-0 animate-bounce" />
                 <span className="text-sm">Instalar Aplicativo</span>

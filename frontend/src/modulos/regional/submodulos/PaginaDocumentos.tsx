@@ -317,7 +317,7 @@ export default function PaginaDocumentos() {
       case 'DECRETO':
         return { label: 'Decreto Regional', icon: Scroll, corBadge: 'bg-purple-950/60 border-purple-500/30 text-purple-300' };
       case 'REGULAMENTO':
-        return { label: 'Regulamento / Estatuto', icon: Award, corBadge: 'bg-sigma-gold text-[#070F1E] shadow-sm border-[#facc15]/30 text-[#facc15]' };
+        return { label: 'Regulamento / Estatuto', icon: Award, corBadge: 'bg-sigma-elevated border border-sigma-border border-[#facc15]/30 text-[#facc15]' };
       case 'CIRCULAR':
         return { label: 'Prancha Circular', icon: Mail, corBadge: 'bg-emerald-950/60 border-emerald-500/30 text-emerald-300' };
       case 'CONVITE':
@@ -706,7 +706,7 @@ export default function PaginaDocumentos() {
                         doc.arquivado ? (
                           <button
                             onClick={() => handleReativarDocumento(doc.id, doc.titulo)}
-                            className="p-1.5 bg-sigma-elevated hover:bg-sigma-gold text-[#070F1E] shadow-sm text-[#666] hover:text-[#facc15] border border-[#2e2e2e] rounded-xl transition-all"
+                            className="p-1.5 bg-sigma-elevated hover:bg-sigma-elevated border border-sigma-border text-[#666] hover:text-[#facc15] border border-[#2e2e2e] rounded-xl transition-all"
                             title="Reativar"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
@@ -812,7 +812,7 @@ export default function PaginaDocumentos() {
                               doc.arquivado ? (
                                 <button
                                   onClick={() => handleReativarDocumento(doc.id, doc.titulo)}
-                                  className="p-1.5 bg-[#1c1c1c] hover:bg-sigma-gold text-[#070F1E] shadow-sm text-[#666] hover:text-[#facc15] rounded-lg transition-colors"
+                                  className="p-1.5 bg-[#1c1c1c] hover:bg-sigma-elevated border border-sigma-border text-[#666] hover:text-[#facc15] rounded-lg transition-colors"
                                   title="Reativar"
                                 >
                                   <RotateCcw className="w-3.5 h-3.5" />
@@ -878,7 +878,7 @@ export default function PaginaDocumentos() {
             {/* Header do Drawer */}
             <div className="p-5 border-b border-[#242424] flex items-start justify-between bg-sigma-surface">
               <div className="flex gap-4">
-                <div className="p-3 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 rounded-xl text-[#facc15] h-fit">
+                <div className="p-3 bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 rounded-xl text-[#facc15] h-fit">
                   <FileText className="w-6 h-6" />
                 </div>
                 <div>
@@ -998,7 +998,7 @@ export default function PaginaDocumentos() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between bg-sigma-surface">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 rounded-xl text-[#facc15]">
+                <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 rounded-xl text-[#facc15]">
                   <Plus className="w-5 h-5" />
                 </div>
                 <div>

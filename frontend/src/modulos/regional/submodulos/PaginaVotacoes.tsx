@@ -375,7 +375,7 @@ export default function PaginaVotacoes() {
     return (
       <div className="min-h-screen bg-sigma-bg flex items-center justify-center p-6 text-gray-200">
         <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
-          <div className="w-16 h-16 mx-auto bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+          <div className="w-16 h-16 mx-auto bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
@@ -408,13 +408,13 @@ export default function PaginaVotacoes() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
               <Vote className="w-5 h-5"/>
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-sm font-bold text-white tracking-wide uppercase">Enquetes e Votações</h1>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] border border-[#facc15]/20">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/20">
                   {votacoes.length} cadastradas
                 </span>
                 {totalEmAndamento > 0 && (
@@ -451,7 +451,7 @@ export default function PaginaVotacoes() {
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Consultas</span>
               <span className="text-xl font-black text-white">{votacoes.length}</span>
             </div>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] rounded-lg">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
               <Vote className="w-5 h-5" />
             </div>
           </div>
@@ -484,7 +484,7 @@ export default function PaginaVotacoes() {
                 <span className="text-[11px] text-gray-500 font-semibold">/ {totalMinhasPendentes} pendente(s)</span>
               </div>
             </div>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] rounded-lg">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
               <CheckSquare className="w-5 h-5" />
             </div>
           </div>
@@ -597,7 +597,7 @@ export default function PaginaVotacoes() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border tracking-wider ${
                           votacao.tipo === 'DELIBERACAO'
-                            ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border-amber-500/30'
+                            ? 'bg-sigma-elevated border border-sigma-border text-amber-400 border-amber-500/30'
                             : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
                         }`}>
                           {votacao.tipo_label}
@@ -654,7 +654,7 @@ export default function PaginaVotacoes() {
                           </div>
                         </div>
                       ) : isAberta ? (
-                        <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/25 rounded-xl flex items-center gap-2">
+                        <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-amber-500/25 rounded-xl flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 animate-pulse" />
                           <div>
                             <span className="text-[10px] uppercase font-bold text-amber-400/80 block">Atenção ao Quórum</span>
@@ -792,7 +792,7 @@ export default function PaginaVotacoes() {
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
                     votacaoSelecionada.tipo === 'DELIBERACAO'
-                      ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border-amber-500/30'
+                      ? 'bg-sigma-elevated border border-sigma-border text-amber-400 border-amber-500/30'
                       : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
                   }`}>
                     {votacaoSelecionada.tipo_label}
@@ -975,7 +975,7 @@ export default function PaginaVotacoes() {
                           )}
                         </div>
 
-                        <span className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] border border-[#facc15]/20 flex-shrink-0">
+                        <span className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/20 flex-shrink-0">
                           {v.opcao_escolhida}
                         </span>
                       </div>
@@ -998,7 +998,7 @@ export default function PaginaVotacoes() {
             
             <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] rounded-lg">
+                <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
                   <Vote className="w-5 h-5" />
                 </div>
                 <div>
