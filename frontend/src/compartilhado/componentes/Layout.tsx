@@ -659,30 +659,9 @@ export default function Layout() {
         </div>
       )}
 
-        {/* MOBILE BOTTOM NAVIGATION */}
-        <nav className="md:hidden w-full bg-[#070e1c] border-t border-[rgba(221,185,107,0.2)] flex items-center justify-around pb-safe pt-2 px-1 h-[60px] shrink-0 z-30">
-          <NavLink to={id ? `/regiao/${id}` : '/'} end className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
-            <Bell className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Avisos</span>
-          </NavLink>
-          <NavLink to={id ? `/regiao/${id}/lojas` : '/lojas'} className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
-            <Building2 className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Lojas</span>
-          </NavLink>
-          <NavLink to={id ? `/regiao/${id}/admissoes` : '/admissoes'} className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
-            <BookOpenCheck className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Prévias</span>
-          </NavLink>
-          <NavLink to={id ? `/regiao/${id}/votacoes` : '/votacoes'} className={({isActive}) => `flex flex-col items-center gap-1 flex-1 ${isActive ? 'text-[#facc15]' : 'text-gray-500 hover:text-gray-400'}`}>
-            <Vote className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Votações</span>
-          </NavLink>
-          <button onClick={() => setMobileDrawerOpen(true)} className="flex flex-col items-center gap-1 flex-1 text-gray-500 hover:text-gray-400">
-            <Menu className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Mais</span>
-          </button>
-        </nav>
+        
 
     </div>
   );
 }
+
