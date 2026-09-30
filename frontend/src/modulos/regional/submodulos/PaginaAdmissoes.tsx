@@ -7,7 +7,7 @@ import {
   Plus, Search, ArrowLeft, FileText, Download, ExternalLink,
   MessageSquare, Calendar, Trash2, Send, CheckCircle2,
   Clock, Sparkles, User, X, Eye, CheckCheck, RotateCcw,
-  SlidersHorizontal, ChevronLeft, ChevronRight
+  SlidersHorizontal, ChevronLeft, ChevronRight, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 // CORREÇÃO (2026-09-18): esta página ainda usava axios puro + um seletor
@@ -109,6 +109,7 @@ export default function PaginaAdmissoes() {
 
   // Modal de Considerações
   const [previaSelecionada, setPreviaSelecionada] = useState<PreviaAdmissaoItem | null>(null);
+  const [pareceresAbertos, setPareceresAbertos] = useState(false);
   const [consideracoes, setConsideracoes] = useState<ConsideracaoItem[]>([]);
   const [carregandoConsideracoes, setCarregandoConsideracoes] = useState(false);
   const [novaConsideracaoTexto, setNovaConsideracaoTexto] = useState('');
@@ -221,6 +222,7 @@ export default function PaginaAdmissoes() {
   // Abrir Modal de Considerações
   const abrirModalConsideracoes = async (previa: PreviaAdmissaoItem) => {
     setPreviaSelecionada(previa);
+    setPareceresAbertos(false);
     setCarregandoConsideracoes(true);
     setNovaConsideracaoTexto('');
     try {
@@ -995,22 +997,6 @@ export default function PaginaAdmissoes() {
               </div>
 
               <div className="flex items-center gap-2">
-                <a
-                  href={`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf?download=true`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5 text-gray-400" />
-                  Baixar PDF
-                </a>
-                <button
-                  onClick={() => setPdfPreviewModal(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"
-                >
-                  <Eye className="w-3.5 h-3.5 text-[#facc15]" />
-                  Ver PDF
-                </button>
                 <button 
                   onClick={() => setPreviaSelecionada(null)}
                   className="p-1.5 text-gray-400 hover:text-white hover:bg-[#252525] rounded-lg transition-colors"
@@ -1022,6 +1008,39 @@ export default function PaginaAdmissoes() {
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
+              {/* Destaque do PDF */}
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-red-500/10 rounded-xl">
+                    <FileText className="w-8 h-8 text-red-500" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Documento Oficial de Prévia</h4>
+                    <p className="text-xs text-gray-400 truncate max-w-[200px] sm:max-w-[300px]">
+                      {previaSelecionada.pdf_nome_original || 'documento_oficial.pdf'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPdfPreviewModal(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-[#facc15]" />
+                    Ler Online
+                  </button>
+                  <a
+                    href={`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf?download=true`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5 text-gray-400" />
+                    Baixar PDF
+                  </a>
+                </div>
+              </div>
+
               {/* Barra de Status & Ação de Homologação/Verificação */}
               <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
                 previaSelecionada.status === 'AVERIGUADO'
@@ -1070,107 +1089,128 @@ export default function PaginaAdmissoes() {
                 </button>
               </div>
 
-              <div>
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-[#facc15]" />
-                  Pareceres Registrados ({consideracoes.length})
-                </h4>
-
-                {carregandoConsideracoes ? (
-                  <div className="py-8 text-center text-gray-500 flex items-center justify-center gap-2 text-xs">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#facc15]" />
-                    Carregando pareceres...
+              {/* Accordion de Pareceres e Votos */}
+              <div className="border border-[#222] rounded-xl overflow-hidden bg-[#0a0a0a]">
+                <button
+                  onClick={() => setPareceresAbertos(!pareceresAbertos)}
+                  className="w-full px-4 py-3 flex items-center justify-between bg-[#111] hover:bg-[#1a1a1a] transition-colors"
+                >
+                  <div className="flex items-center gap-2 text-sm font-bold text-white">
+                    <MessageSquare className="w-4 h-4 text-[#facc15]" />
+                    Pareceres e Votos do Conselho ({consideracoes.length})
                   </div>
-                ) : consideracoes.length === 0 ? (
-                  <div className="p-6 bg-[#0c0c0c] border border-[#222] rounded-xl text-center text-gray-500 text-xs">
-                    Nenhum parecer ou consideração foi registrado ainda para esta prévia.<br/>
-                    Utilize o formulário abaixo para inserir o primeiro apontamento.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {consideracoes.map((c) => (
-                      <div 
-                        key={c.id}
-                        className="bg-[#0f0f0f] border border-[#222] rounded-xl p-4 transition-all"
-                      >
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 flex items-center justify-center text-[#facc15] text-xs font-bold">
-                              {c.autor_nome.substring(0, 2).toUpperCase()}
-                            </div>
-                            <div>
-                              <span className="text-xs font-bold text-white block">
-                                {c.autor_nome}
-                              </span>
-                              <span className="text-[11px] text-gray-400">
-                                {c.autor_cargo} • {c.loja_nome} {c.loja_numero ? `nº ${c.loja_numero}` : ''}
-                              </span>
-                            </div>
-                          </div>
+                  {pareceresAbertos ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                
+                {pareceresAbertos && (
+                  <div className="p-4 space-y-6 border-t border-[#222]">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        Pareceres Registrados
+                      </h4>
 
-                          <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                            <span>{formatarDataHora(c.data_criacao)}</span>
-                            {c.pode_excluir && (
-                              <button
-                                onClick={() => handleExcluirConsideracao(c.id)}
-                                className="p-1 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-                                title="Ocultar parecer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
+                      {carregandoConsideracoes ? (
+                        <div className="py-8 text-center text-gray-500 flex items-center justify-center gap-2 text-xs">
+                          <Loader2 className="w-4 h-4 animate-spin text-[#facc15]" />
+                          Carregando pareceres...
                         </div>
+                      ) : consideracoes.length === 0 ? (
+                        <div className="p-6 bg-[#0c0c0c] border border-[#222] rounded-xl text-center text-gray-500 text-xs">
+                          Nenhum parecer ou consideração foi registrado ainda para esta prévia.<br/>
+                          Utilize o formulário abaixo para inserir o primeiro apontamento.
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {consideracoes.map((c) => (
+                            <div 
+                              key={c.id}
+                              className="bg-[#0f0f0f] border border-[#222] rounded-xl p-4 transition-all"
+                            >
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 flex items-center justify-center text-[#facc15] text-xs font-bold">
+                                    {c.autor_nome.substring(0, 2).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <span className="text-xs font-bold text-white block">
+                                      {c.autor_nome}
+                                    </span>
+                                    <span className="text-[11px] text-gray-400">
+                                      {c.autor_cargo} • {c.loja_nome} {c.loja_numero ? `nº ${c.loja_numero}` : ''}
+                                    </span>
+                                  </div>
+                                </div>
 
-                        <p className="text-xs text-gray-300 pl-9 whitespace-pre-wrap leading-relaxed">
-                          {c.conteudo}
-                        </p>
+                                <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                                  <span>{formatarDataHora(c.data_criacao)}</span>
+                                  {c.pode_excluir && (
+                                    <button
+                                      onClick={() => handleExcluirConsideracao(c.id)}
+                                      className="p-1 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                                      title="Ocultar parecer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <p className="text-xs text-gray-300 pl-9 whitespace-pre-wrap leading-relaxed">
+                                {c.conteudo}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <form onSubmit={handleEnviarConsideracao} className="bg-[#171717] border border-[#282828] rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-white flex items-center gap-2">
+                          <Plus className="w-3.5 h-3.5 text-[#facc15]" />
+                          Adicionar Nova Consideração / Parecer
+                        </label>
+                        <span className="text-[11px] text-gray-400">
+                          Manifestando-se como: <b className="text-[#facc15]">{userContext.role}</b>
+                        </span>
                       </div>
-                    ))}
+
+                      <textarea
+                        rows={3}
+                        value={novaConsideracaoTexto}
+                        onChange={(e) => setNovaConsideracaoTexto(e.target.value)}
+                        placeholder="Insira apontamentos sobre sindicâncias, reputação, idoneidade ou conformidade maçônica..."
+                        className="w-full p-3 bg-[#0d0d0d] border border-[#333] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors resize-none"
+                        required
+                      />
+
+                      <div className="flex items-center justify-end gap-3 pt-1">
+                        <button
+                          type="submit"
+                          disabled={enviandoConsideracao || !novaConsideracaoTexto.trim()}
+                          className="flex items-center gap-2 px-4 py-2 bg-[#facc15] hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-md transition-all"
+                        >
+                          {enviandoConsideracao ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Registrando...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-3.5 h-3.5" />
+                              Registrar Parecer no Mural
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 )}
               </div>
-
-              <form onSubmit={handleEnviarConsideracao} className="bg-[#171717] border border-[#282828] rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-white flex items-center gap-2">
-                    <Plus className="w-3.5 h-3.5 text-[#facc15]" />
-                    Adicionar Nova Consideração / Parecer
-                  </label>
-                  <span className="text-[11px] text-gray-400">
-                    Manifestando-se como: <b className="text-[#facc15]">{userContext.role}</b>
-                  </span>
-                </div>
-
-                <textarea
-                  rows={3}
-                  value={novaConsideracaoTexto}
-                  onChange={(e) => setNovaConsideracaoTexto(e.target.value)}
-                  placeholder="Insira apontamentos sobre sindicâncias, reputação, idoneidade ou conformidade maçônica..."
-                  className="w-full p-3 bg-[#0d0d0d] border border-[#333] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors resize-none"
-                  required
-                />
-
-                <div className="flex items-center justify-end gap-3 pt-1">
-                  <button
-                    type="submit"
-                    disabled={enviandoConsideracao || !novaConsideracaoTexto.trim()}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#facc15] hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-md transition-all"
-                  >
-                    {enviandoConsideracao ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Registrando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5" />
-                        Registrar Parecer no Mural
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         </div>
