@@ -483,7 +483,7 @@ export default function PaginaAdmissoes() {
       <div className="max-w-7xl mx-auto px-6 pb-12 space-y-6">
         
         {/* Painel de Métricas Rápidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="hidden lg:grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Prévias</span>
@@ -689,14 +689,31 @@ export default function PaginaAdmissoes() {
               const viewPdfUrl = `${API_URL}/regional/${id}/admissoes/${previa.id}/pdf`;
 
               return (
-                <div 
-                  key={previa.id}
-                  className={`border rounded-2xl p-5 shadow-xl transition-all duration-200 flex flex-col justify-between group relative ${
-                    isAveriguado 
-                      ? 'bg-gradient-to-b from-emerald-950/20 via-[#131414] to-[#141414] border-emerald-500/40 hover:border-emerald-500/60 shadow-emerald-950/20' 
-                      : 'bg-[#141414] border-[#252525] hover:border-[#383838]'
-                  }`}
-                >
+                <React.Fragment key={previa.id}>
+                  {/* Versão Mobile */}
+                  <div
+                    onClick={() => abrirModalConsideracoes(previa)}
+                    className="lg:hidden flex items-center justify-between p-3 bg-[#141414] border border-[#252525] rounded-xl active:bg-[#1a1a1a] transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border tracking-wider flex-shrink-0 ${getTipoBadgeColor(previa.tipo)}`}>
+                        {previa.tipo_label}
+                      </span>
+                      <span className="text-xs font-semibold text-gray-200 truncate">
+                        {previa.loja_nome} - {previa.candidato_nome}
+                      </span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  </div>
+
+                  {/* Versão Desktop */}
+                  <div 
+                    className={`hidden lg:flex border rounded-2xl p-5 shadow-xl transition-all duration-200 flex-col justify-between group relative ${
+                      isAveriguado 
+                        ? 'bg-gradient-to-b from-emerald-950/20 via-[#131414] to-[#141414] border-emerald-500/40 hover:border-emerald-500/60 shadow-emerald-950/20' 
+                        : 'bg-[#141414] border-[#252525] hover:border-[#383838]'
+                    }`}
+                  >
                   <div>
                     {/* Cabeçalho do Card: Badges de Tipo, Status de Verificação e Data */}
                     <div className="flex items-start justify-between gap-2 mb-3">
@@ -877,6 +894,7 @@ export default function PaginaAdmissoes() {
                     </div>
                   </div>
                 </div>
+                </React.Fragment>
               );
             })}
           </div>
@@ -959,11 +977,26 @@ export default function PaginaAdmissoes() {
                   {previaSelecionada.titulo_formatado}
                 </h3>
                 <p className="text-xs text-amber-400/90 font-medium mt-0.5">
-                  Candidato: <b>{previaSelecionada.candidato_nome}</b>
+                  Candidato: <b>{previaSelecionada.candidato_nome}</b> | Loja: <b>{previaSelecionada.loja_nome} {previaSelecionada.loja_numero ? `nº ${previaSelecionada.loja_numero}` : ''}</b>
                 </p>
+                {previaSelecionada.data_limite && (
+                  <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Prazo de Considerações: {formatarData(previaSelecionada.data_limite)}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
+                <a
+                  href={`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf?download=true`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5 text-gray-400" />
+                  Baixar PDF
+                </a>
                 <button
                   onClick={() => setPdfPreviewModal(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf`)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-[#3d3d3d] transition-colors"

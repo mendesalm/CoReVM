@@ -445,7 +445,7 @@ export default function PaginaVotacoes() {
       <div className="max-w-7xl mx-auto px-6 pb-12 space-y-6">
         
         {/* Painel de Métricas Rápidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="hidden lg:grid lg:grid-cols-4 gap-3">
           <div className="bg-[#121212] border border-[#222] rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Consultas</span>

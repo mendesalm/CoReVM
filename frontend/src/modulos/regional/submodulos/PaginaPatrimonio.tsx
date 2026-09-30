@@ -462,7 +462,7 @@ export default function PaginaPatrimonio() {
         )}
 
         {/* 1. DASHBOARD DE ESTATÍSTICAS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="hidden lg:grid lg:grid-cols-4 gap-4 mt-6">
           <div className="bg-[#121212] border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1 h-full bg-[#facc15]" />
             <div className="flex items-center justify-between text-[#888] mb-2">
