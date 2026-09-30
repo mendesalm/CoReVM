@@ -250,6 +250,28 @@ button, a, input, select, textarea, [role="button"] {
 .text-sigma-gold { color: #D1A958 !important; }
 
 
-.crvm-dogear-card { position: relative; background: linear-gradient(225deg, transparent 17px, #1f2937 0); }
-.crvm-dogear-fold { content: ''; position: absolute; top: 0; right: 0; width: 24px; height: 24px; background: linear-gradient(to bottom left, transparent 50%, rgba(255,255,255,0.08) 50%); box-shadow: -2px 2px 4px rgba(0,0,0,0.3); border-bottom-left-radius: 2px; border-left: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
 
+
+
+
+.crvm-dogear-wrapper {
+  filter: drop-shadow(0 0 1px var(--dogear-border, rgba(255,255,255,0.1)));
+  transition: all 0.2s;
+}
+.crvm-dogear-wrapper:hover {
+  filter: drop-shadow(0 0 2px var(--dogear-border, rgba(255,255,255,0.2))) brightness(1.1);
+}
+.crvm-dogear-card { 
+  position: relative; 
+  background: #1f2937; 
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
+  border-radius: 8px;
+}
+.crvm-dogear-fold { 
+  position: absolute; 
+  top: 0; right: 0; 
+  width: 22px; height: 22px; 
+  background: rgba(255,255,255,0.1); 
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  border-bottom-left-radius: 4px;
+}

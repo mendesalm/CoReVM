@@ -807,16 +807,16 @@ export default function PainelConselho() {
         </svg>
 
   return (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      setItemEmFocoId(item.id);
-                    }}
-                    className={`crvm-dogear-card p-3 min-h-[100px] flex flex-col justify-between cursor-pointer border hover:brightness-110 transition-all ${
-                      cor.border
-                    }`}
-                  >
-                    <div className="crvm-dogear-fold"></div>
+                  <div 
+                      key={item.id}
+                      className="crvm-dogear-wrapper"
+                      style={{ '--dogear-border': cor.hex } as any}
+                    >
+                      <div
+                        onClick={() => { setItemEmFocoId(item.id); }}
+                        className="crvm-dogear-card p-3 min-h-[100px] flex flex-col justify-between cursor-pointer group-hover:brightness-110 transition-all"
+                      >
+                        <div className="crvm-dogear-fold"></div>
                     <div>
                       <div className={`flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider mb-2 ${cor.text}`}>
                         {item.nivel === 'ALTO' ? <AlertTriangle className="w-3.5 h-3.5" /> : (item.nivel === 'MEDIO' ? <AlertOctagon className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />)}
@@ -831,8 +831,9 @@ export default function PainelConselho() {
                       </div>
                     )}
                   </div>
-                );
-              })}
+                    </div>
+                  );
+                })}
               
               {(abaAtiva === 'avisos' ? avisosOrdenados : notifOrdenadas).length === 0 && (
                 <div className="col-span-2 text-center text-gray-500 py-12">
@@ -1037,3 +1038,4 @@ export default function PainelConselho() {
     </div>
   );
 }
+
