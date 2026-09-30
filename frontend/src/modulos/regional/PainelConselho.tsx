@@ -611,7 +611,7 @@ export default function PainelConselho() {
     // Skeleton elegante — simula a estrutura real do painel (stat-bar + 2 colunas)
     // para reduzir a percepção de lentidão e preparar o olho do usuário.
   return (
-      <div className="min-h-screen bg-sigma-bg p-6 sm:p-8 animate-pulse">
+      <div className="h-full bg-sigma-bg p-6 sm:p-8 animate-pulse">
         {/* Stat-bar skeleton */}
         <div className="max-w-7xl mx-auto mb-6">
           <div className="h-20 bg-sigma-surface border border-sigma-border rounded-2xl w-full" />
@@ -646,7 +646,7 @@ export default function PainelConselho() {
 
   if (erro) {
   return (
-      <div className="h-screen bg-sigma-bg flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
+      <div className="h-full bg-sigma-bg flex items-center justify-center flex-col gap-4 text-orange-500 font-bold">
         <ShieldCheck className="w-16 h-16"/> {erro}
       </div>
     );
@@ -705,9 +705,9 @@ export default function PainelConselho() {
         </svg>
 
   return (
-    <div className="min-h-screen bg-sigma-bg text-gray-200 p-4 sm:p-6 flex flex-col">
+    <div className="h-full bg-sigma-bg text-gray-200 p-4 sm:p-6 flex flex-col min-h-0">
       {/* Container Principal Mobile-First */}
-      <div className="max-w-xl mx-auto w-full flex-1 flex flex-col">
+      <div className="max-w-xl mx-auto w-full flex-1 flex flex-col min-h-0">
         
         {/* CABEÇALHO (Card Hero) */}
         <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex items-center justify-between shadow-xl mb-4">
@@ -777,7 +777,7 @@ export default function PainelConselho() {
         {/* CONTEÚDO PRINCIPAL (Grid e Cards) */}
         <div className="bg-sigma-surface border border-sigma-border rounded-b-xl rounded-tr-xl flex-1 flex flex-col overflow-hidden shadow-2xl relative">
           
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar h-[calc(100vh-320px)]">
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <div className="grid grid-cols-2 gap-3">
               {(abaAtiva === 'avisos' ? avisosOrdenados : notifOrdenadas).map((item: any) => {
                 const cor = corNivel(item.nivel);
