@@ -575,7 +575,7 @@ export default function Layout() {
                   setMobileDrawerOpen(false);
                   dispararInstalacao();
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-[#DDB96B]/50 text-[#FDE68A] hover:bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/30 transition-all font-semibold shadow-lg mb-2"
+                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-[#DDB96B]/50 text-[#FDE68A] hover:bg-sigma-gold text-[#070F1E] shadow-sm transition-all font-semibold shadow-lg mb-2"
               >
                 <Download className="w-5 h-5 shrink-0 animate-bounce" />
                 <span className="text-sm">Instalar Aplicativo</span>
@@ -687,7 +687,7 @@ export default function Layout() {
           className="fixed -translate-y-1/2 px-4 py-2.5 bg-sigma-surface/95 backdrop-blur-xl text-white rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.95)] border border-sigma-border z-[9999] pointer-events-none animate-in fade-in zoom-in-95 duration-200 min-w-[200px] max-w-[320px]"
         >
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 animate-pulse"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-sigma-gold text-[#070F1E] shadow-md animate-pulse"></span>
             <p className="font-bold text-[#facc15] text-xs tracking-wide">
               {tooltipData.titulo}
             </p>

@@ -210,7 +210,7 @@ export default function PainelSuperAdmin() {
                 setSecretarioId('');
                 setShowModal(true);
               }}
-              className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-3.5 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 px-3.5 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Conselho</span>
@@ -259,7 +259,7 @@ export default function PainelSuperAdmin() {
               <p className="text-gray-400 mb-1">Status do Sistema</p>
               <h3 className="text-3xl font-bold text-green-500">Online</h3>
             </div>
-            <div className="w-12 h-12 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-sigma-gold text-[#070F1E] shadow-sm rounded-full flex items-center justify-center">
               <Activity className="text-[#facc15] w-6 h-6" />
             </div>
           </div>
@@ -440,7 +440,7 @@ export default function PainelSuperAdmin() {
                   setMenuOpcoesRegiao(null);
                   navigate(`/regiao/${regId}`);
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-[#facc15]/30 text-[#facc15] font-bold text-sm hover:bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/30 text-[#facc15] font-bold text-sm hover:bg-sigma-gold text-[#070F1E] shadow-sm transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2.5">
                   <Activity className="w-4 h-4" /> Acessar Painel do Conselho
@@ -505,8 +505,8 @@ export default function PainelSuperAdmin() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-[#facc15]">Criar Novo Conselho Regional</h2>
               <div className="flex gap-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 1 ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black' : 'bg-[#333] text-gray-400'}`}>1. Lojas</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 2 ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black' : 'bg-[#333] text-gray-400'}`}>2. Diretoria</span>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 1 ? 'bg-sigma-gold text-[#070F1E] shadow-md' : 'bg-[#333] text-gray-400'}`}>1. Lojas</span>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 2 ? 'bg-sigma-gold text-[#070F1E] shadow-md' : 'bg-[#333] text-gray-400'}`}>2. Diretoria</span>
               </div>
             </div>
             
@@ -582,7 +582,7 @@ export default function PainelSuperAdmin() {
                     type="button"
                     onClick={() => setStep(2)}
                     disabled={selectedLojas.length === 0 || !nome}
-                    className={`px-6 py-2 rounded-lg font-semibold transition-colors ${selectedLojas.length > 0 && nome ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black' : 'bg-[#333] text-gray-500 cursor-not-allowed'}`}
+                    className={`px-6 py-2 rounded-lg font-semibold transition-colors ${selectedLojas.length > 0 && nome ? 'bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90' : 'bg-[#333] text-gray-500 cursor-not-allowed'}`}
                   >
                     Avançar para Diretoria
                   </button>
@@ -618,7 +618,7 @@ export default function PainelSuperAdmin() {
                       <button 
                         type="button"
                         onClick={(e) => handleCreate(e as unknown as React.FormEvent)}
-                        className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ${presidenteId || vicePresidenteId || secretarioId ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black' : 'bg-[#333] text-gray-500 cursor-not-allowed'}`}
+                        className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ${presidenteId || vicePresidenteId || secretarioId ? 'bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90' : 'bg-[#333] text-gray-500 cursor-not-allowed'}`}
                         disabled={!presidenteId && !vicePresidenteId && !secretarioId}
                       >
                         Criar e Salvar no Banco
@@ -723,7 +723,7 @@ export default function PainelSuperAdmin() {
                 <button 
                   type="button"
                   onClick={(e) => handleUpdate(e as unknown as React.FormEvent)}
-                  className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                  className="bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
                 >
                   Salvar Alterações
                 </button>

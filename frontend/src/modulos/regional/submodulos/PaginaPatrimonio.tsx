@@ -404,7 +404,7 @@ export default function PaginaPatrimonio() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15] border border-[#facc15]/20">
               <Landmark className="w-5 h-5"/>
             </div>
             <div>
@@ -433,7 +433,7 @@ export default function PaginaPatrimonio() {
                 });
                 setModalNovoItemAberto(true);
               }}
-              className="flex items-center gap-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+              className="flex items-center gap-2 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
             >
               <Plus className="w-4 h-4" /> Cadastrar Bem
             </button>
@@ -464,7 +464,7 @@ export default function PaginaPatrimonio() {
         {/* 1. DASHBOARD DE ESTATÍSTICAS */}
         <div className="hidden lg:grid lg:grid-cols-4 gap-4 mt-6">
           <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-1 h-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20" />
+            <div className="absolute top-0 left-0 w-1 h-full bg-sigma-gold text-[#070F1E] shadow-md" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Acervo Total</span>
               <Landmark className="w-5 h-5 text-[#facc15] opacity-80" />
@@ -507,7 +507,7 @@ export default function PaginaPatrimonio() {
           </div>
 
           <div className="bg-sigma-surface border border-[#242424] rounded-2xl p-5 shadow-lg relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-1 h-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20" />
+            <div className="absolute top-0 left-0 w-1 h-full bg-sigma-gold text-[#070F1E] shadow-md" />
             <div className="flex items-center justify-between text-[#888] mb-2">
               <span className="text-xs font-bold uppercase tracking-wider">Fila de Espera</span>
               <Clock className="w-5 h-5 text-amber-400 opacity-80" />
@@ -613,7 +613,7 @@ export default function PaginaPatrimonio() {
                             Loja {item.loja_proprietaria_numero}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-[#facc15]/20 text-[#facc15] rounded-full text-[10px] font-extrabold uppercase tracking-wide">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 text-[#facc15] rounded-full text-[10px] font-extrabold uppercase tracking-wide">
                             <Landmark className="w-3 h-3" />
                             Conselho Regional
                           </span>
@@ -651,7 +651,7 @@ export default function PaginaPatrimonio() {
                         <div className="w-full bg-[#202020] h-2 rounded-full overflow-hidden flex">
                           <div 
                             className={`h-full transition-all duration-300 ${
-                              estaDisponivel ? 'bg-emerald-500' : 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20'
+                              estaDisponivel ? 'bg-emerald-500' : 'bg-sigma-gold text-[#070F1E] shadow-md'
                             }`}
                             style={{ width: `${(item.quantidade_disponivel / item.quantidade_total) * 100}%` }}
                           />
@@ -857,7 +857,7 @@ export default function PaginaPatrimonio() {
                       {filaItem.map(f => (
                         <div key={f.id} className="bg-[#161616] border border-[#2a2a2a] p-4 rounded-xl flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 font-bold flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 font-bold flex items-center justify-center shrink-0">
                               {f.posicao}º
                             </div>
                             <div>
@@ -923,7 +923,7 @@ export default function PaginaPatrimonio() {
                     });
                     setModalFilaAberto(true);
                   }}
-                  className="w-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-amber-400 text-black font-extrabold text-sm py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-sigma-gold text-[#070F1E] shadow-md hover:bg-amber-400 text-black font-extrabold text-sm py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Clock className="w-5 h-5" /> Entrar na Fila
                 </button>
@@ -1179,7 +1179,7 @@ export default function PaginaPatrimonio() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/20 rounded-xl text-amber-400">
+                <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 rounded-xl text-amber-400">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
@@ -1268,7 +1268,7 @@ export default function PaginaPatrimonio() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-amber-400 text-black font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-sigma-gold text-[#070F1E] shadow-md hover:bg-amber-400 text-black font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2"
                 >
                   <Clock className="w-4 h-4" /> Registrar na Fila
                 </button>
@@ -1286,7 +1286,7 @@ export default function PaginaPatrimonio() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
+                <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 rounded-xl text-[#facc15]">
                   <Plus className="w-5 h-5" />
                 </div>
                 <div>
@@ -1437,7 +1437,7 @@ export default function PaginaPatrimonio() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" /> Cadastrar Bem
                 </button>
@@ -1455,7 +1455,7 @@ export default function PaginaPatrimonio() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-[#242424] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-[#facc15]/20 rounded-xl text-[#facc15]">
+                <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 rounded-xl text-[#facc15]">
                   <FileCheck className="w-5 h-5" />
                 </div>
                 <div>

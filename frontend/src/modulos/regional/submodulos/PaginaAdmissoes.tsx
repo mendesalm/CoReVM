@@ -396,7 +396,7 @@ export default function PaginaAdmissoes() {
   const getTipoBadgeColor = (tipo: string) => {
     switch (tipo.toUpperCase()) {
       case 'INICIACAO':
-        return 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border-amber-500/30';
+        return 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border-amber-500/30';
       case 'FILIACAO':
         return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
       case 'REGULARIZACAO':
@@ -431,7 +431,7 @@ export default function PaginaAdmissoes() {
     return (
       <div className="min-h-screen bg-sigma-bg flex items-center justify-center p-6 text-gray-200">
         <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
-          <div className="w-16 h-16 mx-auto bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+          <div className="w-16 h-16 mx-auto bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
@@ -441,7 +441,7 @@ export default function PaginaAdmissoes() {
 
           <button
             onClick={() => carregarDados()}
-            className="w-full py-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black font-bold text-xs rounded-xl transition-all shadow-md"
+            className="w-full py-2.5 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs rounded-xl transition-all shadow-md"
           >
             Tentar Novamente
           </button>
@@ -464,7 +464,7 @@ export default function PaginaAdmissoes() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15] border border-[#facc15]/20">
               <BookOpenCheck className="w-5 h-5"/>
             </div>
             <div>
@@ -475,7 +475,7 @@ export default function PaginaAdmissoes() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowNovaPreviaModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black font-bold text-xs rounded-xl shadow-lg shadow-[#facc15]/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-2 px-4 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs rounded-xl shadow-lg shadow-[#facc15]/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               Publicar Nova Prévia
@@ -493,7 +493,7 @@ export default function PaginaAdmissoes() {
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Prévias</span>
               <span className="text-xl font-black text-white">{previas.length}</span>
             </div>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-[#facc15] rounded-lg">
+            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] rounded-lg">
               <FileText className="w-5 h-5" />
             </div>
           </div>
@@ -503,7 +503,7 @@ export default function PaginaAdmissoes() {
               <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Iniciações</span>
               <span className="text-xl font-black text-amber-400">{totalIniciacoes}</span>
             </div>
-            <div className="p-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 rounded-lg">
+            <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 rounded-lg">
               <Sparkles className="w-5 h-5" />
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function PaginaAdmissoes() {
                 onClick={() => setFiltroTipo('TODAS')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   filtroTipo === 'TODAS' 
-                    ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-md shadow-[#facc15]/10' 
+                    ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md shadow-[#facc15]/10' 
                     : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
                 }`}
               >
@@ -562,7 +562,7 @@ export default function PaginaAdmissoes() {
                 onClick={() => setFiltroTipo('INICIACAO')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   filtroTipo === 'INICIACAO' 
-                    ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-md shadow-amber-500/10' 
+                    ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md shadow-amber-500/10' 
                     : 'text-gray-400 hover:text-white hover:bg-[#1c1c1c]'
                 }`}
               >
@@ -622,7 +622,7 @@ export default function PaginaAdmissoes() {
                 onClick={() => setFiltroStatus('EM_ANDAMENTO')}
                 className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
                   filtroStatus === 'EM_ANDAMENTO' 
-                    ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-amber-300 border border-amber-500/30' 
+                    ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-300 border border-amber-500/30' 
                     : 'text-gray-400 hover:text-amber-300'
                 }`}
               >
@@ -694,7 +694,7 @@ export default function PaginaAdmissoes() {
 
               const corSinalizador = isAveriguado 
                 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' 
-                : (previa.total_consideracoes > 0 ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]');
+                : (previa.total_consideracoes > 0 ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]');
 
               return (
                 <React.Fragment key={previa.id}>
@@ -741,7 +741,7 @@ export default function PaginaAdmissoes() {
                             Averiguado
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border tracking-wider bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border-amber-500/20 flex items-center gap-1">
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border tracking-wider bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border-amber-500/20 flex items-center gap-1">
                             <Clock className="w-3 h-3 text-amber-400" />
                             Em Aberto
                           </span>
@@ -774,7 +774,7 @@ export default function PaginaAdmissoes() {
 
                     {/* Candidato Proposto */}
                     <div className="flex items-center gap-2 p-2.5 bg-sigma-surface border border-sigma-border rounded-xl mb-3.5">
-                      <div className={`p-1.5 rounded-lg ${isAveriguado ? 'bg-emerald-500/10 text-emerald-400' : 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-[#facc15]'}`}>
+                      <div className={`p-1.5 rounded-lg ${isAveriguado ? 'bg-emerald-500/10 text-emerald-400' : 'bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15]'}`}>
                         <User className="w-4 h-4" />
                       </div>
                       <div className="overflow-hidden">
@@ -895,7 +895,7 @@ export default function PaginaAdmissoes() {
 
                       <button
                         onClick={() => abrirModalConsideracoes(previa)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-gray-200 hover:text-black font-bold text-xs rounded-xl border border-sigma-border hover:border-[#facc15] transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-sigma-gold text-[#070F1E] shadow-md text-gray-200 hover:text-black font-bold text-xs rounded-xl border border-sigma-border hover:border-[#facc15] transition-all"
                       >
                         <span>Abrir Considerações</span>
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -932,7 +932,7 @@ export default function PaginaAdmissoes() {
                   onClick={() => setPaginaAtual(num)}
                   className={`w-8 h-8 rounded-lg text-xs font-bold border transition-all ${
                     paginaAtual === num
-                      ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black border-[#facc15] shadow-md shadow-[#facc15]/10'
+                      ? 'bg-sigma-gold text-[#070F1E] shadow-md border-[#facc15] shadow-md shadow-[#facc15]/10'
                       : 'bg-sigma-elevated text-gray-300 border-sigma-border hover:border-[#444] hover:bg-sigma-elevated'
                   }`}
                 >
@@ -978,7 +978,7 @@ export default function PaginaAdmissoes() {
                       Averiguado
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border-amber-500/20 flex items-center gap-1">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border-amber-500/20 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       Em Aberto
                     </span>
@@ -1052,7 +1052,7 @@ export default function PaginaAdmissoes() {
               <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
                 previaSelecionada.status === 'AVERIGUADO'
                   ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
-                  : 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/5 border-amber-500/20 text-amber-300'
+                  : 'bg-sigma-gold text-[#070F1E] shadow-sm border-amber-500/20 text-amber-300'
               }`}>
                 <div className="flex items-center gap-3">
                   {previaSelecionada.status === 'AVERIGUADO' ? (
@@ -1139,7 +1139,7 @@ export default function PaginaAdmissoes() {
                             >
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-7 h-7 rounded-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-[#facc15]/20 flex items-center justify-center text-[#facc15] text-xs font-bold">
+                                  <div className="w-7 h-7 rounded-full bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/20 flex items-center justify-center text-[#facc15] text-xs font-bold">
                                     {c.autor_nome.substring(0, 2).toUpperCase()}
                                   </div>
                                   <div>
@@ -1199,7 +1199,7 @@ export default function PaginaAdmissoes() {
                         <button
                           type="submit"
                           disabled={enviandoConsideracao || !novaConsideracaoTexto.trim()}
-                          className="flex items-center gap-2 px-4 py-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-md transition-all"
+                          className="flex items-center gap-2 px-4 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-md transition-all"
                         >
                           {enviandoConsideracao ? (
                             <>
@@ -1230,7 +1230,7 @@ export default function PaginaAdmissoes() {
             
             <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-[#facc15] rounded-lg">
+                <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15] rounded-lg">
                   <BookOpenCheck className="w-5 h-5" />
                 </div>
                 <div>
@@ -1264,7 +1264,7 @@ export default function PaginaAdmissoes() {
                       onClick={() => setFormPrevia(prev => ({ ...prev, tipo: t }))}
                       className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
                         formPrevia.tipo === t 
-                          ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black border-[#facc15]' 
+                          ? 'bg-sigma-gold text-[#070F1E] shadow-md border-[#facc15]' 
                           : 'bg-sigma-surface text-gray-400 border-[#2a2a2a] hover:border-[#444]'
                       }`}
                     >
@@ -1368,7 +1368,7 @@ export default function PaginaAdmissoes() {
                 <button
                   type="submit"
                   disabled={salvandoPrevia}
-                  className="flex items-center gap-2 px-5 py-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-lg transition-all"
+                  className="flex items-center gap-2 px-5 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-lg transition-all"
                 >
                   {salvandoPrevia ? (
                     <>

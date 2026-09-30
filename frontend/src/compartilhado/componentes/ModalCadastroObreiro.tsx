@@ -104,7 +104,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
     <div className="fixed inset-0 bg-sigma-bg/80 flex items-center justify-center z-[60] p-4 overflow-y-auto">
       <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl my-auto shadow-2xl">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 rounded-lg text-[#facc15]">
+          <div className="p-2 bg-sigma-gold text-[#070F1E] shadow-sm rounded-lg text-[#facc15]">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
@@ -254,7 +254,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
             <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg font-medium text-xs text-gray-400 hover:text-white transition-colors" disabled={loading}>
               Cancelar
             </button>
-            <button type="submit" className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-6 py-2 rounded-lg font-semibold text-xs transition-colors disabled:opacity-50" disabled={loading}>
+            <button type="submit" className="bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 px-6 py-2 rounded-lg font-semibold text-xs transition-colors disabled:opacity-50" disabled={loading}>
               {loading ? 'Processando...' : (obreiroLocalizado ? 'Confirmar e Atribuir' : 'Cadastrar e Atribuir')}
             </button>
           </div>

@@ -232,7 +232,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
         {/* Topo do Modal */}
         <div className="bg-gradient-to-r from-[#181818] via-[#141414] to-[#181818] p-5 border-b border-sigma-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-[#facc15]/30 rounded-xl text-[#facc15]">
+            <div className="p-2.5 bg-sigma-gold text-[#070F1E] shadow-sm border border-[#facc15]/30 rounded-xl text-[#facc15]">
               <Award className="w-6 h-6" />
             </div>
             <div>
@@ -326,7 +326,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                                 Venerável Mestre • CIM: <span className="text-white font-mono">{vmData.cim}</span>
                               </p>
                             </div>
-                            <div className="p-3 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 rounded-xl text-[#facc15] border border-[#facc15]/20">
+                            <div className="p-3 bg-sigma-gold text-[#070F1E] shadow-sm rounded-xl text-[#facc15] border border-[#facc15]/20">
                               <Award className="w-8 h-8" />
                             </div>
                           </div>
@@ -371,7 +371,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                             <button
                               type="button"
                               onClick={() => setIsEditing(true)}
-                              className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-[#facc15] hover:text-black bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 hover:bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 border border-[#facc15]/30 transition-all"
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-[#facc15] hover:text-black bg-sigma-gold text-[#070F1E] shadow-sm hover:bg-sigma-gold text-[#070F1E] shadow-md border border-[#facc15]/30 transition-all"
                             >
                               <Edit3 className="w-4 h-4" />
                               Editar Informações
@@ -470,7 +470,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                           <button
                             type="submit"
                             disabled={salvandoEdicao}
-                            className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-5 py-2 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2"
+                            className="bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 px-5 py-2 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2"
                           >
                             {salvandoEdicao && <Loader2 className="w-4 h-4 animate-spin" />}
                             {salvandoEdicao ? 'Gravando...' : 'Salvar Alterações'}
@@ -494,7 +494,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                       <button
                         type="button"
                         onClick={() => setActiveTab('substituir')}
-                        className="inline-flex items-center gap-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-5 py-2.5 rounded-lg font-bold text-xs transition-colors shadow-lg"
+                        className="inline-flex items-center gap-2 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 px-5 py-2.5 rounded-lg font-bold text-xs transition-colors shadow-lg"
                       >
                         <Sparkles className="w-4 h-4" /> Empossar Venerável Mestre
                       </button>
@@ -507,7 +507,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
               {activeTab === 'substituir' && (
                 <form onSubmit={handleEmpossarNovoVM} className="space-y-4">
                   {vmData?.tem_vm && (
-                    <div className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-3">
+                    <div className="bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/30 rounded-xl p-3 flex items-start gap-3">
                       <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                       <p className="text-xs text-amber-200">
                         <span className="font-bold">Transição de Gestão:</span> Ao confirmar a posse do novo Venerável Mestre, o mandato do Ir. <span className="font-bold underline">{vmData.nome_completo}</span> será automaticamente finalizado na data de hoje e registrado na Galeria Histórica.
@@ -623,7 +623,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                     <button
                       type="submit"
                       disabled={salvandoNovaGestao}
-                      className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black px-6 py-2.5 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg"
+                      className="bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 px-6 py-2.5 rounded-lg font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg"
                     >
                       {salvandoNovaGestao && <Loader2 className="w-4 h-4 animate-spin" />}
                       {salvandoNovaGestao ? 'Processando Posse...' : 'Confirmar Posse / Nova Gestão'}

@@ -302,7 +302,7 @@ export const PaginaRelatorios: React.FC = () => {
           </Link>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border border-amber-500/20">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20">
                 MÓDULO DE GESTÃO & GOVERNANÇA
               </span>
               <span className="text-xs text-gray-500">•</span>
@@ -350,7 +350,7 @@ export const PaginaRelatorios: React.FC = () => {
       {/* 2. BARRA DE EXPORTAÇÃO OFICIAL REPORTLAB */}
       <div className="bg-gradient-to-r from-[#141414] via-[#181818] to-[#141414] border border-[#2a2a2a] p-4 rounded-lg flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <div className="w-10 h-10 rounded-lg bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 flex items-center justify-center text-amber-400">
             <FileText className="w-5 h-5" />
           </div>
           <div>
@@ -398,7 +398,7 @@ export const PaginaRelatorios: React.FC = () => {
           onClick={() => setAbaAtiva('visao-geral')}
           className={`flex items-center space-x-2 px-4 py-3 border-b-2 text-sm font-semibold whitespace-nowrap transition-colors ${
             abaAtiva === 'visao-geral'
-              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/5'
+              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] shadow-sm'
               : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700'
           }`}
         >
@@ -410,7 +410,7 @@ export const PaginaRelatorios: React.FC = () => {
           onClick={() => setAbaAtiva('integrantes')}
           className={`flex items-center space-x-2 px-4 py-3 border-b-2 text-sm font-semibold whitespace-nowrap transition-colors ${
             abaAtiva === 'integrantes'
-              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/5'
+              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] shadow-sm'
               : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700'
           }`}
         >
@@ -422,7 +422,7 @@ export const PaginaRelatorios: React.FC = () => {
           onClick={() => setAbaAtiva('patrimonio')}
           className={`flex items-center space-x-2 px-4 py-3 border-b-2 text-sm font-semibold whitespace-nowrap transition-colors ${
             abaAtiva === 'patrimonio'
-              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/5'
+              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] shadow-sm'
               : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700'
           }`}
         >
@@ -434,7 +434,7 @@ export const PaginaRelatorios: React.FC = () => {
           onClick={() => setAbaAtiva('quorum')}
           className={`flex items-center space-x-2 px-4 py-3 border-b-2 text-sm font-semibold whitespace-nowrap transition-colors ${
             abaAtiva === 'quorum'
-              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/5'
+              ? 'border-macaonico-dourado text-macaonico-dourado bg-sigma-gold text-[#070F1E] shadow-sm'
               : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700'
           }`}
         >
@@ -457,11 +457,11 @@ export const PaginaRelatorios: React.FC = () => {
             <div className="space-y-6">
               {/* Card Destaque: Índice de Engajamento Regional (IER) */}
               <div className="bg-sigma-surface border border-sigma-border p-6 rounded-lg relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-96 h-96 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute right-0 top-0 w-96 h-96 bg-sigma-gold text-[#070F1E] shadow-sm rounded-full blur-3xl pointer-events-none" />
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
                   <div className="lg:col-span-2 space-y-2">
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border border-amber-500/20">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20">
                         INDICADOR-CHAVE DE PERFORMANCE
                       </span>
                       <span className="text-xs text-gray-500">•</span>
@@ -587,7 +587,7 @@ export const PaginaRelatorios: React.FC = () => {
                         </div>
                         <div className="w-full bg-[#1e1e1e] rounded-full h-2 overflow-hidden">
                           <div 
-                            className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 h-2 rounded-full"
+                            className="bg-sigma-gold text-[#070F1E] shadow-md h-2 rounded-full"
                             style={{ width: `${r.percentual}%` }}
                           />
                         </div>
@@ -620,7 +620,7 @@ export const PaginaRelatorios: React.FC = () => {
                       <div key={l.id} className="flex items-center justify-between p-2.5 bg-sigma-elevated border border-[#242424] rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            index === 0 ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black' : 
+                            index === 0 ? 'bg-sigma-gold text-[#070F1E] shadow-md' : 
                             index === 1 ? 'bg-gray-300 text-black' : 
                             index === 2 ? 'bg-amber-700 text-white' : 'bg-sigma-elevated text-gray-400'
                           }`}>
@@ -658,7 +658,7 @@ export const PaginaRelatorios: React.FC = () => {
                     </h2>
                     <p className="text-xs text-gray-400">Oficiais eleitos para a condução dos trabalhos administrativos do Conselho Regional.</p>
                   </div>
-                  <span className="text-xs text-amber-400 font-semibold px-2 py-1 rounded bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/20 self-start">
+                  <span className="text-xs text-amber-400 font-semibold px-2 py-1 rounded bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 self-start">
                     Mandato 2024–2025
                   </span>
                 </div>
@@ -999,7 +999,7 @@ export const PaginaRelatorios: React.FC = () => {
                                   VENCIDO
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">
+                                <span className="px-2 py-0.5 rounded bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20 text-[10px] font-semibold">
                                   Em Aberto
                                 </span>
                               )}
@@ -1031,7 +1031,7 @@ export const PaginaRelatorios: React.FC = () => {
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs px-2.5 py-1 rounded bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border border-amber-500/20 font-semibold">
+                    <span className="text-xs px-2.5 py-1 rounded bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20 font-semibold">
                       Total: {kpis?.total_votacoes || 0} Deliberações
                     </span>
                   </div>
@@ -1055,7 +1055,7 @@ export const PaginaRelatorios: React.FC = () => {
                         <tr key={loja.id} className="hover:bg-[#161616] transition-colors">
                           <td className="p-3 text-center">
                             <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs ${
-                              idx === 0 ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-lg shadow-amber-500/30' :
+                              idx === 0 ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-lg shadow-amber-500/30' :
                               idx === 1 ? 'bg-gray-300 text-black' :
                               idx === 2 ? 'bg-amber-700 text-white' : 'bg-sigma-elevated text-gray-400'
                             }`}>
@@ -1105,7 +1105,7 @@ export const PaginaRelatorios: React.FC = () => {
                           <td className="p-3 text-right">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                               loja.status_label === 'Excelente' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                              loja.status_label === 'Regular' ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 text-amber-400 border border-amber-500/20' :
+                              loja.status_label === 'Regular' ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-amber-400 border border-amber-500/20' :
                               'bg-red-500/10 text-red-400 border border-red-500/20'
                             }`}>
                               {loja.status_label}

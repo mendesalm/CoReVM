@@ -102,7 +102,7 @@ export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
 
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={onCancel} className="px-4 py-2 text-gray-400 hover:text-white">Cancelar</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black font-semibold rounded-lg">
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-sigma-gold text-[#070F1E] shadow-md font-semibold rounded-lg">
               {loading ? "Salvando..." : "Cadastrar Loja"}
             </button>
           </div>

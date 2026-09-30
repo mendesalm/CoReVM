@@ -401,7 +401,7 @@ export default function PaginaCalendario() {
     return (
       <div className="p-8 h-full flex items-center justify-center">
         <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
-          <div className="w-16 h-16 mx-auto bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+          <div className="w-16 h-16 mx-auto bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
@@ -410,7 +410,7 @@ export default function PaginaCalendario() {
           </div>
           <button
             onClick={() => carregarDados()}
-            className="w-full py-2.5 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black font-bold text-xs rounded-xl transition-all shadow-md"
+            className="w-full py-2.5 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs rounded-xl transition-all shadow-md"
           >
             Tentar Novamente
           </button>
@@ -437,7 +437,7 @@ export default function PaginaCalendario() {
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   modoVisualizacao === 'lista'
-                    ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-md'
+                    ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -452,7 +452,7 @@ export default function PaginaCalendario() {
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   modoVisualizacao === 'calendario'
-                    ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-md'
+                    ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -476,7 +476,7 @@ export default function PaginaCalendario() {
               onClick={() => setModoVisualizacao('lista')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 modoVisualizacao === 'lista'
-                  ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-md'
+                  ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -488,7 +488,7 @@ export default function PaginaCalendario() {
               onClick={() => setModoVisualizacao('calendario')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 modoVisualizacao === 'calendario'
-                  ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black shadow-md'
+                  ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-md'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -541,7 +541,7 @@ export default function PaginaCalendario() {
               <button
                 type="button"
                 onClick={() => setMostrarLegenda(!mostrarLegenda)}
-                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/20 text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-sigma-elevated'}`}
+                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-sigma-gold text-[#070F1E] shadow-sm text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-sigma-elevated'}`}
               >
                 <Palette className="w-3.5 h-3.5" />
                 Legenda
@@ -562,7 +562,7 @@ export default function PaginaCalendario() {
                 setIsEditing(false);
                 setShowModal(true);
               }}
-              className="hidden md:flex items-center gap-2 ml-auto px-4 py-2 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] text-black font-bold rounded-xl transition-all shadow-md"
+              className="hidden md:flex items-center gap-2 ml-auto px-4 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold rounded-xl transition-all shadow-md"
             >
               <Plus className="w-4 h-4" />
               Novo Evento
@@ -637,7 +637,7 @@ export default function PaginaCalendario() {
                           {tiposEvento.find(t => t.tipo === evento.tipo)?.rotulo || evento.tipo}
                         </span>
                         {evento.subtipo && (
-                          <span className="text-[10px] font-medium text-amber-300/80 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-medium text-amber-300/80 bg-sigma-gold text-[#070F1E] shadow-sm border border-amber-500/20 px-1.5 py-0.5 rounded">
                             {SUBTIPO_ROTULOS[evento.subtipo] || evento.subtipo}
                           </span>
                         )}
@@ -729,7 +729,7 @@ export default function PaginaCalendario() {
             setShowModal(true);
           }}
           aria-label="Novo Evento"
-          className="md:hidden fixed bottom-20 right-5 z-40 w-14 h-14 rounded-full bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] active:scale-95 text-black shadow-2xl flex items-center justify-center transition-all border-2 border-amber-300/40"
+          className="md:hidden fixed bottom-20 right-5 z-40 w-14 h-14 rounded-full bg-sigma-gold text-[#070F1E] shadow-md hover:bg-[#eab308] active:scale-95 text-black shadow-2xl flex items-center justify-center transition-all border-2 border-amber-300/40"
         >
           <Plus className="w-7 h-7" />
         </button>
@@ -984,7 +984,7 @@ export default function PaginaCalendario() {
                     <button
                       type="submit"
                       disabled={salvando || !tipo}
-                      className="bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 hover:bg-[#eab308] disabled:opacity-50 text-black px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                      className="bg-sigma-gold text-[#070F1E] shadow-md hover:bg-[#eab308] disabled:opacity-50 text-black px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
                     >
                       {salvando && <Loader2 className="w-4 h-4 animate-spin" />}
                       {isEditing ? 'Atualizar Evento' : 'Salvar Evento'}

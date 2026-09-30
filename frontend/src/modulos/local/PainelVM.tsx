@@ -50,7 +50,7 @@ export default function PainelVM() {
                     <input type="text" defaultValue="556299999999" className="w-full bg-sigma-bg border border-sigma-border rounded p-2 text-white" />
                   </div>
                 </div>
-                <button className="mt-4 bg-sigma-gold text-[#070F1E] border-none shadow-md shadow-amber-900/20 text-black px-4 py-2 rounded-lg font-bold">Salvar Perfil</button>
+                <button className="mt-4 bg-sigma-gold text-[#070F1E] shadow-md px-4 py-2 rounded-lg font-bold">Salvar Perfil</button>
               </div>
             </div>
           </div>
