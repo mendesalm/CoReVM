@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import {
   ShieldCheck, Award, Calendar,
   Bell, Pin, Archive, ArchiveRestore, Plus, AlertTriangle, AlertOctagon,
-  Sparkles, Megaphone, CheckCheck, Eye
+  Sparkles, Megaphone, CheckCheck, Eye, X
 } from 'lucide-react';
 import { clienteHttp, API_URL } from '../../compartilhado/contextos/AuthContext';
 import { CampoData } from '../../compartilhado/componentes/SeletorDataHora';
