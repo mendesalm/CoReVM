@@ -817,19 +817,31 @@ export default function PainelConselho() {
                         className="crvm-dogear-card p-3 min-h-[100px] flex flex-col justify-between cursor-pointer group-hover:brightness-110 transition-all"
                       >
                         <div className="crvm-dogear-fold"></div>
-                    <div>
-                      <div className={`flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider mb-2 ${cor.text}`}>
-                        {item.nivel === 'ALTO' ? <AlertTriangle className="w-3.5 h-3.5" /> : (item.nivel === 'MEDIO' ? <AlertOctagon className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />)}
-                        {item.nivel === 'ALTO' ? 'Urgente' : (item.nivel === 'MEDIO' ? 'Atenção' : (item.tipo === 'NOTIFICACAO' ? 'Notificação' : 'Informativo'))}
+                    <div className={item.lido || item.arquivado ? 'opacity-50 saturate-[0.7]' : ''}>
+                        <div className={`flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider mb-2 ${cor.text}`}>
+                          {item.nivel === 'ALTO' ? <AlertTriangle className="w-3.5 h-3.5" /> : (item.nivel === 'MEDIO' ? <AlertOctagon className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />)}
+                          {item.nivel === 'ALTO' ? 'Urgente' : (item.nivel === 'MEDIO' ? 'Atenção' : (item.tipo === 'NOTIFICACAO' ? 'Notificação' : 'Informativo'))}
+                        </div>
+                        <p className="text-[10px] text-gray-400 leading-tight pr-4">
+                          {item.arquivado ? 'Item Arquivado' : 'Clique para ler a mensagem'}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-gray-400 leading-tight pr-4">Clique para ler a mensagem</p>
-                    </div>
-                    
-                    {item.fixado && (
-                      <div className="self-end mt-2">
-                        <Pin className="w-3.5 h-3.5 text-sigma-accent fill-sigma-accent/20 rotate-45" />
+                      
+                      <div className="self-end mt-2 flex items-center gap-1.5">
+                        {item.lido && !item.arquivado && (
+                          <div className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px] font-bold border border-emerald-500/20">
+                            <CheckCheck className="w-3 h-3" /> LIDO
+                          </div>
+                        )}
+                        {item.arquivado && (
+                          <div className="flex items-center gap-1 text-red-400 bg-red-950/40 px-1.5 py-0.5 rounded text-[9px] font-bold border border-red-500/20">
+                            <Archive className="w-3 h-3" /> ARQ
+                          </div>
+                        )}
+                        {item.fixado && !item.arquivado && (
+                          <Pin className="w-3.5 h-3.5 text-sigma-accent fill-sigma-accent/20 rotate-45" />
+                        )}
                       </div>
-                    )}
                   </div>
                     </div>
                   );
@@ -846,18 +858,23 @@ export default function PainelConselho() {
           
           {/* SPLIT FOOTER */}
           <div className="grid grid-cols-2 border-t border-sigma-border bg-sigma-elevated mt-auto shrink-0">
-            <button className="flex items-center justify-between p-4 border-r border-sigma-border hover:bg-white/5 transition-colors">
-              <div className="flex items-center gap-2">
-                <ArchiveRestore className="w-5 h-5 text-gray-400" />
-                <div className="text-left leading-tight">
-                  <span className="text-[10px] font-bold block">Ver</span>
-                  <span className="text-[11px] font-bold">Arquivados</span>
+            <button 
+                onClick={() => setMostrarArquivados(v => !v)}
+                className={`flex items-center justify-between p-4 border-r border-sigma-border transition-colors cursor-pointer ${mostrarArquivados ? 'bg-sigma-gold/10 text-sigma-gold' : 'hover:bg-white/5'}`}
+              >
+                <div className="flex items-center gap-2">
+                  <ArchiveRestore className={`w-5 h-5 ${mostrarArquivados ? 'text-sigma-gold' : 'text-gray-400'}`} />
+                  <div className="text-left leading-tight">
+                    <span className="text-[10px] font-bold block">{mostrarArquivados ? 'Ocultar' : 'Ver'}</span>
+                    <span className="text-[11px] font-bold">Arquivados</span>
+                  </div>
                 </div>
-              </div>
-              <span className="text-sm font-black text-white">
-                {avisos.filter((a: any) => a.arquivado && a.tipo === (abaAtiva === 'avisos' ? 'AVISO' : 'NOTIFICACAO')).length}
-              </span>
-            </button>
+                {mostrarArquivados && (
+                  <span className="text-sm font-black text-sigma-gold">
+                    {avisos.filter((a: any) => a.arquivado && a.tipo === (abaAtiva === 'avisos' ? 'AVISO' : 'NOTIFICACAO')).length}
+                  </span>
+                )}
+              </button>
             <button className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
               <div className="flex items-center gap-2">
                 <Eye className="w-5 h-5 text-gray-400" />
