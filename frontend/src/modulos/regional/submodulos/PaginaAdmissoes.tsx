@@ -467,7 +467,7 @@ export default function PaginaAdmissoes() {
               : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          Iniciação {totalIniciacoes}
+          INICIAÇÃO {totalIniciacoes}
         </button>
         
         <button
@@ -479,7 +479,7 @@ export default function PaginaAdmissoes() {
               : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          Filiação {totalFiliacoes}
+          FILIAÇÃO {totalFiliacoes}
         </button>
 
         <button
@@ -491,7 +491,7 @@ export default function PaginaAdmissoes() {
               : 'bg-[#2a303c] text-white hover:bg-[#3b4354]'
           }`}
         >
-          Regularização {totalRegularizacoes}
+          REGULARIZAÇÃO {totalRegularizacoes}
         </button>
       </div>
 
