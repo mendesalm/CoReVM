@@ -233,7 +233,7 @@ export default function PainelMinhaLoja({
     return (
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-10 text-center text-gray-400">
-          <Loader2 className="w-8 h-8 mx-auto mb-3 text-[#facc15] animate-spin" />
+          <Loader2 className="w-8 h-8 mx-auto mb-3 title-sigma-gold animate-spin" />
           Carregando os dados da sua Loja...
         </div>
       </div>
@@ -258,12 +258,12 @@ export default function PainelMinhaLoja({
       {/* Cabeçalho do Painel */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-sigma-elevated border border-sigma-border rounded-xl text-[#facc15] border border-[#facc15]/20">
+          <div className="p-3 bg-sigma-elevated border border-sigma-border rounded-xl title-sigma-gold border border-[#facc15]/20">
             <Building2 className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#facc15] uppercase tracking-wider">Minha Loja</span>
+              <span className="text-xs font-bold title-sigma-gold uppercase tracking-wider">Minha Loja</span>
             </div>
             <h1 className="text-lg font-bold text-white tracking-wide">{nomeLojaCompleto}</h1>
             <p className="text-xs text-gray-400 mt-0.5">
@@ -286,12 +286,12 @@ export default function PainelMinhaLoja({
       <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
-            <Building2 className="w-4 h-4 text-[#facc15]" /> Dados da Loja
+            <Building2 className="w-4 h-4 title-sigma-gold" /> Dados da Loja
           </div>
           <button
             type="button"
             onClick={onAbrirEdicaoLoja}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold title-sigma-gold hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
             title="Editar cadastro da Loja"
           >
             <Edit3 className="w-3.5 h-3.5" /> Editar
@@ -360,13 +360,13 @@ export default function PainelMinhaLoja({
           <div className="space-y-4 lg:pr-5 lg:border-r lg:border-[#232323]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
-                <Award className="w-4 h-4 text-[#facc15]" /> Venerável Mestre
+                <Award className="w-4 h-4 title-sigma-gold" /> Venerável Mestre
               </div>
               {!souOperadorAdministrativo && (
                 <button
                   type="button"
                   onClick={onAbrirGestaoVM}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold title-sigma-gold hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
                   title="Gerenciar Venerável Mestre"
                 >
                   <UserCog className="w-3.5 h-3.5" /> Gerenciar
@@ -402,7 +402,7 @@ export default function PainelMinhaLoja({
                       </div>
                     )}
                   </div>
-                  <div className="pt-2 border-t border-[#232323] flex items-center gap-2 text-[#facc15] text-xs font-semibold">
+                  <div className="pt-2 border-t border-[#232323] flex items-center gap-2 title-sigma-gold text-xs font-semibold">
                     <Clock className="w-3.5 h-3.5 shrink-0" />
                     <span>
                       {formatarDuracaoMandato(vmDetalhe?.data_inicio)}
@@ -436,7 +436,7 @@ export default function PainelMinhaLoja({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
-                <Users className="w-4 h-4 text-[#facc15]" /> Suplente do Conselho
+                <Users className="w-4 h-4 title-sigma-gold" /> Suplente do Conselho
               </div>
               {!souOperadorAdministrativo && (
                 <button
@@ -486,7 +486,7 @@ export default function PainelMinhaLoja({
         <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-bold text-sm">
-              <Calendar className="w-4 h-4 text-[#facc15]" /> Eventos da Loja
+              <Calendar className="w-4 h-4 title-sigma-gold" /> Eventos da Loja
             </div>
             <span className="text-[11px] font-bold text-gray-400 bg-sigma-surface border border-[#262626] px-2 py-0.5 rounded-full">
               {eventosVigentesWidget.length}
@@ -520,7 +520,7 @@ export default function PainelMinhaLoja({
           <button
             type="button"
             onClick={() => setModalAberto('eventos')}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold title-sigma-gold hover:text-[#eab308] transition-colors cursor-pointer"
           >
             Ver tudo e gerenciar <ChevronRight className="w-3 h-3" />
           </button>
@@ -530,7 +530,7 @@ export default function PainelMinhaLoja({
         <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-bold text-sm">
-              <FileText className="w-4 h-4 text-[#facc15]" /> Documentos e Convites
+              <FileText className="w-4 h-4 title-sigma-gold" /> Documentos e Convites
             </div>
             <span className="text-[11px] font-bold text-gray-400 bg-sigma-surface border border-[#262626] px-2 py-0.5 rounded-full">
               {documentosVigentesWidget.length}
@@ -566,7 +566,7 @@ export default function PainelMinhaLoja({
           <button
             type="button"
             onClick={() => setModalAberto('documentos')}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold title-sigma-gold hover:text-[#eab308] transition-colors cursor-pointer"
           >
             Ver tudo e gerenciar <ChevronRight className="w-3 h-3" />
           </button>
@@ -576,7 +576,7 @@ export default function PainelMinhaLoja({
         <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-bold text-sm">
-              <BookOpenCheck className="w-4 h-4 text-[#facc15]" /> Editais de Admissão
+              <BookOpenCheck className="w-4 h-4 title-sigma-gold" /> Editais de Admissão
             </div>
             <span className="text-[11px] font-bold text-gray-400 bg-sigma-surface border border-[#262626] px-2 py-0.5 rounded-full">
               {previas.length}
@@ -621,7 +621,7 @@ export default function PainelMinhaLoja({
           <button
             type="button"
             onClick={() => setModalAberto('admissoes')}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#facc15] hover:text-[#eab308] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold title-sigma-gold hover:text-[#eab308] transition-colors cursor-pointer"
           >
             Ver tudo e gerenciar <ChevronRight className="w-3 h-3" />
           </button>
@@ -678,7 +678,7 @@ function EnvelopeModal({ titulo, icone: Icone, onFechar, children }: { titulo: s
       <div className="bg-sigma-surface border border-[#262626] rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-white font-bold text-base">
-            <Icone className="w-5 h-5 text-[#facc15]" /> {titulo}
+            <Icone className="w-5 h-5 title-sigma-gold" /> {titulo}
           </div>
           <button
             type="button"
@@ -1031,7 +1031,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
                     type="button"
                     title="Clonar evento (nova data)"
                     onClick={() => handleClonarEvento(e)}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-sigma-elevated transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-gray-500 hover:title-sigma-gold hover:bg-sigma-elevated transition-colors cursor-pointer"
                   >
                     <Copy className="w-3.5 h-3.5" />
                   </button>
@@ -1042,7 +1042,7 @@ function ModalEventos({ regiaoId, loja, eventos, carregando, tiposPermitidos, on
                       type="button"
                       title="Editar evento"
                       onClick={() => handleEditarEvento(e)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-sigma-elevated transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-gray-500 hover:title-sigma-gold hover:bg-sigma-elevated transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
@@ -1266,7 +1266,7 @@ function ModalDocumentos({ regiaoId, loja, documentos, carregando, onFechar, onC
                     title="Reativar documento"
                     onClick={() => handleReativarDocumento(d.id)}
                     disabled={salvando}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-[#facc15] hover:bg-sigma-elevated disabled:opacity-50 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-gray-500 hover:title-sigma-gold hover:bg-sigma-elevated disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
@@ -1276,7 +1276,7 @@ function ModalDocumentos({ regiaoId, loja, documentos, carregando, onFechar, onC
                     href={`${API_URL}/regional/${regiaoId}/documentos/${d.id}/arquivo`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[#facc15] hover:text-[#eab308]"
+                    className="title-sigma-gold hover:text-[#eab308]"
                     title="Baixar arquivo"
                   >
                     <ChevronRight className="w-4 h-4" />

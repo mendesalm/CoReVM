@@ -11,20 +11,20 @@ export default function PainelVM() {
       <div className="bg-sigma-surface border-b border-sigma-border sticky top-0 z-50">
         <div className="max-w-4xl mx-auto p-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#facc15] uppercase tracking-widest">Painel do Venerável Mestre</h1>
+            <h1 className="text-xl font-bold title-sigma-gold uppercase tracking-widest">Painel do Venerável Mestre</h1>
             <p className="text-sm text-gray-400">Gestão Local - ARLS Luz e Força</p>
           </div>
         </div>
         
         {/* Tabs */}
         <div className="max-w-4xl mx-auto px-4 flex gap-6">
-          <button onClick={() => setActiveTab('perfil')} className={`pb-3 font-semibold border-b-2 transition-colors ${activeTab === 'perfil' ? 'border-[#facc15] text-[#facc15]' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+          <button onClick={() => setActiveTab('perfil')} className={`pb-3 font-semibold border-b-2 transition-colors ${activeTab === 'perfil' ? 'border-[#facc15] title-sigma-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
             Meu Perfil
           </button>
-          <button onClick={() => setActiveTab('familia')} className={`pb-3 font-semibold border-b-2 transition-colors ${activeTab === 'familia' ? 'border-[#facc15] text-[#facc15]' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+          <button onClick={() => setActiveTab('familia')} className={`pb-3 font-semibold border-b-2 transition-colors ${activeTab === 'familia' ? 'border-[#facc15] title-sigma-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
             Família
           </button>
-          <button onClick={() => setActiveTab('suplentes')} className={`pb-3 font-semibold border-b-2 transition-colors ${activeTab === 'suplentes' ? 'border-[#facc15] text-[#facc15]' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+          <button onClick={() => setActiveTab('suplentes')} className={`pb-3 font-semibold border-b-2 transition-colors ${activeTab === 'suplentes' ? 'border-[#facc15] title-sigma-gold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
             Suplentes do Conselho
           </button>
         </div>

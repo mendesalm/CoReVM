@@ -232,7 +232,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
         {/* Topo do Modal */}
         <div className="bg-gradient-to-r from-[#181818] via-[#141414] to-[#181818] p-5 border-b border-sigma-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 rounded-xl text-[#facc15]">
+            <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 rounded-xl title-sigma-gold">
               <Award className="w-6 h-6" />
             </div>
             <div>
@@ -240,7 +240,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                 <h2 className="text-lg font-bold text-white tracking-wide">
                   Gestão do Venerável Mestre
                 </h2>
-                <span className="bg-sigma-elevated text-[#facc15] text-[11px] font-bold px-2 py-0.5 rounded border border-[#444]">
+                <span className="bg-sigma-elevated title-sigma-gold text-[11px] font-bold px-2 py-0.5 rounded border border-[#444]">
                   Loja {loja.numero}
                 </span>
               </div>
@@ -265,7 +265,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
             onClick={() => setActiveTab('visualizar')}
             className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
               activeTab === 'visualizar'
-                ? 'border-[#facc15] text-[#facc15] bg-[#1c1c1c]/50'
+                ? 'border-[#facc15] title-sigma-gold bg-[#1c1c1c]/50'
                 : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
@@ -276,7 +276,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
             onClick={() => setActiveTab('substituir')}
             className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
               activeTab === 'substituir'
-                ? 'border-[#facc15] text-[#facc15] bg-[#1c1c1c]/50'
+                ? 'border-[#facc15] title-sigma-gold bg-[#1c1c1c]/50'
                 : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
@@ -288,7 +288,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
             onClick={() => setActiveTab('historico')}
             className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
               activeTab === 'historico'
-                ? 'border-[#facc15] text-[#facc15] bg-[#1c1c1c]/50'
+                ? 'border-[#facc15] title-sigma-gold bg-[#1c1c1c]/50'
                 : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
@@ -300,7 +300,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-3">
-              <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+              <Loader2 className="w-8 h-8 title-sigma-gold animate-spin" />
               <p className="text-xs">Consultando registros maçônicos...</p>
             </div>
           ) : (
@@ -322,11 +322,11 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                               <h3 className="text-xl font-bold text-white pt-1">
                                 {vmData.nome_completo}
                               </h3>
-                              <p className="text-xs text-[#facc15] font-semibold">
+                              <p className="text-xs title-sigma-gold font-semibold">
                                 Venerável Mestre • CIM: <span className="text-white font-mono">{vmData.cim}</span>
                               </p>
                             </div>
-                            <div className="p-3 bg-sigma-elevated border border-sigma-border rounded-xl text-[#facc15] border border-[#facc15]/20">
+                            <div className="p-3 bg-sigma-elevated border border-sigma-border rounded-xl title-sigma-gold border border-[#facc15]/20">
                               <Award className="w-8 h-8" />
                             </div>
                           </div>
@@ -348,9 +348,9 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                               <span className="text-white font-medium">{vmData.cpf ? formatarCPF(vmData.cpf) : 'Não informado'}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-300">
-                              <Calendar className="w-4 h-4 text-[#facc15]" />
+                              <Calendar className="w-4 h-4 title-sigma-gold" />
                               <span className="text-gray-400">Posse / Início:</span>
-                              <span className="text-[#facc15] font-bold">{formatarDataBR(vmData.data_inicio)}</span>
+                              <span className="title-sigma-gold font-bold">{formatarDataBR(vmData.data_inicio)}</span>
                             </div>
                           </div>
                         </div>
@@ -371,7 +371,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                             <button
                               type="button"
                               onClick={() => setIsEditing(true)}
-                              className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-[#facc15] hover:text-black bg-sigma-elevated border border-sigma-border hover:bg-sigma-gold text-[#070F1E] shadow-md border border-[#facc15]/30 transition-all"
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold title-sigma-gold hover:text-black bg-sigma-elevated border border-sigma-border hover:bg-sigma-gold text-[#070F1E] shadow-md border border-[#facc15]/30 transition-all"
                             >
                               <Edit3 className="w-4 h-4" />
                               Editar Informações
@@ -385,7 +385,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                         <div className="bg-sigma-elevated border border-sigma-border rounded-xl p-4 mb-2">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-xs text-[#facc15] font-semibold">Editando cadastro do Venerável Mestre</p>
+                              <p className="text-xs title-sigma-gold font-semibold">Editando cadastro do Venerável Mestre</p>
                               <p className="text-sm font-bold text-white">CIM: {vmData.cim}</p>
                             </div>
                             <span className="text-[11px] text-gray-400 italic">
@@ -448,13 +448,13 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-semibold title-sigma-gold uppercase tracking-wider mb-1">
                               Data de Início do Mandato
                             </label>
                             <CampoData
                               value={editForm.data_inicio}
                               onChange={(v) => setEditForm({...editForm, data_inicio: v})}
-                              className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                              className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm title-sigma-gold font-semibold focus:border-[#facc15] focus:outline-none"
                             />
                           </div>
                         </div>
@@ -517,7 +517,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
 
                   {/* Campo CIM com Busca Instantânea */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-semibold title-sigma-gold uppercase tracking-wider mb-1">
                       CIM do Novo Venerável Mestre *
                     </label>
                     <div className="relative">
@@ -531,7 +531,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                       />
                       <div className="absolute right-3 top-2.5 text-gray-400">
                         {buscandoCim ? (
-                          <Loader2 className="w-5 h-5 text-[#facc15] animate-spin" />
+                          <Loader2 className="w-5 h-5 title-sigma-gold animate-spin" />
                         ) : obreiroLocalizado === true ? (
                           <CheckCircle2 className="w-5 h-5 text-green-400" />
                         ) : obreiroLocalizado === false ? (
@@ -601,13 +601,13 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
+                      <label className="block text-xs font-semibold title-sigma-gold uppercase tracking-wider mb-1">
                         Data de Posse / Início do Mandato *
                       </label>
                       <CampoData
                         value={novaGestaoForm.data_inicio_mandato}
                         onChange={(v) => setNovaGestaoForm({...novaGestaoForm, data_inicio_mandato: v})}
-                        className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                        className="w-full bg-sigma-bg border border-sigma-border rounded-lg p-2.5 text-sm title-sigma-gold font-semibold focus:border-[#facc15] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -656,7 +656,7 @@ A loja voltará ao status 'Pendente' até que um novo Venerável Mestre seja emp
                               <span className="text-[11px] text-gray-400 font-mono">CIM: {m.cim}</span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-gray-400">
-                              <Calendar className="w-3.5 h-3.5 text-[#facc15]" />
+                              <Calendar className="w-3.5 h-3.5 title-sigma-gold" />
                               <span>Início: {formatarDataBR(m.data_inicio)}</span>
                               <span>•</span>
                               <span>Término: {m.ativo ? 'Vigente' : formatarDataBR(m.data_fim)}</span>

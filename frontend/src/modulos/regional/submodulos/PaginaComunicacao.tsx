@@ -393,7 +393,7 @@ export const PaginaComunicacao: React.FC = () => {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg title-sigma-gold border border-[#facc15]/20">
               <MessageSquare className="w-5 h-5"/>
             </div>
             <div>

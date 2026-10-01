@@ -279,7 +279,7 @@ function formatarLojaMembro(membro: any): string {
   if (loading) {
     return (
       <div className="h-screen bg-sigma-bg flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-[#facc15] animate-spin" />
+        <Loader2 className="w-12 h-12 title-sigma-gold animate-spin" />
       </div>
     );
   }
@@ -306,7 +306,7 @@ function formatarLojaMembro(membro: any): string {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg title-sigma-gold border border-[#facc15]/20">
               <Award className="w-5 h-5"/>
             </div>
             <div>
@@ -329,8 +329,8 @@ function formatarLojaMembro(membro: any): string {
                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                 MANDATO VIGENTE ATIVO
               </span>
-              <span className="px-3 py-1 bg-sigma-elevated text-[#facc15] border border-[#444] rounded-full font-semibold text-xs flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#facc15]" />
+              <span className="px-3 py-1 bg-sigma-elevated title-sigma-gold border border-[#444] rounded-full font-semibold text-xs flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 title-sigma-gold" />
                 Gestão: {presidente?.inicio_mandato?.split('-')[0] || '2026'} - {presidente?.termino_mandato?.split('-')[0] || '2027'}
               </span>
             </div>
@@ -357,17 +357,17 @@ function formatarLojaMembro(membro: any): string {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Card: Presidente */}
-          <div onClick={() => openDrawer(presidente, 'Presidente', <Shield className="w-5 h-5 text-[#facc15]" />, 'Presidência executiva, convocação de plenárias e representação institucional.', 'presidente')} className="bg-sigma-surface border border-sigma-border hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
+          <div onClick={() => openDrawer(presidente, 'Presidente', <Shield className="w-5 h-5 title-sigma-gold" />, 'Presidência executiva, convocação de plenárias e representação institucional.', 'presidente')} className="bg-sigma-surface border border-sigma-border hover:border-[#facc15]/40 rounded-2xl p-6 shadow-xl transition-all flex flex-col justify-between group cursor-pointer relative hover:scale-[1.02] duration-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/30">
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-sigma-elevated border border-sigma-border title-sigma-gold border border-[#facc15]/30">
                   Presidente
                 </span>
-                <Shield className="w-5 h-5 text-[#facc15] opacity-60 group-hover:opacity-100 transition-opacity" />
+                <Shield className="w-5 h-5 title-sigma-gold opacity-60 group-hover:opacity-100 transition-opacity" />
               </div>
 
               <div className="flex items-center gap-4 pt-2">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2a2612] to-[#16140b] border border-[#facc15]/40 text-[#facc15] flex items-center justify-center font-black text-xl shadow-inner shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2a2612] to-[#16140b] border border-[#facc15]/40 title-sigma-gold flex items-center justify-center font-black text-xl shadow-inner shrink-0">
                   P
                 </div>
                 <div className="min-w-0">
@@ -538,7 +538,7 @@ function formatarLojaMembro(membro: any): string {
         {/* Painel Informativo da Vigência */}
         <div className="bg-sigma-surface border border-[#2a2a2a] rounded-2xl p-6 shadow-xl">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[#facc15]" />
+            <Calendar className="w-4 h-4 title-sigma-gold" />
             Cronograma do Mandato Oficial
           </h3>
           
@@ -674,7 +674,7 @@ function formatarLojaMembro(membro: any): string {
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-sigma-elevated border border-sigma-border rounded-xl text-[#facc15] border border-[#facc15]/30">
+              <div className="p-2.5 bg-sigma-elevated border border-sigma-border rounded-xl title-sigma-gold border border-[#facc15]/30">
                 <Award className="w-6 h-6" />
               </div>
               <div>
@@ -693,7 +693,7 @@ function formatarLojaMembro(membro: any): string {
                 profundidade). */}
             <form onSubmit={handleSalvarDiretoria} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold title-sigma-gold uppercase tracking-wider mb-1">
                   Presidente do Conselho
                 </label>
                 <select

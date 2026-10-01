@@ -180,21 +180,21 @@ export default function PainelSuperAdmin() {
       <div className="max-w-6xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-10">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-[#facc15] mb-1">Conselhos Regionais</h1>
+            <h1 className="text-2xl md:text-3xl font-bold title-sigma-gold mb-1">Conselhos Regionais</h1>
             <p className="text-xs md:text-sm text-gray-400">Administração Global e Gestão de Conselhos</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link
               to="/solicitacoes-cadastro"
-              className="border border-sigma-border hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
+              className="border border-sigma-border hover:border-[#facc15]/50 text-gray-300 hover:title-sigma-gold px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <UserPlus className="w-4 h-4 text-[#facc15]" />
+              <UserPlus className="w-4 h-4 title-sigma-gold" />
               <span className="hidden sm:inline">Solicitações de Cadastro</span>
               <span className="sm:hidden">Solicitações</span>
             </Link>
             <Link
               to="/minhas-passkeys"
-              className="border border-sigma-border hover:border-[#facc15]/50 text-gray-300 hover:text-[#facc15] px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
+              className="border border-sigma-border hover:border-[#facc15]/50 text-gray-300 hover:title-sigma-gold px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Fingerprint className="w-4 h-4 text-blue-400" />
               <span className="hidden sm:inline">Minhas Passkeys</span>
@@ -260,7 +260,7 @@ export default function PainelSuperAdmin() {
               <h3 className="text-3xl font-bold text-green-500">Online</h3>
             </div>
             <div className="w-12 h-12 bg-sigma-elevated border border-sigma-border rounded-full flex items-center justify-center">
-              <Activity className="text-[#facc15] w-6 h-6" />
+              <Activity className="title-sigma-gold w-6 h-6" />
             </div>
           </div>
         </div>
@@ -293,7 +293,7 @@ export default function PainelSuperAdmin() {
                 {loading ? (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-gray-500">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-[#facc15]" />
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 title-sigma-gold" />
                       Carregando conselhos...
                     </td>
                   </tr>
@@ -305,11 +305,11 @@ export default function PainelSuperAdmin() {
                   </tr>
                 ) : regioesFiltradas.map(regiao => (
                   <tr key={regiao.id} className="border-b border-sigma-border hover:bg-[#151515] transition-colors">
-                    <td className="p-4 font-medium text-[#facc15]">
+                    <td className="p-4 font-medium title-sigma-gold">
                       {regiao.nome} <span className="text-gray-500 text-xs ml-2">({regiao.uf || 'GO'})</span>
                     </td>
                     <td className="p-4 text-gray-300">
-                      <button onClick={() => openViewLojas(regiao)} className="hover:text-[#facc15] underline decoration-dashed underline-offset-4 transition-colors cursor-pointer">
+                      <button onClick={() => openViewLojas(regiao)} className="hover:title-sigma-gold underline decoration-dashed underline-offset-4 transition-colors cursor-pointer">
                         {regiao.lojas?.length || 0} Lojas ativas
                       </button>
                     </td>
@@ -331,7 +331,7 @@ export default function PainelSuperAdmin() {
                       </button>
                       <button 
                         onClick={() => navigate(`/regiao/${regiao.id}`)}
-                        className="p-2 hover:bg-sigma-elevated rounded-lg text-[#facc15] hover:text-[#eab308] transition-colors flex items-center gap-1 font-medium cursor-pointer"
+                        className="p-2 hover:bg-sigma-elevated rounded-lg title-sigma-gold hover:text-[#eab308] transition-colors flex items-center gap-1 font-medium cursor-pointer"
                         title="Entrar no Dashboard do Conselho"
                       >
                         Acessar <ChevronRight className="w-4 h-4" />
@@ -354,7 +354,7 @@ export default function PainelSuperAdmin() {
           <div className="block md:hidden divide-y divide-[#222]">
             {loading ? (
               <div className="p-8 text-center text-gray-500">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-[#facc15]" />
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 title-sigma-gold" />
                 Carregando conselhos...
               </div>
             ) : regioesFiltradas.length === 0 ? (
@@ -370,7 +370,7 @@ export default function PainelSuperAdmin() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <h3 className="text-base font-bold text-white group-hover:text-[#facc15] transition-colors truncate">
+                      <h3 className="text-base font-bold text-white group-hover:title-sigma-gold transition-colors truncate">
                         {regiao.nome}
                       </h3>
                       <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-sigma-elevated text-gray-300">
@@ -401,7 +401,7 @@ export default function PainelSuperAdmin() {
                     >
                       <MoreVertical className="w-5 h-5" />
                     </button>
-                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-[#facc15] transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:title-sigma-gold transition-colors" />
                   </div>
                 </div>
               ))
@@ -440,7 +440,7 @@ export default function PainelSuperAdmin() {
                   setMenuOpcoesRegiao(null);
                   navigate(`/regiao/${regId}`);
                 }}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 text-[#facc15] font-bold text-sm hover:bg-sigma-elevated border border-sigma-border transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 title-sigma-gold font-bold text-sm hover:bg-sigma-elevated border border-sigma-border transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2.5">
                   <Activity className="w-4 h-4" /> Acessar Painel do Conselho
@@ -503,7 +503,7 @@ export default function PainelSuperAdmin() {
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-[#facc15]">Criar Novo Conselho Regional</h2>
+              <h2 className="text-2xl font-bold title-sigma-gold">Criar Novo Conselho Regional</h2>
               <div className="flex gap-2">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 1 ? 'bg-sigma-gold text-[#070F1E] shadow-md' : 'bg-[#333] text-gray-400'}`}>1. Lojas</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 2 ? 'bg-sigma-gold text-[#070F1E] shadow-md' : 'bg-[#333] text-gray-400'}`}>2. Diretoria</span>
@@ -635,7 +635,7 @@ export default function PainelSuperAdmin() {
       {editModal && (
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-2xl">
-            <h2 className="text-2xl font-bold text-[#facc15] mb-6">Editar Conselho Regional</h2>
+            <h2 className="text-2xl font-bold title-sigma-gold mb-6">Editar Conselho Regional</h2>
             
             <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
               <div className="grid grid-cols-2 gap-4">
@@ -737,7 +737,7 @@ export default function PainelSuperAdmin() {
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-[#facc15]">Lojas: {viewLojasModal.nome}</h2>
+              <h2 className="text-2xl font-bold title-sigma-gold">Lojas: {viewLojasModal.nome}</h2>
               <button onClick={() => setViewLojasModal(null)} className="text-gray-400 hover:text-white">✕</button>
             </div>
             <div className="max-h-[60vh] overflow-y-auto pr-2">

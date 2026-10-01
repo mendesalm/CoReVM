@@ -272,7 +272,7 @@ export default function PainelConselho() {
                   mostrar também a tag "FIXADO" seria redundante,
                   então ela só aparece para MEDIO/BAIXO fixados. */}
               {a.fixado && !isUrgente && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-sigma-elevated border border-sigma-border title-sigma-gold border border-[#facc15]/30">
                   <Pin className="w-3 h-3" /> FIXADO
                 </span>
               )}
@@ -357,9 +357,9 @@ export default function PainelConselho() {
 
         <div className="mt-3.5 pt-2.5 border-t border-[#262626] flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
           <span className="flex items-center gap-1.5">
-            <Award className="w-3.5 h-3.5 text-[#facc15]" />
+            <Award className="w-3.5 h-3.5 title-sigma-gold" />
             <span className="text-gray-300 font-medium">{a.autor_nome || 'Conselho'}</span>
-            {a.loja_id && <span className="text-[#facc15]/90 font-medium">(Loja {a.loja_numero || a.loja_id})</span>}
+            {a.loja_id && <span className="title-sigma-gold/90 font-medium">(Loja {a.loja_numero || a.loja_id})</span>}
           </span>
 
           <div className="flex items-center gap-3 text-gray-400">
@@ -486,7 +486,7 @@ export default function PainelConselho() {
           <div className="mt-2.5 pt-2 border-t border-[#1c1e26] flex items-center justify-between text-[10px] text-gray-500 flex-wrap gap-2">
             <span>
               Por: <strong className="text-gray-300">{n.autor_nome || 'Conselho'}</strong>
-              {n.loja_id && <span className="text-[#facc15]/80 ml-1">(Loja {n.loja_numero || n.loja_id})</span>}
+              {n.loja_id && <span className="title-sigma-gold/80 ml-1">(Loja {n.loja_numero || n.loja_id})</span>}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
@@ -936,7 +936,7 @@ export default function PainelConselho() {
               {/* RODAPÉ */}
               <div className="p-4 border-t border-sigma-border bg-slate-800 flex items-center justify-between gap-3 flex-wrap shadow-inner">
                  <div className="text-xs text-gray-400">
-                    <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-[#facc15]"/> <strong className="text-gray-300 font-medium">{itemEmFoco.autor_nome || 'Conselho'}</strong> {itemEmFoco.loja_id ? `(Loja ${itemEmFoco.loja_numero || itemEmFoco.loja_id})` : ''}</span>
+                    <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5 title-sigma-gold"/> <strong className="text-gray-300 font-medium">{itemEmFoco.autor_nome || 'Conselho'}</strong> {itemEmFoco.loja_id ? `(Loja ${itemEmFoco.loja_numero || itemEmFoco.loja_id})` : ''}</span>
                     <span className="flex items-center gap-1 mt-1"><Calendar className="w-3.5 h-3.5"/> {itemEmFoco.data_publicacao ? itemEmFoco.data_publicacao.split('-').reverse().join('/') : ''}</span>
                  </div>
                  
@@ -1034,7 +1034,7 @@ export default function PainelConselho() {
                     <select
                       value={avisoForm.nivel}
                       onChange={(e) => setAvisoForm({...avisoForm, nivel: e.target.value})}
-                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-xs text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                      className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-xs title-sigma-gold font-semibold focus:border-[#facc15] focus:outline-none"
                     >
                       <option value="BAIXO">🟢 Baixo - Informativo (Borda Verde)</option>
                       <option value="MEDIO">🟡 Médio - Alerta (Borda Amarela)</option>
@@ -1087,7 +1087,7 @@ export default function PainelConselho() {
                         type="checkbox"
                         checked={avisoForm.fixado}
                         onChange={(e) => setAvisoForm({...avisoForm, fixado: e.target.checked})}
-                        className="rounded border-[#444] text-[#facc15] focus:ring-[#facc15] h-4 w-4 bg-sigma-elevated"
+                        className="rounded border-[#444] title-sigma-gold focus:ring-[#facc15] h-4 w-4 bg-sigma-elevated"
                       />
                       <span>Fixar no topo da coluna</span>
                     </label>

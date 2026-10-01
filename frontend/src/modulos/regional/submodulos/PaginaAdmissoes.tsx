@@ -401,7 +401,7 @@ export default function PaginaAdmissoes() {
   if (loading && previas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-gray-400">
-        <Loader2 className="w-8 h-8 animate-spin text-[#facc15]" />
+        <Loader2 className="w-8 h-8 animate-spin title-sigma-gold" />
         <span className="text-sm">Carregando Mural de Admissão...</span>
       </div>
     );
@@ -411,7 +411,7 @@ export default function PaginaAdmissoes() {
     return (
       <div className="min-h-screen bg-sigma-bg flex items-center justify-center p-6 text-gray-200">
         <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
-          <div className="w-16 h-16 mx-auto bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+          <div className="w-16 h-16 mx-auto bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-2xl flex items-center justify-center title-sigma-gold">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
@@ -685,7 +685,7 @@ export default function PaginaAdmissoes() {
                     onClick={() => setPdfPreviewModal(`${API_URL}/regional/${id}/admissoes/${previaSelecionada.id}/pdf`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-sigma-elevated hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-sigma-border transition-colors"
                   >
-                    <Eye className="w-3.5 h-3.5 text-[#facc15]" />
+                    <Eye className="w-3.5 h-3.5 title-sigma-gold" />
                     Ler Online
                   </button>
                   <a
@@ -755,7 +755,7 @@ export default function PaginaAdmissoes() {
                   className="w-full px-4 py-3 flex items-center justify-between bg-sigma-surface hover:bg-sigma-elevated transition-colors"
                 >
                   <div className="flex items-center gap-2 text-sm font-bold text-white">
-                    <MessageSquare className="w-4 h-4 text-[#facc15]" />
+                    <MessageSquare className="w-4 h-4 title-sigma-gold" />
                     Pareceres e Votos do Conselho ({consideracoes.length})
                   </div>
                   {pareceresAbertos ? (
@@ -774,7 +774,7 @@ export default function PaginaAdmissoes() {
 
                       {carregandoConsideracoes ? (
                         <div className="py-8 text-center text-gray-500 flex items-center justify-center gap-2 text-xs">
-                          <Loader2 className="w-4 h-4 animate-spin text-[#facc15]" />
+                          <Loader2 className="w-4 h-4 animate-spin title-sigma-gold" />
                           Carregando pareceres...
                         </div>
                       ) : consideracoes.length === 0 ? (
@@ -791,7 +791,7 @@ export default function PaginaAdmissoes() {
                             >
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-7 h-7 rounded-full bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 flex items-center justify-center text-[#facc15] text-xs font-bold">
+                                  <div className="w-7 h-7 rounded-full bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 flex items-center justify-center title-sigma-gold text-xs font-bold">
                                     {c.autor_nome.substring(0, 2).toUpperCase()}
                                   </div>
                                   <div>
@@ -830,11 +830,11 @@ export default function PaginaAdmissoes() {
                     <form onSubmit={handleEnviarConsideracao} className="bg-sigma-elevated border border-sigma-border rounded-xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold text-white flex items-center gap-2">
-                          <Plus className="w-3.5 h-3.5 text-[#facc15]" />
+                          <Plus className="w-3.5 h-3.5 title-sigma-gold" />
                           Adicionar Nova Consideração / Parecer
                         </label>
                         <span className="text-[11px] text-gray-400">
-                          Manifestando-se como: <b className="text-[#facc15]">{userContext.role}</b>
+                          Manifestando-se como: <b className="title-sigma-gold">{userContext.role}</b>
                         </span>
                       </div>
 
@@ -882,7 +882,7 @@ export default function PaginaAdmissoes() {
             
             <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
+                <div className="p-2 bg-sigma-elevated border border-sigma-border title-sigma-gold rounded-lg">
                   <BookOpenCheck className="w-5 h-5" />
                 </div>
                 <div>
@@ -996,7 +996,7 @@ export default function PaginaAdmissoes() {
                     }}
                   />
                   <label htmlFor="pdf-upload" className="cursor-pointer flex flex-col items-center gap-1.5">
-                    <FileText className="w-8 h-8 text-[#facc15]" />
+                    <FileText className="w-8 h-8 title-sigma-gold" />
                     <span className="text-xs font-semibold text-gray-200">
                       {arquivoPdf ? arquivoPdf.name : 'Clique para selecionar o PDF da Prancha'}
                     </span>
@@ -1046,7 +1046,7 @@ export default function PaginaAdmissoes() {
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
             <div className="px-5 py-3 bg-sigma-elevated border-b border-[#2a2a2a] flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-bold text-white">
-                <FileText className="w-4 h-4 text-[#facc15]" />
+                <FileText className="w-4 h-4 title-sigma-gold" />
                 Visualização do Documento Oficial (PDF)
               </div>
               <div className="flex items-center gap-3">

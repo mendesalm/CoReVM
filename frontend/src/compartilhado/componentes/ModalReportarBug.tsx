@@ -83,7 +83,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
             <CheckCircle2 className="w-16 h-16 text-green-400 animate-bounce" />
             <h4 className="text-lg font-bold text-white">Reporte Enviado com Sucesso!</h4>
             <p className="text-xs text-gray-400 max-w-sm">
-              Um e-mail formal foi encaminhado para a equipe técnica de engenharia (<span className="text-[#facc15]">andreluiz@addex.dev</span>).
+              Um e-mail formal foi encaminhado para a equipe técnica de engenharia (<span className="title-sigma-gold">andreluiz@addex.dev</span>).
             </p>
           </div>
         ) : (
@@ -152,7 +152,7 @@ export const ModalReportarBug: React.FC<ModalReportarBugProps> = ({
             {/* Metadados Técnicos Automáticos */}
             <div className="p-3 bg-[#0a0a0a] border border-sigma-border rounded-xl text-[11px] text-gray-400 space-y-1">
               <div className="flex items-center gap-1.5 text-gray-300">
-                <AlertTriangle className="w-3.5 h-3.5 text-[#facc15]" />
+                <AlertTriangle className="w-3.5 h-3.5 title-sigma-gold" />
                 <span className="font-semibold">Contexto capturado automaticamente:</span>
               </div>
               <p className="truncate"><strong className="text-gray-500">Rota / URL:</strong> {location.pathname}</p>

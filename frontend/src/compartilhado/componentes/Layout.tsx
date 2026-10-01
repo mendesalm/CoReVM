@@ -649,7 +649,7 @@ export default function Layout() {
         >
           <div className="flex items-center gap-2 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-sigma-gold text-[#070F1E] shadow-md animate-pulse"></span>
-            <p className="font-bold text-[#facc15] text-xs tracking-wide">
+            <p className="font-bold title-sigma-gold text-xs tracking-wide">
               {tooltipData.titulo}
             </p>
           </div>

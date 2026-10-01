@@ -506,7 +506,7 @@ export default function PaginaLojas() {
   if (loading) {
     return (
       <div className="h-screen bg-sigma-bg flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-[#facc15] animate-spin" />
+        <Loader2 className="w-12 h-12 title-sigma-gold animate-spin" />
       </div>
     );
   }
@@ -549,7 +549,7 @@ export default function PaginaLojas() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
+            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg title-sigma-gold border border-[#facc15]/20">
               <Building2 className="w-5 h-5"/>
             </div>
             <div>
@@ -621,7 +621,7 @@ export default function PaginaLojas() {
               <div className="text-2xl font-black text-white">{totalLojas}</div>
               <span className="text-[11px] text-gray-500">Total integradas ao conselho</span>
             </div>
-            <div className="p-3 rounded-xl bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/20">
+            <div className="p-3 rounded-xl bg-sigma-elevated border border-sigma-border title-sigma-gold border border-[#facc15]/20">
               <Building2 className="w-6 h-6" />
             </div>
           </div>
@@ -846,7 +846,7 @@ export default function PaginaLojas() {
                       >
                         {/* Coluna unificada com padrão estrito: 'Loja {nome_loja}, nº {numero_loja}' */}
                         <td className="p-3.5 pl-5">
-                          <span className="font-bold text-white group-hover:text-[#facc15] transition-colors">
+                          <span className="font-bold text-white group-hover:title-sigma-gold transition-colors">
                             {formatarTituloLoja(l)}
                           </span>
                           {ehMinhaLoja && (
@@ -868,7 +868,7 @@ export default function PaginaLojas() {
                         </td>
 
                         <td className="p-3.5">
-                          <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide bg-[#202020] text-[#facc15] border border-sigma-border">
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide bg-[#202020] title-sigma-gold border border-sigma-border">
                             {l.potencia || 'GOB'}
                           </span>
                         </td>
@@ -930,7 +930,7 @@ export default function PaginaLojas() {
                                 <button
                                   type="button"
                                   onClick={() => setGestaoVmModal(l)}
-                                  className="p-1.5 text-[#facc15] hover:text-black hover:bg-sigma-gold text-[#070F1E] shadow-md rounded-lg transition-colors cursor-pointer"
+                                  className="p-1.5 title-sigma-gold hover:text-black hover:bg-sigma-gold text-[#070F1E] shadow-md rounded-lg transition-colors cursor-pointer"
                                   title={temVm ? "Gerenciar Venerável Mestre" : "Empossar Venerável Mestre"}
                                 >
                                   <Award className="w-4 h-4" />
@@ -1019,7 +1019,7 @@ export default function PaginaLojas() {
               <button
                 type="button"
                 onClick={() => setShowAddLojaModal(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#facc15] hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-3.5 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold title-sigma-gold hover:text-[#eab308] bg-sigma-elevated border border-sigma-border hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 px-3.5 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Não encontrou a loja? Clique aqui para vincular
               </button>
@@ -1036,7 +1036,7 @@ export default function PaginaLojas() {
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-6 w-full max-w-xl shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-sigma-elevated border border-sigma-border rounded-xl text-[#facc15] border border-[#facc15]/30">
+              <div className="p-2.5 bg-sigma-elevated border border-sigma-border rounded-xl title-sigma-gold border border-[#facc15]/30">
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
@@ -1156,13 +1156,13 @@ export default function PaginaLojas() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#facc15] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold title-sigma-gold uppercase tracking-wider mb-1">
                   Rito Trabalhado
                 </label>
                 <select 
                   value={editLojaForm.rito}
                   onChange={(e) => setEditLojaForm({...editLojaForm, rito: e.target.value})}
-                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm text-[#facc15] font-semibold focus:border-[#facc15] focus:outline-none"
+                  className="w-full bg-sigma-bg border border-sigma-border rounded-xl p-2.5 text-sm title-sigma-gold font-semibold focus:border-[#facc15] focus:outline-none"
                 >
                   <option value="REAA">REAA</option>
                   <option value="Rito York">Rito de York</option>
@@ -1617,7 +1617,7 @@ export default function PaginaLojas() {
             <div className="flex items-start justify-between pb-4 border-b border-sigma-border">
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="px-2 py-0.5 rounded bg-[#202020] text-[#facc15] font-bold text-xs border border-sigma-border">
+                  <span className="px-2 py-0.5 rounded bg-[#202020] title-sigma-gold font-bold text-xs border border-sigma-border">
                     {lojaDetalhesModal.potencia || 'GOB'}
                   </span>
                   <span className="text-xs font-semibold text-gray-400">
@@ -1651,7 +1651,7 @@ export default function PaginaLojas() {
               
               {/* Bloco 1: Liderança no Conselho Regional */}
               <div className="bg-sigma-elevated border border-[#262626] rounded-xl p-4 space-y-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#facc15] block">
+                <span className="text-[11px] font-bold uppercase tracking-wider title-sigma-gold block">
                   Liderança e Representação no Conselho
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1734,7 +1734,7 @@ export default function PaginaLojas() {
                   <div>
                     <span className="text-gray-500 block mb-0.5">E-mail</span>
                     {lojaDetalhesModal.email ? (
-                      <a href={`mailto:${lojaDetalhesModal.email}`} className="text-[#facc15] hover:underline flex items-center gap-1 truncate">
+                      <a href={`mailto:${lojaDetalhesModal.email}`} className="title-sigma-gold hover:underline flex items-center gap-1 truncate">
                         <Mail className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{lojaDetalhesModal.email}</span>
                       </a>
@@ -1746,7 +1746,7 @@ export default function PaginaLojas() {
                   <div>
                     <span className="text-gray-500 block mb-0.5">Telefone / WhatsApp</span>
                     {lojaDetalhesModal.telefone ? (
-                      <a href={`tel:${lojaDetalhesModal.telefone}`} className="text-white hover:text-[#facc15] flex items-center gap-1 truncate">
+                      <a href={`tel:${lojaDetalhesModal.telefone}`} className="text-white hover:title-sigma-gold flex items-center gap-1 truncate">
                         <Phone className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{lojaDetalhesModal.telefone}</span>
                       </a>
@@ -1795,7 +1795,7 @@ export default function PaginaLojas() {
                       setLojaDetalhesModal(null);
                       setGestaoVmModal(l);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sigma-elevated border border-sigma-border text-[#facc15] hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sigma-elevated border border-sigma-border title-sigma-gold hover:bg-sigma-elevated border border-sigma-border border border-[#facc15]/30 transition-colors"
                   >
                     <Award className="w-3.5 h-3.5" /> Gerenciar VM
                   </button>
@@ -1865,7 +1865,7 @@ export default function PaginaLojas() {
                   }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl bg-sigma-elevated hover:bg-sigma-elevated text-white text-left font-medium transition-colors cursor-pointer"
                 >
-                  <Award className="w-4 h-4 text-[#facc15] shrink-0" />
+                  <Award className="w-4 h-4 title-sigma-gold shrink-0" />
                   <div>
                     <div className="font-semibold text-white">
                       {lojaAcoesModal.hasVm ? 'Gerenciar Venerável Mestre' : 'Empossar Venerável Mestre'}

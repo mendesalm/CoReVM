@@ -30,12 +30,12 @@ export const ModuloGenericoConselho: React.FC<ModuloGenericoConselhoProps> = ({
       {/* Cabeçalho do Módulo */}
       <div className="bg-[#151515] border border-sigma-border rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 rounded-2xl text-[#facc15] shadow-inner">
+          <div className="p-3.5 bg-sigma-elevated border border-sigma-border border border-[#facc15]/20 rounded-2xl title-sigma-gold shadow-inner">
             <Icone className="w-7 h-7" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="text-[11px] font-extrabold px-2 py-0.5 rounded bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/30">
+              <span className="text-[11px] font-extrabold px-2 py-0.5 rounded bg-sigma-elevated border border-sigma-border title-sigma-gold border border-[#facc15]/30">
                 MÓDULO {numero}
               </span>
               <h2 className="text-xl font-bold text-white tracking-wide">{titulo}</h2>
@@ -54,13 +54,13 @@ export const ModuloGenericoConselho: React.FC<ModuloGenericoConselhoProps> = ({
       {/* Cartão de Regras e Matriz de Permissões */}
       <div className="bg-sigma-surface border border-sigma-border rounded-xl p-4 text-xs space-y-3">
         <div className="flex items-center gap-2 text-gray-300 font-semibold">
-          <Info className="w-4 h-4 text-[#facc15]" />
+          <Info className="w-4 h-4 title-sigma-gold" />
           <span>Matriz de Acesso e Regras de Deleção Visual</span>
         </div>
         <p className="text-gray-400 leading-relaxed pl-6">{descricaoRegras}</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 pl-6">
           <div className="p-2.5 bg-sigma-elevated rounded-lg border border-sigma-border">
-            <span className="font-bold text-[#facc15] block mb-1">SuperAdmin:</span>
+            <span className="font-bold title-sigma-gold block mb-1">SuperAdmin:</span>
             <span className="text-gray-400">{regrasRbac.superadmin}</span>
           </div>
           <div className="p-2.5 bg-sigma-elevated rounded-lg border border-sigma-border">

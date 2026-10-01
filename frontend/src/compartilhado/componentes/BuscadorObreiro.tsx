@@ -58,7 +58,7 @@ export default function BuscadorObreiro({ cargo, lojasConselho, defaultCim, onSu
 
   return (
     <div className="p-5 bg-[#151515] border border-sigma-border rounded-xl space-y-4">
-      <h3 className="text-[#facc15] font-semibold flex items-center gap-2">
+      <h3 className="title-sigma-gold font-semibold flex items-center gap-2">
         <Search className="w-4 h-4" /> Buscar {cargo}
       </h3>
       

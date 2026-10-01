@@ -173,13 +173,13 @@ export default function PaginaSolicitacoesCadastro() {
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <UserPlus className="w-6 h-6 text-[#facc15]" />
+          <UserPlus className="w-6 h-6 title-sigma-gold" />
           <h1 className="text-xl font-bold text-white">Solicitações de Cadastro</h1>
         </div>
         <button
           type="button"
           onClick={buscarLista}
-          className="flex items-center gap-2 text-xs text-gray-400 hover:text-[#facc15] transition-colors px-3 py-1.5 rounded-lg border border-sigma-border hover:border-[#facc15]/40"
+          className="flex items-center gap-2 text-xs text-gray-400 hover:title-sigma-gold transition-colors px-3 py-1.5 rounded-lg border border-sigma-border hover:border-[#facc15]/40"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${carregando ? 'animate-spin' : ''}`} /> Atualizar
         </button>
@@ -199,7 +199,7 @@ export default function PaginaSolicitacoesCadastro() {
             onClick={() => setStatusFiltro(f.valor)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               statusFiltro === f.valor
-                ? 'bg-sigma-elevated border border-sigma-border text-[#facc15] border-[#facc15]/40'
+                ? 'bg-sigma-elevated border border-sigma-border title-sigma-gold border-[#facc15]/40'
                 : 'text-gray-400 border-sigma-border hover:text-white hover:border-[#555]'
             }`}
           >
@@ -383,7 +383,7 @@ export default function PaginaSolicitacoesCadastro() {
       )}
 
       <div className="mt-8">
-        <Link to="/login" className="text-xs text-gray-500 hover:text-[#facc15] inline-flex items-center gap-1">
+        <Link to="/login" className="text-xs text-gray-500 hover:title-sigma-gold inline-flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Voltar
         </Link>
       </div>

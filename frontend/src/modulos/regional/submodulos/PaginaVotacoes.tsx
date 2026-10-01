@@ -7,26 +7,9 @@ import {
   Plus, Search, ArrowLeft, Calendar, Trash2, Send, CheckCircle2,
   Clock, X, CheckCheck,
   SlidersHorizontal, ChevronLeft, ChevronRight, BarChart3,
-  AlertCircle, CheckSquare, Building2, Check
+  AlertCircle, CheckSquare, Building2, Check, Edit2, Save
 } from 'lucide-react';
 
-// CORREÇÃO (2026-09-19): esta página ainda usava axios puro + um seletor
-// "Simular Acesso" que enviava um header `X-User-Id` não autenticado —
-// mesmo padrão pré-fix de segurança de 2026-09-11 já corrigido em
-// PaginaAdmissoes.tsx (B.5 do roteiro de testes). Desde esse fix,
-// `/regional/{id}/me` e `/votacoes` exigem `Authorization: Bearer` real
-// (validado via get_current_regional_user), então o header X-User-Id nunca
-// mais foi aceito: toda chamada desta página vinha retornando 422 sem que
-// ninguém notasse, até o usuário reportar o erro ao tentar acessar o menu
-// Enquetes e Votações. Substituído por `clienteHttp` (injeta o token real
-// do login via AuthContext, mesmo padrão já usado em PaginaLojas.tsx e
-// PaginaAdmissoes.tsx).
-//
-// Mesmo bug de renderização de PaginaAdmissoes.tsx também estava latente
-// aqui: `setErro(err.response?.data?.detail || ...)` jogaria a lista de
-// objetos de validação do FastAPI direto no estado, quebrando a página ao
-// renderizar `{erro}` num <p>. `extrairMensagemErro()` normaliza qualquer
-// formato de erro do backend para uma string segura de exibir.
 function extrairMensagemErro(err: any, mensagemPadrao: string): string {
   const detail = err?.response?.data?.detail;
   if (typeof detail === 'string') return detail;
@@ -64,7 +47,7 @@ interface VotacaoItem {
   descricao: string;
   tipo: string;
   tipo_label: string;
-  status: string; // 'EM_ANDAMENTO' | 'ENCERRADA'
+  status: string;
   opcoes: string[];
   data_abertura: string;
   data_encerramento: string | null;
@@ -88,8 +71,6 @@ export default function PaginaVotacoes() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   
-  // Controle de Usuário e RBAC (resolvido inteiramente por GET /me, a
-  // partir do token real de login — ver correção de 2026-09-19 acima)
   const [userContext, setUserContext] = useState<any>({
     usuario_id: '',
     role: '',
@@ -97,21 +78,27 @@ export default function PaginaVotacoes() {
     loja_id: null
   });
 
-  // Filtros, Busca, Ordenação e Paginação
   const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODAS' | 'DELIBERACAO' | 'CONSULTA'>('TODAS');
   const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'EM_ANDAMENTO' | 'ENCERRADA' | 'MINHA_PENDENTE'>('TODOS');
   const [ordenacao, setOrdenacao] = useState<'RECENTES' | 'PRAZO' | 'MAIS_VOTADAS' | 'PENDENTES_PRIMEIRO'>('RECENTES');
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const [itensPorPagina, setItensPorPagina] = useState(6);
+  const [itensPorPagina, setItensPorPagina] = useState(10);
 
-  // Modal de Votação e Apuração
   const [votacaoSelecionada, setVotacaoSelecionada] = useState<VotacaoItem | null>(null);
   const [opcaoVotoEscolhida, setOpcaoVotoEscolhida] = useState('');
   const [justificativaVoto, setJustificativaVoto] = useState('');
   const [enviandoVoto, setEnviandoVoto] = useState(false);
 
-  // Modal de Criação de Nova Votação
+  const [isEditando, setIsEditando] = useState(false);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [formEdicao, setFormEdicao] = useState({
+    titulo: '',
+    descricao: '',
+    data_encerramento: '',
+    quorum_minimo: ''
+  });
+
   const [showNovaVotacaoModal, setShowNovaVotacaoModal] = useState(false);
   const [salvandoVotacao, setSalvandoVotacao] = useState(false);
   const [formVotacao, setFormVotacao] = useState({
@@ -124,7 +111,6 @@ export default function PaginaVotacoes() {
   });
   const [novaOpcaoTexto, setNovaOpcaoTexto] = useState('');
 
-  // Carregar Dados
   const carregarDados = async () => {
     setLoading(true);
     setErro('');
@@ -139,14 +125,12 @@ export default function PaginaVotacoes() {
         setErro(extrairMensagemErro(errVotacoes, 'Não foi possível carregar as votações do conselho.'));
       }
 
-      // 2. Contexto do Usuário
       try {
         const userRes = await clienteHttp.get(`${API_URL}/regional/${id}/me`);
         if (userRes.data) setUserContext(userRes.data);
       } catch (errUser) {
         console.warn('Contexto do usuário não pôde ser carregado:', errUser);
       }
-
     } finally {
       setLoading(false);
     }
@@ -156,19 +140,23 @@ export default function PaginaVotacoes() {
     if (id) carregarDados();
   }, [id]);
 
-  // Resetar paginação ao filtrar ou buscar
   useEffect(() => {
     setPaginaAtual(1);
   }, [busca, filtroTipo, filtroStatus, ordenacao, itensPorPagina]);
 
-  // Abrir Modal de Voto / Apuração
   const abrirModalVoto = (votacao: VotacaoItem) => {
     setVotacaoSelecionada(votacao);
     setOpcaoVotoEscolhida(votacao.meu_voto || '');
     setJustificativaVoto(votacao.minha_loja_justificativa || '');
+    setIsEditando(false);
+    setFormEdicao({
+      titulo: votacao.titulo,
+      descricao: votacao.descricao,
+      data_encerramento: votacao.data_encerramento || '',
+      quorum_minimo: votacao.quorum_minimo
+    });
   };
 
-  // Submeter Voto Formal
   const handleVotar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!votacaoSelecionada || !opcaoVotoEscolhida) return;
@@ -183,7 +171,6 @@ export default function PaginaVotacoes() {
         }
       );
 
-      // Recarregar votações e atualizar modal ativo
       const res = await clienteHttp.get(`${API_URL}/regional/${id}/votacoes`);
       const listaAtualizada: VotacaoItem[] = res.data || [];
       setVotacoes(listaAtualizada);
@@ -199,7 +186,6 @@ export default function PaginaVotacoes() {
     }
   };
 
-  // Alternar Status (Encerrar / Reabrir Votação)
   const handleAlternarStatusVotacao = async (votacaoId: string, statusAtual: string) => {
     const novoStatus = statusAtual === 'ENCERRADA' ? 'EM_ANDAMENTO' : 'ENCERRADA';
     const acaoLabel = novoStatus === 'ENCERRADA' ? 'encerrar' : 'reabrir';
@@ -220,7 +206,6 @@ export default function PaginaVotacoes() {
     }
   };
 
-  // Excluir Votação (Deleção Visual)
   const handleExcluirVotacao = async (votacaoId: string) => {
     if (!confirm('Deseja realmente ocultar esta deliberação do conselho?')) return;
     try {
@@ -234,7 +219,42 @@ export default function PaginaVotacoes() {
     }
   };
 
-  // Submeter Nova Votação
+  const handleSalvarEdicao = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!votacaoSelecionada) return;
+    if (!formEdicao.titulo.trim()) {
+      alert('Informe o título da deliberação.');
+      return;
+    }
+
+    setSalvandoEdicao(true);
+    try {
+      await clienteHttp.put(
+        `${API_URL}/regional/${id}/votacoes/${votacaoSelecionada.id}`,
+        {
+          titulo: formEdicao.titulo.trim(),
+          descricao: formEdicao.descricao.trim(),
+          data_encerramento: formEdicao.data_encerramento || null,
+          quorum_minimo: formEdicao.quorum_minimo
+        }
+      );
+
+      const res = await clienteHttp.get(`${API_URL}/regional/${id}/votacoes`);
+      const listaAtualizada: VotacaoItem[] = res.data || [];
+      setVotacoes(listaAtualizada);
+      
+      const atualizada = listaAtualizada.find(v => v.id === votacaoSelecionada.id);
+      if (atualizada) {
+        setVotacaoSelecionada(atualizada);
+      }
+      setIsEditando(false);
+    } catch (err: any) {
+      alert(extrairMensagemErro(err, 'Erro ao editar votação'));
+    } finally {
+      setSalvandoEdicao(false);
+    }
+  };
+
   const handleSalvarNovaVotacao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formVotacao.titulo.trim()) {
@@ -277,7 +297,6 @@ export default function PaginaVotacoes() {
     }
   };
 
-  // Adicionar Opção Customizada ao Formulário
   const handleAdicionarOpcao = () => {
     if (!novaOpcaoTexto.trim()) return;
     if (formVotacao.opcoes.includes(novaOpcaoTexto.trim())) {
@@ -291,7 +310,6 @@ export default function PaginaVotacoes() {
     setNovaOpcaoTexto('');
   };
 
-  // Remover Opção
   const handleRemoverOpcao = (indice: number) => {
     if (formVotacao.opcoes.length <= 2) {
       alert('Uma votação deve possuir no mínimo 2 opções.');
@@ -303,7 +321,6 @@ export default function PaginaVotacoes() {
     }));
   };
 
-  // 1. Filtragem
   const votacoesFiltradas = votacoes.filter(v => {
     const atendeTipo = filtroTipo === 'TODAS' || v.tipo.toUpperCase() === filtroTipo;
     let atendeStatus = true;
@@ -320,7 +337,6 @@ export default function PaginaVotacoes() {
     return atendeTipo && atendeStatus && atendeBusca;
   });
 
-  // 2. Ordenação
   const votacoesOrdenadas = [...votacoesFiltradas].sort((a, b) => {
     if (ordenacao === 'PRAZO') {
       const dataA = a.data_encerramento || '9999-12-31';
@@ -338,17 +354,13 @@ export default function PaginaVotacoes() {
     return b.data_abertura.localeCompare(a.data_abertura);
   });
 
-  // 3. Paginação
   const totalPaginas = Math.ceil(votacoesOrdenadas.length / itensPorPagina) || 1;
   const indexInicio = (paginaAtual - 1) * itensPorPagina;
   const indexFim = itensPorPagina === 9999 ? votacoesOrdenadas.length : indexInicio + itensPorPagina;
   const votacoesPaginadas = itensPorPagina === 9999 ? votacoesOrdenadas : votacoesOrdenadas.slice(indexInicio, indexFim);
 
-  // Métricas
   const totalEmAndamento = votacoes.filter(v => v.status === 'EM_ANDAMENTO').length;
   const totalEncerradas = votacoes.filter(v => v.status === 'ENCERRADA').length;
-  const totalMinhasVotadas = votacoes.filter(v => v.minha_loja_votou).length;
-  const totalMinhasPendentes = votacoes.filter(v => v.status === 'EM_ANDAMENTO' && !v.minha_loja_votou).length;
 
   const formatarData = (isoStr: string) => {
     if (!isoStr) return '--/--/----';
@@ -364,8 +376,8 @@ export default function PaginaVotacoes() {
 
   if (loading && votacoes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-gray-400">
-        <Loader2 className="w-8 h-8 animate-spin text-[#facc15]" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-slate-400">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-300" />
         <span className="text-sm">Carregando Enquetes e Votações...</span>
       </div>
     );
@@ -373,19 +385,19 @@ export default function PaginaVotacoes() {
 
   if (erro && votacoes.length === 0) {
     return (
-      <div className="min-h-screen bg-sigma-bg flex items-center justify-center p-6 text-gray-200">
-        <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
-          <div className="w-16 h-16 mx-auto bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+      <div className="min-h-screen bg-[#070e1c] flex items-center justify-center p-6 text-slate-200">
+        <div className="max-w-md w-full p-8 text-center bg-[#1e293b] border border-slate-700 rounded-2xl shadow-2xl space-y-4">
+          <div className="w-16 h-16 mx-auto bg-slate-800 border border-slate-600 rounded-2xl flex items-center justify-center text-slate-300">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-white mb-1">Acesso ao Módulo de Votações</h2>
-            <p className="text-xs text-gray-400">{erro}</p>
+            <p className="text-xs text-slate-400">{erro}</p>
           </div>
 
           <button
             onClick={() => carregarDados()}
-            className="w-full py-2.5 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs rounded-xl transition-all shadow-md"
+            className="w-full py-2.5 bg-slate-600 text-white hover:bg-slate-500 font-bold text-xs rounded-xl transition-all shadow-md"
           >
             Tentar Novamente
           </button>
@@ -395,339 +407,111 @@ export default function PaginaVotacoes() {
   }
 
   return (
-    <div className="min-h-screen bg-sigma-bg text-gray-200">
+    <div className="min-h-screen bg-[#070e1c] text-slate-200">
       
-      {/* Sub-Header Contextual */}
-      <div className="bg-sigma-surface border-b border-sigma-border">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+      <div className="bg-[#1e293b] border-b border-slate-700">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <Link
               to={`/regiao/${id}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors hidden md:block"
               title="Voltar ao Painel Geral"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15] border border-[#facc15]/20">
-              <Vote className="w-5 h-5"/>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold text-white tracking-wide uppercase">Enquetes e Votações</h1>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/20">
-                  {votacoes.length} cadastradas
-                </span>
-                {totalEmAndamento > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {totalEmAndamento} ativas
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Consultas oficiais e deliberações do Conselho
-              </p>
+            
+            <div className="relative w-full md:w-[320px]">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text"
+                placeholder="Buscar deliberação ou enquete..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+              />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="w-full md:w-auto">
             <button
               onClick={() => setShowNovaVotacaoModal(true)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+              className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 font-bold text-sm rounded-xl transition-all shadow"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              Nova Deliberação / Enquete
+              Nova Enquete
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pb-12 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         
-        {/* Painel de Métricas Rápidas */}
-        <div className="hidden lg:grid lg:grid-cols-4 gap-3">
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Total de Consultas</span>
-              <span className="text-xl font-black text-white">{votacoes.length}</span>
-            </div>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
-              <Vote className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Em Votação (Ativas)</span>
-              <span className="text-xl font-black text-emerald-400">{totalEmAndamento}</span>
-            </div>
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <Clock className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Encerradas / Apuradas</span>
-              <span className="text-xl font-black text-blue-400">{totalEncerradas}</span>
-            </div>
-            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
-              <CheckCheck className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3.5 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">Votos da Minha Loja</span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-black text-[#facc15]">{totalMinhasVotadas}</span>
-                <span className="text-[11px] text-gray-500 font-semibold">/ {totalMinhasPendentes} pendente(s)</span>
-              </div>
-            </div>
-            <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
-              <CheckSquare className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Barra de Filtros Unificada */}
-        <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <div className="relative min-w-[260px] flex-1 sm:flex-initial">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input 
-                type="text"
-                placeholder="Buscar deliberação por título ou tema..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-sigma-surface border border-sigma-border rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors"
-              />
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-400 font-medium">Natureza:</span>
-              <select
-                value={filtroTipo}
-                onChange={(e: any) => setFiltroTipo(e.target.value)}
-                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
-              >
-                <option value="TODAS">Todas ({votacoes.length})</option>
-                <option value="DELIBERACAO">Deliberações Formais</option>
-                <option value="CONSULTA">Consultas Regionais</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-400 font-medium">Status:</span>
-              <select
-                value={filtroStatus}
-                onChange={(e: any) => setFiltroStatus(e.target.value)}
-                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
-              >
-                <option value="TODOS">Todos</option>
-                <option value="EM_ANDAMENTO">Em Aberto ({totalEmAndamento})</option>
-                <option value="ENCERRADA">Encerradas ({totalEncerradas})</option>
-                <option value="MINHA_PENDENTE">Minha Loja Pendente ({totalMinhasPendentes})</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <div className="flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
-              <span className="text-gray-400 font-medium">Ordenar por:</span>
-              <select
-                value={ordenacao}
-                onChange={(e: any) => setOrdenacao(e.target.value)}
-                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
-              >
-                <option value="RECENTES">Mais Recentes</option>
-                <option value="PRAZO">Prazo de Encerramento</option>
-                <option value="MAIS_VOTADAS">Mais Votadas</option>
-                <option value="PENDENTES_PRIMEIRO">Pendentes Primeiro</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-400 font-medium">Exibir:</span>
-              <select
-                value={itensPorPagina}
-                onChange={(e) => setItensPorPagina(Number(e.target.value))}
-                className="bg-[#0a0a0a] text-gray-200 border border-[#2e2e2e] rounded-lg px-2 py-2 text-xs focus:outline-none cursor-pointer"
-              >
-                <option value={6}>6</option>
-                <option value={9}>9</option>
-                <option value={12}>12</option>
-                <option value={9999}>Todas</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Grid de Cards de Votação */}
         {votacoesOrdenadas.length === 0 ? (
-          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-12 text-center text-gray-400">
-            <Vote className="w-12 h-12 mx-auto mb-3 text-gray-600 stroke-[1.5]" />
-            <h3 className="text-base font-bold text-gray-300 mb-1">Nenhuma deliberação encontrada</h3>
-            <p className="text-xs text-gray-500 max-w-md mx-auto">
-              Não há consultas correspondentes aos filtros aplicados. Clique em "Nova Deliberação / Enquete" para iniciar uma votação regional.
+          <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-12 text-center text-slate-400">
+            <Vote className="w-12 h-12 mx-auto mb-3 text-slate-500 stroke-[1.5]" />
+            <h3 className="text-base font-bold text-slate-200 mb-1">Nenhuma deliberação encontrada</h3>
+            <p className="text-sm text-slate-400 max-w-md mx-auto">
+              Não há consultas correspondentes aos filtros aplicados.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="flex flex-col gap-3">
+            {/* Cabecalho Lista (Desktop) */}
+            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-6">Nome da Enquete / Votação</div>
+              <div className="col-span-3">Status</div>
+              <div className="col-span-3 text-right">Quórum / Participação</div>
+            </div>
+
+            {/* Itens */}
             {votacoesPaginadas.map((votacao) => {
               const isAberta = votacao.status === 'EM_ANDAMENTO';
-              const minhaLojaVotou = votacao.minha_loja_votou;
-
+              
               return (
                 <div
                   key={votacao.id}
                   onClick={() => abrirModalVoto(votacao)}
-                  className={`border rounded-2xl p-5 shadow-xl transition-all duration-200 flex flex-col justify-between group cursor-pointer ${
-                    minhaLojaVotou
-                      ? 'bg-gradient-to-b from-emerald-950/15 via-[#131414] to-[#141414] border-emerald-500/30 hover:border-emerald-500/50'
-                      : isAberta
-                      ? 'bg-sigma-surface border-sigma-border hover:border-sigma-border'
-                      : 'bg-[#101010] border-sigma-border opacity-90'
-                  }`}
+                  className="bg-[#1e293b] border border-slate-700 hover:border-slate-500 rounded-xl p-4 cursor-pointer transition-colors flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 group"
                 >
-                  <div>
-                    {/* Cabeçalho do Card */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border tracking-wider ${
-                          votacao.tipo === 'DELIBERACAO'
-                            ? 'bg-sigma-elevated border border-sigma-border text-amber-400 border-amber-500/30'
-                            : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                        }`}>
-                          {votacao.tipo_label}
-                        </span>
-
-                        {isAberta ? (
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border tracking-wider bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            Em Votação
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border tracking-wider bg-red-500/10 text-red-400 border-red-500/20 flex items-center gap-1">
-                            Encerrada
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                        <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                        <span>{formatarData(votacao.data_abertura)}</span>
-
-                        {votacao.pode_gerenciar && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleExcluirVotacao(votacao.id); }}
-                            className="p-1 text-gray-500 hover:text-red-400 rounded-md hover:bg-red-500/10 transition-colors ml-1"
-                            title="Ocultar esta votação"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Título da Votação */}
-                    <h2 className="text-sm font-bold text-white leading-snug group-hover:text-[#facc15] transition-colors mb-2">
+                  <div className="md:col-span-6 flex flex-col gap-1">
+                    <h3 className="text-sm font-bold text-white group-hover:text-slate-300 transition-colors line-clamp-1">
                       {votacao.titulo}
-                    </h2>
-
-                    {/* Descrição resumida */}
-                    <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed mb-3.5">
-                      {votacao.descricao}
-                    </p>
-
-                    {/* Selo de Voto da Loja */}
-                    <div className="mb-4">
-                      {minhaLojaVotou ? (
-                        <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/25 rounded-xl flex items-center gap-2">
-                          <CheckCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                          <div className="overflow-hidden">
-                            <span className="text-[10px] uppercase font-bold text-emerald-400/80 block">Voto Formal da sua Loja</span>
-                            <span className="text-xs font-black text-emerald-300 truncate block">
-                              {votacao.meu_voto}
-                            </span>
-                          </div>
-                        </div>
-                      ) : isAberta ? (
-                        <div className="p-2.5 bg-sigma-elevated border border-sigma-border border border-amber-500/25 rounded-xl flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 animate-pulse" />
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-amber-400/80 block">Atenção ao Quórum</span>
-                            <span className="text-xs font-bold text-amber-300 block">
-                              Sua Loja ainda não registrou o voto
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-xl text-center text-[11px] text-gray-400">
-                          Votação finalizada
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Barra de Progresso / Quórum das Lojas */}
-                    <div className="bg-[#0e0e0e] border border-[#242424] rounded-xl p-3 mb-4 space-y-2">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-gray-400 font-semibold flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-[#facc15]" />
-                          Quórum de Lojas:
-                        </span>
-                        <span className="font-bold text-white">
-                          {votacao.total_votos} de {votacao.total_lojas_conselho} lojas ({votacao.percentual_quorum}%)
-                        </span>
-                      </div>
-                      
-                      <div className="w-full bg-[#202020] h-2 rounded-full overflow-hidden">
-                        <div 
-                          className="bg-gradient-to-r from-[#facc15] to-emerald-400 h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, votacao.percentual_quorum)}%` }}
-                        />
-                      </div>
-
-                      {/* Mini Apuração das Opções */}
-                      {votacao.total_votos > 0 && (
-                        <div className="pt-2 border-t border-[#1f1f1f] space-y-1.5">
-                          {votacao.apuracao.slice(0, 3).map((ap) => (
-                            <div key={ap.opcao} className="flex items-center justify-between text-[10px] text-gray-300">
-                              <span className="truncate max-w-[170px]">{ap.opcao}</span>
-                              <span className="font-bold text-[#facc15]">{ap.percentual}% ({ap.votos})</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span className={`px-2 py-0.5 rounded uppercase font-bold text-[10px] ${
+                        votacao.tipo === 'DELIBERACAO' 
+                          ? 'bg-slate-700 text-slate-300' 
+                          : 'bg-slate-800 text-slate-400 border border-slate-700'
+                      }`}>
+                        {votacao.tipo_label}
+                      </span>
+                      <span>Criada em {formatarData(votacao.data_abertura)}</span>
                     </div>
                   </div>
 
-                  {/* Rodapé do Card */}
-                  <div className="pt-3 border-t border-sigma-border space-y-2">
-                    
-                    {/* Botões de Ação */}
-                    <div className="flex items-center justify-between gap-2">
-                      {votacao.pode_gerenciar && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleAlternarStatusVotacao(votacao.id, votacao.status); }}
-                          className="text-[11px] font-semibold text-gray-400 hover:text-white transition-colors"
-                        >
-                          {isAberta ? 'Encerrar Votação' : 'Reabrir Votação'}
-                        </button>
-                      )}
+                  <div className="md:col-span-3 flex items-center">
+                    {isAberta ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Em Votação
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-1 rounded bg-slate-700 text-slate-300 text-xs font-bold">
+                        Encerrado
+                      </span>
+                    )}
+                  </div>
 
-                      <button
-                        onClick={(e) => { e.stopPropagation(); abrirModalVoto(votacao); }}
-                        className={`flex items-center gap-1.5 px-3.5 py-1.5 font-bold text-xs rounded-xl border transition-all ml-auto ${
-                          !minhaLojaVotou && isAberta
-                            ? 'bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 border-[#facc15] shadow-md shadow-[#facc15]/10'
-                            : 'bg-[#1c1c1c] hover:bg-sigma-elevated text-gray-200 border-sigma-border'
-                        }`}
-                      >
-                        <BarChart3 className="w-3.5 h-3.5" />
-                        <span>{!minhaLojaVotou && isAberta ? 'Votar Agora' : 'Ver Apuração'}</span>
-                      </button>
+                  <div className="md:col-span-3 flex flex-col items-start md:items-end gap-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                      <span>{votacao.percentual_quorum}%</span>
+                      <span className="text-slate-500 font-normal">({votacao.total_votos}/{votacao.total_lojas_conselho})</span>
+                    </div>
+                    <div className="w-full md:w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-slate-400 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, votacao.percentual_quorum)}%` }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -736,84 +520,58 @@ export default function PaginaVotacoes() {
           </div>
         )}
 
-        {/* Controles de Paginação */}
         {votacoesOrdenadas.length > 0 && totalPaginas > 1 && (
-          <div className="bg-sigma-surface border border-sigma-border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-            <span className="text-xs text-gray-400">
-              Exibindo <b>{indexInicio + 1}</b> a <b>{Math.min(indexFim, votacoesOrdenadas.length)}</b> de <b>{votacoesOrdenadas.length}</b> consultas
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 px-2">
+            <span className="text-sm text-slate-400">
+              Página {paginaAtual} de {totalPaginas}
             </span>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
                 disabled={paginaAtual === 1}
-                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
+                className="p-2 rounded-lg bg-[#1e293b] border border-slate-700 text-slate-300 hover:bg-slate-700 disabled:opacity-50 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
-                <button
-                  key={num}
-                  onClick={() => setPaginaAtual(num)}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold border transition-all ${
-                    paginaAtual === num
-                      ? 'bg-sigma-gold text-[#070F1E] shadow-md border-[#facc15] shadow-md shadow-[#facc15]/10'
-                      : 'bg-sigma-elevated text-gray-300 border-sigma-border hover:border-[#444] hover:bg-sigma-elevated'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
-
               <button
                 onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
                 disabled={paginaAtual === totalPaginas}
-                className="p-1.5 rounded-lg border border-sigma-border bg-sigma-elevated hover:bg-sigma-elevated disabled:opacity-40 disabled:hover:bg-sigma-elevated text-gray-300 transition-colors"
+                className="p-2 rounded-lg bg-[#1e293b] border border-slate-700 text-slate-300 hover:bg-slate-700 disabled:opacity-50 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
+
       </div>
 
-      {/* ========================================================= */}
-      {/* MODAL DE VOTAÇÃO INTERATIVA & APURAÇÃO EM TEMPO REAL      */}
-      {/* ========================================================= */}
+      {/* MODAL / DRAWER DE VOTAÇÃO */}
       {votacaoSelecionada && (
-        <div className="fixed inset-0 z-50 bg-sigma-bg/60 backdrop-blur-sm flex justify-end">
+        <div className="fixed inset-0 z-50 bg-[#070e1c]/80 backdrop-blur-sm flex justify-end">
           <div className="absolute inset-0" onClick={() => setVotacaoSelecionada(null)}></div>
-          <div className="relative w-full max-w-md bg-sigma-surface h-full shadow-2xl flex flex-col border-l border-sigma-border animate-in slide-in-from-right duration-300 overflow-hidden">
+          <div className="relative w-full max-w-lg bg-[#1e293b] h-full shadow-2xl flex flex-col border-l border-slate-700 animate-in slide-in-from-right duration-300 overflow-hidden">
             
-            {/* Header do Drawer */}
-            <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-start justify-between gap-4">
+            <div className="px-6 py-4 bg-slate-800 border-b border-slate-700 flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
-                    votacaoSelecionada.tipo === 'DELIBERACAO'
-                      ? 'bg-sigma-elevated border border-sigma-border text-amber-400 border-amber-500/30'
-                      : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                  }`}>
+                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-700 text-slate-300">
                     {votacaoSelecionada.tipo_label}
                   </span>
-
                   {votacaoSelecionada.status === 'EM_ANDAMENTO' ? (
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                       Em Andamento
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border bg-red-500/10 text-red-400 border-red-500/20">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-700 text-slate-400">
                       Encerrada
                     </span>
                   )}
-
-                  <span className="text-xs text-gray-400">
-                    Aberta em {formatarData(votacaoSelecionada.data_abertura)}
+                  <span className="text-xs text-slate-400">
+                    {formatarData(votacaoSelecionada.data_abertura)}
                   </span>
                 </div>
-
                 <h3 className="text-base font-bold text-white">
                   {votacaoSelecionada.titulo}
                 </h3>
@@ -821,36 +579,99 @@ export default function PaginaVotacoes() {
 
               <button 
                 onClick={() => setVotacaoSelecionada(null)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Corpo do Modal */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
-              {/* Descrição e Fundamentação */}
-              <div className="p-4 bg-sigma-elevated border border-[#262626] rounded-xl text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
-                <span className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Fundamentação da Consulta</span>
-                {votacaoSelecionada.descricao}
-              </div>
+              {/* Edição / Detalhes */}
+              {isEditando ? (
+                <form onSubmit={handleSalvarEdicao} className="space-y-4 bg-slate-800 border border-slate-700 rounded-xl p-4">
+                  <h4 className="text-sm font-bold text-white mb-2">Editar Votação</h4>
+                  
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Título</label>
+                    <input
+                      type="text"
+                      value={formEdicao.titulo}
+                      onChange={e => setFormEdicao({...formEdicao, titulo: e.target.value})}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:border-slate-500 outline-none"
+                    />
+                  </div>
 
-              {/* Seção 1: Formulário de Votação (Se aberta) */}
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Descrição</label>
+                    <textarea
+                      rows={3}
+                      value={formEdicao.descricao}
+                      onChange={e => setFormEdicao({...formEdicao, descricao: e.target.value})}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:border-slate-500 outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-400 block mb-1">Encerramento</label>
+                      <CampoData
+                        value={formEdicao.data_encerramento}
+                        onChange={v => setFormEdicao({...formEdicao, data_encerramento: v})}
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-400 block mb-1">Quórum</label>
+                      <select
+                        value={formEdicao.quorum_minimo}
+                        onChange={e => setFormEdicao({...formEdicao, quorum_minimo: e.target.value})}
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white outline-none cursor-pointer"
+                      >
+                        <option value="MAIORIA_SIMPLES">Maioria Simples</option>
+                        <option value="MAIORIA_QUALIFICADA_2_3">Maioria Qualificada (2/3)</option>
+                        <option value="UNANIMIDADE">Unanimidade (100%)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setIsEditando(false)} className="px-3 py-1.5 text-xs text-slate-400 hover:text-white">
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={salvandoEdicao} className="flex items-center gap-1 px-4 py-1.5 bg-slate-600 text-white font-bold text-xs rounded-lg hover:bg-slate-500 transition-colors">
+                      {salvandoEdicao ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}
+                      Salvar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="p-4 bg-slate-800 border border-slate-700 rounded-xl text-sm text-slate-300 leading-relaxed whitespace-pre-wrap relative group">
+                  {votacaoSelecionada.pode_gerenciar && (
+                    <button 
+                      onClick={() => setIsEditando(true)}
+                      className="absolute top-2 right-2 p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                      title="Editar informações"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Fundamentação da Consulta</span>
+                  {votacaoSelecionada.descricao}
+                </div>
+              )}
+
+              {/* Votar (Se Aberta) */}
               {votacaoSelecionada.status === 'EM_ANDAMENTO' && (
-                <form onSubmit={handleVotar} className="bg-sigma-surface border border-sigma-border rounded-xl p-5 space-y-4">
+                <form onSubmit={handleVotar} className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white flex items-center gap-2">
-                      <Vote className="w-4 h-4 text-[#facc15]" />
-                      Registro do Voto Formal da sua Loja
-                    </span>
-                    <span className="text-[11px] text-gray-400">
-                      Representante: <b className="text-[#facc15]">{userContext.role}</b>
+                    <span className="text-sm font-bold text-white flex items-center gap-2">
+                      <Vote className="w-4 h-4 text-slate-400" />
+                      Registro de Voto
                     </span>
                   </div>
 
-                  {/* Opções de Voto */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {votacaoSelecionada.opcoes.map((opcao) => {
                       const selecionada = opcaoVotoEscolhida === opcao;
                       return (
@@ -858,83 +679,67 @@ export default function PaginaVotacoes() {
                           key={opcao}
                           type="button"
                           onClick={() => setOpcaoVotoEscolhida(opcao)}
-                          className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between gap-2 text-left ${
+                          className={`p-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-between gap-2 text-left ${
                             selecionada
-                              ? 'bg-sigma-gold text-[#070F1E] shadow-md border-[#facc15] shadow-lg shadow-[#facc15]/20'
-                              : 'bg-sigma-surface text-gray-200 border-[#2f2f2f] hover:border-[#444] hover:bg-[#161616]'
+                              ? 'bg-slate-600 text-white border-slate-500'
+                              : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600'
                           }`}
                         >
                           <span>{opcao}</span>
-                          {selecionada && <Check className="w-4 h-4 stroke-[3]" />}
+                          {selecionada && <Check className="w-4 h-4" />}
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Justificativa de Voto Opcional */}
                   <div>
-                    <label className="text-[11px] font-semibold text-gray-400 block mb-1">
-                      Justificativa do Voto da Loja (Opcional)
-                    </label>
+                    <label className="text-xs font-semibold text-slate-400 block mb-1">Justificativa (Opcional)</label>
                     <textarea
                       rows={2}
                       value={justificativaVoto}
                       onChange={(e) => setJustificativaVoto(e.target.value)}
-                      placeholder="Manifestação resumida do quadro sobre a decisão..."
-                      className="w-full p-2.5 bg-[#0a0a0a] border border-sigma-border rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition-colors resize-none"
+                      placeholder="Manifestação..."
+                      className="w-full p-3 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white outline-none focus:border-slate-500 resize-none"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] text-gray-500">
-                      * Cada Loja tem direito a 1 voto formal no Conselho Regional.
-                    </span>
-
+                  <div className="flex justify-end pt-2">
                     <button
                       type="submit"
                       disabled={enviandoVoto || !opcaoVotoEscolhida}
-                      className="flex items-center gap-2 px-5 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-md transition-all"
+                      className="flex items-center gap-2 px-5 py-2 bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 font-bold text-sm rounded-xl transition-all"
                     >
-                      {enviandoVoto ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Gravando Voto...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-3.5 h-3.5" />
-                          {votacaoSelecionada.minha_loja_votou ? 'Atualizar Voto da Loja' : 'Confirmar Voto Formal'}
-                        </>
-                      )}
+                      {enviandoVoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      Confirmar Voto
                     </button>
                   </div>
                 </form>
               )}
 
-              {/* Seção 2: Apuração em Tempo Real */}
-              <div className="bg-sigma-surface border border-[#262626] rounded-xl p-5 space-y-4">
+              {/* Apuração */}
+              <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-emerald-400" />
-                    Apuração dos Resultados
+                  <span className="text-sm font-bold text-white flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-slate-400" />
+                    Resultados Parciais / Finais
                   </span>
-                  <span className="text-xs font-bold text-emerald-400">
-                    {votacaoSelecionada.total_votos} de {votacaoSelecionada.total_lojas_conselho} Lojas ({votacaoSelecionada.percentual_quorum}%)
+                  <span className="text-xs font-bold text-slate-300">
+                    {votacaoSelecionada.percentual_quorum}%
                   </span>
                 </div>
 
                 <div className="space-y-3">
                   {votacaoSelecionada.apuracao.map((ap) => (
-                    <div key={ap.opcao} className="space-y-1">
+                    <div key={ap.opcao} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-gray-200">{ap.opcao}</span>
-                        <span className="font-bold text-[#facc15]">
-                          {ap.percentual}% <span className="text-gray-500 font-normal">({ap.votos} voto{ap.votos !== 1 ? 's' : ''})</span>
+                        <span className="font-semibold text-slate-200">{ap.opcao}</span>
+                        <span className="font-bold text-slate-300">
+                          {ap.percentual}% <span className="font-normal text-slate-400">({ap.votos})</span>
                         </span>
                       </div>
-                      <div className="w-full bg-[#0a0a0a] h-3 rounded-full overflow-hidden border border-sigma-border">
+                      <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-700">
                         <div 
-                          className="bg-gradient-to-r from-amber-500 to-[#facc15] h-full rounded-full transition-all duration-500"
+                          className="bg-slate-400 h-full rounded-full transition-all duration-500"
                           style={{ width: `${ap.percentual}%` }}
                         />
                       </div>
@@ -943,39 +748,39 @@ export default function PaginaVotacoes() {
                 </div>
               </div>
 
-              {/* Seção 3: Lista de Lojas Votantes */}
+              {/* Lojas Votantes */}
               <div>
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#facc15]" />
-                  Lojas que já Manifestaram Voto ({votacaoSelecionada.votos_detalhados.length})
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Votos Registrados ({votacaoSelecionada.votos_detalhados.length})
                 </h4>
 
                 {votacaoSelecionada.votos_detalhados.length === 0 ? (
-                  <div className="p-6 bg-[#0a0a0a] border border-sigma-border rounded-xl text-center text-gray-500 text-xs">
-                    Nenhuma Loja registrou voto ainda nesta deliberação.
+                  <div className="p-4 bg-slate-800 border border-slate-700 rounded-xl text-center text-slate-400 text-sm">
+                    Nenhum voto registrado.
                   </div>
                 ) : (
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {votacaoSelecionada.votos_detalhados.map((v) => (
                       <div 
                         key={v.id}
-                        className="bg-[#0e0e0e] border border-sigma-border rounded-xl p-3 flex items-start justify-between gap-3 text-xs"
+                        className="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-start justify-between gap-3 text-sm"
                       >
                         <div className="space-y-0.5">
                           <span className="font-bold text-white block">
-                            {v.loja_nome} {v.loja_numero ? `nº ${v.loja_numero}` : ''}
+                            {v.loja_nome}
                           </span>
-                          <span className="text-[11px] text-gray-400">
-                            Votado por: {v.autor_nome} ({v.autor_cargo}) • {formatarDataHora(v.data_voto)}
+                          <span className="text-xs text-slate-400">
+                            {v.autor_nome} • {formatarDataHora(v.data_voto)}
                           </span>
                           {v.justificativa && (
-                            <p className="text-[11px] text-gray-300 italic pt-1">
+                            <p className="text-xs text-slate-300 italic pt-1">
                               "{v.justificativa}"
                             </p>
                           )}
                         </div>
 
-                        <span className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-sigma-elevated border border-sigma-border text-[#facc15] border border-[#facc15]/20 flex-shrink-0">
+                        <span className="px-2 py-1 rounded bg-slate-700 text-slate-200 font-bold text-xs">
                           {v.opcao_escolhida}
                         </span>
                       </div>
@@ -984,173 +789,83 @@ export default function PaginaVotacoes() {
                 )}
               </div>
 
+              {votacaoSelecionada.pode_gerenciar && (
+                <div className="flex gap-2 justify-end pt-4 border-t border-slate-700">
+                  <button
+                    onClick={() => handleExcluirVotacao(votacaoSelecionada.id)}
+                    className="px-4 py-2 text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                  >
+                    Excluir
+                  </button>
+                  <button
+                    onClick={() => handleAlternarStatusVotacao(votacaoSelecionada.id, votacaoSelecionada.status)}
+                    className="px-4 py-2 text-xs font-bold text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                  >
+                    {votacaoSelecionada.status === 'EM_ANDAMENTO' ? 'Encerrar Votação' : 'Reabrir Votação'}
+                  </button>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* MODAL DE CRIAÇÃO DE NOVA VOTAÇÃO                          */}
-      {/* ========================================================= */}
+      {/* MODAL NOVA VOTAÇÃO */}
       {showNovaVotacaoModal && (
-        <div className="fixed inset-0 z-50 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-sigma-surface border border-sigma-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div className="fixed inset-0 z-50 bg-[#070e1c]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e293b] border border-slate-700 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
             
-            <div className="px-6 py-4 bg-sigma-elevated border-b border-sigma-border flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-sigma-elevated border border-sigma-border text-[#facc15] rounded-lg">
-                  <Vote className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">
-                    Abrir Nova Votação / Deliberação
-                  </h3>
-                  <p className="text-[11px] text-gray-400">
-                    Consulta democrática para decisão das Lojas Jurisdicionadas
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowNovaVotacaoModal(false)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors"
-              >
+            <div className="px-6 py-4 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white">Nova Enquete / Deliberação</h3>
+              <button onClick={() => setShowNovaVotacaoModal(false)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSalvarNovaVotacao} className="p-6 space-y-4">
-              
-              {/* Tipo da Consulta */}
               <div>
-                <label className="text-xs font-semibold text-gray-300 block mb-1">
-                  Natureza da Votação *
-                </label>
+                <label className="text-sm font-semibold text-slate-300 block mb-1">Natureza</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormVotacao(prev => ({ ...prev, tipo: 'DELIBERACAO' }))}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
-                      formVotacao.tipo === 'DELIBERACAO'
-                        ? 'bg-sigma-gold text-[#070F1E] shadow-md border-[#facc15]'
-                        : 'bg-sigma-surface text-gray-400 border-[#2a2a2a] hover:border-[#444]'
-                    }`}
-                  >
-                    Deliberação Formal (Oficial)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormVotacao(prev => ({ ...prev, tipo: 'CONSULTA' }))}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
-                      formVotacao.tipo === 'CONSULTA'
-                        ? 'bg-sigma-gold text-[#070F1E] shadow-md border-[#facc15]'
-                        : 'bg-sigma-surface text-gray-400 border-[#2a2a2a] hover:border-[#444]'
-                    }`}
-                  >
-                    Consulta Regional (Sondagem)
-                  </button>
+                  <button type="button" onClick={() => setFormVotacao(prev => ({ ...prev, tipo: 'DELIBERACAO' }))} className={`py-2 px-3 rounded-lg text-sm font-bold border transition-all ${formVotacao.tipo === 'DELIBERACAO' ? 'bg-slate-600 text-white border-slate-500' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>Deliberação Formal</button>
+                  <button type="button" onClick={() => setFormVotacao(prev => ({ ...prev, tipo: 'CONSULTA' }))} className={`py-2 px-3 rounded-lg text-sm font-bold border transition-all ${formVotacao.tipo === 'CONSULTA' ? 'bg-slate-600 text-white border-slate-500' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>Consulta Regional</button>
                 </div>
               </div>
 
-              {/* Título */}
               <div>
-                <label className="text-xs font-semibold text-gray-300 block mb-1">
-                  Título da Deliberação *
-                </label>
-                <input
-                  type="text"
-                  value={formVotacao.titulo}
-                  onChange={(e) => setFormVotacao(prev => ({ ...prev, titulo: e.target.value }))}
-                  placeholder="Ex: Aprovação do Calendário de Eventos Conjuntos"
-                  className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
-                  required
-                />
+                <label className="text-sm font-semibold text-slate-300 block mb-1">Título</label>
+                <input type="text" value={formVotacao.titulo} onChange={e => setFormVotacao(prev => ({ ...prev, titulo: e.target.value }))} className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-slate-500" required />
               </div>
 
-              {/* Descrição */}
               <div>
-                <label className="text-xs font-semibold text-gray-300 block mb-1">
-                  Descrição e Fundamentação *
-                </label>
-                <textarea
-                  rows={3}
-                  value={formVotacao.descricao}
-                  onChange={(e) => setFormVotacao(prev => ({ ...prev, descricao: e.target.value }))}
-                  placeholder="Explique detalhadamente o objetivo, antecedentes e o que está sendo deliberado..."
-                  className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] resize-none"
-                  required
-                />
+                <label className="text-sm font-semibold text-slate-300 block mb-1">Descrição</label>
+                <textarea rows={3} value={formVotacao.descricao} onChange={e => setFormVotacao(prev => ({ ...prev, descricao: e.target.value }))} className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-slate-500 resize-none" required />
               </div>
 
-              {/* Opções de Voto */}
               <div>
-                <label className="text-xs font-semibold text-gray-300 block mb-1">
-                  Opções de Resposta (Mínimo 2) *
-                </label>
-                <div className="space-y-1.5 mb-2">
+                <label className="text-sm font-semibold text-slate-300 block mb-1">Opções de Resposta</label>
+                <div className="space-y-2 mb-2">
                   {formVotacao.opcoes.map((opcao, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <span className="w-5 text-center text-xs text-gray-500 font-bold">{idx + 1}.</span>
-                      <span className="flex-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#262626] rounded-lg text-xs text-white">
-                        {opcao}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoverOpcao(idx)}
-                        className="p-1.5 text-gray-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
-                        title="Remover opção"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <span className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white">{opcao}</span>
+                      <button type="button" onClick={() => handleRemoverOpcao(idx)} className="p-2 text-slate-400 hover:text-red-400 rounded-lg hover:bg-slate-800"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
-
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={novaOpcaoTexto}
-                    onChange={(e) => setNovaOpcaoTexto(e.target.value)}
-                    placeholder="Digitar nova opção..."
-                    className="flex-1 px-3 py-1.5 bg-sigma-surface border border-[#2e2e2e] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15]"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAdicionarOpcao();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAdicionarOpcao}
-                    className="px-3 py-1.5 bg-sigma-elevated hover:bg-[#333] text-gray-200 text-xs font-semibold rounded-lg border border-sigma-border transition-colors"
-                  >
-                    + Adicionar
-                  </button>
+                  <input type="text" value={novaOpcaoTexto} onChange={e => setNovaOpcaoTexto(e.target.value)} placeholder="Nova opção..." className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-slate-500" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdicionarOpcao(); } }} />
+                  <button type="button" onClick={handleAdicionarOpcao} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold rounded-lg transition-colors">Adicionar</button>
                 </div>
               </div>
 
-              {/* Prazo de Encerramento e Quórum */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-gray-300 block mb-1">
-                    Data Limite (Opcional)
-                  </label>
-                  <CampoData
-                    value={formVotacao.data_encerramento}
-                    onChange={(v) => setFormVotacao(prev => ({ ...prev, data_encerramento: v }))}
-                    className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15]"
-                  />
+                  <label className="text-sm font-semibold text-slate-300 block mb-1">Data Limite (Opcional)</label>
+                  <CampoData value={formVotacao.data_encerramento} onChange={v => setFormVotacao(prev => ({ ...prev, data_encerramento: v }))} className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-slate-500" />
                 </div>
-
                 <div>
-                  <label className="text-xs font-semibold text-gray-300 block mb-1">
-                    Quórum Requerido
-                  </label>
-                  <select
-                    value={formVotacao.quorum_minimo}
-                    onChange={(e) => setFormVotacao(prev => ({ ...prev, quorum_minimo: e.target.value }))}
-                    className="w-full px-3 py-2 bg-sigma-surface border border-[#2e2e2e] rounded-xl text-xs text-white focus:outline-none focus:border-[#facc15] cursor-pointer"
-                  >
+                  <label className="text-sm font-semibold text-slate-300 block mb-1">Quórum</label>
+                  <select value={formVotacao.quorum_minimo} onChange={e => setFormVotacao(prev => ({ ...prev, quorum_minimo: e.target.value }))} className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
                     <option value="MAIORIA_SIMPLES">Maioria Simples (50% + 1)</option>
                     <option value="MAIORIA_QUALIFICADA_2_3">Maioria Qualificada (2/3)</option>
                     <option value="UNANIMIDADE">Unanimidade (100%)</option>
@@ -1158,31 +873,10 @@ export default function PaginaVotacoes() {
                 </div>
               </div>
 
-              {/* Botões */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-sigma-border">
-                <button
-                  type="button"
-                  onClick={() => setShowNovaVotacaoModal(false)}
-                  className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={salvandoVotacao}
-                  className="flex items-center gap-2 px-5 py-2 bg-sigma-gold text-[#070F1E] shadow-md hover:bg-[#eab308] disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow-lg transition-all"
-                >
-                  {salvandoVotacao ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Publicando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      Abrir Votação
-                    </>
-                  )}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-700">
+                <button type="button" onClick={() => setShowNovaVotacaoModal(false)} className="px-4 py-2 text-sm font-bold text-slate-400 hover:text-white transition-colors">Cancelar</button>
+                <button type="submit" disabled={salvandoVotacao} className="flex items-center gap-2 px-5 py-2 bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 font-bold text-sm rounded-xl transition-all">
+                  {salvandoVotacao ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Abrir Votação
                 </button>
               </div>
             </form>

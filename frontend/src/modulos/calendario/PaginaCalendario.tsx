@@ -391,7 +391,7 @@ export default function PaginaCalendario() {
   if (loading) {
     return (
       <div className="p-8 h-full flex flex-col items-center justify-center gap-3 text-gray-400">
-        <Loader2 className="w-8 h-8 animate-spin text-[#facc15]" />
+        <Loader2 className="w-8 h-8 animate-spin title-sigma-gold" />
         <span className="text-sm">Carregando Agenda do Conselho...</span>
       </div>
     );
@@ -401,7 +401,7 @@ export default function PaginaCalendario() {
     return (
       <div className="p-8 h-full flex items-center justify-center">
         <div className="max-w-md w-full p-8 text-center bg-sigma-surface border border-sigma-border rounded-2xl shadow-2xl space-y-4">
-          <div className="w-16 h-16 mx-auto bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-2xl flex items-center justify-center text-[#facc15]">
+          <div className="w-16 h-16 mx-auto bg-sigma-elevated border border-sigma-border border border-amber-500/20 rounded-2xl flex items-center justify-center title-sigma-gold">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
@@ -425,7 +425,7 @@ export default function PaginaCalendario() {
       <div className="mb-6 flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#facc15]">Calendário Regional</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold title-sigma-gold">Calendário Regional</h1>
             
             {/* Alternador de Visão no topo para Mobile */}
             <div className="flex md:hidden bg-[#161616] p-1 rounded-xl border border-sigma-border">
@@ -541,7 +541,7 @@ export default function PaginaCalendario() {
               <button
                 type="button"
                 onClick={() => setMostrarLegenda(!mostrarLegenda)}
-                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-sigma-elevated border border-sigma-border text-[#facc15]' : 'text-gray-400 hover:text-white hover:bg-sigma-elevated'}`}
+                className={`flex flex-1 md:flex-none justify-center md:justify-start items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors ${mostrarLegenda ? 'bg-sigma-elevated border border-sigma-border title-sigma-gold' : 'text-gray-400 hover:text-white hover:bg-sigma-elevated'}`}
               >
                 <Palette className="w-3.5 h-3.5" />
                 Legenda
@@ -623,7 +623,7 @@ export default function PaginaCalendario() {
                     {/* Badge de Data */}
                     <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-[#090909] border border-[#2e2e2e] flex-shrink-0 text-center">
                       <span className="text-[10px] font-bold text-gray-400 leading-tight">{mesCurto}</span>
-                      <span className="text-xl font-extrabold text-[#facc15] leading-none my-0.5">{diaNum}</span>
+                      <span className="text-xl font-extrabold title-sigma-gold leading-none my-0.5">{diaNum}</span>
                       <span className="text-[9px] font-medium text-gray-500 leading-tight">{diaSemana}</span>
                     </div>
 
@@ -738,7 +738,7 @@ export default function PaginaCalendario() {
       {showModal && (
         <div className="fixed inset-0 bg-sigma-bg/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
           <div className="bg-sigma-surface border border-sigma-border rounded-xl p-6 w-full max-w-lg my-auto">
-            <h2 className="text-xl font-bold text-[#facc15] mb-1">
+            <h2 className="text-xl font-bold title-sigma-gold mb-1">
               {isEditing ? (somenteLeitura ? 'Detalhes do Evento' : 'Editar Evento') : 'Novo Evento'}
             </h2>
             {isEditing && eventoSelecionado && (
@@ -916,7 +916,7 @@ export default function PaginaCalendario() {
               {isEditing && eventoSelecionado && (
                 <div className="bg-sigma-elevated border border-[#2d2d2d] rounded-xl p-3 my-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2">
-                    <CalendarPlus className="w-4 h-4 text-[#facc15]" />
+                    <CalendarPlus className="w-4 h-4 title-sigma-gold" />
                     <span className="text-xs font-semibold text-gray-200">Sincronizar no seu celular:</span>
                   </div>
                   <div className="flex items-center gap-2">

@@ -104,11 +104,11 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
     <div className="fixed inset-0 bg-sigma-bg/80 flex items-center justify-center z-[60] p-4 overflow-y-auto">
       <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl my-auto shadow-2xl">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg text-[#facc15]">
+          <div className="p-2 bg-sigma-elevated border border-sigma-border rounded-lg title-sigma-gold">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-[#facc15]">
+            <h2 className="text-xl font-bold title-sigma-gold">
               {cargoPadrao ? `Atribuir ${cargoPadrao}` : 'Vincular Membro à Loja'}
             </h2>
             <p className="text-xs text-gray-400">Informe o CIM para busca automática ou realize o cadastro direto.</p>
@@ -124,7 +124,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
         )}
 
         {obreiroLocalizado === false && formData.cim.length >= 3 && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 my-4 flex items-center gap-2 text-xs text-[#facc15]">
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 my-4 flex items-center gap-2 text-xs title-sigma-gold">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{mensagemBusca}</span>
           </div>
@@ -134,7 +134,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                CIM <span className="text-[#facc15] font-bold">*</span>
+                CIM <span className="title-sigma-gold font-bold">*</span>
               </label>
               <div className="relative">
                 <input 
@@ -147,7 +147,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
                 />
                 {buscandoCim && (
                   <div className="absolute right-3 top-3">
-                    <Loader2 className="w-4 h-4 text-[#facc15] animate-spin" />
+                    <Loader2 className="w-4 h-4 title-sigma-gold animate-spin" />
                   </div>
                 )}
               </div>
@@ -169,7 +169,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
           
           <div>
             <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-              Nome Completo do Obreiro <span className="text-[#facc15] font-bold">*</span>
+              Nome Completo do Obreiro <span className="title-sigma-gold font-bold">*</span>
             </label>
             <input 
               type="text" 
@@ -184,7 +184,7 @@ export default function ModalCadastroObreiro({ cargoPadrao, lojasDisponiveis, on
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
-                E-mail Pessoal <span className="text-[#facc15] font-bold">*</span>
+                E-mail Pessoal <span className="title-sigma-gold font-bold">*</span>
               </label>
               <input 
                 type="email" 

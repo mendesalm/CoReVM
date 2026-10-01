@@ -54,7 +54,7 @@ export default function ModalCadastroLoja({ onSuccess, onCancel }: Props) {
   return (
     <div className="fixed inset-0 bg-sigma-bg/80 flex items-center justify-center z-[60] p-4">
       <div className="bg-sigma-surface border border-sigma-border rounded-xl p-8 w-full max-w-xl">
-        <h2 className="text-xl font-bold text-[#facc15] mb-4">Cadastro Rápido de Loja</h2>
+        <h2 className="text-xl font-bold title-sigma-gold mb-4">Cadastro Rápido de Loja</h2>
         <p className="text-sm text-gray-400 mb-6">Esta loja não foi encontrada no banco. Preencha os dados básicos para registrar no sistema.</p>
         
         <form onSubmit={handleSubmit} className="space-y-4">

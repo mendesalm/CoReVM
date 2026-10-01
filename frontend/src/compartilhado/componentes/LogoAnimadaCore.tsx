@@ -204,7 +204,7 @@ export const LogoAnimadaCore: React.FC<LogoAnimadaCoreProps> = ({
         {showText && (
           <div className="flex flex-col">
             <span className="core-logo-text leading-tight">{text}</span>
-            <span className="text-[9px] uppercase tracking-widest text-[#facc15]/70 font-semibold">Conselho Regional</span>
+            <span className="text-[9px] uppercase tracking-widest title-sigma-gold/70 font-semibold">Conselho Regional</span>
           </div>
         )}
       </div>

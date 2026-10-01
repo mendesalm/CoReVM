@@ -97,7 +97,7 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
                       type="checkbox" 
                       onChange={(e) => setSelectedIds(e.target.checked ? lojasEncontradas.map(l => l.id) : [])}
                       checked={lojasEncontradas.length > 0 && selectedIds.length === lojasEncontradas.length}
-                      className="rounded bg-sigma-bg border-sigma-border text-[#facc15] focus:ring-[#facc15]"
+                      className="rounded bg-sigma-bg border-sigma-border title-sigma-gold focus:ring-[#facc15]"
                     />
                   </th>
                   <th className="px-4 py-3">Número</th>
@@ -114,12 +114,12 @@ export default function BuscadorLoja({ onSelect, onSelectMultiple }: Props) {
                         type="checkbox"
                         checked={selectedIds.includes(loja.id)}
                         onChange={() => {}} // Controlled by tr onClick
-                        className="rounded bg-sigma-bg border-sigma-border text-[#facc15] focus:ring-[#facc15]"
+                        className="rounded bg-sigma-bg border-sigma-border title-sigma-gold focus:ring-[#facc15]"
                       />
                     </td>
                     <td className="px-4 py-3 text-gray-300 font-mono">{loja.numero_loja || loja.numero}</td>
                     <td className="px-4 py-3 text-gray-200 font-medium">{loja.nome}</td>
-                    <td className="px-4 py-3 text-[#facc15] font-semibold">{loja.sigla_potencia || loja.potencia || 'GLEG'}</td>
+                    <td className="px-4 py-3 title-sigma-gold font-semibold">{loja.sigla_potencia || loja.potencia || 'GLEG'}</td>
                     <td className="px-4 py-3 text-gray-400">{loja.cidade || 'N/I'}</td>
                   </tr>
                 ))}
