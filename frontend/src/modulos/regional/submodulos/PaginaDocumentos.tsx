@@ -768,7 +768,7 @@ export default function PaginaDocumentos() {
                       </div>
                     </form>
                   ) : (
-
+                    <>
                     {/* Informações */}
                   <div className="space-y-4">
                     <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider border-b border-sigma-border pb-2">
@@ -808,7 +808,8 @@ export default function PaginaDocumentos() {
                     )}
                   </div>
 
-                                    )}
+                                    </>
+                  )}
                   {/* Estatísticas (Downloads) */}
                   <div className="space-y-4 pt-4 border-t border-sigma-border">
                     <h3 className="text-xs font-bold text-[#888] uppercase tracking-wider">
