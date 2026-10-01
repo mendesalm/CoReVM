@@ -269,7 +269,7 @@ export default function Layout() {
                   setSidebarPinned(!sidebarPinned);
                 }
               }}
-              className="text-[#DDB96B] hover:text-[#FDE68A] transition-colors"
+              className="title-sigma-gold hover:title-sigma-gold transition-colors"
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -331,7 +331,7 @@ export default function Layout() {
             <div className="flex items-center justify-between px-2 pb-2 mb-1 border-b border-[rgba(221,185,107,0.15)]">
               {isExpanded ? (
                 <>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#FDE68A] truncate max-w-[180px]" title={regiaoNome || "Conselho Regional"}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest title-sigma-gold truncate max-w-[180px]" title={regiaoNome || "Conselho Regional"}>
                     {regiaoNome || "Conselho Regional"}
                   </span>
                   <button
@@ -350,7 +350,7 @@ export default function Layout() {
                 <button
                   type="button"
                   onClick={() => setSidebarPinned(true)}
-                  className="w-full flex justify-center py-1 text-gray-400 hover:text-[#FDE68A] transition-colors"
+                  className="w-full flex justify-center py-1 text-gray-400 hover:title-sigma-gold transition-colors"
                   title="Fixar Menu Expandido"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -390,12 +390,12 @@ export default function Layout() {
                   onMouseLeave={handleMouseLeaveItem}
                   className={`group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all ${
                     isActive 
-                      ? 'bg-[rgba(221,185,107,0.14)] text-[#FDE68A] border border-[rgba(221,185,107,0.35)] shadow-sm font-semibold' 
+                      ? 'bg-[rgba(221,185,107,0.14)] title-sigma-gold border border-[rgba(221,185,107,0.35)] shadow-sm font-semibold' 
                       : 'text-gray-300 hover:text-white hover:bg-[rgba(14,28,54,0.6)] border border-transparent'
                   } ${!isExpanded ? 'justify-center' : ''}`}
                 >
                   {/* Ícone */}
-                  <div className={`shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#FDE68A]' : 'text-gray-400 group-hover:text-white'}`}>
+                  <div className={`shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'title-sigma-gold' : 'text-gray-400 group-hover:text-white'}`}>
                     <Icone className="w-5 h-5" />
                   </div>
 
@@ -420,7 +420,7 @@ export default function Layout() {
               onClick={() => setShowBugModal(true)}
               onMouseEnter={(e) => handleMouseEnterItem({ id: 'bug', titulo: 'Reportar Bug / Falha', descricao: 'Canal direto com o SuperAdmin e equipe técnica' }, e)}
               onMouseLeave={handleMouseLeaveItem}
-              className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all text-amber-400/90 hover:text-amber-300 hover:bg-[rgba(14,28,54,0.6)] border border-transparent hover:border-[rgba(221,185,107,0.3)] cursor-pointer ${
+              className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl transition-all title-sigma-gold hover:text-[#DDB96B] hover:bg-[rgba(14,28,54,0.6)] border border-transparent hover:border-[rgba(221,185,107,0.3)] cursor-pointer ${
                 !isExpanded ? 'justify-center' : ''
               }`}
             >
@@ -439,12 +439,12 @@ export default function Layout() {
             {isExpanded ? (
               <div className="space-y-0.5 animate-in fade-in duration-300">
                 <p className="text-[10px] font-bold text-gray-300 tracking-wide">
-                  Desenvolvido por <span className="text-[#FDE68A]">Addex Solutions</span>
+                  Desenvolvido por <span className="title-sigma-gold">Addex Solutions</span>
                 </p>
                 <p className="text-[9px] text-gray-400">Copyright 2026</p>
                 <a 
                   href="mailto:andreluiz@addex.dev" 
-                  className="text-[9px] text-[#DDB96B] hover:text-[#FDE68A] hover:underline block truncate font-mono pt-0.5"
+                  className="text-[9px] title-sigma-gold hover:title-sigma-gold hover:underline block truncate font-mono pt-0.5"
                 >
                   Contato: andreluiz@addex.dev
                 </a>
@@ -454,7 +454,7 @@ export default function Layout() {
                 className="flex flex-col items-center justify-center text-center cursor-help py-1" 
                 title="Desenvolvido por Addex Solutions - Copyright 2026 Contato: andreluiz@addex.dev"
               >
-                <span className="text-[9px] font-black tracking-wider text-[#FDE68A]">ADDEX</span>
+                <span className="text-[9px] font-black tracking-wider title-sigma-gold">ADDEX</span>
                 <span className="text-[8px] text-gray-400 font-mono">2026</span>
               </div>
             )}
@@ -479,7 +479,7 @@ export default function Layout() {
           <div className="flex items-center justify-between p-4 border-b border-[rgba(221,185,107,0.2)]">
             <div className="flex items-center gap-2.5">
               <LogoAnimadaCore theme="ouro" width={28} height={25} animated={false} />
-              <span className="text-xs font-bold text-[#FDE68A] uppercase tracking-wider truncate max-w-[170px]" title={regiaoNome || "Conselho Regional"}>
+              <span className="text-xs font-bold title-sigma-gold uppercase tracking-wider truncate max-w-[170px]" title={regiaoNome || "Conselho Regional"}>
                 {regiaoNome || "Conselho Regional"}
               </span>
             </div>
@@ -517,11 +517,11 @@ export default function Layout() {
                   onClick={() => setMobileDrawerOpen(false)}
                   className={`flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] transition-colors ${
                     isActive 
-                      ? 'bg-[rgba(221,185,107,0.18)] text-[#FDE68A] font-semibold border border-[rgba(221,185,107,0.4)]'
+                      ? 'bg-[rgba(221,185,107,0.18)] title-sigma-gold font-semibold border border-[rgba(221,185,107,0.4)]'
                       : 'text-gray-300 hover:text-white hover:bg-[rgba(14,28,54,0.6)]'
                   }`}
                 >
-                  <Icone className="w-5 h-5 shrink-0 text-[#DDB96B]" />
+                  <Icone className="w-5 h-5 shrink-0 title-sigma-gold" />
                   <span className="text-sm">{item.titulo}</span>
                 </NavLink>
               );
@@ -536,7 +536,7 @@ export default function Layout() {
                   setMobileDrawerOpen(false);
                   dispararInstalacao();
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-[#DDB96B]/50 text-[#FDE68A] hover:bg-sigma-elevated border border-sigma-border transition-all font-semibold shadow-lg mb-2"
+                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] bg-gradient-to-r bg-[#0f172a] hover:bg-slate-800 border border-[#DDB96B]/50 title-sigma-gold hover:bg-sigma-elevated border border-sigma-border transition-all font-semibold shadow-lg mb-2"
               >
                 <Download className="w-5 h-5 shrink-0 animate-bounce" />
                 <span className="text-sm">Instalar Aplicativo</span>
@@ -549,7 +549,7 @@ export default function Layout() {
                 setMobileDrawerOpen(false);
                 setShowBugModal(true);
               }}
-              className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] text-amber-400 hover:bg-[rgba(14,28,54,0.6)] transition-colors"
+              className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl min-h-[48px] title-sigma-gold hover:bg-[rgba(14,28,54,0.6)] transition-colors"
             >
               <Bug className="w-5 h-5 shrink-0" />
               <span className="text-sm font-bold">Reportar Bug</span>
@@ -574,7 +574,7 @@ export default function Layout() {
               end
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
-                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                  isActive ? 'title-sigma-gold font-bold' : 'text-gray-400 hover:text-gray-200'
                 }`
               }
             >
@@ -586,7 +586,7 @@ export default function Layout() {
               to={`/regiao/${id}/lojas`}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
-                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                  isActive ? 'title-sigma-gold font-bold' : 'text-gray-400 hover:text-gray-200'
                 }`
               }
             >
@@ -598,7 +598,7 @@ export default function Layout() {
               to={`/regiao/${id}/admissoes`}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
-                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                  isActive ? 'title-sigma-gold font-bold' : 'text-gray-400 hover:text-gray-200'
                 }`
               }
             >
@@ -610,7 +610,7 @@ export default function Layout() {
               to={`/regiao/${id}/votacoes`}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
-                  isActive ? 'text-[#FDE68A] font-bold' : 'text-gray-400 hover:text-gray-200'
+                  isActive ? 'title-sigma-gold font-bold' : 'text-gray-400 hover:text-gray-200'
                 }`
               }
             >
@@ -621,7 +621,7 @@ export default function Layout() {
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
-              className="flex flex-col items-center justify-center flex-1 h-full min-h-[44px] text-gray-400 hover:text-[#FDE68A] transition-colors"
+              className="flex flex-col items-center justify-center flex-1 h-full min-h-[44px] text-gray-400 hover:title-sigma-gold transition-colors"
             >
               <Menu className="w-5 h-5 mb-0.5" />
               <span className="text-[10px]">Mais</span>
