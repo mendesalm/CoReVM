@@ -590,22 +590,38 @@ export default function PaginaPatrimonio() {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              {itensPaginados.map((item) => {
-                const estaDisponivel = item.quantidade_disponivel > 0;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setItemSelecionado(item)}
-                    className="bg-[#1e293b] border border-slate-700 rounded-lg p-4 flex items-center justify-between hover:bg-slate-700 transition-colors cursor-pointer"
-                  >
-                    <span className="font-bold text-white">{item.nome}</span>
-                    <span className={`text-sm font-semibold px-2 py-1 rounded-md ${estaDisponivel ? 'bg-emerald-900/50 text-emerald-400' : 'bg-amber-900/50 text-amber-400'}`}>
-                      {item.quantidade_disponivel} disp.
-                    </span>
-                  </div>
-                );
-              })}</div>
+            <div className="bg-transparent w-full overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="hidden sm:table-header-group border-b border-slate-700/60">
+                  <tr>
+                    <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Item Catalogado</th>
+                    <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Estoque</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {itensPaginados.map((item) => {
+                    const estaDisponivel = item.quantidade_disponivel > 0;
+                    return (
+                      <tr
+                        key={item.id}
+                        onClick={() => setItemSelecionado(item)}
+                        className="hover:bg-slate-800/40 transition-colors cursor-pointer block sm:table-row py-1 sm:py-0 group"
+                      >
+                        <td className="py-2.5 sm:py-3 px-2 block sm:table-cell align-middle">
+                          <div className="font-bold text-slate-200 group-hover:text-white transition-colors">{item.nome}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{item.categoria} &bull; Cód. {item.codigo_tombamento}</div>
+                        </td>
+                        <td className="pt-0.5 pb-2.5 sm:py-3 px-2 block sm:table-cell sm:text-right align-middle">
+                          <span className={`inline-flex items-center text-[10px] font-bold px-2 py-1 rounded-md ${estaDisponivel ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                            {item.quantidade_disponivel} {item.quantidade_disponivel === 1 ? 'disp.' : 'disp.'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {/* Paginação */}

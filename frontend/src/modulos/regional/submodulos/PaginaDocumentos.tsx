@@ -589,55 +589,64 @@ export default function PaginaDocumentos() {
             </p>
           </div>
         ) : true ? (
-          /* MODO LISTA SIMPLES MOBILE-FIRST (MASTER) */
-          <div className="flex flex-col gap-3">
-            {documentosPaginados.map((doc) => {
-              const catInfo = getCategoriaInfo(doc.categoria);
-              const IconeCat = catInfo.icon;
-              return (
-                <div
-                  key={doc.id}
-                  onClick={() => {
-                    setDocumentoVisualizando(doc);
-                    setFormEdit({
-                      titulo: doc.titulo,
-                      descricao_ementa: doc.descricao_ementa || '',
-                      categoria: doc.categoria,
-                      data_documento: doc.data_documento,
-                      data_expiracao: doc.data_expiracao || '',
-                      visibilidade: doc.visibilidade
-                    });
-                    setIsEditing(false);
-                    setModalVisualizarAberto(true);
-                  }}
-                  className={`bg-slate-800 border border-[#242424] hover:border-slate-600 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer transition-all shadow-md group ${doc.arquivado ? 'opacity-60' : ''}`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${catInfo.corBadge}`}>
-                        <IconeCat className="w-3 h-3" />
-                        {catInfo.label}
-                      </span>
-                      {doc.arquivado && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-gray-600 text-gray-400 bg-gray-900/40">
-                          <Archive className="w-3 h-3" /> Arquivado
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-sm font-bold text-white group-hover:title-sigma-gold transition-colors">{doc.titulo}</h3>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-[#aaa]">
-                    <span className="flex items-center gap-1 whitespace-nowrap">
-                      <Calendar className="w-3.5 h-3.5 title-sigma-gold" /> {doc.data_documento}
-                    </span>
-                    <span className="text-[10px] font-mono bg-slate-700 px-2 py-1 rounded whitespace-nowrap">
-                      {doc.codigo_documento}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          /* MODO LISTA SIMPLES MOBILE-FIRST (MASTER) - NATURAL TABLE */
+            <div className="bg-transparent w-full overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="hidden sm:table-header-group border-b border-slate-700/60">
+                  <tr>
+                    <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Documento</th>
+                    <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Data</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {documentosPaginados.map((doc) => {
+                    const catInfo = getCategoriaInfo(doc.categoria);
+                    const IconeCat = catInfo.icon;
+                    return (
+                      <tr
+                        key={doc.id}
+                        onClick={() => {
+                          setDocumentoVisualizando(doc);
+                          setFormEdit({
+                            titulo: doc.titulo,
+                            descricao_ementa: doc.descricao_ementa || '',
+                            categoria: doc.categoria,
+                            data_documento: doc.data_documento,
+                            data_expiracao: doc.data_expiracao || '',
+                            visibilidade: doc.visibilidade
+                          });
+                          setIsEditing(false);
+                          setModalVisualizarAberto(true);
+                        }}
+                        className={`hover:bg-slate-800/40 transition-colors cursor-pointer block sm:table-row py-1 sm:py-0 group ${doc.arquivado ? 'opacity-60' : ''}`}
+                      >
+                        <td className="py-2.5 sm:py-3 px-2 block sm:table-cell align-middle">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border ${catInfo.corBadge}`}>
+                                <IconeCat className="w-2.5 h-2.5" />
+                                {catInfo.label}
+                              </span>
+                              {doc.arquivado && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border border-gray-600 text-gray-400 bg-gray-900/40">
+                                  <Archive className="w-2.5 h-2.5" /> Arquivado
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors line-clamp-1">{doc.titulo}</h3>
+                          </div>
+                        </td>
+                        <td className="pt-0 pb-2.5 sm:py-3 px-2 block sm:table-cell sm:text-right align-middle">
+                          <div className="text-[11px] text-slate-500">
+                            {new Date(doc.data_documento).toLocaleDateString('pt-BR')}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 /* MODO TABELA ANALÍTICA */
           <div className="bg-slate-800 border border-[#242424] rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
