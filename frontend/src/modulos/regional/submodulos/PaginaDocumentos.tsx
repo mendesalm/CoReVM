@@ -588,131 +588,25 @@ export default function PaginaDocumentos() {
               Não foram encontrados documentos com os critérios e filtros selecionados.
             </p>
           </div>
-        ) : true ? (
+        ) : (
           /* MODO LISTA SIMPLES MOBILE-FIRST (MASTER) - NATURAL TABLE */
-            <div className="bg-transparent w-full overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead className="hidden sm:table-header-group border-b border-slate-700/60">
-                  <tr>
-                    <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Documento</th>
-                    <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Data</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {documentosPaginados.map((doc) => {
-                    const catInfo = getCategoriaInfo(doc.categoria);
-                    const IconeCat = catInfo.icon;
-                    return (
-                      <tr
-                        key={doc.id}
-                        onClick={() => {
-                          setDocumentoVisualizando(doc);
-                          setFormEdit({
-                            titulo: doc.titulo,
-                            descricao_ementa: doc.descricao_ementa || '',
-                            categoria: doc.categoria,
-                            data_documento: doc.data_documento,
-                            data_expiracao: doc.data_expiracao || '',
-                            visibilidade: doc.visibilidade
-                          });
-                          setIsEditing(false);
-                          setModalVisualizarAberto(true);
-                        }}
-                        className={`hover:bg-slate-800/40 transition-colors cursor-pointer block sm:table-row py-1 sm:py-0 group ${doc.arquivado ? 'opacity-60' : ''}`}
-                      >
-                        <td className="py-2.5 sm:py-3 px-2 block sm:table-cell align-middle">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border ${catInfo.corBadge}`}>
-                                <IconeCat className="w-2.5 h-2.5" />
-                                {catInfo.label}
-                              </span>
-                              {doc.arquivado && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border border-gray-600 text-gray-400 bg-gray-900/40">
-                                  <Archive className="w-2.5 h-2.5" /> Arquivado
-                                </span>
-                              )}
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors line-clamp-1">{doc.titulo}</h3>
-                          </div>
-                        </td>
-                        <td className="pt-0 pb-2.5 sm:py-3 px-2 block sm:table-cell sm:text-right align-middle">
-                          <div className="text-[11px] text-slate-500">
-                            {new Date(doc.data_documento).toLocaleDateString('pt-BR')}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-/* MODO TABELA ANALÍTICA */
-          <div className="bg-slate-800 border border-[#242424] rounded-2xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-[#ccc]">
-                <thead className="bg-[#0f172a] text-[#777] uppercase text-[10px] tracking-wider border-b border-[#242424]">
-                  <tr>
-                    <th className="py-3.5 px-4">Código</th>
-                    <th className="py-3.5 px-4">Título do Documento</th>
-                    <th className="py-3.5 px-4">Categoria</th>
-                    <th className="py-3.5 px-4">Origem / Emissor</th>
-                    <th className="py-3.5 px-4">Data Oficial</th>
-                    <th className="py-3.5 px-4 text-center">Downloads</th>
-                    <th className="py-3.5 px-4 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1e1e1e]">
-                  {documentosPaginados.map((doc) => {
-                    const catInfo = getCategoriaInfo(doc.categoria);
-                    const isLoja = doc.tipo_origem === 'LOJA';
-
-                    return (
-                      <tr key={doc.id} className={`hover:bg-slate-700/60 transition-colors ${doc.arquivado ? 'opacity-60' : ''}`}>
-                        <td className="py-3 px-4 font-mono font-bold title-sigma-gold">
-                          {doc.codigo_documento}
-                        </td>
-                        <td className="py-3 px-4">
-                          <strong className="text-white block">
-                            {doc.titulo}
-                            {doc.arquivado && (
-                              <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-extrabold border border-gray-600 text-gray-400 bg-gray-900/40 align-middle">
-                                <Archive className="w-2.5 h-2.5" /> Arquivado
-                              </span>
-                            )}
-                          </strong>
-                          {doc.descricao_ementa && (
-                            <span className="text-[11px] text-[#777] line-clamp-1">{doc.descricao_ementa}</span>
-                          )}
-                          {doc.data_expiracao && (
-                            <span className="text-[11px] text-amber-400 block">
-                              Expira em {new Date(doc.data_expiracao + 'T00:00:00').toLocaleDateString('pt-BR')}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${catInfo.corBadge}`}>
-                            {catInfo.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          {isLoja ? (
-                            <span className="text-pink-300 font-medium">{doc.loja_emissora_nome}</span>
-                          ) : (
-                            <span className="text-[#aaa]">Conselho Regional</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-[#aaa]">
-                          {doc.data_documento}
-                        </td>
-                        <td className="py-3 px-4 text-center font-semibold text-[#888]">
-                          {doc.downloads_count}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => {
-                                setDocumentoVisualizando(doc);
+          <div className="bg-transparent w-full overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead className="hidden sm:table-header-group border-b border-slate-700/60">
+                <tr>
+                  <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Documento</th>
+                  <th className="py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Data</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {documentosPaginados.map((doc) => {
+                  const catInfo = getCategoriaInfo(doc.categoria);
+                  const IconeCat = catInfo.icon;
+                  return (
+                    <tr
+                      key={doc.id}
+                      onClick={() => {
+                        setDocumentoVisualizando(doc);
                         setFormEdit({
                           titulo: doc.titulo,
                           descricao_ementa: doc.descricao_ementa || '',
@@ -722,49 +616,39 @@ export default function PaginaDocumentos() {
                           visibilidade: doc.visibilidade
                         });
                         setIsEditing(false);
-                                setModalVisualizarAberto(true);
-                              }}
-                              className="p-1.5 bg-[#1c1c1c] hover:bg-slate-700 text-[#ddd] rounded-lg transition-colors"
-                              title="Visualizar"
-                            >
-                              <Eye className="w-3.5 h-3.5 title-sigma-gold" />
-                            </button>
-                            <button
-                              onClick={() => handleDownloadArquivo(doc.id)}
-                              className="p-1.5 bg-[#1c1c1c] hover:bg-slate-700 text-[#ddd] rounded-lg transition-colors"
-                              title="Baixar PDF"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                            </button>
-                            {doc.pode_gerenciar && (
-                              doc.arquivado ? (
-                                <button
-                                  onClick={() => handleReativarDocumento(doc.id, doc.titulo)}
-                                  className="p-1.5 bg-[#1c1c1c] hover:bg-slate-700 border border-sigma-border text-[#666] hover:title-sigma-gold rounded-lg transition-colors"
-                                  title="Reativar"
-                                >
-                                  <RotateCcw className="w-3.5 h-3.5" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleExcluirDocumento(doc.id, doc.titulo)}
-                                  className="p-1.5 bg-[#1c1c1c] hover:bg-red-950/40 text-[#666] hover:text-red-400 rounded-lg transition-colors"
-                                  title="Excluir"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              )
+                        setModalVisualizarAberto(true);
+                      }}
+                      className={`hover:bg-slate-800/40 transition-colors cursor-pointer block sm:table-row py-1 sm:py-0 group ${doc.arquivado ? 'opacity-60' : ''}`}
+                    >
+                      <td className="py-2.5 sm:py-3 px-2 block sm:table-cell align-middle">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border ${catInfo.corBadge}`}>
+                              <IconeCat className="w-2.5 h-2.5" />
+                              {catInfo.label}
+                            </span>
+                            {doc.arquivado && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border border-gray-600 text-gray-400 bg-gray-900/40">
+                                <Archive className="w-2.5 h-2.5" /> Arquivado
+                              </span>
                             )}
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          <h3 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors line-clamp-1">{doc.titulo}</h3>
+                        </div>
+                      </td>
+                      <td className="pt-0 pb-2.5 sm:py-3 px-2 block sm:table-cell sm:text-right align-middle">
+                        <div className="text-[11px] text-slate-500">
+                          {new Date(doc.data_documento).toLocaleDateString('pt-BR')}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
+
 
         {/* Paginação */}
         {totalPaginas > 1 && (
