@@ -436,7 +436,8 @@ export default function PainelSuperAdmin() {
                 <p className="text-xs text-gray-400">UF: {conselhoForm.uf}</p>
               </div>
               <div className="flex gap-2 items-center">
-                <button onClick={() => handleDeleteConselho(conselhoFoco.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg" title="Excluir Conselho">
+                <button onClick={() => navigate(`/regiao/${conselhoFoco.id}`)} className="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg flex items-center gap-1 transition-colors" title="Acessar Painel do Conselho"><Activity className="w-4 h-4" /><span className="text-xs font-bold hidden sm:inline">Acessar</span></button>
+                  <button onClick={() => handleDeleteConselho(conselhoFoco.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg" title="Excluir Conselho">
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <button onClick={() => { setConselhoFoco(null); setLojaFoco(null); }} className="p-2 text-gray-400 hover:text-white rounded-lg bg-[#333]">
