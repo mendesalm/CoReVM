@@ -293,12 +293,14 @@ function formatarLojaMembro(membro: any): string {
   }
 
   return (
-    <div className="min-h-screen bg-sigma-bg text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200 p-4 lg:p-8">
       
       {/* Sub-Header Contextual */}
-      <div className="bg-sigma-surface border-b border-sigma-border">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+              {/* 1. CABEÇALHO */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="bg-sigma-surface border-sigma-border border rounded-2xl overflow-hidden mb-6">
+            <div className="px-4 py-3 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
             <Link
               to={`/regiao/${id}`}
               className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
@@ -314,12 +316,14 @@ function formatarLojaMembro(membro: any): string {
               <p className="text-xs text-gray-400 mt-0.5">
                 {conselho?.nome || 'Conselho Regional'} — Liderança executiva, titulares e vigência do mandato
               </p>
+            
             </div>
           </div>
         </div>
+        </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="max-w-7xl mx-auto mb-12 space-y-6">
         
         {/* Banner Institucional do Mandato Ativo */}
         <div className="bg-gradient-to-r from-[#181818] via-[#141414] to-[#0f0f0f] border border-[#2e2e2e] rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-6">

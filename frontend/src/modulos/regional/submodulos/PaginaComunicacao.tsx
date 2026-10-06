@@ -380,12 +380,14 @@ export const PaginaComunicacao: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-sigma-bg text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200 p-4 lg:p-8">
       
       {/* Sub-Header Contextual */}
-      <div className="bg-sigma-surface border-b border-sigma-border">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+              {/* 1. CABEÇALHO */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="bg-sigma-surface border-sigma-border border rounded-2xl overflow-hidden mb-6">
+            <div className="px-4 py-3 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
             <Link
               to={`/regiao/${regiaoId}`}
               className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
@@ -401,8 +403,10 @@ export const PaginaComunicacao: React.FC = () => {
               <p className="text-xs text-gray-400 mt-0.5">
                 Canal sigiloso e correspondência inter-lojas
               </p>
+            
             </div>
           </div>
+        </div>
         </div>
       </div>
 

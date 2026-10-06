@@ -520,7 +520,7 @@ export default function PaginaLojas() {
   }
 
   return (
-    <div className="min-h-screen bg-sigma-bg text-gray-200">
+    <div className="min-h-screen bg-sigma-bg text-gray-200 p-4 lg:p-8">
 
       {/* ALTERAÇÃO (2026-09-18, revisão a pedido do usuário): "Minha Loja"
           agora troca a tela inteira por um painel dedicado -- os widgets do
@@ -539,9 +539,11 @@ export default function PaginaLojas() {
       ) : (
       <>
       {/* Sub-Header Contextual */}
-      <div className="bg-sigma-surface border-b border-sigma-border">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+              {/* 1. CABEÇALHO */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="bg-sigma-surface border-sigma-border border rounded-2xl overflow-hidden mb-6">
+            <div className="px-4 py-3 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
             <Link 
               to={`/regiao/${id}`} 
               className="p-1.5 text-gray-400 hover:text-white hover:bg-sigma-elevated rounded-lg transition-colors mr-1"
@@ -561,12 +563,14 @@ export default function PaginaLojas() {
               <p className="text-xs text-gray-400 mt-0.5">
                 {conselho?.nome || 'Conselho Regional'} — Quadro de lojas, potências, ritos e veneráveis mestres
               </p>
+            
             </div>
           </div>
         </div>
+        </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="max-w-7xl mx-auto mb-12 space-y-6">
         
         {/* Painel de Métricas Rápidas — Versão Mobile (Micro-KPIs em linha única compacta) */}
         <div className="grid grid-cols-3 gap-2 md:hidden">

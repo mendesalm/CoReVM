@@ -407,44 +407,75 @@ export default function PaginaVotacoes() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070e1c] text-slate-200">
+    <div className="min-h-screen bg-[#070e1c] text-slate-200 p-4 lg:p-8">
       
-      <div className="bg-[#1e293b] border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <Link
-              to={`/regiao/${id}`}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors hidden md:block"
-              title="Voltar ao Painel Geral"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            
-            <div className="relative w-full md:w-[320px]">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text"
-                placeholder="Buscar deliberação ou enquete..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
-              />
+              {/* 1. CABEÇALHO */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="bg-slate-800 border border-[#242424] rounded-2xl overflow-hidden mb-6">
+            <div className="px-4 py-3 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Link to={`/regiao/${id}`} className="p-1.5 text-[#888] hover:text-white hover:bg-slate-700 rounded-lg transition-colors mr-1" title="Voltar ao Painel Geral">
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400 border border-blue-400/20">
+                  <Vote className="w-5 h-5" />
+                </div>
+                <div>
+                  <h1 className="text-sm sm:text-base font-bold text-white tracking-wide uppercase">Enquetes e Votações</h1>
+                  <p className="text-xs text-[#888] mt-0.5 line-clamp-1">Consultas oficiais e deliberações do Conselho</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNovaVotacaoModal(true)}
+                className="flex items-center gap-2 bg-slate-700 text-white hover:bg-slate-600 font-bold text-xs p-2.5 sm:px-4 sm:py-2.5 rounded-xl shadow-md transition-all shrink-0"
+                title="Nova Enquete"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" /> <span className="hidden sm:inline">Nova Enquete</span>
+              </button>
             </div>
           </div>
 
-          <div className="w-full md:w-auto">
-            <button
-              onClick={() => setShowNovaVotacaoModal(true)}
-              className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 font-bold text-sm rounded-xl transition-all shadow"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              Nova Enquete
-            </button>
+          {/* 4. BARRA DE FERRAMENTAS */}
+          <div className="my-6 space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-[#666] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar deliberação ou enquete..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="w-full bg-slate-800 border border-[#242424] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-[#666] focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={filtroStatus}
+                  onChange={(e) => setFiltroStatus(e.target.value as any)}
+                  className="flex-1 sm:flex-none bg-slate-800 border border-[#242424] text-xs text-[#ddd] rounded-xl px-2 py-2.5 focus:border-blue-400 focus:outline-none cursor-pointer"
+                >
+                  <option value="TODAS">Todos os Status</option>
+                  <option value="EM_ANDAMENTO">Em Andamento</option>
+                  <option value="MINHA_PENDENTE">Pendentes (Minha Loja)</option>
+                  <option value="ENCERRADA">Encerradas</option>
+                </select>
+
+                <select
+                  value={filtroTipo}
+                  onChange={(e) => setFiltroTipo(e.target.value as any)}
+                  className="flex-1 sm:flex-none bg-slate-800 border border-[#242424] text-xs text-[#ddd] rounded-xl px-2 py-2.5 focus:border-blue-400 focus:outline-none cursor-pointer"
+                >
+                  <option value="TODAS">Todos os Tipos</option>
+                  <option value="DELIBERACAO">Deliberação</option>
+                  <option value="ENQUETE">Enquete</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+        <div className="max-w-7xl mx-auto mb-12 space-y-6">
         
         {votacoesOrdenadas.length === 0 ? (
           <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-12 text-center text-slate-400">
