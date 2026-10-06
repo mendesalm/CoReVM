@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { clienteHttp, API_URL } from '../../compartilhado/contextos/AuthContext';
 import FullCalendar from '@fullcalendar/react';
@@ -104,12 +104,34 @@ const STATUS_ROTULOS: Record<string, string> = {
 };
 
 export default function PaginaCalendario() {
-  // Fix for FullCalendar width calculation on initial load
-  useEffect(() => {
-    const timer = setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
-    return () => clearTimeout(timer);
-  }, []);
+
+
+
   const { id: regiaoId } = useParams();
+
+  const calendarRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Observer para corrigir a largura do FullCalendar quando o menu lateral abre/fecha
+  useEffect(() => {
+    if (!containerRef.current) return;
+    if (typeof ResizeObserver === 'undefined') {
+      const t = setTimeout(() => window.dispatchEvent(new Event('resize')), 200);
+      return () => clearTimeout(t);
+    }
+    const observer = new ResizeObserver(() => {
+      setTimeout(() => {
+        if (calendarRef.current && calendarRef.current.getApi) {
+          calendarRef.current.getApi().updateSize();
+        } else {
+          window.dispatchEvent(new Event('resize'));
+        }
+      }, 150);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
 
   const [userContext, setUserContext] = useState<any>(null);
   const [tiposEvento, setTiposEvento] = useState<TipoEventoInfo[]>([]);
@@ -125,6 +147,8 @@ export default function PaginaCalendario() {
 
   // Modo de visualização responsivo: 'lista' (feed ergonômico mobile) ou 'calendario' (grid mensal)
   const [modoVisualizacao, setModoVisualizacao] = useState<'lista' | 'calendario'>(() => {
+
+
     return typeof window !== 'undefined' && window.innerWidth < 768 ? 'lista' : 'calendario';
   });
   const [isMobile, setIsMobile] = useState(() => {
@@ -688,9 +712,10 @@ export default function PaginaCalendario() {
           )}
         </div>
       ) : (
-        <div className="bg-sigma-surface border border-sigma-border rounded-xl p-3 sm:p-6 flex-1 text-gray-300 min-h-[450px]">
+        <div ref={containerRef} className="bg-sigma-surface border border-sigma-border rounded-xl p-3 sm:p-6 flex-1 text-gray-300 min-h-[450px] overflow-hidden">
           <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             events={eventosCalendario}
             dateClick={handleDateClick}
