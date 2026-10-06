@@ -391,57 +391,51 @@ export default function PaginaPatrimonio() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070e1c] text-gray-200">
+    <div className="min-h-screen bg-[#070e1c] text-gray-200 p-4 lg:p-8">
       
-      {/* Sub-Header Contextual */}
-      <div className="bg-[#1e293b] border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              to={`/regiao/${id}`}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors mr-1"
-              title="Voltar ao Painel Geral"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="p-2 bg-slate-700 border border-slate-700 rounded-lg text-blue-400 border border-blue-400/20">
-              <Landmark className="w-5 h-5"/>
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-white tracking-wide uppercase">Patrimônio</h1>
-              <p className="text-xs text-gray-400 mt-0.5">Catálogo Unificado e Gestão de Ativos</p>
+              {/* 1. CABEÇALHO */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="bg-slate-800 border border-[#242424] rounded-2xl overflow-hidden mb-6">
+            <div className="px-4 py-3 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Link to={`/regiao/${id}`} className="p-1.5 text-[#888] hover:text-white hover:bg-slate-700 rounded-lg transition-colors mr-1" title="Voltar ao Painel Geral">
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400 border border-blue-400/20">
+                  <Landmark className="w-5 h-5" />
+                </div>
+                <div>
+                  <h1 className="text-sm sm:text-base font-bold text-white tracking-wide uppercase">Patrimônio</h1>
+                  <p className="text-xs text-[#888] mt-0.5 line-clamp-1">Catálogo Unificado e Gestão de Ativos</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setFormNovoItem({
+                    codigo_tombamento: '',
+                    nome: '',
+                    descricao: '',
+                    categoria: 'HOSPITALAR',
+                    tipo_propriedade: userContext.is_diretoria ? 'CONSELHO' : 'LOJA',
+                    loja_proprietaria_id: userContext.loja_id || '',
+                    loja_proprietaria_nome: '',
+                    loja_proprietaria_numero: '',
+                    quantidade_total: 1,
+                    localizacao_fisica: '',
+                    estado_conservacao: 'BOM',
+                    permite_emprestimo: true,
+                    permite_locacao: false,
+                    taxa_locacao_estimada: ''
+                  });
+                  setModalNovoItemAberto(true);
+                }}
+                className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-500 font-bold text-xs p-2.5 sm:px-4 sm:py-2.5 rounded-xl shadow-md transition-all shrink-0"
+                title="Cadastrar Bem"
+              >
+                <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Cadastrar Bem</span>
+              </button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => {
-                setFormNovoItem({
-                  codigo_tombamento: '',
-                  nome: '',
-                  descricao: '',
-                  categoria: 'HOSPITALAR',
-                  tipo_propriedade: userContext.is_diretoria ? 'CONSELHO' : 'LOJA',
-                  loja_proprietaria_id: userContext.loja_id || '',
-                  loja_proprietaria_nome: '',
-                  loja_proprietaria_numero: '',
-                  quantidade_total: 1,
-                  localizacao_fisica: '',
-                  estado_conservacao: 'BOM',
-                  permite_emprestimo: true,
-                  permite_locacao: false,
-                  taxa_locacao_estimada: ''
-                });
-                setModalNovoItemAberto(true);
-              }}
-              className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-500 shadow-md hover:opacity-90 font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
-            >
-              <Plus className="w-4 h-4" /> Cadastrar Bem
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 pb-12 space-y-6">
 
         {/* ALERTA DE SUCESSO / ERRO */}
         {sucesso && (
@@ -523,55 +517,58 @@ export default function PaginaPatrimonio() {
         {/* 2. CATÁLOGO UNIFICADO */}
         <div className="mt-8">
           <h2 className="text-lg font-bold text-white mb-4">Catálogo de Ativos</h2>
-          {/* Filtros e Busca */}
-          <div className="bg-[#1e293b] border border-[#242424] rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative min-w-[240px]">
+                    {/* 4. BARRA DE FERRAMENTAS */}
+          <div className="my-6 space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
                 <Search className="w-4 h-4 text-[#666] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Buscar cadeira de rodas, muletas..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="w-full bg-slate-700 border border-[#303030] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#666] focus:border-blue-400 focus:outline-none"
+                  className="w-full bg-slate-800 border border-[#242424] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-[#666] focus:border-blue-400 focus:outline-none"
                 />
               </div>
 
-              <select
-                value={categoriaFiltro}
-                onChange={(e) => setCategoriaFiltro(e.target.value)}
-                className="bg-slate-700 border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-blue-400 focus:outline-none"
-              >
-                <option value="TODAS">Todas as Categorias</option>
-                <option value="HOSPITALAR">🏥 Hospitalar & Beneficência</option>
-                <option value="MOBILIARIO">🪑 Mobiliário & Ágapes</option>
-                <option value="AUDIOVISUAL">📻 Audiovisual & Som</option>
-                <option value="LITURGICO">🏛️ Litúrgico & Templo</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={propriedadeFiltro}
+                  onChange={(e) => setPropriedadeFiltro(e.target.value)}
+                  className="flex-1 sm:flex-none bg-slate-800 border border-[#242424] text-xs text-[#ddd] rounded-xl px-2 py-2.5 focus:border-blue-400 focus:outline-none cursor-pointer"
+                >
+                  <option value="TODOS">Todas Origens</option>
+                  <option value="CONSELHO">Conselho</option>
+                  <option value="LOJA">Lojas</option>
+                </select>
 
-              <select
-                value={propriedadeFiltro}
-                onChange={(e) => setPropriedadeFiltro(e.target.value)}
-                className="bg-slate-700 border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-blue-400 focus:outline-none"
-              >
-                <option value="TODOS">Todas as Origens</option>
-                <option value="CONSELHO">Acervo do Conselho</option>
-                <option value="LOJA">Rede Solidária (Lojas)</option>
-              </select>
+                <select
+                  value={categoriaFiltro}
+                  onChange={(e) => setCategoriaFiltro(e.target.value)}
+                  className="flex-1 sm:flex-none bg-slate-800 border border-[#242424] text-xs text-[#ddd] rounded-xl px-2 py-2.5 focus:border-blue-400 focus:outline-none cursor-pointer max-w-[140px] truncate"
+                >
+                  <option value="TODAS">Todas Cats</option>
+                  <option value="HOSPITALAR">Hospitalar</option>
+                  <option value="MOBILIARIO">Mobiliário</option>
+                  <option value="AUDIOVISUAL">Audiovisual</option>
+                  <option value="LITURGICO">Litúrgico</option>
+                </select>
+              </div>
+            </div>
 
-              <label className="flex items-center gap-2 text-xs text-[#aaa] cursor-pointer select-none">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs text-[#777]">
+                Mostrando <strong className="text-white">{itens.length}</strong> ativos
+              </span>
+              <label className="flex items-center gap-1.5 text-xs font-medium text-[#999] cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={apenasDisponiveis}
                   onChange={(e) => setApenasDisponiveis(e.target.checked)}
-                  className="rounded border-slate-700 text-blue-400 focus:ring-0 bg-slate-700"
+                  className="w-3.5 h-3.5 accent-blue-500 bg-slate-800 border-[#242424] rounded"
                 />
-                Apenas com Disponibilidade Imediata
+                Apenas com Disponibilidade
               </label>
-            </div>
-
-            <div className="text-xs text-[#777]">
-              Mostrando <span className="text-white font-bold">{itens.length}</span> ativos
             </div>
           </div>
 
