@@ -707,7 +707,7 @@ export default function PainelConselho() {
   return (
     <div className="h-full bg-sigma-bg text-gray-200 p-4 sm:p-6 flex flex-col min-h-0">
       {/* Container Principal Mobile-First */}
-      <div className="max-w-xl mx-auto w-full flex-1 flex flex-col min-h-0">
+      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-0">
         
         {/* CABEÇALHO (Card Hero) - Clone do Mural de Admissões */}
           <div className="bg-[#070e1c] border border-slate-700/60 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-lg shrink-0">

@@ -104,6 +104,11 @@ const STATUS_ROTULOS: Record<string, string> = {
 };
 
 export default function PaginaCalendario() {
+  // Fix for FullCalendar width calculation on initial load
+  useEffect(() => {
+    const timer = setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+    return () => clearTimeout(timer);
+  }, []);
   const { id: regiaoId } = useParams();
 
   const [userContext, setUserContext] = useState<any>(null);

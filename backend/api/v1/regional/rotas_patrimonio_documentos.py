@@ -1026,16 +1026,9 @@ def obter_relatorio_consolidado(
         lid = str(vt.loja_id)
         votos_por_loja[lid] = votos_por_loja.get(lid, 0) + 1
 
-    atas_presenca = db_core.query(AtasPresenca).filter(
-        AtasPresenca.regiao_id == regiao_id,
-        AtasPresenca.presente == True,
-    ).all()
-    total_presencas_sessao = len(atas_presenca)
-
+    # AtasPresenca não existe em CoReVM (são de Lojas), mockando para 0
+    total_presencas_sessao = 0
     presencas_por_loja = {}
-    for p in atas_presenca:
-        lid = str(p.loja_id)
-        presencas_por_loja[lid] = presencas_por_loja.get(lid, 0) + 1
 
     distribuicao_ritos = {}
     for lid, l in lojas_info.items():
