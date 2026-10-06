@@ -360,7 +360,7 @@ export default function PaginaDocumentos() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070e1c] text-gray-200">
+    <div className="min-h-screen bg-[#070e1c] text-gray-200 p-4 lg:p-8">
       
       {/* 1. CABEÇALHO & BARRA DE SIMULAÇÃO */}
       <div className="max-w-7xl mx-auto mb-8">
@@ -500,61 +500,60 @@ export default function PaginaDocumentos() {
           </div>
         </div>
 
-        {/* 4. BARRA DE FERRAMENTAS (BUSCA + ORIGEM + ALTERNAR VISUALIZAÇÃO) */}
-        <div className="bg-slate-800 border border-[#242424] rounded-2xl p-4 my-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[260px]">
+        {/* 4. BARRA DE FERRAMENTAS */}
+        <div className="my-6 space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1">
               <Search className="w-4 h-4 text-[#666] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Buscar por título, código, ementa..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full bg-slate-700 border border-[#303030] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#666] focus:border-[#facc15] focus:outline-none"
+                className="w-full bg-slate-800 border border-[#242424] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-[#666] focus:border-[#facc15] focus:outline-none"
               />
             </div>
 
-            <select
-              value={origemFiltro}
-              onChange={(e) => setOrigemFiltro(e.target.value)}
-              className="bg-slate-700 border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none"
-            >
-              <option value="TODOS">Todas as Origens</option>
-              <option value="CONSELHO">Mesa Diretora (Conselho)</option>
-              <option value="LOJA">Lojas Jurisdicionadas</option>
-            </select>
-            <select
-              value={categoriaFiltro}
-              onChange={(e) => setCategoriaFiltro(e.target.value)}
-              className="bg-slate-700 border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none cursor-pointer"
-            >
-              <option value="TODAS">Todos os Documentos ({estatisticas.total_documentos})</option>
-              <option value="ATA">Atas de Reuniões ({estatisticas.total_atas})</option>
-              <option value="DECRETO">Decretos & Resoluções ({estatisticas.total_decretos})</option>
-              <option value="REGULAMENTO">Regulamentos & Estatuto ({estatisticas.total_regulamentos})</option>
-              <option value="CIRCULAR">Pranchas Circulares ({estatisticas.total_circulares})</option>
-              <option value="CONVITE">Convites de Lojas ({estatisticas.total_convites})</option>
-              <option value="MODELO">Modelos & Minutas ({estatisticas.total_modelos})</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={origemFiltro}
+                onChange={(e) => setOrigemFiltro(e.target.value)}
+                className="flex-1 sm:flex-none bg-slate-800 border border-[#242424] text-xs text-[#ddd] rounded-xl px-2 py-2.5 focus:border-[#facc15] focus:outline-none cursor-pointer"
+              >
+                <option value="TODOS">Todas as Origens</option>
+                <option value="CONSELHO">Conselho</option>
+                <option value="LOJA">Lojas</option>
+              </select>
 
-
+              <select
+                value={categoriaFiltro}
+                onChange={(e) => setCategoriaFiltro(e.target.value)}
+                className="flex-1 sm:flex-none bg-slate-800 border border-[#242424] text-xs text-[#ddd] rounded-xl px-2 py-2.5 focus:border-[#facc15] focus:outline-none cursor-pointer max-w-[140px] truncate"
+              >
+                <option value="TODAS">Todos ({estatisticas.total_documentos})</option>
+                <option value="ATA">Atas ({estatisticas.total_atas})</option>
+                <option value="DECRETO">Decretos ({estatisticas.total_decretos})</option>
+                <option value="REGULAMENTO">Regulamentos ({estatisticas.total_regulamentos})</option>
+                <option value="CIRCULAR">Circulares ({estatisticas.total_circulares})</option>
+                <option value="CONVITE">Convites ({estatisticas.total_convites})</option>
+                <option value="MODELO">Modelos ({estatisticas.total_modelos})</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs text-[#777]">
+              Mostrando <strong className="text-white">{documentos.length}</strong> documentos
+            </span>
             <label className="flex items-center gap-1.5 text-xs font-medium text-[#999] cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={mostrarArquivados}
                 onChange={(e) => setMostrarArquivados(e.target.checked)}
-                className="w-3.5 h-3.5 accent-[#facc15] bg-slate-700 border-[#303030] rounded"
+                className="w-3.5 h-3.5 accent-[#facc15] bg-slate-800 border-[#242424] rounded"
               />
               Mostrar arquivados
             </label>
-          </div>
-
-          <div className="flex items-center gap-3">
-            
-
-            <span className="text-xs text-[#777]">
-              Mostrando <strong className="text-white">{documentos.length}</strong> documentos
-            </span>
           </div>
         </div>
 
