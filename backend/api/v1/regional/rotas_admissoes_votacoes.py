@@ -541,6 +541,18 @@ def listar_votacoes_regional(
     """
     Retorna as votações ativas com quórum apurado, percentuais e status do voto da Loja ativa.
     """
+    # Auto-encerrar votações cujo prazo expirou
+    hoje = date.today()
+    db.query(VotacaoRegional).filter(
+        VotacaoRegional.regiao_id == regiao_id,
+        VotacaoRegional.deletado_visualmente == False,
+        VotacaoRegional.status == "EM_ANDAMENTO",
+        VotacaoRegional.data_encerramento < hoje
+    ).update({
+        VotacaoRegional.status: "ENCERRADA"
+    }, synchronize_session=False)
+    db.commit()
+
     votacoes = db.query(VotacaoRegional).filter(
         VotacaoRegional.regiao_id == regiao_id,
         VotacaoRegional.deletado_visualmente == False
@@ -762,6 +774,41 @@ def alterar_status_votacao(
     db.commit()
     return {"status": "success", "novo_status": votacao.status, "message": f"Votação {votacao.status} com sucesso."}
 
+
+class VotacaoUpdatePayload(BaseModel):
+    titulo: Optional[str] = None
+    descricao: Optional[str] = None
+    data_encerramento: Optional[date] = None
+
+@router.put("/{regiao_id}/votacoes/{votacao_id}", summary="Edita informações básicas de uma votação")
+def atualizar_votacao_regional(
+    regiao_id: str,
+    votacao_id: str,
+    payload: VotacaoUpdatePayload,
+    user: RegionalUserContext = Depends(get_current_regional_user),
+    db: Session = Depends(get_db_core)
+):
+    votacao = db.query(VotacaoRegional).filter(
+        VotacaoRegional.id == votacao_id,
+        VotacaoRegional.regiao_id == regiao_id,
+        VotacaoRegional.deletado_visualmente == False
+    ).first()
+
+    if not votacao:
+        raise HTTPException(status_code=404, detail="Votação não encontrada.")
+
+    if not (user.is_diretoria or user.role.upper() == "SUPERADMIN" or votacao.autor_id == user.usuario_id):
+        raise HTTPException(status_code=403, detail="Você não tem permissão para editar esta votação.")
+
+    if payload.titulo is not None:
+        votacao.titulo = payload.titulo
+    if payload.descricao is not None:
+        votacao.descricao = payload.descricao
+    if payload.data_encerramento is not None:
+        votacao.data_encerramento = payload.data_encerramento
+
+    db.commit()
+    return {"status": "success", "message": "Votação atualizada com sucesso."}
 
 @router.delete("/{regiao_id}/votacoes/{votacao_id}", summary="Remove ou oculta visualmente uma votação")
 def excluir_votacao_regional(

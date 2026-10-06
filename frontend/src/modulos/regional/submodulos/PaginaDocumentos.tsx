@@ -500,36 +500,6 @@ export default function PaginaDocumentos() {
           </div>
         </div>
 
-        {/* 3. BARRA DE ABAS DE CATEGORIA */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-sigma-border mt-8 overflow-x-auto pb-1">
-          {[
-            { id: 'TODAS', label: 'Todos os Documentos', count: estatisticas.total_documentos },
-            { id: 'ATA', label: 'Atas de Reuniões', count: estatisticas.total_atas },
-            { id: 'DECRETO', label: 'Decretos & Resoluções', count: estatisticas.total_decretos },
-            { id: 'REGULAMENTO', label: 'Regulamentos & Estatuto', count: estatisticas.total_regulamentos },
-            { id: 'CIRCULAR', label: 'Pranchas Circulares', count: estatisticas.total_circulares },
-            { id: 'CONVITE', label: 'Convites de Lojas', count: estatisticas.total_convites },
-            { id: 'MODELO', label: 'Modelos & Minutas', count: estatisticas.total_modelos }
-          ].map((aba) => (
-            <button
-              key={aba.id}
-              onClick={() => setCategoriaFiltro(aba.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-                categoriaFiltro === aba.id
-                  ? 'bg-sigma-gold text-[#070F1E] shadow-md shadow-lg'
-                  : 'text-[#888] hover:text-white hover:bg-[#0f172a]'
-              }`}
-            >
-              <span>{aba.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                categoriaFiltro === aba.id ? 'bg-[#070e1c]/20 text-black' : 'bg-slate-700 text-[#888]'
-              }`}>
-                {aba.count}
-              </span>
-            </button>
-          ))}
-        </div>
-
         {/* 4. BARRA DE FERRAMENTAS (BUSCA + ORIGEM + ALTERNAR VISUALIZAÇÃO) */}
         <div className="bg-slate-800 border border-[#242424] rounded-2xl p-4 my-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -553,6 +523,20 @@ export default function PaginaDocumentos() {
               <option value="CONSELHO">Mesa Diretora (Conselho)</option>
               <option value="LOJA">Lojas Jurisdicionadas</option>
             </select>
+            <select
+              value={categoriaFiltro}
+              onChange={(e) => setCategoriaFiltro(e.target.value)}
+              className="bg-slate-700 border border-[#303030] text-xs text-[#ddd] rounded-xl px-3 py-2 focus:border-[#facc15] focus:outline-none cursor-pointer"
+            >
+              <option value="TODAS">Todos os Documentos ({estatisticas.total_documentos})</option>
+              <option value="ATA">Atas de Reuniões ({estatisticas.total_atas})</option>
+              <option value="DECRETO">Decretos & Resoluções ({estatisticas.total_decretos})</option>
+              <option value="REGULAMENTO">Regulamentos & Estatuto ({estatisticas.total_regulamentos})</option>
+              <option value="CIRCULAR">Pranchas Circulares ({estatisticas.total_circulares})</option>
+              <option value="CONVITE">Convites de Lojas ({estatisticas.total_convites})</option>
+              <option value="MODELO">Modelos & Minutas ({estatisticas.total_modelos})</option>
+            </select>
+
 
             <label className="flex items-center gap-1.5 text-xs font-medium text-[#999] cursor-pointer select-none">
               <input
