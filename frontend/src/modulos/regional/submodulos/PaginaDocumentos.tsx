@@ -364,26 +364,21 @@ export default function PaginaDocumentos() {
       
       {/* 1. CABEÇALHO & BARRA DE SIMULAÇÃO */}
       <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sigma-border pb-6">
-          <div>
-            <div className="flex items-center gap-3 text-xs text-[#888] mb-2 uppercase tracking-wider">
-              <Link to={`/regiao/${id}`} className="hover:title-sigma-gold flex items-center gap-1 transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5" /> Painel do Conselho
+        <div className="bg-slate-800 border border-[#242424] rounded-2xl overflow-hidden mb-6">
+          <div className="px-4 py-3 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Link to={`/regiao/${id}`} className="p-1.5 text-[#888] hover:text-white hover:bg-slate-700 rounded-lg transition-colors mr-1">
+                <ArrowLeft className="w-5 h-5" />
               </Link>
-              <span>/</span>
-              <span className="title-sigma-gold">Repositório Documental</span>
+              <div className="p-2 bg-[#facc15]/10 rounded-lg text-[#facc15] border border-[#facc15]/20">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-sm sm:text-base font-bold text-white tracking-wide uppercase">Documentos</h1>
+                <p className="text-xs text-[#888] mt-0.5 line-clamp-1">Regulamentos e pranchas da região</p>
+              </div>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <FileText className="w-8 h-8 title-sigma-gold" />
-              Documentos do Conselho Regional
-            </h1>
-            <p className="text-sm text-[#aaa] mt-1">
-              Repositório canônico de atas de reuniões, decretos, resoluções, estatutos, pranchas circulares e convites.
-            </p>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Botão Novo Documento */}
             <button
               onClick={() => {
                 const isDir = userContext.is_diretoria || userContext.role === 'SUPERADMIN';
@@ -418,9 +413,10 @@ export default function PaginaDocumentos() {
                 setTemExpiracaoUpload(false);
                 setModalPublicarAberto(true);
               }}
-              className="flex items-center gap-2 bg-sigma-gold text-[#070F1E] shadow-md hover:opacity-90 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+              className="flex items-center gap-2 bg-[#facc15] text-black hover:bg-[#eab308] font-bold text-xs p-2.5 sm:px-4 sm:py-2.5 rounded-xl shadow-md transition-all shrink-0"
+              title="Publicar Documento"
             >
-              <Plus className="w-4 h-4" /> Publicar Documento
+              <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Publicar Documento</span>
             </button>
           </div>
         </div>
