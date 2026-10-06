@@ -449,7 +449,7 @@ export default function PaginaCalendario() {
   }
 
   return (
-    <div className="p-4 sm:p-8 h-full flex flex-col relative pb-24 sm:pb-8">
+    <div className="p-4 sm:p-8 h-full flex flex-col relative pb-24 sm:pb-8 min-w-0">
       {/* Cabeçalho com Título, Alternador de Visão e Filtros */}
       <div className="mb-6 flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
@@ -712,7 +712,7 @@ export default function PaginaCalendario() {
           )}
         </div>
       ) : (
-        <div ref={containerRef} className="bg-sigma-surface border border-sigma-border rounded-xl p-3 sm:p-6 flex-1 text-gray-300 min-h-[450px] overflow-hidden">
+        <div ref={containerRef} className="bg-sigma-surface border border-sigma-border rounded-xl p-3 sm:p-6 flex-1 min-w-0 text-gray-300 min-h-[450px] overflow-hidden">
           <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

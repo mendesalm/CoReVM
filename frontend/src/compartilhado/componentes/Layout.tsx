@@ -311,7 +311,7 @@ export default function Layout() {
         </header>
 
       {/* ÁREA INFERIOR: SIDEBAR COLAPSÁVEL + CONTEÚDO PRINCIPAL */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 min-w-0 overflow-hidden relative">
         
         {/* SIDEBAR COLAPSÁVEL COM EXPANSÃO AUTOMÁTICA ON HOVER */}
         <aside 
@@ -562,8 +562,8 @@ export default function Layout() {
         </aside>
 
         {/* ÁREA CENTRAL DE CONTEÚDO */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden bg-sigma-bg">
-          <div className="flex-1 overflow-y-auto">
+        <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden bg-sigma-bg">
+          <div className="flex-1 min-w-0 overflow-y-auto">
             <Outlet />
           </div>
 
