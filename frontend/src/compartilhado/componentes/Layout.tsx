@@ -317,7 +317,7 @@ export default function Layout() {
         <aside 
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`hidden md:flex transition-all duration-300 ease-in-out bg-[#070e1c]/95 backdrop-blur-md border-r border-[rgba(221,185,107,0.2)] flex-col justify-between shrink-0 select-none z-20 ${
+          className={`absolute top-0 left-0 bottom-0 hidden md:flex transition-all duration-300 ease-in-out bg-[#070e1c]/95 backdrop-blur-md border-r border-[rgba(221,185,107,0.2)] flex-col justify-between shrink-0 select-none z-40 ${
             isExpanded ? 'w-72 shadow-2xl' : 'w-20'
           }`}
         >
@@ -562,7 +562,7 @@ export default function Layout() {
         </aside>
 
         {/* ÁREA CENTRAL DE CONTEÚDO */}
-        <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden bg-sigma-bg">
+        <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden bg-sigma-bg md:ml-20">
           <div className="flex-1 min-w-0 overflow-y-auto">
             <Outlet />
           </div>
