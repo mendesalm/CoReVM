@@ -172,7 +172,7 @@ export default function PaginaVotacoes() {
       );
 
       const res = await clienteHttp.get(`${API_URL}/regional/${id}/votacoes`);
-      const listaAtualizada: VotacaoItem[] = res.data || [];
+      const listaAtualizada: VotacaoItem[] = Array.isArray(res.data) ? res.data : [];
       setVotacoes(listaAtualizada);
       
       const atualizada = listaAtualizada.find(v => v.id === votacaoSelecionada.id);
@@ -240,7 +240,7 @@ export default function PaginaVotacoes() {
       );
 
       const res = await clienteHttp.get(`${API_URL}/regional/${id}/votacoes`);
-      const listaAtualizada: VotacaoItem[] = res.data || [];
+      const listaAtualizada: VotacaoItem[] = Array.isArray(res.data) ? res.data : [];
       setVotacoes(listaAtualizada);
       
       const atualizada = listaAtualizada.find(v => v.id === votacaoSelecionada.id);

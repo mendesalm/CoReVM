@@ -203,7 +203,7 @@ export default function PaginaLojas() {
 
       // Busca oficial das Lojas Jurisdicionadas pertencentes a este Conselho no Core
       const resLojas = await clienteHttp.get(`${API_URL}/regional/${id}/lojas`);
-      const lojasBase = resLojas.data?.lojas || [];
+      const lojasBase = Array.isArray(resLojas.data?.lojas) ? resLojas.data.lojas : [];
 
       // MODO PAINEL: "Minha Loja" (?minha=1)
       if (emModoPainel) {
@@ -433,7 +433,7 @@ export default function PaginaLojas() {
     setCarregandoOficiais(true);
     try {
       const res = await clienteHttp.get(`${API_URL}/regional/${id}/lojas/${loja.loja_id}/oficiais`);
-      setOficiaisLoja(res.data?.oficiais || []);
+      setOficiaisLoja(Array.isArray(res.data?.oficiais) ? res.data.oficiais : []);
     } catch (e: any) {
       alert(extrairMensagemErro(e, 'Erro ao carregar os oficiais da loja'));
       setDesignarSuplenteModal(null);

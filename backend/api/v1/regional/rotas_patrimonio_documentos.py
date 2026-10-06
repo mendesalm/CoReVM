@@ -1035,6 +1035,16 @@ def obter_relatorio_consolidado(
         rito_nome = l.get("rito") or "Não Informado"
         distribuicao_ritos[rito_nome] = distribuicao_ritos.get(rito_nome, 0) + 1
 
+    distribuicao_ritos_lista = []
+    total_ritos = sum(distribuicao_ritos.values())
+    for rito, qtd in distribuicao_ritos.items():
+        distribuicao_ritos_lista.append({
+            "rito": rito,
+            "quantidade": qtd,
+            "percentual": round((qtd / total_ritos) * 100, 1) if total_ritos > 0 else 0
+        })
+    distribuicao_ritos_lista.sort(key=lambda x: x["quantidade"], reverse=True)
+
     ranking_lojas = []
     for a in agregadas:
         lid = str(a.loja_id)
@@ -1072,7 +1082,7 @@ def obter_relatorio_consolidado(
             "total_presencas_registradas": total_presencas_sessao,
             "taxa_engajamento_colegiado": engajamento_colegiado,
         },
-        "distribuicao_ritos": distribuicao_ritos,
+        "distribuicao_ritos": distribuicao_ritos_lista,
         "ranking_lojas": ranking_lojas,
     }
 

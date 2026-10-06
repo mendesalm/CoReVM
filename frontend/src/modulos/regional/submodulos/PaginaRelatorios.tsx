@@ -200,22 +200,22 @@ export const PaginaRelatorios: React.FC = () => {
       // 1. Relatório Consolidado
       const resConsol = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/relatorios/consolidado`);
       setKpis(resConsol.data.kpis);
-      setDistribuicaoRitos(resConsol.data.distribuicao_ritos || []);
-      setRankingLojas(resConsol.data.ranking_lojas || []);
+      setDistribuicaoRitos(Array.isArray(resConsol.data.distribuicao_ritos) ? resConsol.data.distribuicao_ritos : []);
+      setRankingLojas(Array.isArray(resConsol.data.ranking_lojas) ? resConsol.data.ranking_lojas : []);
       if (resConsol.data.conselho?.nome) {
         setConselhoNome(resConsol.data.conselho.nome);
       }
 
       // 2. Relatório de Integrantes
       const resInt = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/relatorios/integrantes`);
-      setMesaDiretora(resInt.data.mesa_diretora || []);
-      setLojasColegiado(resInt.data.lojas || []);
+      setMesaDiretora(Array.isArray(resInt.data.mesa_diretora) ? resInt.data.mesa_diretora : []);
+      setLojasColegiado(Array.isArray(resInt.data.lojas) ? resInt.data.lojas : []);
 
       // 3. Relatório de Patrimônio
       const resPat = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/relatorios/patrimonio`);
       setResumoPatrimonio(resPat.data.resumo || null);
-      setItensPatrimonio(resPat.data.itens || []);
-      setEmprestimosPatrimonio(resPat.data.emprestimos || []);
+      setItensPatrimonio(Array.isArray(resPat.data.itens) ? resPat.data.itens : []);
+      setEmprestimosPatrimonio(Array.isArray(resPat.data.emprestimos) ? resPat.data.emprestimos : []);
 
     } catch (err: any) {
       console.error("Erro ao carregar dados dos relatórios:", err);

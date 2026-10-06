@@ -208,7 +208,7 @@ export const PaginaComunicacao: React.FC = () => {
     setLoadingChat(true);
     try {
       const res = await clienteHttp.get(`${API_URL}/regional/${regiaoId}/comunicacao/topicos/${topicoId}`);
-      setMensagens(res.data.mensagens || []);
+      setMensagens(Array.isArray(res.data?.mensagens) ? res.data.mensagens : []);
     } catch (err: any) {
       console.error("Erro ao carregar mensagens do tópico:", err);
       setErro(extrairMensagemErro(err, "Não foi possível carregar a correspondência."));
