@@ -98,6 +98,19 @@ def listar_avisos_regionais(
     Retorna os avisos da região ordenados por prioridade de exibição.
     Consome dados cadastrais das lojas em lote via API do Lojas (API-First).
     """
+    # Auto-arquivamento de avisos expirados (antes de processar a leitura)
+    hoje = date.today()
+    db.query(AvisoRegional).filter(
+        AvisoRegional.regiao_id == regiao_id,
+        AvisoRegional.arquivado == False,
+        AvisoRegional.data_validade < hoje
+    ).update({
+        AvisoRegional.arquivado: True,
+        AvisoRegional.arquivado_em: datetime.utcnow(),
+        AvisoRegional.arquivado_por: "SISTEMA_AUTO_EXPIRACAO"
+    }, synchronize_session=False)
+    db.commit()
+
     pode_ver_arquivados = user.is_diretoria or user.role.upper() == "SUPERADMIN"
 
     query = db.query(AvisoRegional).filter(AvisoRegional.regiao_id == regiao_id)
