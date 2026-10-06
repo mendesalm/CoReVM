@@ -330,9 +330,9 @@ export default function PaginaVotacoes() {
     
     const termo = busca.toLowerCase();
     const atendeBusca = 
-      v.titulo.toLowerCase().includes(termo) ||
-      v.descricao.toLowerCase().includes(termo) ||
-      v.tipo_label.toLowerCase().includes(termo);
+      (v.titulo || "").toLowerCase().includes(termo) ||
+      (v.descricao || "").toLowerCase().includes(termo) ||
+      (v.tipo_label || "").toLowerCase().includes(termo);
 
     return atendeTipo && atendeStatus && atendeBusca;
   });

@@ -371,10 +371,10 @@ export const PaginaComunicacao: React.FC = () => {
     const matchAlcance = filtroAlcance === 'TODOS' || t.tipo_alcance === filtroAlcance;
     const matchStatus = filtroStatus === 'TODOS' || t.status === filtroStatus;
     const matchBusca = 
-      t.assunto.toLowerCase().includes(busca.toLowerCase()) ||
+      (t.assunto || "").toLowerCase().includes(busca.toLowerCase()) ||
       (t.loja_origem_nome && t.loja_origem_nome.toLowerCase().includes(busca.toLowerCase())) ||
       (t.loja_destino_nome && t.loja_destino_nome.toLowerCase().includes(busca.toLowerCase())) ||
-      t.criado_por_nome.toLowerCase().includes(busca.toLowerCase());
+      (t.criado_por_nome || "").toLowerCase().includes(busca.toLowerCase());
 
     return matchAlcance && matchStatus && matchBusca;
   });

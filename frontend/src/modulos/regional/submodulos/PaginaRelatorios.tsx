@@ -268,10 +268,10 @@ export const PaginaRelatorios: React.FC = () => {
   // Filtragem de Integrantes
   const lojasFiltradas = lojasColegiado.filter(l => {
     const matchBusca = 
-      l.nome.toLowerCase().includes(buscaIntegrantes.toLowerCase()) ||
+      (l.nome || "").toLowerCase().includes(buscaIntegrantes.toLowerCase()) ||
       l.numero.includes(buscaIntegrantes) ||
-      l.vm_nome.toLowerCase().includes(buscaIntegrantes.toLowerCase()) ||
-      l.suplente_nome.toLowerCase().includes(buscaIntegrantes.toLowerCase());
+      (l.vm_nome || "").toLowerCase().includes(buscaIntegrantes.toLowerCase()) ||
+      (l.suplente_nome || "").toLowerCase().includes(buscaIntegrantes.toLowerCase());
     
     const matchRito = filtroRito === 'TODOS' || l.rito.toUpperCase() === filtroRito.toUpperCase();
     return matchBusca && matchRito;
@@ -280,9 +280,9 @@ export const PaginaRelatorios: React.FC = () => {
   // Filtragem de Patrimônio
   const itensPatrimonioFiltrados = itensPatrimonio.filter(item => {
     const matchBusca = 
-      item.nome.toLowerCase().includes(buscaPatrimonio.toLowerCase()) ||
-      item.codigo_tombamento.toLowerCase().includes(buscaPatrimonio.toLowerCase()) ||
-      item.localizacao_fisica.toLowerCase().includes(buscaPatrimonio.toLowerCase());
+      (item.nome || "").toLowerCase().includes(buscaPatrimonio.toLowerCase()) ||
+      (item.codigo_tombamento || "").toLowerCase().includes(buscaPatrimonio.toLowerCase()) ||
+      (item.localizacao_fisica || "").toLowerCase().includes(buscaPatrimonio.toLowerCase());
     
     const matchCat = filtroCategoriaPatrimonio === 'TODAS' || item.categoria === filtroCategoriaPatrimonio;
     return matchBusca && matchCat;

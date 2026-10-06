@@ -108,9 +108,9 @@ export default function PaginaDiretoria() {
       setDiretoria(resDiretoria.data || []);
       setVeneraveisElegiveis(resElegiveis.data || []);
 
-      const pres = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'presidente');
-      const vice = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
-      const sec = resDiretoria.data.find((d: any) => d.cargo.toLowerCase() === 'secretario');
+      const pres = resDiretoria.data.find((d: any) => (d.cargo || '').toLowerCase() === 'presidente');
+      const vice = resDiretoria.data.find((d: any) => (d.cargo || '').toLowerCase() === 'vice-presidente' || (d.cargo || '').toLowerCase() === 'vice_presidente');
+      const sec = resDiretoria.data.find((d: any) => (d.cargo || '').toLowerCase() === 'secretario');
 
       setDiretoriaForm({
         presidente_id: pres?.usuario_id || '',
@@ -166,9 +166,9 @@ export default function PaginaDiretoria() {
     }
   };
 
-  const presidente = diretoria.find(d => d.cargo.toLowerCase() === 'presidente');
-  const vicePresidente = diretoria.find(d => d.cargo.toLowerCase() === 'vice-presidente' || d.cargo.toLowerCase() === 'vice_presidente');
-  const secretario = diretoria.find(d => d.cargo.toLowerCase() === 'secretario');
+  const presidente = diretoria.find(d => (d.cargo || '').toLowerCase() === 'presidente');
+  const vicePresidente = diretoria.find(d => (d.cargo || '').toLowerCase() === 'vice-presidente' || (d.cargo || '').toLowerCase() === 'vice_presidente');
+  const secretario = diretoria.find(d => (d.cargo || '').toLowerCase() === 'secretario');
 
 function formatarLojaMembro(membro: any): string {
   if (!membro) return 'Não vinculada';
