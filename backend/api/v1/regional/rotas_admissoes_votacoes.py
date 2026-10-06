@@ -97,6 +97,18 @@ def listar_previas_admissao(
     Retorna as prévias de admissão (Iniciação, Filiação, Regularização) ativas no conselho.
     Para o Operador Administrativo, a listagem é restrita à própria Loja.
     """
+    # Auto-arquivamento de admissões com data limite vencida
+    hoje = date.today()
+    db.query(PreviaAdmissao).filter(
+        PreviaAdmissao.regiao_id == regiao_id,
+        PreviaAdmissao.deletado_visualmente == False,
+        PreviaAdmissao.data_limite < hoje
+    ).update({
+        PreviaAdmissao.deletado_visualmente: True,
+        PreviaAdmissao.status: "CONCLUIDO"
+    }, synchronize_session=False)
+    db.commit()
+
     query = db.query(PreviaAdmissao).filter(
         PreviaAdmissao.regiao_id == regiao_id,
         PreviaAdmissao.deletado_visualmente == False
