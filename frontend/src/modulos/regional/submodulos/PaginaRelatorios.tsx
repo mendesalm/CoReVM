@@ -631,7 +631,7 @@ export const PaginaRelatorios: React.FC = () => {
                             {index + 1}
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-white">{l.nome} nº {l.numero}</div>
+                            <div className="text-xs font-bold text-white">Loja {l.nome}, nº {l.numero}</div>
                             <div className="text-[10px] text-gray-400">{l.rito} • {l.votos_computados} votos registrados</div>
                           </div>
                         </div>

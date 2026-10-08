@@ -1054,13 +1054,16 @@ def obter_relatorio_consolidado(
         score = (num_votos * 2) + (num_pres * 3)
 
         ranking_lojas.append({
-            "loja_id": lid,
-            "nome_loja": l.get("nome_loja") if l else f"Loja {lid}",
-            "numero_loja": l.get("numero_loja") if l else lid,
+            "id": lid,
+            "nome": (l.get("nome") or l.get("nome_loja")) if l else f"Loja {lid}",
+            "numero": (l.get("numero") or l.get("numero_loja")) if l else lid,
             "rito": l.get("rito") if l else "REAA",
-            "filiacao": l.get("filiacao_formatada") if l else "GOB",
-            "votos_participados": num_votos,
-            "sessoes_presentes": num_pres,
+            "cidade": l.get("cidade") if l else "",
+            "votos_computados": num_votos,
+            "total_votacoes": total_votacoes,
+            "percentual_participacao": round((num_votos / total_votacoes) * 100, 1) if total_votacoes > 0 else 0,
+            "status_label": "Engajamento Alto" if (num_votos / (total_votacoes or 1)) > 0.7 else "Engajamento Moderado" if (num_votos / (total_votacoes or 1)) > 0.3 else "Engajamento Baixo",
+            "bens_solidarios_count": num_pres,
             "score_engajamento": score,
         })
 
