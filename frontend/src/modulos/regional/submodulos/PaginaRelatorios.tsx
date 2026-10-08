@@ -461,8 +461,8 @@ export const PaginaRelatorios: React.FC = () => {
             <div className="space-y-6">
               {/* Card Destaque: Índice de Engajamento Regional (IER) */}
               <div className="bg-sigma-surface border border-sigma-border p-6 rounded-lg relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-96 h-96 bg-sigma-elevated border border-sigma-border rounded-full blur-3xl pointer-events-none" />
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                <div className="absolute right-0 top-0 w-96 h-96 bg-sigma-elevated border border-sigma-border rounded-full blur-3xl pointer-events-none z-0" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center relative z-10">
                   <div className="lg:col-span-2 space-y-2">
                     <div className="flex items-center space-x-2">
                       <span className="text-xs font-bold px-2 py-0.5 rounded bg-sigma-elevated border border-sigma-border text-amber-400 border border-amber-500/20">
