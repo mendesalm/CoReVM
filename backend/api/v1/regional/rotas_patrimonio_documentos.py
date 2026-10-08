@@ -1074,16 +1074,59 @@ def obter_relatorio_consolidado(
         votos_esperados = total_lojas * total_votacoes
         engajamento_colegiado = round((total_votos_colegiado / votos_esperados * 100), 1)
 
+    total_admissoes = db_core.query(PreviaAdmissao).filter(PreviaAdmissao.regiao_id == regiao_id).count()
+    admissoes_concluidas = db_core.query(PreviaAdmissao).filter(
+        PreviaAdmissao.regiao_id == regiao_id,
+        PreviaAdmissao.status.in_(["CONCLUIDO", "AVERIGUADO", "APROVADA", "ARQUIVADA"])
+    ).count()
+    admissoes_andamento = db_core.query(PreviaAdmissao).filter(
+        PreviaAdmissao.regiao_id == regiao_id,
+        PreviaAdmissao.status == "EM_ANDAMENTO"
+    ).count()
+
+    total_consideracoes = db_core.query(ConsideracaoPrevia).join(PreviaAdmissao).filter(
+        PreviaAdmissao.regiao_id == regiao_id
+    ).count()
+
+    itens_patrimonio = db_core.query(ItemPatrimonio).filter(ItemPatrimonio.regiao_id == regiao_id).all()
+    total_ativos_patrimonio = sum(i.quantidade_total for i in itens_patrimonio)
+    total_ativos_disponiveis = sum(i.quantidade_disponivel for i in itens_patrimonio)
+    total_ativos_emprestados = total_ativos_patrimonio - total_ativos_disponiveis
+    bens_solidarios_geral = sum(i.quantidade_total for i in itens_patrimonio if i.tipo_propriedade == "LOJA")
+
+    cautelas = db_core.query(EmprestimoPatrimonio).filter(EmprestimoPatrimonio.regiao_id == regiao_id).all()
+    total_cautelas = len(cautelas)
+    cautelas_ativas = len([c for c in cautelas if c.status == "ATIVO"])
+    hoje = date.today()
+    cautelas_atrasadas = len([c for c in cautelas if c.status == "ATIVO" and c.data_prevista_devolucao and c.data_prevista_devolucao < hoje])
+
+    documentos = db_core.query(DocumentoRegional).filter(DocumentoRegional.regiao_id == regiao_id).all()
+    total_documentos = len(documentos)
+    total_downloads = sum(d.downloads_count for d in documentos)
+
     return {
         "conselho_nome": conselho_nome,
         "regiao_id": regiao_id,
         "data_consolidacao": date.today().strftime("%d/%m/%Y"),
         "kpis": {
-            "total_lojas_jurisdicionadas": total_lojas,
-            "total_consultas_pleitos": total_votacoes,
-            "total_votos_computados": total_votos_colegiado,
-            "total_presencas_registradas": total_presencas_sessao,
-            "taxa_engajamento_colegiado": engajamento_colegiado,
+            "total_lojas": total_lojas,
+            "total_votacoes": total_votacoes,
+            "total_votos_registrados": total_votos_colegiado,
+            "quorum_medio": engajamento_colegiado,
+            "total_admissoes": total_admissoes,
+            "admissoes_concluidas": admissoes_concluidas,
+            "admissoes_andamento": admissoes_andamento,
+            "total_consideracoes": total_consideracoes,
+            "total_ativos_patrimonio": total_ativos_patrimonio,
+            "total_ativos_disponiveis": total_ativos_disponiveis,
+            "total_ativos_emprestados": total_ativos_emprestados,
+            "bens_solidarios_geral": bens_solidarios_geral,
+            "total_cautelas": total_cautelas,
+            "cautelas_ativas": cautelas_ativas,
+            "cautelas_atrasadas": cautelas_atrasadas,
+            "total_documentos": total_documentos,
+            "total_downloads": total_downloads,
+            "indice_engajamento_regional": engajamento_colegiado,
         },
         "distribuicao_ritos": distribuicao_ritos_lista,
         "ranking_lojas": ranking_lojas,
