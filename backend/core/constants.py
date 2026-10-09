@@ -54,3 +54,60 @@ class StatusObreiro(str, Enum):
     REGULAR = "Regular"
     IRREGULAR = "Irregular"
     FALECIDO = "Falecido"
+
+
+# ---------------------------------------------------------------------------
+# Importação em lote de Conselho Regional via CSV (2026-10-09)
+# ---------------------------------------------------------------------------
+
+class ModoImportacao(str, Enum):
+    """Define se a importação cria uma Região nova ou atualiza uma existente."""
+    CRIAR = "CRIAR"
+    ATUALIZAR = "ATUALIZAR"
+
+
+class StatusLinhaImportacao(str, Enum):
+    """Resultado da validação de uma linha (ou campo) do CSV."""
+    OK = "OK"
+    AVISO = "AVISO"
+    ERRO = "ERRO"
+
+
+class AcaoImportacao(str, Enum):
+    """Ações previstas/executadas para cada linha durante a importação."""
+    CRIAR_LOJA = "CRIAR_LOJA"
+    VINCULAR_LOJA = "VINCULAR_LOJA"
+    ATUALIZAR_LOJA = "ATUALIZAR_LOJA"
+    CRIAR_OBREIRO = "CRIAR_OBREIRO"
+    VINCULAR_OBREIRO = "VINCULAR_OBREIRO"
+    CRIAR_CONTA = "CRIAR_CONTA"
+    CONTA_EXISTENTE = "CONTA_EXISTENTE"
+    SUBSTITUIR_VM = "SUBSTITUIR_VM"
+    SUBSTITUIR_SUPLENTE = "SUBSTITUIR_SUPLENTE"
+    DEFINIR_DIRETORIA = "DEFINIR_DIRETORIA"
+    DESAGREGAR_LOJA = "DESAGREGAR_LOJA"
+
+
+class SlotOperador(str, Enum):
+    """Slots do Operador Administrativo de Loja (ver OperadorAdministrativoLoja)."""
+    SECRETARIO = "SECRETARIO"
+    CHANCELER = "CHANCELER"
+
+
+# Cargos da Loja aceitos para o Suplente do Conselho: os 6 cargos eletivos
+# (exceto o VM) + Mestre Instalado. Equivale, por nome, a
+# `CARGOS_SUPLENTE_ELEGIVEIS_IDS = [2..7]` de `core/dependencies.py`.
+CARGOS_SUPLENTE_ELEGIVEIS_NOMES = (
+    CargoLoja.PRIMEIRO_VIGILANTE.value,
+    CargoLoja.SEGUNDO_VIGILANTE.value,
+    CargoLoja.ORADOR.value,
+    CargoLoja.SECRETARIO.value,
+    CargoLoja.TESOUREIRO.value,
+    CargoLoja.CHANCELER.value,
+    GrauSimbolico.MESTRE_INSTALADO.value,
+)
+
+# Limites de segurança do upload de CSV.
+IMPORTACAO_TAMANHO_MAX_BYTES = 1_048_576  # 1 MB
+IMPORTACAO_MAX_LINHAS = 500
+IMPORTACAO_TOKEN_TTL_MINUTOS = 30
