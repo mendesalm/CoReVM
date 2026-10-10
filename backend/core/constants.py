@@ -111,3 +111,19 @@ CARGOS_SUPLENTE_ELEGIVEIS_NOMES = (
 IMPORTACAO_TAMANHO_MAX_BYTES = 1_048_576  # 1 MB
 IMPORTACAO_MAX_LINHAS = 500
 IMPORTACAO_TOKEN_TTL_MINUTOS = 30
+
+# IDs dos cargos eletivos na tabela `cargos` do módulo Lojas (usados ao empossar o
+# VM/Suplente pela API do Lojas). "Mestre Instalado" não é cargo: é grau/título.
+CARGO_LOJA_ID_POR_NOME = {
+    CargoLoja.VENERAVEL_MESTRE.value: 1,
+    CargoLoja.PRIMEIRO_VIGILANTE.value: 2,
+    CargoLoja.SEGUNDO_VIGILANTE.value: 3,
+    CargoLoja.ORADOR.value: 4,
+    CargoLoja.SECRETARIO.value: 5,
+    CargoLoja.TESOUREIRO.value: 6,
+    CargoLoja.CHANCELER.value: 7,
+}
+
+# Fonte registrada em HistoricoLiderancaLoja para VMs vindos da importação em lote
+# (o Lojas é atualizado na mesma operação, portanto equivale a uma sincronização).
+FONTE_LIDERANCA_IMPORTACAO = "SYNC_LOJAS"

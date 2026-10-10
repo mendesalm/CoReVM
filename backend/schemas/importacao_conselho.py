@@ -30,7 +30,7 @@ COLUNAS_CSV: List[str] = [
     "conselho_nome", "conselho_uf",
     "loja_numero", "loja_nome", "loja_rito", "loja_cidade", "loja_uf",
     "loja_email", "loja_telefone", "loja_dia_sessao", "loja_periodicidade",
-    "loja_horario_sessao", "data_filiacao",
+    "loja_horario_sessao", "data_filiacao", "loja_potencia_id",
     "vm_cim", "vm_nome", "vm_cpf", "vm_email", "vm_whatsapp", "vm_data_posse",
     "suplente_cim", "suplente_nome", "suplente_cpf", "suplente_email", "suplente_cargo_loja",
     "op_secretario_cim", "op_secretario_nome", "op_secretario_email",
@@ -166,6 +166,8 @@ class LinhaImportacaoConselho(BaseModel):
     loja_periodicidade: Optional[str] = None
     loja_horario_sessao: Optional[str] = None
     data_filiacao: Optional[date] = None
+    # Necessário apenas quando a Loja ainda não existe no módulo Lojas (cadastro on-the-fly).
+    loja_potencia_id: Optional[str] = None
 
     vm_cim: Optional[str] = None
     vm_nome: Optional[str] = None
@@ -229,7 +231,7 @@ class LinhaImportacaoConselho(BaseModel):
     def _telefone(cls, v):
         return normalizar_telefone(v) if v else v
 
-    @field_validator("vm_cim", "suplente_cim", "op_secretario_cim", "op_chanceler_cim", "loja_numero")
+    @field_validator("vm_cim", "suplente_cim", "op_secretario_cim", "op_chanceler_cim", "loja_numero", "loja_potencia_id")
     @classmethod
     def _so_digitos(cls, v):
         if v and not re.fullmatch(r"\d{1,20}", v):
@@ -351,6 +353,33 @@ class RevalidacaoPayload(BaseModel):
 
 
 class ConfirmacaoImportacao(BaseModel):
-    """Payload de POST /confirmar."""
+    """
+    Payload de POST /confirmar. Reenvia as linhas exatamente como validadas:
+    o servidor revalida tudo e só executa se o `token_importacao` bater com o
+    recalculado — garantindo que o confirmado é o que o SuperAdmin revisou.
+    """
     token_importacao: str
+    modo: ModoImportacao
+    regiao_id: Optional[str] = None
+    linhas: List[Dict[str, Any]]
     lojas_desagregar: List[str] = Field(default=[], description="loja_id das Lojas ausentes que o superadmin aprovou desagregar.")
+
+
+class ContaProvisionada(BaseModel):
+    """Resultado do provisionamento de conta de uma pessoa (sem qualquer senha)."""
+    cpf: str
+    email: str
+    status: str = Field(..., description="criada | acesso_concedido | existente")
+    email_enviado: bool = False
+
+
+class RelatorioExecucao(BaseModel):
+    """Resposta de POST /confirmar: resumo do que foi efetivamente gravado."""
+    regiao_id: str
+    regiao_nome: str
+    modo: ModoImportacao
+    lojas_processadas: int
+    lojas_criadas_no_lojas: int
+    lojas_desagregadas: int
+    contas: List[ContaProvisionada] = []
+    avisos: List[str] = []

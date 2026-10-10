@@ -6,6 +6,7 @@ from api.v1.integracao.rotas import router as integracao_router
 from api.v1.regional.rotas import router as regional_router
 from api.v1.email.rotas import router as email_router
 from api.v1.superadmin.rotas import router as superadmin_router
+from api.v1.superadmin.rotas_importacao import router as superadmin_importacao_router
 from core.tarefas_agendadas import iniciar_agendador
 
 app = FastAPI(
@@ -27,6 +28,8 @@ app.include_router(integracao_router, prefix="/api/v1/integracao", tags=["Integr
 app.include_router(regional_router, prefix="/api/v1/regional", tags=["Gestão Regional"])
 app.include_router(email_router, prefix="/api/v1/email", tags=["Email e Notificações"])
 app.include_router(superadmin_router, prefix="/api/v1/superadmin", tags=["SuperAdmin"])
+# Importação em lote de Conselho via CSV (2026-10-09/10).
+app.include_router(superadmin_importacao_router, prefix="/api/v1/superadmin")
 
 @app.on_event("startup")
 def iniciar_tarefas_agendadas():

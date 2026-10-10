@@ -59,6 +59,14 @@ class ConsultorExterno(Protocol):
 
     def conta_existe(self, cpf: Optional[str], email: Optional[str]) -> bool: ...
 
+    def conta_conflito(self, cpf: Optional[str], email: Optional[str]) -> Optional[str]:
+        """Mensagem de conflito no e-Sigma (e-mail de outro CPF etc.) ou None."""
+        ...
+
+    def lojas_da_regiao(self, regiao_id: str) -> List[Dict[str, Any]]:
+        """Lojas hoje agregadas à Região: dicts com loja_id, numero, uf e nome (modo ATUALIZAR)."""
+        ...
+
 
 # ---------------------------------------------------------------------------
 # Parse
@@ -206,19 +214,41 @@ def _consultar_externo(
             campo="loja_numero", status=StatusLinhaImportacao.ERRO,
             mensagem=f"Loja já agregada ao Conselho '{outra}'.",
         ))
-    acoes[n].append(AcaoImportacao.VINCULAR_LOJA if consultor.loja_existe(m.loja_numero, m.loja_uf) else AcaoImportacao.CRIAR_LOJA)
+    loja_ja_existe = consultor.loja_existe(m.loja_numero, m.loja_uf)
+    acoes[n].append(AcaoImportacao.VINCULAR_LOJA if loja_ja_existe else AcaoImportacao.CRIAR_LOJA)
+    if not loja_ja_existe and not m.loja_potencia_id:
+        mensagens[n].append(MensagemValidacao(
+            campo="loja_potencia_id", status=StatusLinhaImportacao.ERRO,
+            mensagem="Loja inexistente no módulo Lojas: informe a Potência (loja_potencia_id) para cadastrá-la.",
+        ))
 
     contas = 0
-    pessoas = [(m.vm_cim, m.vm_cpf, m.vm_email)]
+    pessoas = [("vm", m.vm_cim, m.vm_cpf, m.vm_email)]
     if m.suplente_cim:
-        pessoas.append((m.suplente_cim, m.suplente_cpf, m.suplente_email))
-    for cim, cpf, email in pessoas:
+        pessoas.append(("suplente", m.suplente_cim, m.suplente_cpf, m.suplente_email))
+    for papel, cim, cpf, email in pessoas:
         acoes[n].append(AcaoImportacao.VINCULAR_OBREIRO if consultor.obreiro_existe(cim) else AcaoImportacao.CRIAR_OBREIRO)
+        conflito = consultor.conta_conflito(cpf, email)
+        if conflito:
+            mensagens[n].append(MensagemValidacao(
+                campo=f"{'vm' if papel == 'vm' else 'suplente'}_email", status=StatusLinhaImportacao.ERRO,
+                mensagem=conflito,
+            ))
         if consultor.conta_existe(cpf, email):
             acoes[n].append(AcaoImportacao.CONTA_EXISTENTE)
         else:
             acoes[n].append(AcaoImportacao.CRIAR_CONTA)
             contas += 1
+
+    # Operadores administrativos não têm CPF no CSV: precisam já estar cadastrados no Lojas.
+    for slot in ("op_secretario", "op_chanceler"):
+        cim = getattr(m, f"{slot}_cim")
+        if cim and not consultor.obreiro_existe(cim):
+            mensagens[n].append(MensagemValidacao(
+                campo=f"{slot}_cim", status=StatusLinhaImportacao.ERRO,
+                mensagem="Obreiro não encontrado no módulo Lojas (operadores precisam estar previamente cadastrados).",
+            ))
+
     if m.cargo_diretoria:
         acoes[n].append(AcaoImportacao.DEFINIR_DIRETORIA)
     return contas
@@ -277,10 +307,28 @@ def validar_importacao(
             status = StatusLinhaImportacao.AVISO
         else:
             status = StatusLinhaImportacao.OK
-        dados = modelos[n].model_dump(mode="json") if n in modelos and status != StatusLinhaImportacao.ERRO else {
+        dados = modelos[n].model_dump(mode="json") if n in modelos else {
             k: bruta.get(k, "") for k in COLUNAS_CSV
         }
         resultados.append(ResultadoLinha(numero_linha=n, status=status, dados=dados, mensagens=msgs, acoes=acoes.get(n, [])))
+
+    # Modo ATUALIZAR: Lojas hoje agregadas que não aparecem no arquivo. Nunca são
+    # desagregadas automaticamente — viram opção explícita no formulário.
+    lojas_ausentes: List[Dict[str, Any]] = []
+    if consultor and modo == ModoImportacao.ATUALIZAR and regiao_id:
+        no_arquivo = {(m.loja_numero, m.loja_uf) for m in modelos.values()}
+        try:
+            lojas_ausentes = [
+                loja for loja in consultor.lojas_da_regiao(regiao_id)
+                if (str(loja.get("numero")), loja.get("uf")) not in no_arquivo
+            ]
+        except Exception as exc:
+            logger.warning(f"[Importação Conselho] Falha ao listar Lojas da Região {regiao_id}: {exc}")
+            erros_gerais.append("Não foi possível listar as Lojas atuais da Região para comparação.")
+    if lojas_ausentes:
+        erros_gerais.append(
+            f"Aviso: {len(lojas_ausentes)} Loja(s) da Região não constam no arquivo (permanecem agregadas, salvo desagregação explícita)."
+        )
 
     contagem = Counter(r.status for r in resultados)
     erros_bloqueantes = [e for e in erros_gerais if not e.startswith("Aviso:")]
@@ -301,6 +349,7 @@ def validar_importacao(
         ),
         linhas=resultados,
         erros_gerais=erros_gerais,
+        lojas_ausentes=lojas_ausentes,
         token_importacao=gerar_token(modo, regiao_id, [r.dados for r in resultados]) if sem_erros else None,
     )
     logger.info(

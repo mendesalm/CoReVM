@@ -35,8 +35,9 @@ def mensagens_de(relatorio, n=1):
 
 
 class ConsultorFake:
-    def __init__(self, agregada=None, lojas=(), obreiros=(), contas=()):
+    def __init__(self, agregada=None, lojas=(), obreiros=(), contas=(), conflitos=None, da_regiao=()):
         self.agregada, self.lojas, self.obreiros, self.contas = agregada or {}, set(lojas), set(obreiros), set(contas)
+        self.conflitos, self.da_regiao = conflitos or {}, list(da_regiao)
 
     def loja_agregada_em_outra_regiao(self, numero, uf, regiao_id):
         return self.agregada.get((numero, uf))
@@ -49,6 +50,12 @@ class ConsultorFake:
 
     def conta_existe(self, cpf, email):
         return cpf in self.contas or email in self.contas
+
+    def conta_conflito(self, cpf, email):
+        return self.conflitos.get(email)
+
+    def lojas_da_regiao(self, regiao_id):
+        return self.da_regiao
 
 
 # --- Parse --------------------------------------------------------------
@@ -193,3 +200,35 @@ def test_token_muda_quando_dados_mudam():
 
 def test_cpf_valido_util():
     assert cpf_valido("52998224725") and not cpf_valido("12345678900")
+
+
+def test_loja_inexistente_exige_potencia():
+    rel = validar_importacao([linha_base()], ModoImportacao.CRIAR, consultor=ConsultorFake())
+    assert any(c == "loja_potencia_id" for c, _ in mensagens_de(rel))
+    rel = validar_importacao([linha_base(loja_potencia_id="3")], ModoImportacao.CRIAR, consultor=ConsultorFake())
+    assert rel.resumo.linhas_erro == 0
+
+
+def test_conflito_de_conta_no_esigma_bloqueia():
+    consultor = ConsultorFake(lojas={("10", "GO")}, conflitos={"vm@exemplo.org": "E-mail já pertence a outra pessoa (CPF diferente)."})
+    rel = validar_importacao([linha_base()], ModoImportacao.CRIAR, consultor=consultor)
+    assert any("outra pessoa" in m for _, m in mensagens_de(rel))
+    assert rel.token_importacao is None
+
+
+def test_operador_precisa_existir_no_lojas():
+    l = linha_base(op_secretario_cim="777", op_secretario_nome="a b", op_secretario_email="o@x.org")
+    rel = validar_importacao([l], ModoImportacao.CRIAR, consultor=ConsultorFake(lojas={("10", "GO")}))
+    assert any(c == "op_secretario_cim" for c, _ in mensagens_de(rel))
+    rel = validar_importacao([l], ModoImportacao.CRIAR, consultor=ConsultorFake(lojas={("10", "GO")}, obreiros={"777"}))
+    assert not any(c == "op_secretario_cim" for c, _ in mensagens_de(rel))
+
+
+def test_modo_atualizar_lista_lojas_ausentes_sem_bloquear():
+    consultor = ConsultorFake(lojas={("10", "GO")}, da_regiao=[
+        {"loja_id": "L10", "numero": "10", "uf": "GO", "nome": "A"},
+        {"loja_id": "L99", "numero": "99", "uf": "GO", "nome": "Ausente"},
+    ])
+    rel = validar_importacao([linha_base()], ModoImportacao.ATUALIZAR, regiao_id="R1", consultor=consultor)
+    assert [l["loja_id"] for l in rel.lojas_ausentes] == ["L99"]
+    assert rel.token_importacao  # aviso, não erro
